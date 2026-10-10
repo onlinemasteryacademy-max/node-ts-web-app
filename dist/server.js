@@ -36,6 +36,7 @@ const domainsController_js_1 = require("./modules/domains/domainsController.js")
 const multiStoreController_js_1 = require("./modules/stores/multiStoreController.js");
 const analyticsController_js_1 = require("./modules/analytics/analyticsController.js");
 const billingController_js_1 = require("./modules/billing/billingController.js");
+const mailer_js_1 = require("./modules/email/mailer.js");
 const multipart_1 = __importDefault(require("@fastify/multipart"));
 const node_fs_1 = __importDefault(require("node:fs"));
 const node_crypto_1 = __importDefault(require("node:crypto"));
@@ -256,6 +257,92 @@ fastify.post('/api/merchant/settings', async (req, reply) => {
     (0, db_js_1.dbUpdate)('stores', updates, { id: store.id });
     req.session.merchantStore = { ...store, ...updates };
     return reply.send({ success: true, store: req.session.merchantStore });
+});
+// Inbound Enterprise Inquiry API
+fastify.post('/api/enterprise-inquiry', async (req, reply) => {
+    const body = req.body || {};
+    const name = (body.name || '').trim();
+    const email = (body.email || '').trim().toLowerCase();
+    const phone = (body.phone || '').trim();
+    const business_name = (body.business_name || '').trim();
+    const store_volume = (body.store_volume || '').trim();
+    const notes = (body.notes || '').trim();
+    if (!name || !email) {
+        return reply.code(400).send({ success: false, error: 'Full name and email are required.' });
+    }
+    if (!email.includes('@')) {
+        return reply.code(400).send({ success: false, error: 'Please enter a valid email address.' });
+    }
+    try {
+        const leadId = (0, db_js_1.dbInsert)('enterprise_leads', {
+            name,
+            email,
+            phone: phone || null,
+            business_name: business_name || null,
+            store_volume: store_volume || null,
+            notes: notes || null,
+            status: 'new'
+        });
+        // Notify Super Admin via email (non-blocking)
+        const superAdminEmail = env_js_1.ENV.SUPER_ADMIN_EMAIL || 'admin@zlik.store';
+        try {
+            const adminDashboardUrl = `${env_js_1.ENV.APP_URL}/${env_js_1.ENV.ADMIN_SECRET_PATH}`;
+            await (0, mailer_js_1.sendEmail)({
+                toEmail: superAdminEmail,
+                toName: 'Zlik Super Admin',
+                subject: `🏢 New Enterprise Inquiry: ${business_name || name}`,
+                htmlContent: `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #E3E9E5; border-radius: 16px; background: #ffffff;">
+            <div style="margin-bottom: 20px;">
+              <span style="background: #ede9fe; color: #6d28d9; font-size: 11px; font-weight: bold; padding: 4px 10px; border-radius: 999px; text-transform: uppercase;">Enterprise Lead</span>
+              <h2 style="color: #08110D; margin: 8px 0 4px 0; font-size: 20px;">New Enterprise Inquiry Received</h2>
+              <p style="color: #6B756F; font-size: 13px; margin: 0;">An enterprise customer submitted an inquiry from the landing page.</p>
+            </div>
+            
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; line-height: 1.6; margin-bottom: 20px;">
+              <tr style="border-bottom: 1px solid #f3f4f6;">
+                <td style="padding: 10px 0; color: #6B756F; width: 140px; font-weight: 600;">Contact Name</td>
+                <td style="padding: 10px 0; color: #08110D; font-weight: 600;">${name}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #f3f4f6;">
+                <td style="padding: 10px 0; color: #6B756F; font-weight: 600;">Work Email</td>
+                <td style="padding: 10px 0;"><a href="mailto:${email}" style="color: #087A50; font-weight: 600; text-decoration: none;">${email}</a></td>
+              </tr>
+              <tr style="border-bottom: 1px solid #f3f4f6;">
+                <td style="padding: 10px 0; color: #6B756F; font-weight: 600;">Phone / WhatsApp</td>
+                <td style="padding: 10px 0; color: #08110D;">${phone ? `<a href="tel:${phone}" style="color: #08110D; text-decoration: none;">${phone}</a> &bull; <a href="https://wa.me/${phone.replace(/[^0-9]/g, '')}" target="_blank" style="color: #25D366; font-weight: 600; text-decoration: none;">WhatsApp Chat</a>` : 'N/A'}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #f3f4f6;">
+                <td style="padding: 10px 0; color: #6B756F; font-weight: 600;">Business Name</td>
+                <td style="padding: 10px 0; color: #08110D; font-weight: 600;">${business_name || 'N/A'}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #f3f4f6;">
+                <td style="padding: 10px 0; color: #6B756F; font-weight: 600;">Est. Sales Volume</td>
+                <td style="padding: 10px 0; color: #08110D;">${store_volume || 'N/A'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 0; color: #6B756F; font-weight: 600; vertical-align: top;">Requirements</td>
+                <td style="padding: 10px 0; color: #08110D; white-space: pre-wrap;">${notes || 'None provided'}</td>
+              </tr>
+            </table>
+
+            <div style="text-align: center; padding-top: 10px;">
+              <a href="${adminDashboardUrl}" style="background: #19D98B; color: #08110D; text-decoration: none; padding: 12px 28px; border-radius: 10px; font-weight: bold; font-size: 13px; display: inline-block;">Open Super Admin Dashboard &rarr;</a>
+            </div>
+          </div>
+        `,
+                templateName: 'enterprise_inquiry'
+            });
+        }
+        catch (e) {
+            fastify.log.warn('Could not dispatch enterprise alert email: ' + (e?.message || e));
+        }
+        return reply.send({ success: true, message: 'Inquiry received successfully.', leadId });
+    }
+    catch (err) {
+        fastify.log.error(err);
+        return reply.code(500).send({ success: false, error: 'Failed to record inquiry: ' + (err.message || 'Unknown database error') });
+    }
 });
 // SSR Page Routes
 // 1. Landing Page

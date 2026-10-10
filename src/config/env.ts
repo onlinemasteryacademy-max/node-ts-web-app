@@ -55,6 +55,7 @@ export const ENV = {
   IS_PRODUCTION: (process.env.NODE_ENV || '').toLowerCase() === 'production',
   PORT: parseInt(process.env.PORT || '3000', 10),
   HOST: process.env.HOST || '0.0.0.0',
+  APP_URL: (process.env.APP_URL || 'https://zlik.store').replace(/\/+$/, ''),
   SESSION_SECRET: process.env.SESSION_SECRET || 'zlik_super_secure_production_secret_key_98374298734982739847239847293847!',
   SUPER_ADMIN_EMAIL: (process.env.SUPER_ADMIN_EMAIL || 'admin@zlik.store').toLowerCase().trim(),
   SUPER_ADMIN_PASSWORD: process.env.SUPER_ADMIN_PASSWORD || 'Zlik#Admin!2026@Security',

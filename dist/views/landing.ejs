@@ -553,7 +553,7 @@
             <span id="breakdownBtnText">Full feature breakdown</span>
             <span id="breakdownBtnIcon">↓</span>
           </button>
-          <button onclick="openRegisterModal('enterprise')" class="w-full sm:w-auto bg-[#08110D] hover:bg-black text-white text-xs font-semibold font-display px-5 py-3 rounded-lg transition shadow-2xs flex items-center justify-center gap-1.5">
+          <button onclick="openEnterpriseModal()" class="w-full sm:w-auto bg-[#08110D] hover:bg-black text-white text-xs font-semibold font-display px-5 py-3 rounded-lg transition shadow-2xs flex items-center justify-center gap-1.5">
             <span>Get Enterprise Plan</span>
             <span>&rarr;</span>
           </button>
@@ -1050,6 +1050,95 @@
     </div>
   </div>
 
+  <!-- ==========================================
+       ENTERPRISE CUSTOM PLAN INQUIRY MODAL
+       ========================================== -->
+  <div id="enterpriseModal" class="fixed inset-0 bg-[#08110D]/70 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="bg-white w-full max-w-lg p-6 sm:p-8 rounded-3xl relative shadow-2xl border border-[#E3E9E5] max-h-[92vh] overflow-y-auto">
+      <button onclick="closeEnterpriseModal()" class="absolute top-5 right-5 text-[#6B756F] hover:text-[#08110D] text-lg font-semibold w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 transition">✕</button>
+
+      <div id="enterpriseFormContent">
+        <div class="mb-5">
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700 font-mono">Enterprise Solution</span>
+          </div>
+          <h2 class="text-xl font-bold font-display text-[#08110D]">Get Enterprise Plan</h2>
+          <p class="text-xs text-[#6B756F] mt-1 leading-relaxed">
+            Custom store limits, dedicated account manager, high-volume SLA, custom integrations, and priority support tailored to your brand.
+          </p>
+        </div>
+
+        <form id="enterpriseInquiryForm" onsubmit="submitEnterpriseInquiry(event)" class="space-y-4">
+          <div id="enterpriseFormError" class="hidden p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-600"></div>
+
+          <div>
+            <label class="block text-xs font-semibold text-[#08110D] mb-1">Your Full Name <span class="text-red-500">*</span></label>
+            <input type="text" id="entName" name="name" required placeholder="e.g. Adebayo Ogunlesi" class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-[#E3E9E5] focus:outline-none focus:border-[#19D98B] transition">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-[#08110D] mb-1">Work Email <span class="text-red-500">*</span></label>
+              <input type="email" id="entEmail" name="email" required placeholder="name@company.com" class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-[#E3E9E5] focus:outline-none focus:border-[#19D98B] transition">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-[#08110D] mb-1">Phone / WhatsApp <span class="text-red-500">*</span></label>
+              <input type="tel" id="entPhone" name="phone" required placeholder="e.g. 0801 234 5678" class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-[#E3E9E5] focus:outline-none focus:border-[#19D98B] transition">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-[#08110D] mb-1">Business / Brand Name <span class="text-red-500">*</span></label>
+              <input type="text" id="entBusiness" name="business_name" required placeholder="e.g. Prime Retail Group" class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-[#E3E9E5] focus:outline-none focus:border-[#19D98B] transition">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-[#08110D] mb-1">Monthly Sales Volume</label>
+              <select id="entVolume" name="store_volume" class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-[#E3E9E5] focus:outline-none focus:border-[#19D98B] transition bg-white">
+                <option value="">Select estimated volume</option>
+                <option value="₦1M - ₦5M / month">₦1M - ₦5M / month</option>
+                <option value="₦5M - ₦20M / month">₦5M - ₦20M / month</option>
+                <option value="₦20M - ₦50M / month">₦20M - ₦50M / month</option>
+                <option value="₦50M+ / month">₦50M+ / month</option>
+                <option value="Launching soon">Launching soon / New enterprise</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-[#08110D] mb-1">Specific Needs / Requirements</label>
+            <textarea id="entNotes" name="notes" rows="3" placeholder="Tell us about your multi-store architecture, required staff seats, custom domain needs, or custom integrations..." class="w-full text-xs px-3.5 py-2.5 rounded-xl border border-[#E3E9E5] focus:outline-none focus:border-[#19D98B] transition"></textarea>
+          </div>
+
+          <button type="submit" id="entSubmitBtn" class="w-full bg-[#08110D] hover:bg-black text-white text-xs font-semibold font-display py-3 rounded-xl transition shadow-xs flex items-center justify-center gap-2">
+            <span>Send Enterprise Inquiry</span>
+            <span>&rarr;</span>
+          </button>
+
+          <p class="text-[11px] text-[#6B756F] text-center">
+            Our enterprise solutions team reviews and responds within 24 business hours.
+          </p>
+        </form>
+      </div>
+
+      <!-- Success Screen -->
+      <div id="enterpriseSuccessState" class="hidden py-8 text-center space-y-4">
+        <div class="w-14 h-14 bg-[#19D98B]/20 text-[#087A50] rounded-2xl flex items-center justify-center text-2xl mx-auto">
+          ✓
+        </div>
+        <h3 class="text-xl font-bold font-display text-[#08110D]">Inquiry Received</h3>
+        <p class="text-xs text-[#6B756F] max-w-sm mx-auto leading-relaxed">
+          Thank you for your interest in Zlik Enterprise! Our executive account team has received your details and will contact you via email/WhatsApp shortly.
+        </p>
+        <div class="pt-2">
+          <button onclick="closeEnterpriseModal()" class="bg-[#08110D] hover:bg-black text-white text-xs font-semibold px-6 py-2.5 rounded-xl transition">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const industryTemplatesData = {
       1: [
@@ -1195,7 +1284,11 @@
     }
 
     function openRegisterModal(plan = 'free') {
-      selectModalPlan(plan === 'enterprise' ? 'business' : plan);
+      if (plan === 'enterprise') {
+        openEnterpriseModal();
+        return;
+      }
+      selectModalPlan(plan);
       goToStep1();
       document.getElementById('registerModal').classList.remove('hidden');
     }
@@ -1204,6 +1297,75 @@
       document.getElementById('registerModal').classList.add('hidden');
       document.getElementById('registerError').classList.add('hidden');
       document.getElementById('verifyError').classList.add('hidden');
+    }
+
+    function openEnterpriseModal() {
+      const modal = document.getElementById('enterpriseModal');
+      if (modal) {
+        document.getElementById('enterpriseFormContent').classList.remove('hidden');
+        document.getElementById('enterpriseSuccessState').classList.add('hidden');
+        const errBox = document.getElementById('enterpriseFormError');
+        if (errBox) errBox.classList.add('hidden');
+        const form = document.getElementById('enterpriseInquiryForm');
+        if (form) form.reset();
+        modal.classList.remove('hidden');
+      }
+    }
+
+    function closeEnterpriseModal() {
+      const modal = document.getElementById('enterpriseModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    async function submitEnterpriseInquiry(e) {
+      e.preventDefault();
+      const btn = document.getElementById('entSubmitBtn');
+      const errBox = document.getElementById('enterpriseFormError');
+      if (errBox) errBox.classList.add('hidden');
+
+      const name = document.getElementById('entName').value.trim();
+      const email = document.getElementById('entEmail').value.trim();
+      const phone = document.getElementById('entPhone').value.trim();
+      const business_name = document.getElementById('entBusiness').value.trim();
+      const store_volume = document.getElementById('entVolume').value;
+      const notes = document.getElementById('entNotes').value.trim();
+
+      if (!name || !email) {
+        if (errBox) {
+          errBox.textContent = 'Please provide both your full name and work email.';
+          errBox.classList.remove('hidden');
+        }
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span>Submitting inquiry...</span>';
+
+      try {
+        const res = await fetch('/api/enterprise-inquiry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, phone, business_name, store_volume, notes })
+        });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('enterpriseFormContent').classList.add('hidden');
+          document.getElementById('enterpriseSuccessState').classList.remove('hidden');
+        } else {
+          if (errBox) {
+            errBox.textContent = data.error || 'Failed to submit inquiry. Please try again.';
+            errBox.classList.remove('hidden');
+          }
+        }
+      } catch (err) {
+        if (errBox) {
+          errBox.textContent = 'Network error. Please check your connection and try again.';
+          errBox.classList.remove('hidden');
+        }
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Send Enterprise Inquiry</span><span>&rarr;</span>';
+      }
     }
 
     function openContactModal() {
