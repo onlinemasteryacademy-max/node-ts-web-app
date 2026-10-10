@@ -269,6 +269,9 @@
                 <div>
                     <label class="block font-medium text-[#08110D] mb-1">Account Number</label>
                     <input type="text" id="accountNumber" value="<%= store.bank_account_number || '' %>" placeholder="0123456789" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                    <span class="text-[10.5px] text-[#6B756F] mt-1 flex items-center gap-1">
+                        <span>🔒</span> <span>A security OTP verification code will be sent to your email when changing account numbers.</span>
+                    </span>
                 </div>
                 <div>
                     <label class="block font-medium text-[#08110D] mb-1">Account Name</label>
@@ -554,6 +557,54 @@
             </button>
         </form>
     </main>
+
+    <!-- Bank Account Security Authorization OTP Modal -->
+    <div id="bankOtpModal" class="fixed inset-0 z-50 bg-[#08110D]/75 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 space-y-5 border border-[#E3E9E5] shadow-2xl text-center font-body relative">
+            <button type="button" onclick="closeBankOtpModal()" class="absolute top-4 right-4 text-[#6B756F] hover:text-[#08110D] font-bold text-lg w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#F8FAF8] transition">✕</button>
+
+            <!-- Modal Header Icon -->
+            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center text-xl mx-auto font-bold shadow-2xs">
+                🔒
+            </div>
+
+            <div class="space-y-1.5">
+                <h3 class="text-lg font-bold text-[#08110D] font-display">Authorize Bank Account Change</h3>
+                <p class="text-xs text-[#6B756F] leading-relaxed">
+                    For your store security, a 6-digit verification code has been sent to <strong id="bankOtpMaskedEmail" class="text-[#08110D] font-mono">your email</strong>.
+                </p>
+            </div>
+
+            <!-- OTP Form -->
+            <form id="bankOtpForm" onsubmit="handleVerifyAndSaveBankOtp(event)" class="space-y-4 text-left">
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-bold text-[#08110D]">Enter 6-Digit Authorization Code</label>
+                        <div id="bankOtpTimerBadge" class="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-[#087A50]">
+                            <span>⏱</span> <span id="bankOtpCountdownText">05:00</span>
+                        </div>
+                    </div>
+                    <input type="text" id="bankOtpInput" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" required placeholder="••••••" class="w-full text-center text-2xl font-bold tracking-[0.3em] font-mono border-2 border-[#08110D] rounded-2xl py-3 bg-[#F8FAF8] outline-none focus:bg-white focus:border-[#19D98B] transition">
+                </div>
+
+                <div class="flex items-center justify-between text-[11px] pt-1">
+                    <span class="text-[#6B756F]">Didn't receive code?</span>
+                    <button type="button" id="resendBankOtpBtn" onclick="requestBankOtp(true)" class="font-bold text-[#087A50] hover:underline disabled:opacity-50 disabled:cursor-not-allowed">
+                        Resend Code
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2 pt-2 border-t border-[#E3E9E5]">
+                    <button type="button" onclick="closeBankOtpModal()" class="w-1/3 bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-medium text-xs py-3 rounded-xl border border-[#E3E9E5] transition">
+                        Cancel
+                    </button>
+                    <button type="submit" id="verifyBankOtpSubmitBtn" class="w-2/3 bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs py-3 rounded-xl transition shadow-2xs font-display flex items-center justify-center gap-1.5">
+                        <span>Approve & Save</span> <span>✓</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <%- include('components/upgrade_modal.ejs') %>
 
@@ -944,6 +995,162 @@
             if (fileInput) fileInput.value = '';
         }
 
+        const originalBankAccountNumber = '<%= (store.bank_account_number || "").trim() %>';
+        let bankOtpTimerInterval = null;
+        let bankOtpSecondsRemaining = 300;
+        let pendingSettingsPayload = null;
+
+        function startBankOtpTimer(duration = 300) {
+            if (bankOtpTimerInterval) clearInterval(bankOtpTimerInterval);
+            bankOtpSecondsRemaining = duration;
+            updateBankOtpTimerDisplay();
+
+            const resendBtn = document.getElementById('resendBankOtpBtn');
+            if (resendBtn) resendBtn.disabled = true;
+
+            bankOtpTimerInterval = setInterval(() => {
+                bankOtpSecondsRemaining--;
+                if (bankOtpSecondsRemaining <= 0) {
+                    clearInterval(bankOtpTimerInterval);
+                    bankOtpSecondsRemaining = 0;
+                    if (resendBtn) resendBtn.disabled = false;
+                } else if (bankOtpSecondsRemaining <= 270) {
+                    if (resendBtn) resendBtn.disabled = false;
+                }
+                updateBankOtpTimerDisplay();
+            }, 1000);
+        }
+
+        function updateBankOtpTimerDisplay() {
+            const text = document.getElementById('bankOtpCountdownText');
+            if (!text) return;
+            const min = Math.floor(bankOtpSecondsRemaining / 60);
+            const sec = bankOtpSecondsRemaining % 60;
+            text.textContent = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+        }
+
+        function openBankOtpModal(maskedEmail) {
+            if (maskedEmail) {
+                document.getElementById('bankOtpMaskedEmail').textContent = maskedEmail;
+            }
+            document.getElementById('bankOtpInput').value = '';
+            document.getElementById('bankOtpModal').classList.remove('hidden');
+            startBankOtpTimer(300);
+            setTimeout(() => document.getElementById('bankOtpInput')?.focus(), 150);
+        }
+
+        function closeBankOtpModal() {
+            document.getElementById('bankOtpModal').classList.add('hidden');
+            if (bankOtpTimerInterval) clearInterval(bankOtpTimerInterval);
+            const btn = document.getElementById('saveBtn');
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Save Settings';
+            }
+        }
+
+        async function requestBankOtp(isResend = false) {
+            const newAccountNum = document.getElementById('accountNumber')?.value?.trim() || '';
+            const newBankName = document.getElementById('bankName')?.value?.trim() || '';
+            const newAccountName = document.getElementById('accountName')?.value?.trim() || '';
+
+            const resendBtn = document.getElementById('resendBankOtpBtn');
+            if (resendBtn && isResend) {
+                resendBtn.disabled = true;
+                resendBtn.textContent = 'Sending...';
+            }
+
+            try {
+                const res = await fetch('/api/merchant/bank/request-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        bank_account_number: newAccountNum,
+                        bank_name: newBankName,
+                        bank_account_name: newAccountName
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    openBankOtpModal(data.masked_email);
+                    if (isResend) alert(data.message || 'New verification code sent to your email.');
+                } else {
+                    alert(data.error || 'Failed to request security verification code.');
+                    const btn = document.getElementById('saveBtn');
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = 'Save Settings';
+                    }
+                }
+            } catch (err) {
+                alert('Network error requesting verification code.');
+            } finally {
+                if (resendBtn && isResend) {
+                    resendBtn.textContent = 'Resend Code';
+                }
+            }
+        }
+
+        async function handleVerifyAndSaveBankOtp(e) {
+            e.preventDefault();
+            const otpCode = document.getElementById('bankOtpInput')?.value?.trim();
+            if (!otpCode || otpCode.length < 6) {
+                alert('Please enter the full 6-digit verification code.');
+                return;
+            }
+
+            const submitBtn = document.getElementById('verifyBankOtpSubmitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>Verifying...</span>';
+
+            if (pendingSettingsPayload) {
+                pendingSettingsPayload.otp_code = otpCode;
+                await submitSettingsPayload(pendingSettingsPayload, submitBtn);
+            }
+        }
+
+        async function submitSettingsPayload(payload, triggerBtn = null) {
+            const saveBtn = document.getElementById('saveBtn');
+            try {
+                const res = await fetch('/api/merchant/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const d = await res.json();
+                if (d.success) {
+                    if (triggerBtn) triggerBtn.innerHTML = '<span>✓ Verified!</span>';
+                    if (saveBtn) {
+                        saveBtn.textContent = '✓ Saved Successfully!';
+                        saveBtn.classList.add('bg-emerald-600', 'text-white');
+                    }
+                    setTimeout(() => {
+                        location.reload();
+                    }, 500);
+                } else {
+                    alert(d.error || 'Failed to update settings');
+                    if (triggerBtn) {
+                        triggerBtn.disabled = false;
+                        triggerBtn.innerHTML = '<span>Approve & Save</span> <span>✓</span>';
+                    }
+                    if (saveBtn) {
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Save Settings';
+                    }
+                }
+            } catch (err) {
+                alert('Network error updating settings. Please try again.');
+                if (triggerBtn) {
+                    triggerBtn.disabled = false;
+                    triggerBtn.innerHTML = '<span>Approve & Save</span> <span>✓</span>';
+                }
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Save Settings';
+                }
+            }
+        }
+
         async function handleSaveSettings(e) {
             e.preventDefault();
             const btn = document.getElementById('saveBtn');
@@ -952,6 +1159,9 @@
                 btn.disabled = true;
                 btn.textContent = 'Saving Settings...';
             }
+
+            const newAccountNum = document.getElementById('accountNumber')?.value?.trim() || '';
+            const isAccountChanged = newAccountNum !== '' && newAccountNum !== originalBankAccountNumber;
 
             const payload = {
                 template_slug: document.getElementById('selectedTemplateInput')?.value || 'general_clean',
@@ -967,41 +1177,19 @@
                 google_tag_id: document.getElementById('googleTagId')?.value?.trim() || null,
                 tiktok_pixel_id: document.getElementById('tiktokPixelId')?.value?.trim() || null,
                 bank_name: document.getElementById('bankName')?.value?.trim() || null,
-                bank_account_number: document.getElementById('accountNumber')?.value?.trim() || null,
+                bank_account_number: newAccountNum || null,
                 bank_account_name: document.getElementById('accountName')?.value?.trim() || null,
                 alert_sound: document.getElementById('alertSound')?.value || 'bell',
                 delivery_fee: parseFloat(document.getElementById('deliveryFee')?.value || 0)
             };
 
-            try {
-                const res = await fetch('/api/merchant/settings', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const d = await res.json();
-                if (d.success) {
-                    if (btn) {
-                        btn.textContent = '✓ Saved Successfully!';
-                        btn.classList.add('bg-emerald-600', 'text-white');
-                    }
-                    setTimeout(() => {
-                        location.reload();
-                    }, 500);
-                } else {
-                    alert(d.error || 'Failed to update settings');
-                    if (btn) {
-                        btn.disabled = false;
-                        btn.textContent = originalText;
-                    }
-                }
-            } catch (err) {
-                alert('Network error updating settings. Please try again.');
-                if (btn) {
-                    btn.disabled = false;
-                    btn.textContent = originalText;
-                }
+            if (isAccountChanged) {
+                pendingSettingsPayload = payload;
+                await requestBankOtp(false);
+                return;
             }
+
+            await submitSettingsPayload(payload);
         }
 
         function requestVerification() {

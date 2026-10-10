@@ -98,16 +98,21 @@
 
 
 
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-                <h2 class="text-base font-extrabold text-[#08110D] font-display flex items-center gap-2">
-                    <span>Store Products (<%= items.length %>)</span>
-                    <span class="text-xs font-normal text-[#6B756F]">• Configured for <%= templateConfig ? templateConfig.name : 'General' %></span>
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-[#E3E9E5]/60 pb-3">
+            <div class="space-y-1.5 min-w-0">
+                <h2 class="text-base sm:text-lg font-extrabold text-[#08110D] font-display">
+                    Store Products (<%= items.length %>)
                 </h2>
+                <div>
+                    <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-lg bg-emerald-50 text-[#087A50] border border-emerald-200 font-mono">
+                        <span>⚡</span>
+                        <span>Configured for <%= templateConfig ? templateConfig.name : 'General' %> Storefront Specs</span>
+                    </span>
+                </div>
                 <p class="text-xs text-[#6B756F]">Manage items, structured variants, customizable option groups, technical specs, and in-stock inventory</p>
             </div>
-            <div class="flex items-center gap-2">
-                <a href="/<%= store.slug %>" target="_blank" class="bg-white hover:bg-gray-50 text-[#08110D] border border-[#E3E9E5] text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1">
+            <div class="flex items-center gap-2 shrink-0">
+                <a href="/<%= store.slug %>" target="_blank" class="bg-white hover:bg-gray-50 text-[#08110D] border border-[#E3E9E5] text-xs font-bold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-2xs">
                     <span>View Storefront ↗</span>
                 </a>
             </div>

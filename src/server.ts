@@ -30,7 +30,7 @@ import { domainsRoutes } from './modules/domains/domainsController.js';
 import { multiStoreRoutes } from './modules/stores/multiStoreController.js';
 import { analyticsRoutes, recordStoreVisit, getStoreVisitorMetrics } from './modules/analytics/analyticsController.js';
 import { billingRoutes } from './modules/billing/billingController.js';
-import { sendEmail } from './modules/email/mailer.js';
+import { sendEmail, sendBankAccountChangeOtp } from './modules/email/mailer.js';
 
 import fastifyMultipart from '@fastify/multipart';
 import fs from 'node:fs';
@@ -39,6 +39,15 @@ import { pipeline } from 'node:stream/promises';
 
 import { ENV } from './config/env.js';
 import { initSuperAdminAccount } from './modules/admin/adminSecurity.js';
+
+interface BankOtpRecord {
+  otp_hash: string;
+  expires_at: number;
+  account_number: string;
+  bank_name: string;
+  account_name: string;
+}
+const bankChangeOtpStore = new Map<number, BankOtpRecord>();
 
 const fastify = Fastify({
   logger: false,
@@ -213,6 +222,60 @@ fastify.delete('/api/merchant/items', async (req: FastifyRequest<{ Querystring: 
   return reply.send({ success: true });
 });
 
+// Merchant Payout Bank Change OTP Request
+fastify.post('/api/merchant/bank/request-otp', async (req: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
+  const store = (req as any).session?.merchantStore;
+  if (!store) return reply.code(401).send({ success: false, error: 'Unauthorized' });
+
+  const body = (req.body || {}) as any;
+  const newAccountNumber = (body.bank_account_number || '').trim();
+  const newBankName = (body.bank_name || '').trim();
+  const newAccountName = (body.bank_account_name || '').trim();
+
+  if (!newAccountNumber) {
+    return reply.code(400).send({ success: false, error: 'New account number is required.' });
+  }
+
+  // Get recipient email (store.email or owner email)
+  let ownerEmail = store.email;
+  if (!ownerEmail || !ownerEmail.includes('@')) {
+    const freshStore = dbFetchOne<any>('stores', { id: store.id });
+    if (freshStore && freshStore.email) {
+      ownerEmail = freshStore.email;
+    }
+  }
+
+  if (!ownerEmail || !ownerEmail.includes('@')) {
+    return reply.code(400).send({ success: false, error: 'No valid email address linked to your store account to receive verification OTP.' });
+  }
+
+  const otpCode = String(crypto.randomInt(100000, 999999));
+  const otpHash = crypto.createHash('sha256').update(otpCode).digest('hex');
+  const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
+
+  bankChangeOtpStore.set(store.id, {
+    otp_hash: otpHash,
+    expires_at: expiresAt,
+    account_number: newAccountNumber,
+    bank_name: newBankName,
+    account_name: newAccountName
+  });
+
+  // Dispatch Security OTP Email
+  await sendBankAccountChangeOtp(ownerEmail, store.store_name || 'Store Owner', otpCode, newBankName, newAccountNumber);
+
+  const parts = ownerEmail.split('@');
+  const maskedUser = parts[0].length > 2 ? parts[0].slice(0, 2) + '••••' + parts[0].slice(-1) : '••';
+  const maskedEmail = `${maskedUser}@${parts[1]}`;
+
+  return reply.send({
+    success: true,
+    message: `Security authorization code sent to ${maskedEmail}.`,
+    masked_email: maskedEmail,
+    expires_in: 300
+  });
+});
+
 fastify.post('/api/merchant/settings', async (req: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
   const store = (req as any).session?.merchantStore;
   if (!store) return reply.code(401).send({ success: false, error: 'Unauthorized' });
@@ -251,11 +314,53 @@ fastify.post('/api/merchant/settings', async (req: FastifyRequest<{ Body: any }>
   if (body.meta_pixel_id !== undefined) updates.meta_pixel_id = body.meta_pixel_id ? body.meta_pixel_id.trim() : null;
   if (body.google_tag_id !== undefined) updates.google_tag_id = body.google_tag_id ? body.google_tag_id.trim() : null;
   if (body.tiktok_pixel_id !== undefined) updates.tiktok_pixel_id = body.tiktok_pixel_id ? body.tiktok_pixel_id.trim() : null;
-  if (body.bank_name !== undefined) updates.bank_name = body.bank_name;
-  if (body.bank_account_number !== undefined) updates.bank_account_number = body.bank_account_number;
-  if (body.bank_account_name !== undefined) updates.bank_account_name = body.bank_account_name;
   if (body.alert_sound !== undefined) updates.alert_sound = body.alert_sound;
   if (body.delivery_fee !== undefined) updates.delivery_fee = parseFloat(body.delivery_fee || 0);
+
+  // Check if bank account number is being modified
+  const currentBankAcct = (store.bank_account_number || '').trim();
+  const rawNewBankAcct = body.bank_account_number !== undefined ? String(body.bank_account_number).trim() : currentBankAcct;
+  const isChangingBankAcct = rawNewBankAcct !== '' && rawNewBankAcct !== currentBankAcct;
+
+  if (isChangingBankAcct) {
+    const otpCode = (body.otp_code || '').trim();
+    if (!otpCode) {
+      return reply.send({
+        success: false,
+        require_otp: true,
+        error: 'Security authorization code is required to change your payout bank account number.'
+      });
+    }
+
+    const record = bankChangeOtpStore.get(store.id);
+    if (!record || Date.now() > record.expires_at) {
+      return reply.send({
+        success: false,
+        require_otp: true,
+        error: 'Verification code has expired or was not requested. Please request a new code.'
+      });
+    }
+
+    const inputHash = crypto.createHash('sha256').update(otpCode).digest('hex');
+    if (inputHash !== record.otp_hash) {
+      return reply.send({
+        success: false,
+        require_otp: true,
+        error: 'Invalid 6-digit verification code. Please check your email and try again.'
+      });
+    }
+
+    // OTP Verified! Commit bank details and delete OTP
+    bankChangeOtpStore.delete(store.id);
+    updates.bank_account_number = rawNewBankAcct;
+    if (body.bank_name !== undefined) updates.bank_name = body.bank_name ? body.bank_name.trim() : null;
+    if (body.bank_account_name !== undefined) updates.bank_account_name = body.bank_account_name ? body.bank_account_name.trim() : null;
+  } else {
+    // If account number did not change, allow updating bank name and account name if provided
+    if (body.bank_name !== undefined) updates.bank_name = body.bank_name ? body.bank_name.trim() : null;
+    if (body.bank_account_name !== undefined) updates.bank_account_name = body.bank_account_name ? body.bank_account_name.trim() : null;
+    if (body.bank_account_number !== undefined && !isChangingBankAcct) updates.bank_account_number = body.bank_account_number ? body.bank_account_number.trim() : null;
+  }
 
   dbUpdate('stores', updates, { id: store.id });
   (req as any).session.merchantStore = { ...store, ...updates };

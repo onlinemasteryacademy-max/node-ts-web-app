@@ -10,6 +10,7 @@ exports.sendCustomerOrderConfirmationEmail = sendCustomerOrderConfirmationEmail;
 exports.sendPasswordResetEmail = sendPasswordResetEmail;
 exports.sendAdminTestEmail = sendAdminTestEmail;
 exports.sendEmailVerificationOtp = sendEmailVerificationOtp;
+exports.sendBankAccountChangeOtp = sendBankAccountChangeOtp;
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const db_js_1 = require("../../db/db.js");
 /**
@@ -319,5 +320,40 @@ async function sendEmailVerificationOtp(email, name, otpCode, verifyUrl) {
         subject: `Your Zlik Verification Code: ${otpCode}`,
         htmlContent: html,
         templateName: 'email_verification_otp'
+    });
+}
+/**
+ * 7. Bank Account Change Security Authorization OTP
+ */
+async function sendBankAccountChangeOtp(email, storeName, otpCode, bankName, accountNumber) {
+    const safeName = storeName?.trim() || 'Store Owner';
+    const maskedAcct = accountNumber ? accountNumber.replace(/\d(?=\d{4})/g, '*') : '••••';
+    const html = emailLayout('Authorize Payout Bank Account Change', `
+    <h2 style="font-size: 20px; font-weight: 700; color: #08110D; margin-top: 0;">Security Alert: Bank Account Change</h2>
+    <p style="font-size: 14px; color: #4B5563;">Hello <strong>${safeName}</strong>, a request was made to update the payout bank account details for your Zlik store to:</p>
+    
+    <div style="background-color: #F8FAF8; border: 1px solid #E3E9E5; border-radius: 10px; padding: 14px 18px; margin: 16px 0; font-size: 13px; color: #08110D;">
+      <div><strong>Bank:</strong> ${bankName || 'Not Specified'}</div>
+      <div style="margin-top: 4px;"><strong>Account Number:</strong> <span style="font-family: monospace; font-weight: bold;">${maskedAcct}</span></div>
+    </div>
+
+    <p style="font-size: 14px; color: #4B5563;">To approve and complete this bank account change, enter the 6-digit authorization code in your settings window:</p>
+
+    <div style="background-color: #08110D; border-radius: 12px; padding: 24px; text-align: center; margin: 20px 0;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #19D98B; letter-spacing: 1px; margin-bottom: 8px;">AUTHORIZATION CODE</div>
+      <div style="font-size: 36px; font-weight: 800; color: #FFFFFF; letter-spacing: 8px; font-family: monospace;">${otpCode}</div>
+      <div style="font-size: 12px; color: #9CA3AF; margin-top: 8px;">Valid for 5 minutes</div>
+    </div>
+
+    <p style="font-size: 12px; color: #DC2626; font-weight: 600; margin-top: 16px;">
+      ⚠️ If you did not initiate this change, DO NOT share this code with anyone. Your payout details remain safe and unchanged.
+    </p>
+    `);
+    return sendEmail({
+        toEmail: email,
+        toName: safeName,
+        subject: `Security Alert: Authorize Bank Account Change (${otpCode})`,
+        htmlContent: html,
+        templateName: 'bank_account_change_otp'
     });
 }
