@@ -164,23 +164,31 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-white/5">
-                <% stores.slice(0, 5).forEach(s => { %>
+                <% if (stores.length === 0) { %>
                   <tr>
-                    <td class="py-3 font-semibold text-white"><%= s.store_name %></td>
-                    <td class="py-3 text-white/70"><%= s.owner_name %></td>
-                    <td class="py-3 text-white/70"><%= s.whatsapp_number %></td>
-                    <td class="py-3">
-                      <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= s.plan_tier === 'pro' ? 'bg-[#19D98B]/20 text-[#19D98B]' : (s.plan_tier === 'business' ? 'bg-blue-500/20 text-blue-400' : 'bg-white/10 text-white/70') %>">
-                        <%= s.plan_tier || 'free' %>
-                      </span>
-                    </td>
-                    <td class="py-3 text-right">
-                      <button onclick="impersonateMerchant(<%= s.id %>)" class="text-xs text-[#19D98B] hover:underline font-semibold">
-                        Impersonate &rarr;
-                      </button>
+                    <td colspan="5" class="py-8 text-center text-white/40 text-xs">
+                      No merchant stores registered yet. Platform is fresh.
                     </td>
                   </tr>
-                <% }); %>
+                <% } else { %>
+                  <% stores.slice(0, 5).forEach(s => { %>
+                    <tr>
+                      <td class="py-3 font-semibold text-white"><%= s.store_name %></td>
+                      <td class="py-3 text-white/70"><%= s.owner_name %></td>
+                      <td class="py-3 text-white/70"><%= s.whatsapp_number %></td>
+                      <td class="py-3">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= s.plan_tier === 'pro' ? 'bg-[#19D98B]/20 text-[#19D98B]' : (s.plan_tier === 'business' ? 'bg-blue-500/20 text-blue-400' : 'bg-white/10 text-white/70') %>">
+                          <%= s.plan_tier || 'free' %>
+                        </span>
+                      </td>
+                      <td class="py-3 text-right">
+                        <button onclick="impersonateMerchant(<%= s.id %>)" class="text-xs text-[#19D98B] hover:underline font-semibold">
+                          Impersonate &rarr;
+                        </button>
+                      </td>
+                    </tr>
+                  <% }); %>
+                <% } %>
               </tbody>
             </table>
           </div>
@@ -275,50 +283,60 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-white/5">
-              <% stores.forEach(s => { %>
-                <tr class="merchant-row hover:bg-white/5 transition" id="merchant-row-<%= s.id %>" data-search="<%= (s.store_name + ' ' + s.owner_name + ' ' + s.slug + ' ' + s.whatsapp_number).toLowerCase() %>">
-                  <td class="p-4 text-center">
-                    <input type="checkbox" class="merchant-select-cb w-4 h-4 rounded bg-white/10 border-white/20 text-[#19D98B] focus:ring-0 cursor-pointer accent-[#19D98B]" value="<%= s.id %>" onchange="handleMerchantSelectChange()">
-                  </td>
-                  <td class="p-4">
-                    <div class="font-bold text-white text-sm"><%= s.store_name %></div>
-                    <a href="/<%= s.slug %>" target="_blank" class="text-xs text-[#19D98B] hover:underline font-mono">/<%= s.slug %></a>
-                  </td>
-                  <td class="p-4">
-                    <div class="font-semibold text-white"><%= s.owner_name %></div>
-                    <div class="text-white/60 text-[11px]"><%= s.whatsapp_number %> &bull; <%= s.email || 'No email' %></div>
-                  </td>
-                  <td class="p-4">
-                    <div class="flex items-center gap-2">
-                      <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= s.plan_tier === 'pro' ? 'bg-[#19D98B]/20 text-[#19D98B]' : (s.plan_tier === 'business' ? 'bg-blue-500/20 text-blue-400' : (s.plan_tier === 'enterprise' ? 'bg-purple-500/20 text-purple-300' : 'bg-white/10 text-white/70')) %>">
-                        <%= s.plan_tier || 'free' %>
-                      </span>
-                      <span class="text-[11px] font-semibold <%= s.status === 'active' ? 'text-emerald-400' : 'text-rose-400' %>">
-                        ● <%= s.status || 'active' %>
-                      </span>
-                    </div>
-                  </td>
-                  <td class="p-4">
-                    <button onclick="toggleVerification(<%= s.id %>, <%= s.is_verified ? 0 : 1 %>)" class="px-2.5 py-1 rounded text-[11px] font-semibold border <%= s.is_verified ? 'bg-[#19D98B]/10 border-[#19D98B] text-[#19D98B]' : 'bg-white/5 border-white/10 text-white/50 hover:text-white' %>">
-                      <%= s.is_verified ? '✓ Verified' : '+ Add Badge' %>
-                    </button>
-                  </td>
-                  <td class="p-4 text-right space-x-2">
-                    <button onclick="openAdminTemplateModal(<%= s.id %>, '<%= s.store_name.replace(/'/g, "\\'") %>', '<%= s.template_slug || 'general_clean' %>')" class="px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 text-[#19D98B] font-medium text-xs transition">
-                      🎨 Theme
-                    </button>
-                    <button onclick="openPlanModal(<%= s.id %>, '<%= s.store_name.replace(/'/g, "\\'") %>', '<%= s.plan_tier %>')" class="px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 text-white font-medium text-xs transition">
-                      Set Tier
-                    </button>
-                    <button onclick="toggleStoreStatus(<%= s.id %>, '<%= s.status === 'active' ? 'suspended' : 'active' %>')" class="px-3 py-1.5 rounded <%= s.status === 'active' ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400' %> font-medium text-xs transition">
-                      <%= s.status === 'active' ? 'Suspend' : 'Activate' %>
-                    </button>
-                    <button onclick="impersonateMerchant(<%= s.id %>)" class="px-3 py-1.5 rounded bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] font-bold text-xs transition shadow-sm">
-                      Login &rarr;
-                    </button>
+              <% if (stores.length === 0) { %>
+                <tr>
+                  <td colspan="6" class="p-12 text-center text-white/40">
+                    <div class="text-3xl mb-2">🏪</div>
+                    <div class="font-bold text-white text-sm">No registered merchant stores yet</div>
+                    <div class="text-xs text-white/50 mt-1">Platform is fresh. When real merchants register on zlik.store, their stores will appear here.</div>
                   </td>
                 </tr>
-              <% }); %>
+              <% } else { %>
+                <% stores.forEach(s => { %>
+                  <tr class="merchant-row hover:bg-white/5 transition" id="merchant-row-<%= s.id %>" data-search="<%= (s.store_name + ' ' + s.owner_name + ' ' + s.slug + ' ' + s.whatsapp_number).toLowerCase() %>">
+                    <td class="p-4 text-center">
+                      <input type="checkbox" class="merchant-select-cb w-4 h-4 rounded bg-white/10 border-white/20 text-[#19D98B] focus:ring-0 cursor-pointer accent-[#19D98B]" value="<%= s.id %>" onchange="handleMerchantSelectChange()">
+                    </td>
+                    <td class="p-4">
+                      <div class="font-bold text-white text-sm"><%= s.store_name %></div>
+                      <a href="/<%= s.slug %>" target="_blank" class="text-xs text-[#19D98B] hover:underline font-mono">/<%= s.slug %></a>
+                    </td>
+                    <td class="p-4">
+                      <div class="font-semibold text-white"><%= s.owner_name %></div>
+                      <div class="text-white/60 text-[11px]"><%= s.whatsapp_number %> &bull; <%= s.email || 'No email' %></div>
+                    </td>
+                    <td class="p-4">
+                      <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= s.plan_tier === 'pro' ? 'bg-[#19D98B]/20 text-[#19D98B]' : (s.plan_tier === 'business' ? 'bg-blue-500/20 text-blue-400' : (s.plan_tier === 'enterprise' ? 'bg-purple-500/20 text-purple-300' : 'bg-white/10 text-white/70')) %>">
+                          <%= s.plan_tier || 'free' %>
+                        </span>
+                        <span class="text-[11px] font-semibold <%= s.status === 'active' ? 'text-emerald-400' : 'text-rose-400' %>">
+                          ● <%= s.status || 'active' %>
+                        </span>
+                      </div>
+                    </td>
+                    <td class="p-4">
+                      <button onclick="toggleVerification(<%= s.id %>, <%= s.is_verified ? 0 : 1 %>)" class="px-2.5 py-1 rounded text-[11px] font-semibold border <%= s.is_verified ? 'bg-[#19D98B]/10 border-[#19D98B] text-[#19D98B]' : 'bg-white/5 border-white/10 text-white/50 hover:text-white' %>">
+                        <%= s.is_verified ? '✓ Verified' : '+ Add Badge' %>
+                      </button>
+                    </td>
+                    <td class="p-4 text-right space-x-2">
+                      <button onclick="openAdminTemplateModal(<%= s.id %>, '<%= s.store_name.replace(/'/g, "\\'") %>', '<%= s.template_slug || 'general_clean' %>')" class="px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 text-[#19D98B] font-medium text-xs transition">
+                        🎨 Theme
+                      </button>
+                      <button onclick="openPlanModal(<%= s.id %>, '<%= s.store_name.replace(/'/g, "\\'") %>', '<%= s.plan_tier %>')" class="px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 text-white font-medium text-xs transition">
+                        Set Tier
+                      </button>
+                      <button onclick="toggleStoreStatus(<%= s.id %>, '<%= s.status === 'active' ? 'suspended' : 'active' %>')" class="px-3 py-1.5 rounded <%= s.status === 'active' ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400' %> font-medium text-xs transition">
+                        <%= s.status === 'active' ? 'Suspend' : 'Activate' %>
+                      </button>
+                      <button onclick="impersonateMerchant(<%= s.id %>)" class="px-3 py-1.5 rounded bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] font-bold text-xs transition shadow-sm">
+                        Login &rarr;
+                      </button>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } %>
             </tbody>
           </table>
         </div>
