@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Settings — <%= store.store_name %> | zlik</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        zlikDark: '#08110D',
+                        zlikGreen: '#19D98B',
+                        zlikDeep: '#087A50',
+                        zlikBg: '#F8FAF8',
+                        zlikWhite: '#FFFFFF',
+                        zlikMuted: '#6B756F',
+                        zlikBorder: '#E3E9E5'
+                    },
+                    fontFamily: {
+                        display: ['Montserrat', 'sans-serif'],
+                        body: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAF8; color: #08110D; }
+        .font-display { font-family: 'Montserrat', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0.5rem); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E3E9E5] shadow-2xs">
+        <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-4">
+            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                <a href="/merchant" class="text-xs font-medium text-[#6B756F] hover:text-[#08110D] flex items-center gap-1 transition shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    <span class="hidden sm:inline">Dashboard</span>
+                </a>
+                <span class="text-gray-300 hidden sm:inline">/</span>
+                <h1 class="text-xs sm:text-sm font-semibold text-[#08110D] truncate">Settings</h1>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="/<%= store.slug %>" target="_blank" title="View Public Storefront" class="bg-[#08110D] text-[#19D98B] font-medium text-xs p-2 sm:px-3.5 sm:py-2 rounded-xl transition flex items-center gap-1 shadow-2xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                    <span class="hidden sm:inline">Storefront ↗</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="hidden sm:flex max-w-7xl mx-auto px-4 items-center gap-2 overflow-x-auto text-xs font-medium border-t border-[#E3E9E5]/60 pt-2 pb-2">
+            <a href="/merchant" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Orders</a>
+            <a href="/merchant/items" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Products</a>
+            <a href="/merchant/ledger" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Sales Ledger</a>
+            <a href="/merchant/debts" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Debts</a>
+            <a href="/merchant/messages" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Live Chat</a>
+            <a href="/merchant/settings" class="px-3.5 py-1.5 rounded-xl bg-[#08110D] text-white font-semibold">Settings</a>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24 sm:pb-8 flex-1 w-full space-y-5 sm:space-y-6">
+        <form id="settingsForm" onsubmit="handleSaveSettings(event)" class="space-y-6">
+            
+            <!-- Store Category & Templates Card -->
+            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 sm:p-6 shadow-xs space-y-5 text-xs">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E3E9E5] pb-4">
+                    <div>
+                        <h3 class="font-semibold text-sm text-[#08110D]">Store Category & Templates</h3>
+                        <p class="text-[11px] text-[#6B756F] mt-0.5">Select your industry category and template design.</p>
+                    </div>
+                    <div>
+                        <span id="activeTemplateBadge" class="bg-[#19D98B]/15 text-[#087A50] font-semibold text-[11px] px-3 py-1 rounded-full uppercase tracking-wider font-mono">
+                            Active: <%= templateConfig ? templateConfig.name : 'Classic Grid' %>
+                        </span>
+                    </div>
+                    <input type="hidden" id="selectedTemplateInput" value="<%= store.template_slug || 'general_clean' %>">
+                </div>
+
+                <!-- Category Selector (Dropdown Only) -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label for="categorySelect" class="font-semibold text-[#08110D] text-xs">Industry Category</label>
+                        <span class="text-[11px] text-[#6B756F]">1 Free + 2 Pro designs per category</span>
+                    </div>
+
+                    <!-- Category Dropdown -->
+                    <select id="categorySelect" onchange="handleCategorySelect(this.value)" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] focus:border-[#08110D] rounded-xl p-3 text-xs font-medium text-[#08110D] outline-none transition cursor-pointer">
+                        <% Object.values(storeCategories || {}).forEach(cat => { 
+                            const isCurrentCat = (templateConfig && templateConfig.category_id === cat.id) || (!templateConfig && cat.id === 'general');
+                        %>
+                            <option value="<%= cat.id %>" <%= isCurrentCat ? 'selected' : '' %>>
+                                <%= cat.name %> — <%= cat.tagline %>
+                            </option>
+                        <% }) %>
+                    </select>
+                </div>
+
+                <!-- 3-Template Cards Grid -->
+                <div id="templatesGrid" class="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1">
+                    <!-- Injected dynamically via JS with exactly ONE clean button per card -->
+                </div>
+            </div>
+
+            <!-- Storefront URL & QR Code -->
+            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs">
+                <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
+                    <div>
+                        <h3 class="font-semibold text-sm text-[#08110D]">Storefront URL & QR Code</h3>
+                        <p class="text-[11px] text-[#6B756F] mt-0.5">Your store web address and scan code.</p>
+                    </div>
+                    <a href="/<%= store.slug %>" target="_blank" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-medium text-[11px] px-3 py-1.5 rounded-xl transition shadow-2xs">
+                        Open Store ↗
+                    </a>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start pt-1">
+                    <!-- Slug Input -->
+                    <div class="sm:col-span-2 space-y-3">
+                        <div>
+                            <label class="block font-medium text-[#08110D] mb-1">Store Username (URL)</label>
+                            <div class="flex items-center rounded-xl border border-[#E3E9E5] bg-[#F8FAF8] overflow-hidden focus-within:border-[#08110D]">
+                                <span class="px-3 text-[#6B756F] font-mono text-xs bg-[#E3E9E5]/40 border-r border-[#E3E9E5] py-2.5 select-none">zlik.store/</span>
+                                <input type="text" id="storeSlug" value="<%= store.slug %>" required pattern="[a-z0-9_-]{3,30}" placeholder="yourbrand" class="flex-1 bg-transparent p-2.5 outline-none font-mono text-xs text-[#08110D]">
+                            </div>
+                            <p class="text-[10px] text-[#6B756F] mt-1">
+                                3-30 lowercase characters, numbers, and hyphens.
+                            </p>
+                        </div>
+
+                        <div class="flex items-center gap-2 pt-1">
+                            <button type="button" onclick="copySettingsStoreUrl()" id="settingsCopyUrlBtn" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-medium text-xs px-3 py-2 rounded-xl border border-[#E3E9E5] transition">
+                                Copy Store Link
+                            </button>
+                            <a href="https://wa.me/?text=Order%20directly%20from%20our%20official%20store:%20https://zlik.store/<%= store.slug %>" target="_blank" class="bg-[#19D98B]/15 hover:bg-[#19D98B]/25 text-[#087A50] font-medium text-xs px-3 py-2 rounded-xl border border-[#19D98B]/30 transition">
+                                Share on WhatsApp
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Embedded QR Code Box -->
+                    <div class="bg-[#F8FAF8] p-3.5 rounded-2xl border border-[#E3E9E5] flex flex-col items-center justify-center space-y-2 text-center">
+                        <div id="settingsQrContainer" class="p-2 bg-white rounded-xl shadow-2xs border border-[#E3E9E5] flex items-center justify-center min-h-[120px] min-w-[120px]"></div>
+                        <button type="button" onclick="downloadSettingsQrCode()" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-medium text-[10px] py-2 rounded-lg transition shadow-2xs">
+                            Download QR Code
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Store Profile -->
+            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs">
+                <h3 class="font-semibold text-sm text-[#08110D]">Store Profile</h3>
+                <div>
+                    <label class="block font-medium text-[#08110D] mb-1">Store Name</label>
+                    <input type="text" id="storeName" value="<%= store.store_name %>" required class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                </div>
+                <div>
+                    <label class="block font-medium text-[#08110D] mb-1">Store Bio / Tagline</label>
+                    <textarea id="storeBio" rows="2" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]"><%= store.bio || '' %></textarea>
+                </div>
+                <div class="space-y-2">
+                    <label class="block font-medium text-[#08110D]">Store Logo</label>
+                    <div class="flex items-center gap-4">
+                        <div id="logoPreviewContainer" class="w-16 h-16 rounded-2xl border border-[#E3E9E5] bg-[#F8FAF8] flex items-center justify-center overflow-hidden shrink-0 shadow-2xs">
+                            <% if (store.logo_url) { %>
+                                <img id="logoPreviewImg" src="<%= store.logo_url %>" alt="Store Logo" class="w-full h-full object-cover">
+                            <% } else { %>
+                                <span id="logoPreviewPlaceholder" class="text-xl font-semibold text-[#6B756F] font-display"><%= (store.store_name || 'S').charAt(0).toUpperCase() %></span>
+                            <% } %>
+                        </div>
+                        <div class="flex-1 space-y-1.5">
+                            <div class="flex items-center gap-2">
+                                <label class="cursor-pointer bg-[#08110D] hover:bg-black text-[#19D98B] font-medium text-xs px-3.5 py-2 rounded-xl transition shadow-2xs">
+                                    <span>Upload Logo</span>
+                                    <input type="file" id="logoFileInput" accept="image/*" onchange="handleLogoUpload(this.files[0])" class="hidden">
+                                </label>
+                                <button type="button" onclick="removeStoreLogo()" id="removeLogoBtn" class="bg-[#F8FAF8] hover:bg-red-50 hover:text-red-700 text-[#6B756F] font-medium text-xs px-3 py-2 rounded-xl border border-[#E3E9E5] transition <%= store.logo_url ? '' : 'hidden' %>">
+                                    Remove
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-[#6B756F]">Supports JPG, PNG, WebP, SVG (up to 10MB).</p>
+                        </div>
+                    </div>
+                    <input type="hidden" id="logoUrl" value="<%= store.logo_url || '' %>">
+                </div>
+
+                <% 
+                    const isCurrentTemplatePro = Boolean(templateConfig && templateConfig.is_pro);
+                %>
+                <!-- Store Cover Image & Banner Overlay (Pro Feature) -->
+                <div id="coverCustomizationSection" class="space-y-4 pt-3 border-t border-[#E3E9E5]/60 relative">
+                    <!-- Locked Notice Banner for Free Templates -->
+                    <div id="coverLockedBanner" class="bg-[#F8FAF8] border border-[#E3E9E5] rounded-2xl p-3.5 flex items-center justify-between gap-3 <%= isCurrentTemplatePro ? 'hidden' : '' %>">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-6 h-6 rounded-full bg-[#08110D]/10 flex items-center justify-center text-xs text-[#08110D] font-mono">🔒</span>
+                            <div>
+                                <h4 class="font-semibold text-xs text-[#08110D]">Cover Image Uploads Locked</h4>
+                                <p class="text-[10px] text-[#6B756F]">Custom hero cover uploads and banner tints are unlocked on Pro templates.</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="openProUpgradeModal('Pro Storefront Covers')" class="shrink-0 bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-[10px] px-3 py-1.5 rounded-xl transition shadow-2xs">
+                            Upgrade
+                        </button>
+                    </div>
+
+                    <div id="coverControlsWrapper" class="space-y-4 <%= isCurrentTemplatePro ? '' : 'opacity-40 pointer-events-none' %>">
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <label class="block font-medium text-[#08110D]">Store Cover Image</label>
+                                <span class="text-[10px] text-[#6B756F]">Shown on storefront hero banner</span>
+                            </div>
+                            <div class="space-y-3">
+                                <div id="coverPreviewContainer" class="w-full aspect-[21/9] sm:aspect-[24/8] max-h-40 rounded-2xl border border-[#E3E9E5] bg-[#08110D] flex items-center justify-center overflow-hidden relative shadow-2xs">
+                                    <img id="coverPreviewImg" src="<%= store.cover_url || (templateConfig ? templateConfig.default_cover_image : '') || '/assets/images/templates/general_modern.png' %>" alt="Cover Preview" class="w-full h-full object-cover">
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <label id="coverUploadBtn" class="cursor-pointer bg-[#08110D] hover:bg-black text-[#19D98B] font-medium text-xs px-3.5 py-2 rounded-xl transition shadow-2xs">
+                                        <span>Upload Cover</span>
+                                        <input type="file" id="coverFileInput" accept="image/*" onchange="handleCoverUpload(this.files[0])" class="hidden" <%= isCurrentTemplatePro ? '' : 'disabled' %>>
+                                    </label>
+                                    <button type="button" onclick="removeStoreCover()" id="removeCoverBtn" class="bg-[#F8FAF8] hover:bg-red-50 hover:text-red-700 text-[#6B756F] font-medium text-xs px-3 py-2 rounded-xl border border-[#E3E9E5] transition <%= store.cover_url ? '' : 'hidden' %>">
+                                        Reset to Default
+                                    </button>
+                                </div>
+                            </div>
+                            <input type="hidden" id="coverUrl" value="<%= store.cover_url || '' %>">
+                        </div>
+
+                        <!-- Cover Overlay Color (Customizable for Overlay CTA Templates) -->
+                        <div class="space-y-2 pt-3 border-t border-[#E3E9E5]/60">
+                            <div class="flex items-center justify-between">
+                                <label for="coverOverlayColor" class="block font-medium text-[#08110D]">Banner Overlay Color</label>
+                                <span class="text-[10px] text-[#6B756F]">Customizable dark tint for hero banner text</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <input type="color" id="coverOverlayColor" value="<%= store.cover_overlay_color || '#08110D' %>" onchange="document.getElementById('coverOverlayColorHex').value = this.value" class="w-10 h-10 rounded-xl border border-[#E3E9E5] cursor-pointer p-0.5 bg-white" <%= isCurrentTemplatePro ? '' : 'disabled' %>>
+                                <input type="text" id="coverOverlayColorHex" value="<%= store.cover_overlay_color || '#08110D' %>" oninput="document.getElementById('coverOverlayColor').value = this.value" class="flex-1 bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none font-mono text-xs text-[#08110D]" <%= isCurrentTemplatePro ? '' : 'disabled' %>>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bank Transfer Details -->
+            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs">
+                <h3 class="font-semibold text-sm text-[#08110D]">Bank Transfer Details</h3>
+                <div>
+                    <label class="block font-medium text-[#08110D] mb-1">Bank Name</label>
+                    <input type="text" id="bankName" value="<%= store.bank_name || '' %>" placeholder="e.g. Zenith Bank, GTBank, Kuda" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                </div>
+                <div>
+                    <label class="block font-medium text-[#08110D] mb-1">Account Number</label>
+                    <input type="text" id="accountNumber" value="<%= store.bank_account_number || '' %>" placeholder="0123456789" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                </div>
+                <div>
+                    <label class="block font-medium text-[#08110D] mb-1">Account Name</label>
+                    <input type="text" id="accountName" value="<%= store.bank_account_name || '' %>" placeholder="e.g. John Doe Enterprises" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                </div>
+            </div>
+
+            <!-- Notification Sounds -->
+            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs">
+                <h3 class="font-semibold text-sm text-[#08110D]">Order & Chat Notification Sounds</h3>
+                <div>
+                    <label class="block font-medium text-[#08110D] mb-1">Alert Sound Style</label>
+                    <select id="alertSound" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none font-medium">
+                        <option value="chime" <%= store.alert_sound === 'chime' ? 'selected' : '' %>>Classic Chime</option>
+                        <option value="bell" <%= store.alert_sound === 'bell' ? 'selected' : '' %>>Service Bell</option>
+                        <option value="cash_register" <%= store.alert_sound === 'cash_register' ? 'selected' : '' %>>Cash Register</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Seller-Branded Receipts Customization (Pro Feature) -->
+            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs">
+                <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
+                    <div>
+                        <h3 class="font-semibold text-sm text-[#08110D]">Seller-Branded Digital Receipts</h3>
+                        <p class="text-[11px] text-[#6B756F] mt-0.5">Customize PDF/printable receipts sent to customers.</p>
+                    </div>
+                    <% if (!isPro) { %>
+                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900">PRO FEATURE</span>
+                    <% } %>
+                </div>
+
+                <div class="space-y-4 <%= isPro ? '' : 'opacity-60' %>">
+                    <div>
+                        <label class="block font-medium text-[#08110D] mb-1">Receipt Custom Note / Payment Policy</label>
+                        <input type="text" id="receiptCustomNote" value="<%= store.receipt_custom_note || '' %>" placeholder="e.g. Thank you for your order! Goods once sold are not refundable." class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]" <%= isPro ? '' : 'disabled' %>>
+                        <span class="text-[10px] text-[#6B756F] mt-1 block">Printed on printable digital receipts & invoices.</span>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-1">
+                        <div>
+                            <span class="font-medium text-[#08110D] block">Display Store Logo on Receipt</span>
+                            <span class="text-[10px] text-[#6B756F]">Show store logo in receipt header</span>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="receiptShowLogo" class="sr-only peer" <%= store.receipt_show_logo !== 0 ? 'checked' : '' %> <%= isPro ? '' : 'disabled' %>>
+                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#08110D]"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Marketing Pixels & Ads Tracking (Meta, Google, TikTok) -->
+            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs">
+                <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
+                    <div>
+                        <h3 class="font-semibold text-sm text-[#08110D]">Marketing Pixels & Ads Tracking</h3>
+                        <p class="text-[11px] text-[#6B756F] mt-0.5">Track page views, add to cart, and checkout conversion events for paid ad campaigns.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block font-medium text-[#08110D] mb-1">Meta Pixel ID (Facebook & Instagram)</label>
+                        <input type="text" id="metaPixelId" value="<%= store.meta_pixel_id || '' %>" placeholder="e.g. 123456789012345" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] font-mono">
+                        <span class="text-[10px] text-[#6B756F] mt-1 block">Fires PageView, ViewContent, AddToCart, InitiateCheckout & Purchase events.</span>
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-[#08110D] mb-1">Google Tag / Measurement ID (Analytics & Ads)</label>
+                        <input type="text" id="googleTagId" value="<%= store.google_tag_id || '' %>" placeholder="e.g. G-XXXXXXX or AW-XXXXXXX" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] font-mono">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-[#08110D] mb-1">TikTok Pixel ID</label>
+                        <input type="text" id="tiktokPixelId" value="<%= store.tiktok_pixel_id || '' %>" placeholder="e.g. CXXXXXXXXXXXXXXX" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] font-mono">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Store Trust & Verification Badge -->
+            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs">
+                <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
+                    <div>
+                        <h3 class="font-semibold text-sm text-[#08110D]">Store Trust & Verification</h3>
+                        <p class="text-[11px] text-[#6B756F] mt-0.5">Show a verified merchant checkmark on your storefront.</p>
+                    </div>
+                    <% if (store.is_verified) { %>
+                        <span class="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-900 flex items-center gap-1 font-mono">
+                            <span>✓</span> <span>VERIFIED</span>
+                        </span>
+                    <% } else if (store.verification_requested) { %>
+                        <span class="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 font-mono">
+                            UNDER REVIEW
+                        </span>
+                    <% } else { %>
+                        <span class="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 font-mono">
+                            UNVERIFIED
+                        </span>
+                    <% } %>
+                </div>
+
+                <div class="space-y-3">
+                    <p class="text-xs text-[#6B756F]">
+                        Verified sellers enjoy higher checkout conversion rates and highlighted placement on the Zlik Marketplace directory.
+                    </p>
+                    <% if (!store.is_verified && !store.verification_requested) { %>
+                        <button type="button" onclick="requestVerification()" id="reqVerifyBtn" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs px-4 py-2.5 rounded-xl transition shadow-2xs">
+                            Request Verification Badge
+                        </button>
+                    <% } else if (store.verification_requested && !store.is_verified) { %>
+                        <div class="p-3 bg-amber-50 text-amber-900 rounded-xl text-[11px] border border-amber-200">
+                            Your verification request has been submitted to the compliance team. We verify stores with completed sales and active products.
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Multi-Store Management (1 Free, 3 Pro, 10 Business) -->
+            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs">
+                <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-semibold text-sm text-[#08110D]">Multi-Store Management</h3>
+                            <% if (!isPro) { %>
+                                <span class="text-[9.5px] font-semibold bg-[#08110D] text-[#19D98B] px-2 py-0.5 rounded-md font-mono">🔒 PRO & BUSINESS</span>
+                            <% } %>
+                        </div>
+                        <p class="text-[11px] text-[#6B756F] mt-0.5">Manage multiple store brands under one login account (1 Free, 3 Pro, 10 Business).</p>
+                    </div>
+                    <% if (isPro) { %>
+                        <button type="button" onclick="openCreateStoreModal()" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-[11px] px-3 py-1.5 rounded-xl transition shadow-2xs">
+                            + Add Store
+                        </button>
+                    <% } else { %>
+                        <button type="button" onclick="openProUpgradeModal('Multi-Store Management (Up to 3 Stores on Pro, 10 on Business)')" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] border border-[#E3E9E5] font-medium text-[11px] px-3 py-1.5 rounded-xl transition">
+                            🔒 + Add Store (Pro)
+                        </button>
+                    <% } %>
+                </div>
+
+                <div id="myStoresListContainer" class="space-y-2">
+                    <!-- Injected via JS -->
+                    <div class="p-3 bg-[#F8FAF8] rounded-2xl border border-[#E3E9E5] text-[11px] text-[#6B756F]">Loading your stores...</div>
+                </div>
+            </div>
+
+            <!-- Team & Staff Accounts (1 Pro, 5 Business) -->
+            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs">
+                <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-semibold text-sm text-[#08110D]">Team Members & Staff Accounts</h3>
+                            <% if (!isPro) { %>
+                                <span class="text-[9.5px] font-semibold bg-[#08110D] text-[#19D98B] px-2 py-0.5 rounded-md font-mono">🔒 PRO & BUSINESS</span>
+                            <% } %>
+                        </div>
+                        <p class="text-[11px] text-[#6B756F] mt-0.5">Grant employee access with role-based permissions (1 Pro, 5 Business).</p>
+                    </div>
+                    <% if (isPro) { %>
+                        <button type="button" onclick="openAddStaffModal()" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-[11px] px-3 py-1.5 rounded-xl transition shadow-2xs">
+                            + Add Staff
+                        </button>
+                    <% } else { %>
+                        <button type="button" onclick="openProUpgradeModal('Staff Accounts & RBAC (1 on Pro, 5 on Business)')" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] border border-[#E3E9E5] font-medium text-[11px] px-3 py-1.5 rounded-xl transition">
+                            🔒 + Add Staff (Pro)
+                        </button>
+                    <% } %>
+                </div>
+
+                <div id="staffListContainer" class="space-y-2">
+                    <!-- Injected via JS -->
+                    <div class="p-3 bg-[#F8FAF8] rounded-2xl border border-[#E3E9E5] text-[11px] text-[#6B756F]">Loading team members...</div>
+                </div>
+            </div>
+
+            <!-- Physical Store Branches (Business Feature) -->
+            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs">
+                <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-semibold text-sm text-[#08110D]">Physical Store Branches</h3>
+                            <span class="text-[9.5px] font-semibold bg-[#08110D] text-[#19D98B] px-2 py-0.5 rounded-md font-mono">🔒 BUSINESS PLAN</span>
+                        </div>
+                        <p class="text-[11px] text-[#6B756F] mt-0.5">Track inventory and sales per physical pickup/outlet branch.</p>
+                    </div>
+                    <button type="button" onclick="openAddBranchModal()" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-[11px] px-3 py-1.5 rounded-xl transition shadow-2xs">
+                        + Add Branch
+                    </button>
+                </div>
+
+                <div id="branchesListContainer" class="space-y-2">
+                    <!-- Injected via JS -->
+                    <div class="p-3 bg-[#F8FAF8] rounded-2xl border border-[#E3E9E5] text-[11px] text-[#6B756F]">Loading branch locations...</div>
+                </div>
+            </div>
+
+            <!-- Custom Domain Mapping (Business Feature) -->
+            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs">
+                <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-semibold text-sm text-[#08110D]">Custom Domain Mapping</h3>
+                            <span class="text-[9.5px] font-semibold bg-[#08110D] text-[#19D98B] px-2 py-0.5 rounded-md font-mono">🔒 BUSINESS PLAN</span>
+                        </div>
+                        <p class="text-[11px] text-[#6B756F] mt-0.5">Connect your own web domain (e.g. shop.yourbrand.com).</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block font-medium text-[#08110D] mb-1">Your Custom Domain</label>
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="customDomainInput" value="<%= store.custom_domain || '' %>" placeholder="shop.yourbrand.com" class="flex-1 bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none font-mono text-xs">
+                            <button type="button" onclick="saveCustomDomain()" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs px-4 py-3 rounded-xl transition shadow-2xs">
+                                Connect Domain
+                            </button>
+                        </div>
+                    </div>
+                    <div id="domainStatusBox" class="p-3 bg-[#F8FAF8] rounded-xl border border-[#E3E9E5] text-[11px] text-[#6B756F]">
+                        DNS Target: Point your CNAME record to <code class="font-mono font-bold text-[#08110D]">cname.zlik.me</code>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="saveBtn" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs py-3.5 rounded-2xl transition shadow-2xs">
+                Save Settings
+            </button>
+        </form>
+    </main>
+
+    <!-- Pro Upgrade Modal -->
+    <div id="proUpgradeModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 border border-[#E3E9E5] shadow-2xl text-center">
+            <div class="space-y-1.5">
+                <span class="text-[10px] font-semibold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-[#19D98B]/20 text-[#087A50] font-mono">
+                    Pro Feature
+                </span>
+                <h3 class="text-base font-semibold text-[#08110D]" id="proModalTitle">Unlock Pro Template</h3>
+                <p class="text-xs text-[#6B756F]">
+                    This template is available on Zlik Pro. Upgrade to unlock all 15 industry storefronts, 500 products, and 3 stores.
+                </p>
+            </div>
+
+            <div class="bg-[#F8FAF8] rounded-2xl p-4 border border-[#E3E9E5] text-left space-y-2 text-xs">
+                <div class="font-semibold text-[11px] text-[#08110D] uppercase tracking-wider">Included in Zlik Pro (₦5,000/mo or ₦50,000/yr):</div>
+                <ul class="space-y-1.5 text-xs text-[#08110D]">
+                    <li class="flex items-center gap-2">
+                        <span class="text-[#087A50] font-bold">•</span>
+                        <span>Up to 3 stores & 500 products (5 photos/item)</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="text-[#087A50] font-bold">•</span>
+                        <span>Unlock all 15 storefront designs & custom covers</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="text-[#087A50] font-bold">•</span>
+                        <span>Remove “Powered by Zlik” attribution & watermark</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="text-[#087A50] font-bold">•</span>
+                        <span>1 additional staff account & full sales ledger export</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="text-[#087A50] font-bold">•</span>
+                        <span>Unlimited debts, sound library & WhatsApp support</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="flex items-center gap-2 pt-1">
+                <button type="button" onclick="closeProUpgradeModal()" class="w-1/2 bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-medium text-xs py-3 rounded-xl border border-[#E3E9E5] transition">
+                    Cancel
+                </button>
+                <button type="button" onclick="initiateSettingsUpgrade('pro', 'monthly')" id="settingsUpgradeBtn" class="w-1/2 bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs py-3 rounded-xl transition shadow-2xs flex items-center justify-center">
+                    Upgrade to Pro ⚡
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template Details & Preview Modal -->
+    <div id="templatePreviewModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 border border-[#E3E9E5] shadow-2xl max-h-[90vh] overflow-y-auto text-xs">
+            <div class="flex items-center justify-between pb-3 border-b border-[#E3E9E5]">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h3 id="tplModalName" class="font-semibold text-sm text-[#08110D]">Template Name</h3>
+                        <span id="tplModalTierBadge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-[#08110D]">FREE</span>
+                    </div>
+                    <span id="tplModalCategory" class="text-[11px] text-[#6B756F]">Category</span>
+                </div>
+                <button type="button" onclick="closeTemplatePreviewModal()" class="text-[#6B756F] font-bold text-sm hover:text-black">✕</button>
+            </div>
+
+            <!-- Front View Cover Screenshot -->
+            <div class="w-full rounded-2xl overflow-hidden border border-[#E3E9E5] bg-[#08110D]">
+                <img id="tplModalCover" src="/assets/images/templates/general_clean.png" onerror="this.onerror=null; this.src='/assets/images/templates/general_clean.svg';" alt="Template Preview" class="w-full h-auto object-cover">
+            </div>
+
+            <div class="space-y-3">
+                <div class="bg-[#F8FAF8] p-3.5 rounded-2xl border border-[#E3E9E5]">
+                    <h4 class="text-[10px] font-semibold uppercase tracking-wider text-[#6B756F] mb-1">Description</h4>
+                    <p id="tplModalDesc" class="text-xs text-[#08110D] leading-relaxed"></p>
+                </div>
+
+                <div class="space-y-1.5">
+                    <h4 class="text-[10px] font-semibold uppercase tracking-wider text-[#6B756F]">Key Capabilities</h4>
+                    <ul id="tplModalFeatures" class="space-y-1 text-xs text-[#08110D]"></ul>
+                </div>
+
+                <!-- Direct Live Demo Button -->
+                <a id="tplModalDemoLink" href="/demo/general_clean" target="_blank" class="w-full bg-[#19D98B]/15 hover:bg-[#19D98B]/25 text-[#087A50] font-semibold text-xs py-2.5 rounded-xl border border-[#19D98B]/30 transition flex items-center justify-center gap-1.5">
+                    <span>Live Interactive Demo ↗</span>
+                </a>
+            </div>
+
+            <div class="flex items-center gap-2 pt-2 border-t border-[#E3E9E5]">
+                <button type="button" onclick="closeTemplatePreviewModal()" class="w-1/2 bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-medium text-xs py-3 rounded-xl border border-[#E3E9E5] transition">
+                    Close
+                </button>
+                <button type="button" id="tplModalApplyBtn" onclick="applyFromPreview()" class="w-1/2 bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs py-3 rounded-xl transition shadow-2xs">
+                    Select This Template
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const storeSlug = '<%= store.slug %>';
+        const isMerchantPro = <%= Boolean(isPro) %>;
+        const allTemplatesData = <%- JSON.stringify(allTemplates || {}) %>;
+        const storeCategoriesData = <%- JSON.stringify(storeCategories || {}) %>;
+        let selectedTemplateId = '<%= store.template_slug || "general_clean" %>';
+        let currentCategoryId = '<%= (templateConfig && templateConfig.category_id) || "general" %>';
+        let previewingTplId = null;
+        let settingsQr = null;
+
+        function handleCategorySelect(catId) {
+            if (!storeCategoriesData[catId]) catId = 'general';
+            currentCategoryId = catId;
+
+            const catSelect = document.getElementById('categorySelect');
+            if (catSelect && catSelect.value !== catId) {
+                catSelect.value = catId;
+            }
+
+            renderTemplatesForCategory(catId);
+        }
+
+        function renderTemplatesForCategory(catId) {
+            const container = document.getElementById('templatesGrid');
+            if (!container) return;
+
+            const categoryTemplates = Object.values(allTemplatesData).filter(t => t.category_id === catId);
+            if (categoryTemplates.length === 0) {
+                container.innerHTML = '<div class="col-span-3 text-center py-6 text-[#6B756F]">No templates found for this category.</div>';
+                return;
+            }
+
+            container.innerHTML = categoryTemplates.map(tpl => {
+                const isSelected = selectedTemplateId === tpl.id;
+                const isProTemplate = Boolean(tpl.is_pro);
+                const isLocked = isProTemplate && !isMerchantPro;
+                const coverImage = tpl.preview_image || ('/assets/images/templates/' + tpl.id + '.png');
+
+                let badgeHtml = '';
+                if (isProTemplate) {
+                    badgeHtml = '<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#08110D]/90 text-[#19D98B] border border-[#19D98B]/40 shadow-sm backdrop-blur-xs">PRO</span>';
+                } else {
+                    badgeHtml = '<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/90 text-[#087A50] border border-[#19D98B]/40 shadow-sm backdrop-blur-xs">FREE</span>';
+                }
+
+                // Exactly ONE action button below the card
+                let singleActionBtn = '';
+                if (isSelected) {
+                    singleActionBtn = '<button type="button" disabled class="w-full text-xs font-semibold py-2.5 rounded-xl bg-[#08110D] text-white cursor-default">Selected</button>';
+                } else if (isLocked) {
+                    singleActionBtn = `<button type="button" onclick="event.stopPropagation(); openProUpgradeModal('${tpl.name}')" class="w-full text-xs font-semibold py-2.5 rounded-xl bg-[#08110D] hover:bg-black text-[#19D98B] transition shadow-2xs">Upgrade to Pro</button>`;
+                } else {
+                    singleActionBtn = `<button type="button" onclick="event.stopPropagation(); selectTemplate('${tpl.id}')" class="w-full text-xs font-semibold py-2.5 rounded-xl bg-gray-100 hover:bg-[#08110D] text-[#08110D] hover:text-white transition">Select</button>`;
+                }
+
+                const cardBorder = isSelected 
+                    ? 'border-[#08110D] bg-[#F8FAF8] ring-2 ring-[#08110D] shadow-sm' 
+                    : 'border-[#E3E9E5] bg-white hover:border-[#08110D]/40 hover:shadow-xs';
+
+                return `
+                    <div onclick="previewTemplateDetails('${tpl.id}')" id="tplCard-${tpl.id}" class="template-option-card group relative p-3.5 rounded-2xl border cursor-pointer transition-all duration-200 flex flex-col justify-between ${cardBorder}">
+                        <div class="space-y-2.5">
+                            <!-- Theme Front View Cover Photo with Dark Overlay -->
+                            <div class="relative w-full aspect-[16/10] h-40 sm:h-44 rounded-xl overflow-hidden border border-[#E3E9E5] bg-[#08110D] shadow-xs group-hover:border-[#08110D]/30 transition">
+                                <img src="${coverImage}" onerror="this.onerror=null; this.src='/assets/images/templates/${tpl.id}.svg';" alt="${tpl.name} Screenshot" class="w-full h-full object-cover object-top filter brightness-50 contrast-125 transition-transform duration-300 group-hover:scale-105" loading="lazy">
+                                
+                                <!-- Very dark overlay so preview is veiled until opened -->
+                                <div class="absolute inset-0 bg-[#08110D]/85 backdrop-blur-[2px] flex flex-col items-center justify-center p-3 text-center transition-all duration-200 group-hover:bg-[#08110D]/75">
+                                    <div class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center mb-1.5 border border-white/15">
+                                        <span class="text-white text-[10px]">👁</span>
+                                    </div>
+                                    <span class="text-white font-medium text-[11px] tracking-wide">Click to Preview</span>
+                                    <span class="text-[9px] text-[#19D98B] font-mono mt-0.5">Open Full Screenshot ↗</span>
+                                </div>
+
+                                <div class="absolute top-2 right-2 z-10">
+                                    ${badgeHtml}
+                                </div>
+                            </div>
+
+                            <div class="min-w-0 pt-0.5">
+                                <h4 class="font-semibold text-xs text-[#08110D] truncate">${tpl.name}</h4>
+                                <span class="text-[10px] text-[#6B756F] block truncate mt-0.5">${tpl.category}</span>
+                            </div>
+
+                            <p class="text-[11px] text-[#6B756F] line-clamp-2 leading-relaxed">${tpl.tagline}</p>
+                        </div>
+
+                        <!-- Exactly 1 single action button at bottom -->
+                        <div class="pt-3 mt-3 border-t border-[#E3E9E5]/60">
+                            ${singleActionBtn}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateCoverLockState(isPro) {
+            const banner = document.getElementById('coverLockedBanner');
+            const controls = document.getElementById('coverControlsWrapper');
+            const fileInput = document.getElementById('coverFileInput');
+            const colorInput = document.getElementById('coverOverlayColor');
+            const hexInput = document.getElementById('coverOverlayColorHex');
+            if (banner && controls) {
+                if (isPro) {
+                    banner.classList.add('hidden');
+                    controls.classList.remove('opacity-40', 'pointer-events-none');
+                    if (fileInput) fileInput.disabled = false;
+                    if (colorInput) colorInput.disabled = false;
+                    if (hexInput) hexInput.disabled = false;
+                } else {
+                    banner.classList.remove('hidden');
+                    controls.classList.add('opacity-40', 'pointer-events-none');
+                    if (fileInput) fileInput.disabled = true;
+                    if (colorInput) colorInput.disabled = true;
+                    if (hexInput) hexInput.disabled = true;
+                }
+            }
+        }
+
+        function selectTemplate(templateId) {
+            const tpl = allTemplatesData[templateId];
+            if (!tpl) return;
+
+            if (tpl.is_pro && !isMerchantPro) {
+                openProUpgradeModal(tpl.name);
+                return;
+            }
+
+            selectedTemplateId = templateId;
+            document.getElementById('selectedTemplateInput').value = templateId;
+
+            const activeBadge = document.getElementById('activeTemplateBadge');
+            if (activeBadge) {
+                activeBadge.textContent = `Active: ${tpl.name}`;
+            }
+
+            updateCoverLockState(Boolean(tpl.is_pro));
+            renderTemplatesForCategory(currentCategoryId);
+        }
+
+        function openProUpgradeModal(tplName) {
+            const titleEl = document.getElementById('proModalTitle');
+            if (titleEl && tplName) {
+                titleEl.textContent = `Unlock "${tplName}"`;
+            }
+            document.getElementById('proUpgradeModal').classList.remove('hidden');
+        }
+
+        function closeProUpgradeModal() {
+            document.getElementById('proUpgradeModal').classList.add('hidden');
+        }
+
+        function previewTemplateDetails(templateId) {
+            const tpl = allTemplatesData[templateId];
+            if (!tpl) return;
+            previewingTplId = templateId;
+
+            const coverImg = document.getElementById('tplModalCover');
+            if (coverImg) {
+                coverImg.src = tpl.preview_image || ('/assets/images/templates/' + tpl.id + '.png');
+                coverImg.onerror = function() {
+                    this.onerror = null;
+                    this.src = '/assets/images/templates/' + tpl.id + '.svg';
+                };
+            }
+
+            const demoLink = document.getElementById('tplModalDemoLink');
+            if (demoLink) {
+                demoLink.href = '/demo/' + templateId;
+            }
+
+            document.getElementById('tplModalName').textContent = tpl.name;
+            document.getElementById('tplModalCategory').textContent = tpl.category;
+            document.getElementById('tplModalDesc').textContent = tpl.description;
+
+            const tierBadge = document.getElementById('tplModalTierBadge');
+            if (tierBadge) {
+                if (tpl.is_pro) {
+                    tierBadge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#08110D] text-[#19D98B] border border-[#19D98B]/30';
+                    tierBadge.textContent = 'PRO';
+                } else {
+                    tierBadge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#19D98B]/15 text-[#087A50] border border-[#19D98B]/30';
+                    tierBadge.textContent = 'FREE';
+                }
+            }
+
+            const featsList = document.getElementById('tplModalFeatures');
+            featsList.innerHTML = (tpl.features || []).map(f => `
+                <li class="flex items-center gap-2">
+                    <span class="text-[#087A50] font-bold">•</span>
+                    <span>${f}</span>
+                </li>
+            `).join('');
+
+            document.getElementById('templatePreviewModal').classList.remove('hidden');
+        }
+
+        function closeTemplatePreviewModal() {
+            document.getElementById('templatePreviewModal').classList.add('hidden');
+            previewingTplId = null;
+        }
+
+        function applyFromPreview() {
+            if (previewingTplId) {
+                const tpl = allTemplatesData[previewingTplId];
+                if (tpl && tpl.is_pro && !isMerchantPro) {
+                    closeTemplatePreviewModal();
+                    openProUpgradeModal(tpl.name);
+                    return;
+                }
+                selectTemplate(previewingTplId);
+                closeTemplatePreviewModal();
+            }
+        }
+
+        function initSettingsQr() {
+            const container = document.getElementById('settingsQrContainer');
+            if (container) {
+                container.innerHTML = '';
+                settingsQr = new QRCode(container, {
+                    text: 'https://zlik.store/' + storeSlug,
+                    width: 120,
+                    height: 120,
+                    colorDark: '#08110D',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
+        }
+
+        function downloadSettingsQrCode() {
+            const img = document.querySelector('#settingsQrContainer img');
+            const canvas = document.querySelector('#settingsQrContainer canvas');
+            let dataUrl = '';
+            if (img && img.src) {
+                dataUrl = img.src;
+            } else if (canvas) {
+                dataUrl = canvas.toDataURL('image/png');
+            }
+            if (!dataUrl) return;
+
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `${storeSlug}-zlik-store-qr.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function copySettingsStoreUrl() {
+            const fullUrl = 'https://zlik.store/' + storeSlug;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(fullUrl).then(() => {
+                    const btn = document.getElementById('settingsCopyUrlBtn');
+                    btn.textContent = 'Copied!';
+                    setTimeout(() => btn.textContent = 'Copy Store Link', 2000);
+                });
+            }
+        }
+
+        async function handleLogoUpload(file) {
+            if (!file) return;
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File exceeds 10MB limit. Please choose a smaller image.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('files', file);
+
+            try {
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success && data.url) {
+                    document.getElementById('logoUrl').value = data.url;
+                    
+                    const container = document.getElementById('logoPreviewContainer');
+                    container.innerHTML = `<img id="logoPreviewImg" src="${data.url}" alt="Store Logo" class="w-full h-full object-cover">`;
+                    
+                    const removeBtn = document.getElementById('removeLogoBtn');
+                    if (removeBtn) removeBtn.classList.remove('hidden');
+                } else {
+                    alert(data.error || 'Failed to upload logo.');
+                }
+            } catch (err) {
+                alert('Network error while uploading logo.');
+            }
+        }
+
+        function removeStoreLogo() {
+            document.getElementById('logoUrl').value = '';
+            const container = document.getElementById('logoPreviewContainer');
+            const initial = '<%= (store.store_name || "S").charAt(0).toUpperCase() %>';
+            container.innerHTML = `<span id="logoPreviewPlaceholder" class="text-xl font-semibold text-[#6B756F] font-display">${initial}</span>`;
+            const removeBtn = document.getElementById('removeLogoBtn');
+            if (removeBtn) removeBtn.classList.add('hidden');
+            const fileInput = document.getElementById('logoFileInput');
+            if (fileInput) fileInput.value = '';
+        }
+
+        async function handleCoverUpload(file) {
+            if (!file) return;
+            const currentTpl = allTemplatesData[selectedTemplateId];
+            if (currentTpl && !currentTpl.is_pro) {
+                openProUpgradeModal('Pro Storefront Covers');
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File exceeds 10MB limit. Please choose a smaller image.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('files', file);
+
+            try {
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success && data.url) {
+                    document.getElementById('coverUrl').value = data.url;
+                    
+                    const container = document.getElementById('coverPreviewContainer');
+                    container.innerHTML = `<img id="coverPreviewImg" src="${data.url}" alt="Store Cover" class="w-full h-full object-cover">`;
+                    
+                    const removeBtn = document.getElementById('removeCoverBtn');
+                    if (removeBtn) removeBtn.classList.remove('hidden');
+                } else {
+                    alert(data.error || 'Failed to upload cover image.');
+                }
+            } catch (err) {
+                alert('Network error while uploading cover image.');
+            }
+        }
+
+        function removeStoreCover() {
+            document.getElementById('coverUrl').value = '';
+            const defaultCover = (templateConfig && templateConfig.default_cover_image) || '/assets/images/templates/general_modern.svg';
+            const container = document.getElementById('coverPreviewContainer');
+            container.innerHTML = `<img id="coverPreviewImg" src="${defaultCover}" alt="Cover Preview" class="w-full h-full object-cover">`;
+            const removeBtn = document.getElementById('removeCoverBtn');
+            if (removeBtn) removeBtn.classList.add('hidden');
+            const fileInput = document.getElementById('coverFileInput');
+            if (fileInput) fileInput.value = '';
+        }
+
+        async function handleSaveSettings(e) {
+            e.preventDefault();
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+
+            const payload = {
+                template_slug: document.getElementById('selectedTemplateInput').value,
+                slug: document.getElementById('storeSlug').value.trim(),
+                store_name: document.getElementById('storeName').value.trim(),
+                bio: document.getElementById('storeBio').value.trim(),
+                logo_url: document.getElementById('logoUrl').value.trim() || null,
+                cover_url: document.getElementById('coverUrl').value.trim() || null,
+                cover_overlay_color: document.getElementById('coverOverlayColorHex').value.trim() || '#08110D',
+                receipt_custom_note: document.getElementById('receiptCustomNote')?.value.trim() || null,
+                receipt_show_logo: document.getElementById('receiptShowLogo')?.checked ? 1 : 0,
+                meta_pixel_id: document.getElementById('metaPixelId')?.value.trim() || null,
+                google_tag_id: document.getElementById('googleTagId')?.value.trim() || null,
+                tiktok_pixel_id: document.getElementById('tiktokPixelId')?.value.trim() || null,
+                bank_name: document.getElementById('bankName').value.trim() || null,
+                bank_account_number: document.getElementById('accountNumber').value.trim() || null,
+                bank_account_name: document.getElementById('accountName').value.trim() || null,
+                alert_sound: document.getElementById('alertSound').value,
+                delivery_fee: parseFloat(document.getElementById('deliveryFee').value || 0)
+            };
+
+            try {
+                const res = await fetch('/api/merchant/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const d = await res.json();
+                if (d.success) {
+                    alert('Settings updated successfully!');
+                    location.reload();
+                } else {
+                    alert(d.error || 'Failed to update settings');
+                }
+            } catch (err) {
+                alert('Network error updating settings');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function requestVerification() {
+            const btn = document.getElementById('reqVerifyBtn');
+            if (btn) btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/merchant/verification/request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const d = await res.json();
+                if (d.success) {
+                    alert(d.message || 'Verification request submitted!');
+                    location.reload();
+                } else {
+                    alert(d.error || 'Failed to submit verification request');
+                }
+            } catch(e) {
+                alert('Network error requesting verification');
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        // ==========================================
+        // Multi-Store Management
+        // ==========================================
+        async function loadMyStores() {
+            const container = document.getElementById('myStoresListContainer');
+            if (!container) return;
+
+            try {
+                const res = await fetch('/api/merchant/my-stores');
+                const data = await res.json();
+                if (data.success && data.stores) {
+                    container.innerHTML = data.stores.map(s => `
+                        <div class="p-3 rounded-2xl border ${s.is_current ? 'border-[#087A50] bg-emerald-50/40 ring-1 ring-[#19D98B]' : 'border-[#E3E9E5] bg-[#F8FAF8]'} flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-8 h-8 rounded-xl bg-white border border-[#E3E9E5] flex items-center justify-center font-bold text-xs text-[#08110D] shrink-0">
+                                    ${(s.name || 'S').charAt(0).toUpperCase()}
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="font-bold text-xs text-[#08110D] truncate flex items-center gap-1.5">
+                                        <span>${s.name}</span>
+                                        ${s.is_current ? '<span class="text-[9px] font-bold bg-[#08110D] text-[#19D98B] px-1.5 py-0.2 rounded">CURRENT</span>' : ''}
+                                    </div>
+                                    <div class="text-[10.5px] text-[#6B756F] font-mono truncate">zlik.store/${s.slug} • Plan: ${s.plan.toUpperCase()}</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                ${s.is_current ? `
+                                    <span class="text-[11px] font-bold text-[#087A50]">Active</span>
+                                ` : `
+                                    <button type="button" onclick="switchActiveStore(${s.id})" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-[10.5px] px-3 py-1.5 rounded-lg transition shadow-2xs">
+                                        Switch ↗
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {}
+        }
+
+        async function switchActiveStore(storeId) {
+            try {
+                const res = await fetch('/api/merchant/switch-store', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ store_id: storeId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error || 'Failed to switch store');
+                }
+            } catch (e) {
+                alert('Network error switching store');
+            }
+        }
+
+        function openCreateStoreModal() {
+            document.getElementById('createStoreModal').classList.remove('hidden');
+        }
+
+        function closeCreateStoreModal() {
+            document.getElementById('createStoreModal').classList.add('hidden');
+        }
+
+        async function handleCreateStore(e) {
+            e.preventDefault();
+            const btn = document.getElementById('saveStoreBtn');
+            btn.disabled = true;
+
+            const name = document.getElementById('newStoreName').value.trim();
+            const slug = document.getElementById('newStoreSlug').value.trim();
+            const whatsapp = document.getElementById('newStoreWhatsapp').value.trim();
+
+            try {
+                const res = await fetch('/api/merchant/create-store', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, slug, whatsapp })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error || 'Failed to create store');
+                }
+            } catch (e) {
+                alert('Network error creating store');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // ==========================================
+        // Team Members & Staff RBAC
+        // ==========================================
+        async function loadStaffList() {
+            const container = document.getElementById('staffListContainer');
+            if (!container) return;
+
+            try {
+                const res = await fetch('/api/merchant/staff');
+                const data = await res.json();
+                if (data.success) {
+                    if (data.staff && data.staff.length > 0) {
+                        container.innerHTML = data.staff.map(s => `
+                            <div class="p-3 bg-[#F8FAF8] rounded-2xl border border-[#E3E9E5] flex items-center justify-between gap-3">
+                                <div>
+                                    <div class="font-bold text-xs text-[#08110D] flex items-center gap-2">
+                                        <span>${s.name}</span>
+                                        <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-gray-200 text-gray-800">${s.role}</span>
+                                    </div>
+                                    <div class="text-[10.5px] text-[#6B756F] font-mono">${s.phone} • PIN: ${s.pin_code || '****'}</div>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <button type="button" onclick="toggleStaffStatus(${s.id})" class="text-[10px] font-bold px-2 py-1 rounded-lg border ${s.status === 'active' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-gray-100 text-gray-500 border-gray-300'}">
+                                        ${s.status === 'active' ? 'Active' : 'Disabled'}
+                                    </button>
+                                    <button type="button" onclick="deleteStaffMember(${s.id})" class="text-red-500 hover:text-red-700 font-bold p-1">🗑️</button>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        container.innerHTML = `<div class="p-3 bg-[#F8FAF8] rounded-2xl border border-dashed border-[#E3E9E5] text-center text-[#6B756F] text-[11px]">No staff accounts added yet. Limit: ${data.limits.max_staff} staff for your plan.</div>`;
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function openAddStaffModal() {
+            document.getElementById('addStaffModal').classList.remove('hidden');
+        }
+
+        function closeAddStaffModal() {
+            document.getElementById('addStaffModal').classList.add('hidden');
+        }
+
+        async function handleAddStaff(e) {
+            e.preventDefault();
+            const btn = document.getElementById('saveStaffBtn');
+            btn.disabled = true;
+
+            const name = document.getElementById('staffName').value.trim();
+            const phone = document.getElementById('staffPhone').value.trim();
+            const role = document.getElementById('staffRole').value;
+            const pin_code = document.getElementById('staffPin').value.trim();
+
+            try {
+                const res = await fetch('/api/merchant/staff', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, phone, role, pin_code })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeAddStaffModal();
+                    loadStaffList();
+                } else {
+                    alert(data.error || 'Failed to add staff member');
+                }
+            } catch (e) {
+                alert('Network error adding staff');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function toggleStaffStatus(id) {
+            try {
+                const res = await fetch('/api/merchant/staff/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                const data = await res.json();
+                if (data.success) loadStaffList();
+            } catch (e) {}
+        }
+
+        async function deleteStaffMember(id) {
+            if (!confirm('Remove this staff account?')) return;
+            try {
+                const res = await fetch('/api/merchant/staff/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                const data = await res.json();
+                if (data.success) loadStaffList();
+            } catch (e) {}
+        }
+
+        // ==========================================
+        // Physical Store Branches
+        // ==========================================
+        async function loadBranchesList() {
+            const container = document.getElementById('branchesListContainer');
+            if (!container) return;
+
+            try {
+                const res = await fetch('/api/merchant/branches');
+                const data = await res.json();
+                if (data.success) {
+                    if (data.branches && data.branches.length > 0) {
+                        container.innerHTML = data.branches.map(b => `
+                            <div class="p-3 bg-[#F8FAF8] rounded-2xl border border-[#E3E9E5] flex items-center justify-between gap-3">
+                                <div>
+                                    <div class="font-bold text-xs text-[#08110D] flex items-center gap-1.5">
+                                        <span>${b.name}</span>
+                                        ${b.is_main ? '<span class="text-[9px] bg-blue-100 text-blue-900 font-bold px-1.5 py-0.2 rounded">MAIN BRANCH</span>' : ''}
+                                    </div>
+                                    <div class="text-[10.5px] text-[#6B756F]">${b.address || 'Address not specified'} ${b.city ? '(' + b.city + ')' : ''}</div>
+                                </div>
+                                <button type="button" onclick="deleteBranchLocation(${b.id})" class="text-red-500 hover:text-red-700 font-bold p-1">🗑️</button>
+                            </div>
+                        `).join('');
+                    } else {
+                        container.innerHTML = `<div class="p-3 bg-[#F8FAF8] rounded-2xl border border-dashed border-[#E3E9E5] text-center text-[#6B756F] text-[11px]">No branch locations added yet. Click "+ Add Branch" to configure physical stores.</div>`;
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function openAddBranchModal() {
+            document.getElementById('addBranchModal').classList.remove('hidden');
+        }
+
+        function closeAddBranchModal() {
+            document.getElementById('addBranchModal').classList.add('hidden');
+        }
+
+        async function handleAddBranch(e) {
+            e.preventDefault();
+            const btn = document.getElementById('saveBranchBtn');
+            btn.disabled = true;
+
+            const name = document.getElementById('branchName').value.trim();
+            const address = document.getElementById('branchAddress').value.trim();
+            const city = document.getElementById('branchCity').value.trim();
+            const phone = document.getElementById('branchPhone').value.trim();
+            const is_main = document.getElementById('branchIsMain').checked;
+
+            try {
+                const res = await fetch('/api/merchant/branches', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, address, city, phone, is_main })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeAddBranchModal();
+                    loadBranchesList();
+                } else {
+                    alert(data.error || 'Failed to add branch');
+                }
+            } catch (e) {
+                alert('Network error adding branch');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteBranchLocation(id) {
+            if (!confirm('Delete this branch location?')) return;
+            try {
+                const res = await fetch('/api/merchant/branches/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                const data = await res.json();
+                if (data.success) loadBranchesList();
+            } catch (e) {}
+        }
+
+        // ==========================================
+        // Custom Domain Mapping
+        // ==========================================
+        async function saveCustomDomain() {
+            const domain = document.getElementById('customDomainInput').value.trim();
+            if (!domain) {
+                alert('Please enter a domain name (e.g. shop.mybrand.com).');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/merchant/custom-domain', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ domain })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const statusBox = document.getElementById('domainStatusBox');
+                    statusBox.className = 'p-3 bg-emerald-50 text-emerald-900 rounded-xl border border-emerald-200 text-[11px] font-bold';
+                    statusBox.innerHTML = `✓ Domain ${data.domain} connected! Point your DNS CNAME to <span class="font-mono">${data.cname_target}</span>`;
+                } else {
+                    alert(data.error || 'Failed to connect domain');
+                }
+            } catch (e) {
+                alert('Network error connecting custom domain');
+            }
+        }
+
+        async function initiateSettingsUpgrade(plan = 'pro', cycle = 'monthly') {
+            const btn = document.getElementById('settingsUpgradeBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Initializing...';
+            }
+
+            try {
+                const res = await fetch('/api/billing/initiate_upgrade', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan_tier: plan, billing_cycle: cycle })
+                });
+                const data = await res.json();
+                if (!data.success) {
+                    alert(data.error || 'Failed to initiate upgrade.');
+                    if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro ⚡'; }
+                    return;
+                }
+
+                if (typeof PaystackPop === 'undefined') {
+                    alert('Paystack gateway is loading. Please try again in a few seconds.');
+                    if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro ⚡'; }
+                    return;
+                }
+
+                const handler = PaystackPop.setup({
+                    key: data.paystack_public_key || 'pk_test_sample',
+                    email: data.email || '<%= store.email || "merchant@zlik.store" %>',
+                    amount: data.amount_kobo,
+                    ref: data.reference,
+                    currency: 'NGN',
+                    callback: async function(response) {
+                        if (btn) btn.textContent = 'Verifying upgrade...';
+                        const vRes = await fetch('/api/billing/verify_subscription', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ reference: response.reference })
+                        });
+                        const vData = await vRes.json();
+                        if (vData.success) {
+                            alert('🎉 Upgrade successful! Your store is now on Zlik ' + plan.toUpperCase());
+                            location.reload();
+                        } else {
+                            alert(vData.error || 'Upgrade verification error. Please reload.');
+                        }
+                    },
+                    onClose: function() {
+                        if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro ⚡'; }
+                    }
+                });
+                handler.openIframe();
+            } catch (err) {
+                alert('Network error initiating payment.');
+                if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro ⚡'; }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initSettingsQr();
+            handleCategorySelect(currentCategoryId);
+            loadMyStores();
+            loadStaffList();
+            loadBranchesList();
+        });
+    </script>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+
+    <!-- Create Store Modal -->
+    <div id="createStoreModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-0 shadow-2xl border border-[#E3E9E5] overflow-hidden flex flex-col text-xs">
+            <div class="px-5 py-4 border-b border-[#E3E9E5] flex items-center justify-between bg-[#F8FAF8]">
+                <h3 class="font-extrabold text-sm text-[#08110D]">Add New Store Brand</h3>
+                <button type="button" onclick="closeCreateStoreModal()" class="w-7 h-7 rounded-full bg-white border border-[#E3E9E5] text-[#6B756F] flex items-center justify-center font-bold">✕</button>
+            </div>
+            <form onsubmit="handleCreateStore(event)" class="p-5 space-y-3.5">
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">Store Name *</label>
+                    <input type="text" id="newStoreName" required placeholder="e.g. Luxe Streetwear" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none font-bold">
+                </div>
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">Store Username (URL Slug) *</label>
+                    <input type="text" id="newStoreSlug" placeholder="e.g. luxestreet" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none font-mono">
+                </div>
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">WhatsApp Phone *</label>
+                    <input type="text" id="newStoreWhatsapp" value="<%= store.whatsapp_number %>" required class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none font-mono">
+                </div>
+                <div class="flex items-center gap-2 pt-2 border-t border-[#E3E9E5]">
+                    <button type="button" onclick="closeCreateStoreModal()" class="w-1/2 bg-[#F8FAF8] py-2.5 rounded-xl border border-[#E3E9E5] font-bold">Cancel</button>
+                    <button type="submit" id="saveStoreBtn" class="w-1/2 bg-[#08110D] text-[#19D98B] py-2.5 rounded-xl font-bold font-display">Create Store ✓</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Staff Modal -->
+    <div id="addStaffModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-0 shadow-2xl border border-[#E3E9E5] overflow-hidden flex flex-col text-xs">
+            <div class="px-5 py-4 border-b border-[#E3E9E5] flex items-center justify-between bg-[#F8FAF8]">
+                <h3 class="font-extrabold text-sm text-[#08110D]">Add Team Member</h3>
+                <button type="button" onclick="closeAddStaffModal()" class="w-7 h-7 rounded-full bg-white border border-[#E3E9E5] text-[#6B756F] flex items-center justify-center font-bold">✕</button>
+            </div>
+            <form onsubmit="handleAddStaff(event)" class="p-5 space-y-3.5">
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">Full Name *</label>
+                    <input type="text" id="staffName" required placeholder="e.g. John Doe" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none font-bold">
+                </div>
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">Phone Number *</label>
+                    <input type="text" id="staffPhone" required placeholder="e.g. 08012345678" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none font-mono">
+                </div>
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">Role</label>
+                    <select id="staffRole" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none font-bold">
+                        <option value="sales_rep">Sales Representative</option>
+                        <option value="inventory_clerk">Inventory Clerk</option>
+                        <option value="manager">Store Manager</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">Staff Access PIN (4 Digits)</label>
+                    <input type="text" id="staffPin" value="1234" maxlength="4" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none font-mono font-bold">
+                </div>
+                <div class="flex items-center gap-2 pt-2 border-t border-[#E3E9E5]">
+                    <button type="button" onclick="closeAddStaffModal()" class="w-1/2 bg-[#F8FAF8] py-2.5 rounded-xl border border-[#E3E9E5] font-bold">Cancel</button>
+                    <button type="submit" id="saveStaffBtn" class="w-1/2 bg-[#08110D] text-[#19D98B] py-2.5 rounded-xl font-bold font-display">Add Staff ✓</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Branch Modal -->
+    <div id="addBranchModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-0 shadow-2xl border border-[#E3E9E5] overflow-hidden flex flex-col text-xs">
+            <div class="px-5 py-4 border-b border-[#E3E9E5] flex items-center justify-between bg-[#F8FAF8]">
+                <h3 class="font-extrabold text-sm text-[#08110D]">Add Store Branch Location</h3>
+                <button type="button" onclick="closeAddBranchModal()" class="w-7 h-7 rounded-full bg-white border border-[#E3E9E5] text-[#6B756F] flex items-center justify-center font-bold">✕</button>
+            </div>
+            <form onsubmit="handleAddBranch(event)" class="p-5 space-y-3.5">
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">Branch Name *</label>
+                    <input type="text" id="branchName" required placeholder="e.g. Lekki Phase 1 Outlet" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none font-bold">
+                </div>
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">Street Address</label>
+                    <input type="text" id="branchAddress" placeholder="e.g. 14 Admiralty Way" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none">
+                </div>
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">City / State</label>
+                    <input type="text" id="branchCity" placeholder="e.g. Lekki, Lagos" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none">
+                </div>
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">Branch Phone</label>
+                    <input type="text" id="branchPhone" placeholder="e.g. 08099887766" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none font-mono">
+                </div>
+                <label class="flex items-center gap-2 font-bold text-[#08110D] cursor-pointer">
+                    <input type="checkbox" id="branchIsMain" class="rounded">
+                    <span>Set as Primary / Main Branch</span>
+                </label>
+                <div class="flex items-center gap-2 pt-2 border-t border-[#E3E9E5]">
+                    <button type="button" onclick="closeAddBranchModal()" class="w-1/2 bg-[#F8FAF8] py-2.5 rounded-xl border border-[#E3E9E5] font-bold">Cancel</button>
+                    <button type="submit" id="saveBranchBtn" class="w-1/2 bg-[#08110D] text-[#19D98B] py-2.5 rounded-xl font-bold font-display">Save Branch ✓</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <%- include('components/bottom_nav.ejs', { activeTab: 'settings' }) %>
+</body>
+</html>

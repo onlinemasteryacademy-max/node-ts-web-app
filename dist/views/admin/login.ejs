@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Sign In — zlik</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            zlikDark: '#08110D',
+            zlikGreen: '#19D98B',
+            zlikDeep: '#087A50',
+            zlikBg: '#F8FAF8',
+            zlikWhite: '#FFFFFF',
+            zlikMuted: '#6B756F',
+            zlikBorder: '#E3E9E5'
+          },
+          fontFamily: {
+            display: ['Montserrat', 'sans-serif'],
+            body: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #08110D; color: #FFFFFF; }
+    .font-display { font-family: 'Montserrat', sans-serif; }
+  </style>
+</head>
+<body class="bg-[#08110D] text-white antialiased flex items-center justify-center min-h-screen p-4 selection:bg-[#19D98B] selection:text-[#08110D]">
+
+  <div class="max-w-md w-full bg-white/5 rounded-2xl border border-white/10 p-8 sm:p-10 shadow-2xl backdrop-blur-md">
+    <div class="text-center mb-8">
+      <a href="/" class="text-3xl font-bold font-display tracking-tight text-white inline-block mb-3">
+        zlik
+      </a>
+      <h1 class="text-xl font-bold font-display text-white">Admin Console</h1>
+      <p class="text-xs text-[#E3E9E5]/70 mt-1">Platform governance and executive operations</p>
+    </div>
+
+    <form onsubmit="handleAdminLogin(event)" class="space-y-4 text-xs">
+      <div>
+        <label class="block font-semibold text-[#E3E9E5]/90 mb-1.5">Admin Email</label>
+        <input type="email" id="adminEmail" required placeholder="admin@zlik.store" value="admin@zlik.store" class="w-full px-3.5 py-3 rounded-lg bg-white/10 border border-white/15 text-sm text-white placeholder-white/40 outline-none focus:border-[#19D98B] transition">
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="block font-semibold text-[#E3E9E5]/90">Password</label>
+          <a href="/<%= typeof adminPath !== 'undefined' ? adminPath : 'admin' %>/forgot-password" class="text-xs text-[#19D98B] hover:underline">Forgot password?</a>
+        </div>
+        <input type="password" id="adminPass" required placeholder="••••••••" class="w-full px-3.5 py-3 rounded-lg bg-white/10 border border-white/15 text-sm text-white placeholder-white/40 outline-none focus:border-[#19D98B] transition">
+      </div>
+
+      <div id="adminError" class="text-xs text-rose-400 font-medium hidden"></div>
+
+      <button type="submit" id="adminLoginBtn" class="w-full bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] font-bold font-display text-sm py-3.5 rounded-lg shadow-sm transition duration-200 mt-2">
+        Sign in to Console
+      </button>
+    </form>
+    
+    <div class="mt-6 text-center text-xs text-[#6B756F]">
+      <a href="/merchant/login" class="text-[#19D98B] hover:underline">Switch to Merchant Login &rarr;</a>
+    </div>
+  </div>
+
+  <script>
+    const currentAdminPath = '<%= typeof adminPath !== "undefined" ? adminPath : "admin" %>';
+
+    async function handleAdminLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('adminLoginBtn');
+      const err = document.getElementById('adminError');
+      btn.disabled = true;
+      btn.textContent = 'Authenticating...';
+      err.classList.add('hidden');
+
+      const payload = {
+        email: document.getElementById('adminEmail').value,
+        password: document.getElementById('adminPass').value
+      };
+
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+
+        if (result.success) {
+          window.location.href = result.redirect || ('/' + currentAdminPath);
+        } else {
+          err.textContent = result.error || 'Invalid credentials';
+          err.classList.remove('hidden');
+          btn.disabled = false;
+          btn.textContent = 'Sign in to Console';
+        }
+      } catch (e) {
+        err.textContent = 'Connection error. Please try again.';
+        err.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Sign in to Console';
+      }
+    }
+  </script>
+</body>
+</html>

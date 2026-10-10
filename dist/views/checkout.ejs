@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Transfer Checkout — <%= store.store_name %> | zlik</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        zlikDark: '#08110D',
+                        zlikGreen: '#19D98B',
+                        zlikDeep: '#087A50',
+                        zlikBg: '#F8FAF8',
+                        zlikWhite: '#FFFFFF',
+                        zlikMuted: '#6B756F',
+                        zlikBorder: '#E3E9E5'
+                    },
+                    fontFamily: {
+                        display: ['Montserrat', 'sans-serif'],
+                        body: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAF8; color: #08110D; }
+        .font-display { font-family: 'Montserrat', sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased py-8">
+
+    <div class="max-w-2xl mx-auto px-4 w-full space-y-6">
+        
+        <!-- Top Nav -->
+        <div class="flex items-center justify-between pb-4 border-b border-[#E3E9E5]">
+            <a href="/<%= store.slug %>" class="text-xs font-bold text-[#6B756F] hover:text-[#08110D] flex items-center gap-1.5 transition">
+                <span>←</span> Back to Store
+            </a>
+            <div class="flex items-center gap-2">
+                <% if (store.logo_url) { %>
+                    <img src="<%= store.logo_url %>" alt="Logo" class="w-7 h-7 rounded-lg object-contain border border-[#E3E9E5] bg-white p-0.5">
+                <% } %>
+                <span class="text-sm font-extrabold font-display text-[#08110D]"><%= store.store_name %></span>
+            </div>
+        </div>
+
+        <h1 class="text-2xl font-extrabold font-display text-[#08110D]">Complete Bank Transfer Order</h1>
+
+        <!-- Cart Summary Card -->
+        <div class="bg-white p-6 rounded-3xl border border-[#E3E9E5] shadow-xs space-y-4">
+            <h2 class="text-[10px] font-extrabold uppercase tracking-wider text-[#6B756F]">Order Items Summary</h2>
+            <div id="checkoutCartItems" class="space-y-3 border-b border-[#E3E9E5] pb-4">
+                <!-- Cart items injected via JS -->
+            </div>
+            
+            <div class="space-y-2 text-xs">
+                <div class="flex justify-between text-[#6B756F]">
+                    <span>Subtotal:</span>
+                    <span id="checkoutSubtotal" class="font-bold text-[#08110D]">₦0.00</span>
+                </div>
+                <div class="flex justify-between text-[#6B756F]">
+                    <span id="checkoutDeliveryLabel">Delivery Fee:</span>
+                    <span id="checkoutDelivery" class="font-bold text-[#08110D]">₦<%= Number(store.delivery_fee || 0).toLocaleString('en-US', {minimumFractionDigits: 2}) %></span>
+                </div>
+                <div class="flex justify-between text-base font-extrabold text-[#087A50] pt-2 border-t border-[#E3E9E5]">
+                    <span class="font-display">Total Amount:</span>
+                    <span id="checkoutTotal" class="font-display">₦0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fulfillment Mode Selection -->
+        <div class="bg-white p-6 rounded-3xl border border-[#E3E9E5] shadow-xs space-y-3">
+            <label class="block text-[10px] font-extrabold uppercase tracking-wider text-[#6B756F]">Choose Delivery or Pickup</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <label id="optDelivery" class="flex items-start gap-3 p-4 rounded-2xl border-2 border-[#08110D] bg-[#F8FAF8] cursor-pointer transition">
+                    <input type="radio" name="fulfillment_type" value="delivery" checked onchange="setFulfillment('delivery')" class="mt-0.5 accent-black">
+                    <div>
+                        <div class="font-bold text-[#08110D] font-display">🚚 Direct Delivery</div>
+                        <div class="text-[11px] text-[#6B756F] mt-0.5">Fee: ₦<%= Number(store.delivery_fee || 0).toLocaleString('en-US') %></div>
+                    </div>
+                </label>
+                <label id="optPickup" class="flex items-start gap-3 p-4 rounded-2xl border border-[#E3E9E5] bg-white cursor-pointer transition hover:border-[#08110D]">
+                    <input type="radio" name="fulfillment_type" value="pickup" onchange="setFulfillment('pickup')" class="mt-0.5 accent-black">
+                    <div>
+                        <div class="font-bold text-[#08110D] font-display">🏬 In-Store Pickup</div>
+                        <div class="text-[11px] text-[#087A50] font-bold mt-0.5">Free (No delivery fee)</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- Verified Bank Details Card -->
+        <div class="bg-[#08110D] text-white p-6 rounded-3xl border border-white/10 shadow-lg space-y-4">
+            <div class="flex items-center justify-between">
+                <span class="font-bold text-[10px] px-2.5 py-0.5 rounded-full uppercase bg-[#19D98B] text-[#08110D] font-display">Verified Bank Account</span>
+                <span class="text-xs text-white/70">Direct Transfer</span>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <div class="text-[10px] text-white/60 uppercase font-bold">Bank Name</div>
+                    <div class="text-base font-bold font-display text-white"><%= store.bank_name || 'GTBank' %></div>
+                </div>
+
+                <div class="flex items-center justify-between bg-white/10 p-3.5 rounded-2xl border border-white/10">
+                    <div>
+                        <div class="text-[10px] text-white/60 uppercase font-bold">Account Number</div>
+                        <div class="text-xl font-bold font-mono text-[#19D98B] tracking-wider" id="accNumber"><%= store.bank_account_number || '0123456789' %></div>
+                    </div>
+                    <button id="copyBtn" onclick="copyAccountNumber()" class="bg-[#19D98B] text-[#08110D] text-xs font-bold font-display px-3.5 py-2 rounded-xl transition hover:opacity-90 shadow-2xs">
+                        📋 Copy Account
+                    </button>
+                </div>
+
+                <div>
+                    <div class="text-[10px] text-white/60 uppercase font-bold">Account Name</div>
+                    <div class="text-xs font-semibold text-white"><%= store.bank_account_name || store.store_name %></div>
+                </div>
+            </div>
+
+            <div class="text-xs text-white/80 bg-white/5 p-3 rounded-xl border border-white/10">
+                💡 <%= store.payment_instructions || 'Please transfer the exact amount and submit your details below.' %>
+            </div>
+        </div>
+
+        <!-- Customer Form -->
+        <div class="bg-white p-6 rounded-3xl border border-[#E3E9E5] shadow-xs space-y-4">
+            <h2 class="text-[10px] font-extrabold uppercase tracking-wider text-[#6B756F]">Your Contact & Delivery Details</h2>
+
+            <form id="checkoutForm" onsubmit="submitOrder(event)" class="space-y-3.5 text-xs">
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">Full Name *</label>
+                    <input type="text" id="custName" required placeholder="e.g. Blessing Eke" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                </div>
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">WhatsApp Phone Number *</label>
+                    <input type="tel" id="custPhone" required placeholder="08149876543" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                </div>
+                <div id="addressFieldContainer">
+                    <label class="block font-bold text-[#08110D] mb-1">Delivery Address *</label>
+                    <textarea id="custAddress" rows="2" placeholder="Full street address, area, or landmark" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]"></textarea>
+                </div>
+                <div id="pickupNoticeContainer" class="hidden bg-[#F8FAF8] p-3.5 rounded-2xl border border-[#E3E9E5] text-xs text-[#08110D]">
+                    🏬 <strong>In-Store Pickup Selected:</strong> You will collect your order directly at the store.
+                </div>
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">Transfer Note / Sender Name (Optional)</label>
+                    <input type="text" id="custProof" placeholder="e.g. Blessing Eke - GTBank" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                </div>
+
+                <!-- Error & Open Orders Banner -->
+                <div id="checkoutError" class="hidden p-4 rounded-2xl bg-red-50 text-red-700 text-xs border border-red-200 space-y-2"></div>
+
+                <div class="space-y-2.5 pt-2">
+                    <button type="submit" id="submitOrderBtn" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-extrabold text-xs py-4 rounded-2xl transition shadow-md flex items-center justify-center gap-2 uppercase tracking-wider font-display">
+                        <span>✓</span> <span>I Have Sent Payment (Submit Order)</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+
+    <script>
+        const storeData = <%- JSON.stringify(store) %>;
+        let cart = [];
+        let fulfillment = 'delivery';
+
+        try {
+            const raw = localStorage.getItem('zlik_cart_' + storeData.id) || sessionStorage.getItem('zlik_cart') || '[]';
+            cart = JSON.parse(raw);
+        } catch (e) {
+            cart = [];
+        }
+
+        function setFulfillment(type) {
+            fulfillment = type;
+            const isPickup = (type === 'pickup');
+            document.getElementById('optDelivery').className = isPickup ? 'flex items-start gap-3 p-4 rounded-2xl border border-[#E3E9E5] bg-white cursor-pointer transition hover:border-[#08110D]' : 'flex items-start gap-3 p-4 rounded-2xl border-2 border-[#08110D] bg-[#F8FAF8] cursor-pointer transition';
+            document.getElementById('optPickup').className = isPickup ? 'flex items-start gap-3 p-4 rounded-2xl border-2 border-[#08110D] bg-[#F8FAF8] cursor-pointer transition' : 'flex items-start gap-3 p-4 rounded-2xl border border-[#E3E9E5] bg-white cursor-pointer transition hover:border-[#08110D]';
+            document.getElementById('addressFieldContainer').style.display = isPickup ? 'none' : 'block';
+            document.getElementById('pickupNoticeContainer').style.display = isPickup ? 'block' : 'none';
+            renderSummary();
+        }
+
+        function renderSummary() {
+            const container = document.getElementById('checkoutCartItems');
+            if (!cart || cart.length === 0) {
+                container.innerHTML = '<div class="text-center py-6 text-[#6B756F]">Your cart is empty. <a href="/store/' + storeData.slug + '" class="text-[#087A50] font-bold">Return to store</a></div>';
+                return;
+            }
+
+            container.innerHTML = cart.map(i => `
+                <div class="flex items-center justify-between text-xs">
+                    <div>
+                        <span class="font-bold text-[#08110D]">${i.quantity}x ${escapeHtml(i.title)}</span>
+                    </div>
+                    <span class="font-bold text-[#087A50]">₦${(i.price * i.quantity).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                </div>
+            `).join('');
+
+            const subtotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+            const deliveryFee = (fulfillment === 'pickup') ? 0 : parseFloat(storeData.delivery_fee || 0);
+            const total = subtotal + deliveryFee;
+
+            document.getElementById('checkoutSubtotal').textContent = '₦' + subtotal.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('checkoutDelivery').textContent = (fulfillment === 'pickup') ? 'Free (Pickup)' : ('₦' + deliveryFee.toLocaleString('en-US', {minimumFractionDigits: 2}));
+            document.getElementById('checkoutTotal').textContent = '₦' + total.toLocaleString('en-US', {minimumFractionDigits: 2});
+        }
+
+        function copyAccountNumber() {
+            const acc = document.getElementById('accNumber').textContent.trim();
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(acc).then(() => {
+                    const btn = document.getElementById('copyBtn');
+                    btn.textContent = '✓ Copied!';
+                    btn.classList.add('bg-emerald-400');
+                    setTimeout(() => {
+                        btn.textContent = '📋 Copy Account';
+                        btn.classList.remove('bg-emerald-400');
+                    }, 2000);
+                }).catch(() => fallbackCopy(acc));
+            } else {
+                fallbackCopy(acc);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const input = document.createElement('input');
+            input.value = text;
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+            const btn = document.getElementById('copyBtn');
+            btn.textContent = '✓ Copied!';
+            setTimeout(() => btn.textContent = '📋 Copy Account', 2000);
+        }
+
+        async function submitOrder(e, force = false) {
+            if (e && e.preventDefault) e.preventDefault();
+            const btn = document.getElementById('submitOrderBtn');
+            const errDiv = document.getElementById('checkoutError');
+            btn.disabled = true;
+            errDiv.classList.add('hidden');
+
+            const payload = {
+                store_id: storeData.id,
+                customer_name: document.getElementById('custName').value.trim(),
+                customer_phone: document.getElementById('custPhone').value.trim(),
+                fulfillment_type: fulfillment,
+                delivery_address: fulfillment === 'pickup' ? 'In-Store Pickup' : document.getElementById('custAddress').value.trim(),
+                delivery_fee: fulfillment === 'pickup' ? 0 : parseFloat(storeData.delivery_fee || 0),
+                payment_method: 'bank_transfer',
+                notes: document.getElementById('custProof').value.trim() || null,
+                items: cart,
+                force_create: force
+            };
+
+            try {
+                const res = await fetch('/api/orders?action=create_order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success && data.order) {
+                    localStorage.removeItem('zlik_cart_' + storeData.id);
+                    sessionStorage.removeItem('zlik_cart');
+                    window.location.href = `/order/${data.order.order_ref}?token=${data.order_token}`;
+                } else if (data.open_orders_exceeded && data.existing_orders) {
+                    let html = `
+                        <div class="space-y-2">
+                            <div class="flex items-start gap-2">
+                                <span class="text-base">⚠️</span>
+                                <div>
+                                    <div class="font-extrabold text-[#08110D]">${data.error}</div>
+                                    <div class="text-[11px] text-[#6B756F] mt-0.5">You currently have unfulfilled orders in progress:</div>
+                                </div>
+                            </div>
+                            <div class="space-y-1.5 pt-1">`;
+                    data.existing_orders.forEach(o => {
+                        html += `
+                            <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-[#E3E9E5] text-xs">
+                                <div>
+                                    <span class="font-bold text-[#08110D]">#${o.order_ref}</span>
+                                    <span class="text-[#6B756F] text-[11px] ml-1.5">(₦${Number(o.total_amount).toLocaleString()})</span>
+                                </div>
+                                <a href="/order/${o.order_ref}?token=${o.order_token}" target="_blank" class="bg-[#08110D] text-[#19D98B] px-2.5 py-1 rounded-lg font-bold text-[11px] hover:bg-black transition">Track Order ↗</a>
+                            </div>`;
+                    });
+                    html += `
+                            </div>
+                            <div class="mt-3 pt-3 border-t border-amber-200/80 bg-amber-50/80 -mx-4 -mb-4 p-3.5 rounded-b-2xl space-y-2">
+                                <p class="text-[11px] font-bold text-amber-950">Would you like to continue and place this new order anyway?</p>
+                                <button type="button" onclick="submitOrder(event, true)" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-extrabold text-xs py-3 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
+                                    <span>Proceed with New Order →</span>
+                                </button>
+                            </div>
+                        </div>`;
+                    errDiv.innerHTML = html;
+                    errDiv.className = 'p-4 rounded-2xl bg-amber-50/60 text-[#08110D] text-xs border border-amber-200 overflow-hidden';
+                    errDiv.classList.remove('hidden');
+                } else {
+                    errDiv.className = 'p-4 rounded-2xl bg-red-50 text-red-700 text-xs border border-red-200 space-y-2';
+                    errDiv.textContent = data.error || 'Failed to place order';
+                    errDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                errDiv.className = 'p-4 rounded-2xl bg-red-50 text-red-700 text-xs border border-red-200 space-y-2';
+                errDiv.textContent = 'Network error submitting order';
+                errDiv.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderSummary();
+        });
+    </script>
+</body>
+</html>

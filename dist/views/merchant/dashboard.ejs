@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant Console — <%= store.store_name %> | zlik</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        zlikDark: '#08110D',
+                        zlikGreen: '#19D98B',
+                        zlikDeep: '#087A50',
+                        zlikBg: '#F8FAF8',
+                        zlikWhite: '#FFFFFF',
+                        zlikMuted: '#6B756F',
+                        zlikBorder: '#E3E9E5'
+                    },
+                    fontFamily: {
+                        display: ['Montserrat', 'sans-serif'],
+                        body: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAF8; color: #08110D; }
+        .font-display { font-family: 'Montserrat', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0.5rem); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+    <!-- Audio Unlock Banner -->
+    <div id="audioUnlockBanner" onclick="unlockAudio()" class="bg-[#08110D] text-[#19D98B] py-2 px-3 sm:px-4 text-center text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer border-b border-[#19D98B]/20">
+        <span>🔔 Tap to enable live sound chimes for incoming orders & chat</span>
+    </div>
+
+    <!-- Merchant Header -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E3E9E5] shadow-2xs">
+        <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-4">
+            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                <% if (store.logo_url) { %>
+                    <img src="<%= store.logo_url %>" alt="Logo" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-contain border border-[#E3E9E5] bg-white p-0.5 shrink-0">
+                <% } else { %>
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#08110D] text-[#19D98B] font-semibold text-sm sm:text-base flex items-center justify-center font-display shrink-0 shadow-2xs">
+                        <%= (store.store_name || 'S').charAt(0).toUpperCase() %>
+                    </div>
+                <% } %>
+                <div class="min-w-0">
+                    <h1 class="text-xs sm:text-sm font-semibold text-[#08110D] truncate flex items-center gap-1.5 sm:gap-2">
+                        <span class="truncate max-w-[120px] sm:max-w-[200px]"><%= store.store_name %></span>
+                        <span class="text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full uppercase shrink-0 <%= isPro ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700' %>">
+                            <%= isPro ? 'PRO' : 'FREE' %>
+                        </span>
+                        <% if (!isPro) { %>
+                            <button type="button" onclick="triggerUpgradeModal('General Pro Features')" class="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#08110D] hover:bg-black text-[#19D98B] transition shrink-0 hidden sm:flex items-center gap-1 shadow-2xs">
+                                <span>⚡ Upgrade</span>
+                            </button>
+                        <% } %>
+                    </h1>
+                    <p class="text-[11px] sm:text-xs text-[#6B756F] truncate"><%= store.email || store.whatsapp_number %></p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 sm:gap-2">
+                <% if (!isPro) { %>
+                    <button type="button" onclick="triggerUpgradeModal('General Pro Features')" class="sm:hidden text-[10px] font-bold px-2 py-1.5 rounded-xl bg-[#08110D] text-[#19D98B] transition flex items-center gap-1 shadow-2xs">
+                        <span>⚡ Pro</span>
+                    </button>
+                <% } %>
+                <!-- Store QR Icon / Button -->
+                <button type="button" onclick="openQrModal()" title="Store QR Code" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] text-xs font-medium p-2 sm:px-3 sm:py-2 rounded-xl border border-[#E3E9E5] transition flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-[#08110D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                    </svg>
+                    <span class="hidden sm:inline">Store QR</span>
+                </button>
+                <!-- Sound Toggle -->
+                <button onclick="toggleAudio()" id="soundToggle" title="Audio Chimes" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] text-xs font-medium p-2 sm:px-3 sm:py-2 rounded-xl border border-[#E3E9E5] transition flex items-center gap-1.5">
+                    <span id="soundToggleIcon" class="text-xs">🔊</span>
+                    <span id="soundToggleText" class="hidden sm:inline">Sound: ON</span>
+                </button>
+                <!-- Storefront Link -->
+                <a href="/<%= store.slug %>" target="_blank" title="View Public Storefront" class="bg-[#08110D] text-[#19D98B] font-medium text-xs p-2 sm:px-3.5 sm:py-2 rounded-xl transition flex items-center gap-1 shadow-2xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                    <span class="hidden sm:inline">Storefront ↗</span>
+                </a>
+                <!-- Logout -->
+                <a href="/merchant/logout" title="Sign Out" class="text-[#6B756F] hover:text-red-600 p-1.5 sm:p-2 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+
+        <!-- Desktop Navigation Tabs (Hidden on mobile; sticky bottom bar used on mobile) -->
+        <div class="hidden sm:flex max-w-7xl mx-auto px-4 items-center gap-2 overflow-x-auto text-xs font-medium border-t border-[#E3E9E5]/60 pt-2 pb-2">
+            <a href="/merchant" class="px-3.5 py-1.5 rounded-xl bg-[#08110D] text-white font-semibold">Orders</a>
+            <a href="/merchant/items" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Products</a>
+            <a href="/merchant/ledger" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Sales Ledger</a>
+            <a href="/merchant/debts" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Debts</a>
+            <a href="/merchant/messages" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] flex items-center gap-1.5">
+                <span>Live Chat</span>
+                <span id="navChatUnreadBadge" class="hidden bg-[#19D98B] text-[#08110D] text-[10px] font-semibold px-2 py-0.2 rounded-full animate-pulse shadow-2xs">0 new</span>
+            </a>
+            <a href="/merchant/settings" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Settings</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24 sm:pb-8 flex-1 w-full space-y-5 sm:space-y-6">
+
+        <!-- Low Stock Alert Banner -->
+        <% if (lowStockItems && lowStockItems.length > 0) { %>
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-7 h-7 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center text-xs font-mono font-bold shrink-0">⚠️</span>
+                    <div>
+                        <h4 class="font-semibold text-amber-950">Low Stock Notice (<%= lowStockItems.length %> <%= lowStockItems.length === 1 ? 'item' : 'items' %>)</h4>
+                        <p class="text-[11px] text-amber-800 mt-0.5">
+                            <%= lowStockItems.map(i => `${i.title} (${i.stock_quantity} left)`).slice(0, 3).join(', ') %><%= lowStockItems.length > 3 ? ` and ${lowStockItems.length - 3} more` : '' %>
+                        </p>
+                    </div>
+                </div>
+                <a href="/merchant/items" class="shrink-0 bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs px-3.5 py-2 rounded-xl transition shadow-2xs">
+                    Restock Products
+                </a>
+            </div>
+        <% } %>
+
+        <!-- Store Visitor Analytics (Included in Every Plan: Free, Pro, Business) -->
+        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] uppercase font-semibold text-[#087A50] bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">All Plans</span>
+                        <span class="text-[10px] uppercase font-semibold text-[#6B756F] tracking-wider">Store Traffic</span>
+                    </div>
+                    <h2 class="text-base font-semibold text-[#08110D] mt-0.5">Store Visitor Analytics</h2>
+                </div>
+
+                <!-- 7 Timeframe Tabs (Today, Yesterday, 7 Days, 1 Month, Quarterly, Yearly, Lifetime) -->
+                <div class="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1 lg:pb-0 text-xs font-medium bg-[#F8FAF8] p-1 rounded-2xl border border-[#E3E9E5]">
+                    <button type="button" onclick="switchVisitorPeriod('today')" id="vbtn-today" class="visitor-tab-btn px-3 py-1.5 rounded-xl bg-[#08110D] text-white font-semibold transition text-xs whitespace-nowrap">Today</button>
+                    <button type="button" onclick="switchVisitorPeriod('yesterday')" id="vbtn-yesterday" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Yesterday</button>
+                    <button type="button" onclick="switchVisitorPeriod('7days')" id="vbtn-7days" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">7 Days</button>
+                    <button type="button" onclick="switchVisitorPeriod('month')" id="vbtn-month" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">1 Month</button>
+                    <button type="button" onclick="switchVisitorPeriod('quarterly')" id="vbtn-quarterly" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Quarterly</button>
+                    <button type="button" onclick="switchVisitorPeriod('yearly')" id="vbtn-yearly" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Yearly</button>
+                    <button type="button" onclick="switchVisitorPeriod('lifetime')" id="vbtn-lifetime" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Lifetime</button>
+                </div>
+            </div>
+
+            <!-- Visitor Stats Grid (Total & Unique Visitors Only) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="p-4 sm:p-5 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
+                    <span class="text-[10px] uppercase font-semibold text-[#6B756F]">Total Store Visits</span>
+                    <div class="text-2xl sm:text-3xl font-bold text-[#08110D] font-mono mt-1" id="statVisits">
+                        <%= (visitorMetrics && visitorMetrics.today && visitorMetrics.today.visits) || 0 %>
+                    </div>
+                    <span class="text-[11px] text-[#6B756F]" id="statVisitsSub">Page views recorded</span>
+                </div>
+
+                <div class="p-4 sm:p-5 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
+                    <span class="text-[10px] uppercase font-semibold text-[#6B756F]">Unique Visitors</span>
+                    <div class="text-2xl sm:text-3xl font-bold text-[#087A50] font-mono mt-1" id="statUniqueVisitors">
+                        <%= (visitorMetrics && visitorMetrics.today && visitorMetrics.today.unique_visitors) || 0 %>
+                    </div>
+                    <span class="text-[11px] text-[#6B756F]" id="statUniqueSub">Distinct shoppers</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Metrics Dashboard with Timeframe Switcher -->
+        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <span class="text-[10px] uppercase font-semibold text-[#6B756F] tracking-wider">Store Performance</span>
+                    <h2 class="text-base font-semibold text-[#08110D]">Revenue & Ledger Summary</h2>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-medium text-[#6B756F]">Timeframe:</span>
+                    <select id="timeframeSelect" onchange="handleTimeframeChange(this.value)" class="bg-[#F8FAF8] border border-[#E3E9E5] text-xs font-medium text-[#08110D] rounded-xl px-3 py-1.5 outline-none">
+                        <option value="today">Today</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="this_week">This Week</option>
+                        <option value="this_month">This Month</option>
+                        <option value="last_month">Last Month</option>
+                        <option value="3months" <%= !isPro ? 'class="text-gray-400"' : '' %>>Last 3 Months <%= !isPro ? '🔒 (Pro)' : '' %></option>
+                        <option value="6months" <%= !isPro ? 'class="text-gray-400"' : '' %>>Last 6 Months <%= !isPro ? '🔒 (Pro)' : '' %></option>
+                        <option value="yearly" <%= !isPro ? 'class="text-gray-400"' : '' %>>This Year <%= !isPro ? '🔒 (Pro)' : '' %></option>
+                        <option value="lifetime" <%= !isPro ? 'class="text-gray-400"' : '' %>>Full Lifetime <%= !isPro ? '🔒 (Pro)' : '' %></option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
+                    <span class="text-[10px] uppercase font-semibold text-[#6B756F]">Confirmed Revenue</span>
+                    <div class="text-lg sm:text-xl font-semibold text-[#087A50] mt-1" id="statRevenue">
+                        ₦<%= Number(revenueMetrics.today.confirmed_revenue).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
+                    </div>
+                    <span class="text-[11px] text-[#6B756F]"><span id="statConfirmedCount"><%= revenueMetrics.today.confirmed_count %></span> paid orders</span>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
+                    <span class="text-[10px] uppercase font-semibold text-[#6B756F]">Pending Revenue</span>
+                    <div class="text-lg sm:text-xl font-semibold text-amber-700 mt-1" id="statPendingRevenue">
+                        ₦<%= Number(revenueMetrics.today.pending_revenue).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
+                    </div>
+                    <span class="text-[11px] text-[#6B756F]"><span id="statPendingCount"><%= revenueMetrics.today.pending_count %></span> pending orders</span>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
+                    <span class="text-[10px] uppercase font-semibold text-[#6B756F]">Average Order Value</span>
+                    <div class="text-lg sm:text-xl font-semibold text-[#08110D] mt-1" id="statAov">
+                        ₦<%= Number(revenueMetrics.today.aov).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
+                    </div>
+                    <span class="text-[11px] text-[#6B756F]">Per completed sale</span>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
+                    <span class="text-[10px] uppercase font-semibold text-[#6B756F]">Fulfillment Split</span>
+                    <div class="text-sm font-semibold text-[#08110D] mt-1.5">
+                        Delivery: <span id="statDelivery"><%= revenueMetrics.today.delivery_count %></span> &bull; Pickup: <span id="statPickup"><%= revenueMetrics.today.pickup_count %></span>
+                    </div>
+                    <span class="text-[11px] text-[#6B756F]">Delivery vs Pickup</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Storefront Design Spotlight Banner -->
+        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 sm:p-6 shadow-xs flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden">
+            <div class="space-y-3 max-w-xl">
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full uppercase tracking-wider font-mono <%= templateConfig && templateConfig.is_pro ? 'bg-[#08110D] text-[#19D98B] border border-[#19D98B]/30' : 'bg-[#19D98B]/15 text-[#087A50]' %>">
+                        Active Template: <%= templateConfig ? templateConfig.name : 'Classic Grid' %> (<%= templateConfig ? templateConfig.tier_badge : 'FREE' %>)
+                    </span>
+                    <% if (!isPro) { %>
+                        <span class="text-[10px] font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Pro Templates Available</span>
+                    <% } %>
+                </div>
+                <h3 class="text-base sm:text-lg font-semibold text-[#08110D]">
+                    <%= templateConfig ? templateConfig.hero_headline : 'Curated Essentials & Everyday Favorites' %>
+                </h3>
+                <p class="text-xs text-[#6B756F] leading-relaxed">
+                    <%= templateConfig ? templateConfig.tagline : 'Clean and practical layout suited for multi-category sellers.' %>
+                </p>
+                <div class="flex items-center gap-3 pt-1">
+                    <a href="/<%= store.slug %>" target="_blank" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-2xs">
+                        <span>Live Storefront ↗</span>
+                    </a>
+                    <a href="/merchant/settings" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-medium text-xs px-4 py-2.5 rounded-xl border border-[#E3E9E5] transition flex items-center gap-1.5">
+                        <span>Change Template</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Front View Cover Preview Thumbnail -->
+            <div class="w-full md:w-72 aspect-[16/10] h-40 md:h-44 rounded-2xl overflow-hidden border-2 border-[#E3E9E5] shadow-sm bg-[#08110D] shrink-0 group relative">
+                <img src="<%= templateConfig ? (templateConfig.preview_image || ('/assets/images/templates/' + templateConfig.id + '.svg')) : '/assets/images/templates/general_clean.svg' %>" onerror="this.onerror=null; this.src='/assets/images/templates/general_clean.svg';" alt="Active Theme Front View" class="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-2.5">
+                    <span class="text-[9.5px] font-semibold text-white/90 bg-black/60 px-2 py-0.5 rounded-md backdrop-blur-xs">Live Preview</span>
+                    <a href="/merchant/settings" class="text-[10px] font-semibold text-[#19D98B] bg-[#08110D] px-2 py-0.5 rounded-md shadow-xs">Explore All Templates &rarr;</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders Section -->
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-base font-extrabold text-[#08110D] font-display">Customer Orders</h2>
+                    <p class="text-xs text-[#6B756F]">Manage payments, dispatch, and customer receipts</p>
+                </div>
+                <span class="text-xs font-bold text-[#6B756F] bg-white border border-[#E3E9E5] px-3 py-1.5 rounded-xl"><%= orders.length %> total orders</span>
+            </div>
+
+            <!-- Orders List -->
+            <div class="space-y-3">
+                <% if (orders.length === 0) { %>
+                    <div class="p-12 text-center bg-white rounded-3xl border border-[#E3E9E5] text-[#6B756F] text-xs">
+                        No orders placed yet. Share your store link on WhatsApp to start receiving sales!
+                    </div>
+                <% } else { %>
+                    <% orders.forEach(order => { %>
+                        <div class="p-5 bg-white rounded-3xl border border-[#E3E9E5] space-y-3 shadow-xs hover:border-[#08110D] transition">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-extrabold text-sm text-[#08110D] font-display">#<%= order.order_ref %></span>
+                                    <span class="text-[10px] text-[#6B756F]"><%= new Date(order.created_at).toLocaleString() %></span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px] <%= order.payment_status === 'paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' %>">
+                                        ● <%= order.payment_status %>
+                                    </span>
+                                    <span class="px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px] bg-gray-100 text-gray-800">
+                                        <%= order.order_status %>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Payment Claim Alert Banner -->
+                            <% if (order.payment_status === 'claimed') { %>
+                                <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                                    <div>
+                                        <div class="font-bold text-amber-900 flex items-center gap-1.5">
+                                            <span>🔔</span> <span>Customer Claimed Bank Transfer</span>
+                                        </div>
+                                        <div class="text-[11px] text-amber-800 mt-0.5">
+                                            Transfer Note / Ref: <strong class="font-mono bg-amber-100 px-1 py-0.5 rounded"><%= order.payment_proof_ref %></strong>. Verify in bank app before confirming.
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2 shrink-0">
+                                        <button onclick="confirmPayment(<%= order.id %>)" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-xl shadow-2xs transition">
+                                            ✓ Confirm Payment
+                                        </button>
+                                        <button onclick="rejectPayment(<%= order.id %>)" class="bg-white text-red-700 border border-red-200 hover:bg-red-50 font-bold px-3 py-1.5 rounded-xl transition">
+                                            ✕ Reject
+                                        </button>
+                                    </div>
+                                </div>
+                            <% } %>
+
+                            <div class="grid sm:grid-cols-3 gap-3 text-xs">
+                                <div>
+                                    <div class="text-[10px] uppercase font-bold text-[#6B756F]">Customer</div>
+                                    <div class="font-bold text-[#08110D]"><%= order.customer_name %></div>
+                                    <div class="text-[#6B756F]"><%= order.customer_phone %></div>
+                                </div>
+                                <div>
+                                    <div class="text-[10px] uppercase font-bold text-[#6B756F]">Fulfillment</div>
+                                    <div class="font-bold text-[#08110D]"><%= order.fulfillment_type === 'pickup' ? 'In-Store Pickup' : 'Delivery' %></div>
+                                    <div class="text-[#6B756F] truncate"><%= order.delivery_address || 'Pickup' %></div>
+                                </div>
+                                <div class="sm:text-right">
+                                    <div class="text-[10px] uppercase font-bold text-[#6B756F]">Total Amount</div>
+                                    <div class="text-base font-extrabold text-[#087A50] font-display">
+                                        ₦<%= Number(order.total_amount).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
+                                    </div>
+                                    <div class="text-[10px] text-[#6B756F]">Fee: ₦<%= Number(order.delivery_fee || 0).toLocaleString('en-US') %></div>
+                                </div>
+                            </div>
+
+                            <div class="pt-3 border-t border-[#E3E9E5] flex flex-wrap items-center justify-between gap-3 text-xs">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-[#6B756F]">Status:</span>
+                                    <select onchange="updateStatus(<%= order.id %>, this.value)" class="bg-[#F8FAF8] border border-[#E3E9E5] font-bold text-xs rounded-xl px-2.5 py-1.5 outline-none">
+                                        <option value="pending" <%= order.order_status === 'pending' ? 'selected' : '' %>>⏳ Pending</option>
+                                        <option value="confirmed" <%= order.order_status === 'confirmed' ? 'selected' : '' %>>✓ Confirmed</option>
+                                        <option value="dispatched" <%= order.order_status === 'dispatched' ? 'selected' : '' %>>🚚 Dispatched</option>
+                                        <option value="completed" <%= order.order_status === 'completed' ? 'selected' : '' %>>🎉 Completed</option>
+                                        <option value="cancelled" <%= order.order_status === 'cancelled' ? 'selected' : '' %>>❌ Cancelled</option>
+                                    </select>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    <a href="/merchant/messages" class="bg-[#08110D] text-[#19D98B] font-bold px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-2xs">
+                                        <span>💬 Chat</span>
+                                    </a>
+                                    <a href="/receipt/<%= order.order_ref %>" target="_blank" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-bold px-3 py-1.5 rounded-xl border border-[#E3E9E5] transition">
+                                        Receipt ↗
+                                    </a>
+                                    <a href="/order/<%= order.order_ref %>?token=<%= order.order_token %>" target="_blank" class="bg-white hover:bg-[#F8FAF8] text-[#6B756F] font-bold px-3 py-1.5 rounded-xl border border-[#E3E9E5] transition">
+                                        Track ↗
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } %>
+            </div>
+        </div>
+
+    </main>
+
+    <%- include('components/upgrade_modal.ejs') %>
+
+    <!-- Store QR Code Modal -->
+    <div id="storeQrModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+        <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-sm w-full p-6 space-y-5 border border-[#E3E9E5] shadow-2xl text-center">
+            <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
+                <div class="flex items-center gap-2 text-left">
+                    <span class="text-xl">📱</span>
+                    <div>
+                        <h3 class="font-extrabold text-sm text-[#08110D] font-display">Storefront QR Code</h3>
+                        <p class="text-[11px] text-[#6B756F]">Instant scan & direct order</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeQrModal()" class="text-[#6B756F] hover:text-[#08110D] font-bold text-lg p-1">✕</button>
+            </div>
+
+            <!-- QR Code Canvas Container -->
+            <div class="bg-[#F8FAF8] p-5 rounded-2xl border border-[#E3E9E5] flex flex-col items-center justify-center space-y-3">
+                <div id="qrCodeContainer" class="p-3 bg-white rounded-xl shadow-xs border border-[#E3E9E5] flex items-center justify-center min-h-[180px] min-w-[180px]"></div>
+                <div class="space-y-1">
+                    <div class="text-xs font-mono font-bold text-[#087A50] truncate max-w-[240px]">
+                        zlik.store/<%= store.slug %>
+                    </div>
+                    <p class="text-[10px] text-[#6B756F]">Scan with phone camera to open official store</p>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="space-y-2 pb-safe sm:pb-0">
+                <button type="button" onclick="downloadQrCode()" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs py-3 rounded-xl transition shadow-2xs flex items-center justify-center gap-2 font-display">
+                    <span>⬇️</span> <span>Download Print-Ready QR (PNG)</span>
+                </button>
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" onclick="copyStoreUrl()" id="copyStoreUrlBtn" class="w-full bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-bold text-xs py-2.5 rounded-xl border border-[#E3E9E5] transition flex items-center justify-center gap-1.5">
+                        <span>📋</span> <span>Copy Link</span>
+                    </button>
+                    <a href="https://wa.me/?text=Order%20directly%20from%20our%20official%20store:%20https://zlik.store/<%= store.slug %>" target="_blank" class="w-full bg-[#19D98B]/15 hover:bg-[#19D98B]/25 text-[#087A50] font-bold text-xs py-2.5 rounded-xl border border-[#19D98B]/30 transition flex items-center justify-center gap-1.5">
+                        <span>💬</span> <span>WhatsApp</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pro Upgrade Modal -->
+    <div id="proUpgradeModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 border border-[#E3E9E5] shadow-2xl text-center">
+            <div class="space-y-1.5">
+                <span class="text-[10px] font-semibold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-[#19D98B]/20 text-[#087A50] font-mono">
+                    Pro Feature
+                </span>
+                <h3 class="text-base font-semibold text-[#08110D]" id="proModalTitle">Unlock Pro Feature</h3>
+                <p class="text-xs text-[#6B756F]" id="proModalDesc">
+                    This feature is available on Zlik Pro. Upgrade to unlock all 15 industry storefronts, 500 products, 3 stores, and lifetime sales ledger export.
+                </p>
+            </div>
+
+            <div class="bg-[#F8FAF8] rounded-2xl p-4 border border-[#E3E9E5] text-left space-y-2 text-xs">
+                <div class="font-semibold text-[11px] text-[#08110D] uppercase tracking-wider">Included in Zlik Pro (₦5,000/mo or ₦50,000/yr):</div>
+                <ul class="space-y-1.5 text-xs text-[#08110D]">
+                    <li class="flex items-center gap-2">
+                        <span class="text-[#087A50] font-bold">•</span>
+                        <span>Up to 3 stores & 500 products (5 photos/item)</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="text-[#087A50] font-bold">•</span>
+                        <span>All 15 storefront designs & custom covers</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="text-[#087A50] font-bold">•</span>
+                        <span>Remove “Powered by Zlik” attribution</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="text-[#087A50] font-bold">•</span>
+                        <span>Full sales ledger history & CSV export</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="text-[#087A50] font-bold">•</span>
+                        <span>Unlimited debts, sound library & WhatsApp support</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="flex items-center gap-2 pt-1">
+                <button type="button" onclick="closeProUpgradeModal()" class="w-1/2 bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-medium text-xs py-3 rounded-xl border border-[#E3E9E5] transition">
+                    Maybe Later
+                </button>
+                <button type="button" onclick="initiateDashboardUpgrade('pro', 'monthly')" id="dashUpgradeBtn" class="w-1/2 bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs py-3 rounded-xl transition shadow-2xs text-center flex items-center justify-center">
+                    Upgrade to Pro ⚡
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <%- include('components/bottom_nav.ejs', { activeTab: 'orders' }) %>
+
+    <script src="/assets/js/sound_engine.js"></script>
+    <script>
+        const storeData = <%- JSON.stringify(store) %>;
+        const revenueMetrics = <%- JSON.stringify(revenueMetrics) %>;
+        const visitorMetrics = <%- JSON.stringify(visitorMetrics || {}) %>;
+        let audioEnabled = true;
+        let lastOrderId = <%= orders.length > 0 ? orders[0].id : 0 %>;
+        let lastEventId = 0;
+        let dashboardSSE = null;
+
+        function triggerUpgradeModal(featureName) {
+            const title = document.getElementById('proModalTitle');
+            const desc = document.getElementById('proModalDesc');
+            if (featureName === 'ledger') {
+                if (title) title.textContent = 'Unlock Lifetime Sales Ledger';
+                if (desc) desc.textContent = 'Extended revenue timeframes and lifetime historical records are exclusively unlocked on Zlik Pro.';
+            } else if (featureName) {
+                if (title) title.textContent = `Unlock ${featureName}`;
+                if (desc) desc.textContent = `${featureName} is available on Zlik Pro. Upgrade now for full access and capacity.`;
+            }
+            const modal = document.getElementById('upgradePromptModal') || document.getElementById('proUpgradeModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeProUpgradeModal() {
+            const modal = document.getElementById('upgradePromptModal') || document.getElementById('proUpgradeModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        let currentVisitorPeriod = 'today';
+        function switchVisitorPeriod(period) {
+            currentVisitorPeriod = period;
+            document.querySelectorAll('.visitor-tab-btn').forEach(btn => {
+                btn.classList.remove('bg-[#08110D]', 'text-white', 'font-semibold');
+                btn.classList.add('text-[#6B756F]');
+            });
+            const activeBtn = document.getElementById('vbtn-' + period);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-[#6B756F]');
+                activeBtn.classList.add('bg-[#08110D]', 'text-white', 'font-semibold');
+            }
+
+            const data = visitorMetrics[period] || { visits: 0, unique_visitors: 0, label: period };
+            document.getElementById('statVisits').textContent = Number(data.visits || 0).toLocaleString();
+            document.getElementById('statUniqueVisitors').textContent = Number(data.unique_visitors || 0).toLocaleString();
+            document.getElementById('statVisitsSub').textContent = `In ${data.label || period}`;
+            document.getElementById('statUniqueSub').textContent = `Distinct shoppers in ${data.label || period}`;
+        }
+
+        function playChime() {
+            if (!audioEnabled) return;
+            try {
+                playNotificationSound(storeData.alert_sound || 'chime', storeData.custom_sound_url);
+            } catch (e) {}
+        }
+
+        function unlockAudio() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                ctx.resume();
+                playChime();
+                document.getElementById('audioUnlockBanner').innerHTML = '<span>✓ Live Audible Order & Chat Chimes Active</span>';
+                setTimeout(() => document.getElementById('audioUnlockBanner').classList.add('hidden'), 2500);
+            } catch(e) {}
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            const icon = document.getElementById('soundToggleIcon');
+            const text = document.getElementById('soundToggleText');
+            if (icon) icon.textContent = audioEnabled ? '🔊' : '🔇';
+            if (text) text.textContent = audioEnabled ? 'Sound: ON' : 'Sound: OFF';
+        }
+
+        const isProStore = <%= isPro ? 'true' : 'false' %>;
+        let currentPeriod = 'today';
+
+        function handleTimeframeChange(period) {
+            const gated = ['month', '3months', '6months', 'yearly', 'lifetime'];
+            if (!isProStore && gated.includes(period)) {
+                document.getElementById('timeframeSelect').value = currentPeriod;
+                triggerUpgradeModal('ledger');
+                return;
+            }
+            currentPeriod = period;
+            const data = revenueMetrics[period] || revenueMetrics.today;
+            document.getElementById('statRevenue').textContent = '₦' + Number(data.confirmed_revenue).toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('statConfirmedCount').textContent = data.confirmed_count;
+            document.getElementById('statPendingRevenue').textContent = '₦' + Number(data.pending_revenue).toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('statPendingCount').textContent = data.pending_count;
+            document.getElementById('statAov').textContent = '₦' + Number(data.aov).toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('statDelivery').textContent = data.delivery_count;
+            document.getElementById('statPickup').textContent = data.pickup_count;
+        }
+
+        async function confirmPayment(orderId) {
+            if (!confirm('Confirm you have verified receipt of this bank transfer?')) return;
+            try {
+                const res = await fetch('/api/orders?action=confirm_payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: orderId })
+                });
+                const d = await res.json();
+                if (d.success) location.reload();
+            } catch (e) {}
+        }
+
+        async function rejectPayment(orderId) {
+            if (!confirm('Mark payment claim as rejected?')) return;
+            try {
+                const res = await fetch('/api/orders?action=reject_payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: orderId })
+                });
+                const d = await res.json();
+                if (d.success) location.reload();
+            } catch (e) {}
+        }
+
+        async function updateStatus(orderId, status) {
+            try {
+                await fetch('/api/orders?action=update_status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: orderId, status: status })
+                });
+            } catch (e) {}
+        }
+
+        async function checkUnreadChat() {
+            try {
+                const res = await fetch('/api/chat?action=merchant_get_unread_count');
+                const d = await res.json();
+                if (d.success && d.unread_count > 0) {
+                    const badge = document.getElementById('navChatUnreadBadge');
+                    if (badge) {
+                        badge.textContent = d.unread_count + ' new';
+                        badge.classList.remove('hidden');
+                    }
+                    const mobileBadge = document.getElementById('mobileNavChatBadge');
+                    if (mobileBadge) mobileBadge.classList.remove('hidden');
+                }
+            } catch(e) {}
+        }
+
+        function connectSSE() {
+            if (typeof EventSource === 'undefined') return;
+            dashboardSSE = new EventSource('/api/stream?channel=merchant');
+            dashboardSSE.addEventListener('notification', (e) => {
+                try {
+                    const ev = JSON.parse(e.data);
+                    playChime();
+                    if (ev.event_type === 'chat_message') {
+                        checkUnreadChat();
+                    } else {
+                        setTimeout(() => location.reload(), 2000);
+                    }
+                } catch(err) {}
+            });
+        }
+
+        let qrInstance = null;
+        const storeSlug = '<%= store.slug %>';
+        const storeUrl = window.location.origin + '/' + storeSlug;
+
+        function openQrModal() {
+            const modal = document.getElementById('storeQrModal');
+            modal.classList.remove('hidden');
+            const container = document.getElementById('qrCodeContainer');
+            if (!qrInstance) {
+                container.innerHTML = '';
+                qrInstance = new QRCode(container, {
+                    text: 'https://zlik.store/' + storeSlug,
+                    width: 180,
+                    height: 180,
+                    colorDark: '#08110D',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
+        }
+
+        function closeQrModal() {
+            document.getElementById('storeQrModal').classList.add('hidden');
+        }
+
+        function downloadQrCode() {
+            const img = document.querySelector('#qrCodeContainer img');
+            const canvas = document.querySelector('#qrCodeContainer canvas');
+            let dataUrl = '';
+            if (img && img.src) {
+                dataUrl = img.src;
+            } else if (canvas) {
+                dataUrl = canvas.toDataURL('image/png');
+            }
+            if (!dataUrl) return;
+
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `${storeSlug}-zlik-store-qr.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function copyStoreUrl() {
+            const fullUrl = 'https://zlik.store/' + storeSlug;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(fullUrl).then(() => {
+                    const btn = document.getElementById('copyStoreUrlBtn');
+                    btn.innerHTML = '<span>✓ Copied!</span>';
+                    setTimeout(() => btn.innerHTML = '<span>📋 Copy Link</span>', 2000);
+                });
+            }
+        }
+
+        async function initiateDashboardUpgrade(plan = 'pro', cycle = 'monthly') {
+            const btn = document.getElementById('dashUpgradeBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Initializing...';
+            }
+
+            try {
+                const res = await fetch('/api/billing/initiate_upgrade', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan_tier: plan, billing_cycle: cycle })
+                });
+                const data = await res.json();
+                if (!data.success) {
+                    alert(data.error || 'Failed to initiate upgrade.');
+                    if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro ⚡'; }
+                    return;
+                }
+
+                if (typeof PaystackPop === 'undefined') {
+                    alert('Paystack gateway is loading. Please try again in a few seconds.');
+                    if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro ⚡'; }
+                    return;
+                }
+
+                const handler = PaystackPop.setup({
+                    key: data.paystack_public_key || 'pk_test_sample',
+                    email: data.email || 'merchant@zlik.store',
+                    amount: data.amount_kobo,
+                    ref: data.reference,
+                    currency: 'NGN',
+                    callback: async function(response) {
+                        if (btn) btn.textContent = 'Verifying upgrade...';
+                        const vRes = await fetch('/api/billing/verify_subscription', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ reference: response.reference })
+                        });
+                        const vData = await vRes.json();
+                        if (vData.success) {
+                            alert('🎉 Upgrade successful! Your store is now on Zlik ' + plan.toUpperCase());
+                            location.reload();
+                        } else {
+                            alert(vData.error || 'Upgrade verification error. Please reload.');
+                        }
+                    },
+                    onClose: function() {
+                        if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro ⚡'; }
+                    }
+                });
+                handler.openIframe();
+            } catch (err) {
+                alert('Network error initiating payment.');
+                if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro ⚡'; }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkUnreadChat();
+            connectSSE();
+        });
+    </script>
+    <script src="https://js.paystack.co/v1/inline.js"></script>
+</body>
+</html>

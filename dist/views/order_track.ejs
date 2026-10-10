@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Order #<%= order.order_ref %> — <%= store.store_name %> | zlik</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        zlikDark: '#08110D',
+                        zlikGreen: '#19D98B',
+                        zlikDeep: '#087A50',
+                        zlikBg: '#F8FAF8',
+                        zlikWhite: '#FFFFFF',
+                        zlikMuted: '#6B756F',
+                        zlikBorder: '#E3E9E5'
+                    },
+                    fontFamily: {
+                        display: ['Montserrat', 'sans-serif'],
+                        body: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAF8; color: #08110D; }
+        .font-display { font-family: 'Montserrat', sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased items-center justify-center p-4">
+
+    <div class="max-w-md w-full bg-white rounded-3xl border border-[#E3E9E5] shadow-lg overflow-hidden space-y-5 p-6">
+        <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-4">
+            <div>
+                <span class="text-[10px] uppercase font-bold text-[#6B756F]">Order Tracking</span>
+                <h1 class="text-base font-bold text-[#08110D] font-display font-mono">#<%= order.order_ref %></h1>
+            </div>
+            <a href="/<%= store.slug %>" class="text-xs font-bold text-[#087A50] hover:underline">
+                <%= store.store_name %> ↗
+            </a>
+        </div>
+
+        <!-- Status Progress Bar -->
+        <div class="space-y-3">
+            <div class="flex items-center justify-between text-xs">
+                <span class="font-bold text-[#08110D]">Status:</span>
+                <span class="px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px] <%= order.order_status === 'confirmed' || order.order_status === 'completed' ? 'bg-emerald-100 text-emerald-800' : (order.order_status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800') %>">
+                    <%= order.order_status %>
+                </span>
+            </div>
+
+            <!-- Steps -->
+            <div class="grid grid-cols-4 gap-1.5 text-center text-[10px] font-bold">
+                <div class="p-2 rounded-xl bg-emerald-100 text-emerald-900 border border-emerald-300">1. Placed ✓</div>
+                <div class="p-2 rounded-xl <%= ['confirmed', 'dispatched', 'completed'].includes(order.order_status) ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-gray-100 text-gray-400' %>">2. Confirmed</div>
+                <div class="p-2 rounded-xl <%= ['dispatched', 'completed'].includes(order.order_status) ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-gray-100 text-gray-400' %>">3. Dispatched</div>
+                <div class="p-2 rounded-xl <%= order.order_status === 'completed' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-gray-100 text-gray-400' %>">4. Delivered</div>
+            </div>
+        </div>
+
+        <!-- Bank Details & Payment Claim Action -->
+        <% if (order.payment_status === 'unpaid' && store.bank_name) { %>
+            <div class="p-4 rounded-2xl bg-[#08110D] text-white space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold font-display text-[#19D98B]">🏦 Bank Transfer Details</span>
+                    <span class="text-[10px] text-white/70">Awaiting Payment</span>
+                </div>
+                <div class="text-xs space-y-1.5">
+                    <div class="text-white/70">Bank: <strong class="text-white font-bold"><%= store.bank_name %></strong></div>
+                    <div class="flex items-center justify-between bg-white/10 p-2.5 rounded-xl border border-white/10">
+                        <div>
+                            <div class="text-[10px] text-white/60 uppercase font-bold">Account Number</div>
+                            <div class="text-base font-bold font-mono text-[#19D98B]" id="accNumber"><%= store.bank_account_number %></div>
+                        </div>
+                        <button type="button" id="copyAccBtn" onclick="copyAccountNumber()" class="bg-[#19D98B] hover:bg-[#15b775] text-[#08110D] text-xs font-bold font-display px-3 py-1.5 rounded-lg transition shadow-2xs">
+                            📋 Copy
+                        </button>
+                    </div>
+                    <div class="text-white/70">Account Name: <strong class="text-white font-bold"><%= store.bank_account_name %></strong></div>
+                    <div class="text-white/70">Amount Due: <strong class="text-[#19D98B] font-bold">₦<%= Number(order.total_amount).toLocaleString('en-US', {minimumFractionDigits: 2}) %></strong></div>
+                </div>
+
+                <form onsubmit="submitClaim(event)" class="pt-2 border-t border-white/15 space-y-2">
+                    <input type="text" id="paymentRefInput" required placeholder="Enter Transfer Note / Sender Name" class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-xs text-white placeholder:text-white/40 outline-none focus:border-[#19D98B]">
+                    <button type="submit" id="claimBtn" class="w-full bg-[#19D98B] hover:bg-[#15b775] text-[#08110D] font-extrabold text-xs py-2.5 rounded-xl transition shadow-2xs">
+                        I Have Made the Transfer ✓
+                    </button>
+                </form>
+            </div>
+        <% } else if (order.payment_status === 'claimed') { %>
+            <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-1">
+                <div class="font-bold flex items-center gap-1.5">
+                    <span>⏳</span> <span>Payment Under Review</span>
+                </div>
+                <p class="text-[11px] text-amber-800">You submitted payment note: <strong class="font-mono"><%= order.payment_proof_ref %></strong>. The merchant is verifying your transfer.</p>
+            </div>
+        <% } else if (order.payment_status === 'paid') { %>
+            <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2">
+                <span class="text-lg">✅</span>
+                <div>
+                    <div class="font-bold">Payment Verified & Confirmed</div>
+                    <p class="text-[11px] text-emerald-800">Thank you! Your order is being processed.</p>
+                </div>
+            </div>
+        <% } %>
+
+        <!-- Order Items Summary -->
+        <div class="space-y-2 pt-2 border-t border-[#E3E9E5]">
+            <span class="text-[10px] uppercase font-bold text-[#6B756F]">Items Ordered</span>
+            <div class="space-y-2 text-xs">
+                <% (items || []).forEach(item => { %>
+                    <div class="flex justify-between items-center text-[#08110D]">
+                        <span><%= item.quantity %>x <%= item.title %></span>
+                        <span class="font-bold">₦<%= (Number(item.price) * Number(item.quantity)).toLocaleString('en-US', {minimumFractionDigits: 2}) %></span>
+                    </div>
+                <% }) %>
+                <div class="flex justify-between items-center text-[#6B756F] pt-2 border-t border-[#E3E9E5]">
+                    <span>Delivery Fee:</span>
+                    <span>₦<%= Number(order.delivery_fee || 0).toLocaleString('en-US', {minimumFractionDigits: 2}) %></span>
+                </div>
+                <div class="flex justify-between items-center text-sm font-extrabold text-[#087A50] pt-1">
+                    <span>Total Amount:</span>
+                    <span class="font-display">₦<%= Number(order.total_amount).toLocaleString('en-US', {minimumFractionDigits: 2}) %></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="pt-2 flex items-center gap-2">
+            <a href="/receipt/<%= order.order_ref %>" target="_blank" class="flex-1 text-center bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-bold text-xs py-2.5 rounded-xl border border-[#E3E9E5] transition">
+                View Receipt ↗
+            </a>
+            <a href="/store/<%= store.slug %>" class="flex-1 text-center bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs py-2.5 rounded-xl transition shadow-2xs">
+                Continue Shopping
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function copyAccountNumber() {
+            const acc = document.getElementById('accNumber').textContent.trim();
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(acc).then(() => {
+                    const btn = document.getElementById('copyAccBtn');
+                    btn.textContent = '✓ Copied!';
+                    setTimeout(() => btn.textContent = '📋 Copy', 2000);
+                }).catch(() => fallbackCopy(acc));
+            } else {
+                fallbackCopy(acc);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const input = document.createElement('input');
+            input.value = text;
+            document.body.appendChild(input);
+            input.select();
+            document.execCommand('copy');
+            document.body.removeChild(input);
+            const btn = document.getElementById('copyAccBtn');
+            btn.textContent = '✓ Copied!';
+            setTimeout(() => btn.textContent = '📋 Copy', 2000);
+        }
+
+        async function submitClaim(e) {
+            e.preventDefault();
+            const btn = document.getElementById('claimBtn');
+            const ref = document.getElementById('paymentRefInput').value.trim();
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/orders?action=submit_claim', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: <%= order.id %>, payment_proof_ref: ref })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error || 'Failed to submit claim');
+                }
+            } catch(e) {
+                alert('Network error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

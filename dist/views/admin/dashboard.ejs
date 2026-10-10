@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            zlikDark: '#08110D',
+            zlikGreen: '#19D98B',
+            zlikDeepGreen: '#087A50',
+            zlikBg: '#F8FAF8',
+            zlikWhite: '#FFFFFF',
+            zlikSecondary: '#6B756F',
+            zlikBorder: '#E3E9E5'
+          },
+          fontFamily: {
+            display: ['Montserrat', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #08110D; color: #FFFFFF; }
+    .font-display { font-family: 'Montserrat', sans-serif; }
+    .nav-tab.active { background-color: rgba(25, 217, 139, 0.15); color: #19D98B; border-color: #19D98B; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+  </style>
+</head>
+<body class="bg-[#08110D] text-white min-h-screen selection:bg-[#19D98B] selection:text-[#08110D]">
+
+  <!-- Top Navbar -->
+  <header class="border-b border-white/10 bg-[#08110D]/90 sticky top-0 z-40 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-6">
+        <a href="/<%= typeof adminPath !== 'undefined' ? adminPath : 'admin' %>" class="text-2xl font-extrabold font-display tracking-tight text-white flex items-center gap-1">
+          zlik<span class="text-[#19D98B]">.</span>
+          <span class="text-xs uppercase px-2 py-0.5 ml-2 bg-[#19D98B]/20 text-[#19D98B] font-bold rounded tracking-wider">Console</span>
+        </a>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <div class="text-right hidden sm:block">
+          <div class="text-xs font-bold text-white"><%= currentAdmin ? currentAdmin.name : 'Administrator' %></div>
+          <div class="text-[11px] text-[#19D98B] uppercase font-semibold tracking-wider"><%= currentAdmin && currentAdmin.role_info ? currentAdmin.role_info.name : 'Super Admin' %></div>
+        </div>
+        <a href="/<%= typeof adminPath !== 'undefined' ? adminPath : 'admin' %>/logout" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/20 text-white/80 hover:text-white hover:border-white/40 transition">
+          Sign out
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Tabs Navigation -->
+    <div class="flex items-center space-x-2 border-b border-white/10 pb-4 mb-8 overflow-x-auto text-xs font-semibold">
+      <button onclick="switchTab('overview')" id="tab-btn-overview" class="nav-tab active px-4 py-2 rounded-lg border border-transparent hover:text-[#19D98B] transition whitespace-nowrap">
+        📊 Cockpit Overview
+      </button>
+      <button onclick="switchTab('merchants')" id="tab-btn-merchants" class="nav-tab px-4 py-2 rounded-lg border border-transparent hover:text-[#19D98B] transition whitespace-nowrap">
+        🏪 Merchants CRM (<%= stores.length %>)
+      </button>
+      <button onclick="switchTab('catalog')" id="tab-btn-catalog" class="nav-tab px-4 py-2 rounded-lg border border-transparent hover:text-[#19D98B] transition whitespace-nowrap">
+        📦 Global Catalog
+      </button>
+      <button onclick="switchTab('pricing')" id="tab-btn-pricing" class="nav-tab px-4 py-2 rounded-lg border border-transparent hover:text-[#19D98B] transition whitespace-nowrap">
+        💳 Plans & Limits
+      </button>
+      <button onclick="switchTab('integrations')" id="tab-btn-integrations" class="nav-tab px-4 py-2 rounded-lg border border-transparent hover:text-[#19D98B] transition whitespace-nowrap">
+        ⚙️ Gateways & SMTP
+      </button>
+      <button onclick="switchTab('team')" id="tab-btn-team" class="nav-tab px-4 py-2 rounded-lg border border-transparent hover:text-[#19D98B] transition whitespace-nowrap">
+        👥 Admin Team
+      </button>
+      <button onclick="switchTab('leads')" id="tab-btn-leads" class="nav-tab px-4 py-2 rounded-lg border border-transparent hover:text-[#19D98B] transition whitespace-nowrap">
+        🏢 Enterprise Leads (<%= metrics.totalLeads %>)
+      </button>
+      <button onclick="switchTab('audit')" id="tab-btn-audit" class="nav-tab px-4 py-2 rounded-lg border border-transparent hover:text-[#19D98B] transition whitespace-nowrap">
+        📜 Logs & Maintenance
+      </button>
+    </div>
+
+    <!-- TAB 1: OVERVIEW -->
+    <div id="tab-overview" class="tab-content active space-y-8">
+      <!-- Metric Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
+          <div class="text-xs text-white/60 font-semibold mb-1">TOTAL PLATFORM STORES</div>
+          <div class="text-3xl font-extrabold font-display text-white"><%= metrics.totalStores %></div>
+          <div class="text-xs text-[#19D98B] mt-2 font-medium">● <%= metrics.activeStores %> Active Storefronts</div>
+        </div>
+
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
+          <div class="text-xs text-white/60 font-semibold mb-1">TOTAL ORDERS PROCESSED</div>
+          <div class="text-3xl font-extrabold font-display text-white"><%= metrics.totalOrders %></div>
+          <div class="text-xs text-white/60 mt-2 font-medium">+<%= metrics.todayOrders %> orders today</div>
+        </div>
+
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
+          <div class="text-xs text-white/60 font-semibold mb-1">PLATFORM GMV</div>
+          <div class="text-3xl font-extrabold font-display text-[#19D98B]">₦<%= Number(metrics.totalGmv || 0).toLocaleString() %></div>
+          <div class="text-xs text-white/60 mt-2 font-medium">₦<%= Number(metrics.todayGmv || 0).toLocaleString() %> today</div>
+        </div>
+
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
+          <div class="text-xs text-white/60 font-semibold mb-1">ESTIMATED MRR</div>
+          <div class="text-3xl font-extrabold font-display text-white">₦<%= Number(metrics.estimatedMrr || 0).toLocaleString() %></div>
+          <div class="text-xs text-amber-400 mt-2 font-medium"><%= metrics.proCount %> Pro &bull; <%= metrics.businessCount %> Business</div>
+        </div>
+      </div>
+
+      <!-- Plan Breakdown & Quick Info -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
+          <h3 class="text-sm font-bold font-display uppercase tracking-wider text-white mb-4">Subscription Distribution</h3>
+          <div class="space-y-3 text-xs">
+            <div class="flex justify-between items-center py-2 border-b border-white/5">
+              <span class="text-white/70">Free Starter Tier</span>
+              <span class="font-bold text-white"><%= metrics.totalStores - metrics.proCount - metrics.businessCount - metrics.enterpriseCount %></span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-white/5">
+              <span class="text-white/70">Active 7-Day Trials</span>
+              <span class="font-bold text-amber-400"><%= metrics.trialCount %></span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-white/5">
+              <span class="text-white/70">Pro Plan (₦<%= Number(settings.pro_monthly_price || 5000).toLocaleString() %>/mo)</span>
+              <span class="font-bold text-[#19D98B]"><%= metrics.proCount %></span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-white/5">
+              <span class="text-white/70">Business Tier (₦<%= Number(settings.business_monthly_price || 9000).toLocaleString() %>/mo)</span>
+              <span class="font-bold text-blue-400"><%= metrics.businessCount %></span>
+            </div>
+            <div class="flex justify-between items-center py-2">
+              <span class="text-white/70">Enterprise Tier</span>
+              <span class="font-bold text-purple-400"><%= metrics.enterpriseCount %></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-6 lg:col-span-2">
+          <h3 class="text-sm font-bold font-display uppercase tracking-wider text-white mb-4">Recent Merchant Activity</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="text-white/50 border-b border-white/10 pb-2">
+                  <th class="py-2">Store</th>
+                  <th class="py-2">Owner</th>
+                  <th class="py-2">WhatsApp</th>
+                  <th class="py-2">Tier</th>
+                  <th class="py-2 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-white/5">
+                <% stores.slice(0, 5).forEach(s => { %>
+                  <tr>
+                    <td class="py-3 font-semibold text-white"><%= s.store_name %></td>
+                    <td class="py-3 text-white/70"><%= s.owner_name %></td>
+                    <td class="py-3 text-white/70"><%= s.whatsapp_number %></td>
+                    <td class="py-3">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= s.plan_tier === 'pro' ? 'bg-[#19D98B]/20 text-[#19D98B]' : (s.plan_tier === 'business' ? 'bg-blue-500/20 text-blue-400' : 'bg-white/10 text-white/70') %>">
+                        <%= s.plan_tier || 'free' %>
+                      </span>
+                    </td>
+                    <td class="py-3 text-right">
+                      <button onclick="impersonateMerchant(<%= s.id %>)" class="text-xs text-[#19D98B] hover:underline font-semibold">
+                        Impersonate &rarr;
+                      </button>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: MERCHANTS CRM -->
+    <div id="tab-merchants" class="tab-content space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold font-display text-white">Merchant Directory</h2>
+          <p class="text-xs text-white/60">Manage store subscriptions, verification badges, and access support tools</p>
+        </div>
+        <input type="text" id="merchantSearch" onkeyup="filterMerchants()" placeholder="Search stores, owners, slugs..." class="px-4 py-2 rounded-lg bg-white/10 border border-white/15 text-xs text-white placeholder-white/40 outline-none focus:border-[#19D98B] w-full sm:w-72">
+      </div>
+
+      <div class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs" id="merchantsTable">
+            <thead class="bg-white/5 border-b border-white/10 text-white/60 font-semibold">
+              <tr>
+                <th class="p-4">Store / Slug</th>
+                <th class="p-4">Owner & Contact</th>
+                <th class="p-4">Tier / Status</th>
+                <th class="p-4">Verification</th>
+                <th class="p-4 text-right">Administrative Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              <% stores.forEach(s => { %>
+                <tr class="merchant-row hover:bg-white/5 transition" data-search="<%= (s.store_name + ' ' + s.owner_name + ' ' + s.slug + ' ' + s.whatsapp_number).toLowerCase() %>">
+                  <td class="p-4">
+                    <div class="font-bold text-white text-sm"><%= s.store_name %></div>
+                    <a href="/<%= s.slug %>" target="_blank" class="text-xs text-[#19D98B] hover:underline font-mono">/<%= s.slug %></a>
+                  </td>
+                  <td class="p-4">
+                    <div class="font-semibold text-white"><%= s.owner_name %></div>
+                    <div class="text-white/60 text-[11px]"><%= s.whatsapp_number %> &bull; <%= s.email || 'No email' %></div>
+                  </td>
+                  <td class="p-4">
+                    <div class="flex items-center gap-2">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= s.plan_tier === 'pro' ? 'bg-[#19D98B]/20 text-[#19D98B]' : (s.plan_tier === 'business' ? 'bg-blue-500/20 text-blue-400' : 'bg-white/10 text-white/70') %>">
+                        <%= s.plan_tier || 'free' %>
+                      </span>
+                      <span class="text-[11px] <%= s.status === 'active' ? 'text-emerald-400' : 'text-rose-400' %>">
+                        ● <%= s.status || 'active' %>
+                      </span>
+                    </div>
+                  </td>
+                  <td class="p-4">
+                    <button onclick="toggleVerification(<%= s.id %>, <%= s.is_verified ? 0 : 1 %>)" class="px-2.5 py-1 rounded text-[11px] font-semibold border <%= s.is_verified ? 'bg-[#19D98B]/10 border-[#19D98B] text-[#19D98B]' : 'bg-white/5 border-white/10 text-white/50 hover:text-white' %>">
+                      <%= s.is_verified ? '✓ Verified' : '+ Add Badge' %>
+                    </button>
+                  </td>
+                  <td class="p-4 text-right space-x-2">
+                    <button onclick="openAdminTemplateModal(<%= s.id %>, '<%= s.store_name.replace(/'/g, "\\'") %>', '<%= s.template_slug || 'general_clean' %>')" class="px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 text-[#19D98B] font-medium text-xs transition">
+                      🎨 Theme
+                    </button>
+                    <button onclick="openPlanModal(<%= s.id %>, '<%= s.store_name.replace(/'/g, "\\'") %>', '<%= s.plan_tier %>')" class="px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 text-white font-medium text-xs transition">
+                      Set Tier
+                    </button>
+                    <button onclick="toggleStoreStatus(<%= s.id %>, '<%= s.status === 'active' ? 'suspended' : 'active' %>')" class="px-3 py-1.5 rounded <%= s.status === 'active' ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400' %> font-medium text-xs transition">
+                      <%= s.status === 'active' ? 'Suspend' : 'Activate' %>
+                    </button>
+                    <button onclick="impersonateMerchant(<%= s.id %>)" class="px-3 py-1.5 rounded bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] font-bold text-xs transition shadow-sm">
+                      Login &rarr;
+                    </button>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: GLOBAL CATALOG -->
+    <div id="tab-catalog" class="tab-content space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold font-display text-white">Global Product Catalog</h2>
+          <p class="text-xs text-white/60">Search and moderate inventory across all seller stores</p>
+        </div>
+        <input type="text" id="catalogSearch" onkeyup="filterCatalog()" placeholder="Search products, titles, stores..." class="px-4 py-2 rounded-lg bg-white/10 border border-white/15 text-xs text-white placeholder-white/40 outline-none focus:border-[#19D98B] w-full sm:w-72">
+      </div>
+
+      <div class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs" id="catalogTable">
+            <thead class="bg-white/5 border-b border-white/10 text-white/60 font-semibold">
+              <tr>
+                <th class="p-4">Product</th>
+                <th class="p-4">Price</th>
+                <th class="p-4">Category</th>
+                <th class="p-4">Status</th>
+                <th class="p-4 text-right">Moderation</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              <% items.forEach(it => { %>
+                <tr class="catalog-row hover:bg-white/5 transition" data-search="<%= (it.title + ' ' + (it.category || '')).toLowerCase() %>">
+                  <td class="p-4">
+                    <div class="font-bold text-white text-sm"><%= it.title %></div>
+                    <div class="text-[11px] text-white/50">Store ID #<%= it.store_id %></div>
+                  </td>
+                  <td class="p-4 font-bold text-white">₦<%= Number(it.price).toLocaleString() %></td>
+                  <td class="p-4 text-white/70"><%= it.category || 'General' %></td>
+                  <td class="p-4">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= it.is_available ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400' %>">
+                      <%= it.is_available ? 'Live' : 'Hidden' %>
+                    </span>
+                  </td>
+                  <td class="p-4 text-right">
+                    <button onclick="moderateItem(<%= it.id %>, <%= it.is_available ? 0 : 1 %>)" class="px-3 py-1.5 rounded <%= it.is_available ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400' : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400' %> font-semibold text-xs transition">
+                      <%= it.is_available ? 'Hide Product' : 'Approve Live' %>
+                    </button>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: PRICING & LIMITS -->
+    <div id="tab-pricing" class="tab-content space-y-8">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-bold font-display text-white mb-1">Platform Plans & Feature Matrix Console</h2>
+          <p class="text-xs text-white/60">Configure live subscription rates, resource quotas, and tick/untick feature checkboxes for Free, Pro, and Business tiers in real time</p>
+        </div>
+        <button type="button" onclick="savePlansMatrix(event)" class="bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] font-bold font-display text-xs px-5 py-2.5 rounded-lg transition shadow-sm flex items-center gap-2">
+          <span>💾</span>
+          <span>Save & Sync All Plans</span>
+        </button>
+      </div>
+
+      <!-- 3 Tier Pricing & Quota Limits Cards -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- 1. Free Starter Tier -->
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-5">
+          <div class="flex items-center justify-between pb-3 border-b border-white/10">
+            <div>
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-white/10 text-white">Free Starter</span>
+              <div class="text-lg font-bold font-display text-white mt-1">₦0 / forever</div>
+            </div>
+            <span class="text-xl">🌱</span>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <div>
+              <label class="block text-white/70 font-semibold mb-1">Product Catalog Limit</label>
+              <input type="number" id="limit_free_max_products" value="<%= plans.free.limits.max_products || 10 %>" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+            </div>
+            <div>
+              <label class="block text-white/70 font-semibold mb-1">Photos per Product</label>
+              <input type="number" id="limit_free_photos" value="<%= plans.free.limits.photos_per_product || 1 %>" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+            </div>
+            <div>
+              <label class="block text-white/70 font-semibold mb-1">Storefront Themes Count</label>
+              <input type="number" id="limit_free_themes" value="<%= plans.free.limits.storefront_designs || 5 %>" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+            </div>
+            <div>
+              <label class="block text-white/70 font-semibold mb-1">Sales Ledger History (Days)</label>
+              <input type="number" id="limit_free_ledger_days" value="<%= plans.free.limits.sales_ledger_days || 7 %>" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+            </div>
+            <div>
+              <label class="block text-white/70 font-semibold mb-1">Active Debt Records Limit</label>
+              <input type="number" id="limit_free_debts" value="<%= plans.free.limits.active_debts_limit || 3 %>" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+            </div>
+            <div>
+              <label class="block text-white/70 font-semibold mb-1">Weekly Status Posters Quota</label>
+              <input type="number" id="limit_free_posters" value="<%= settings.free_weekly_posters || 3 %>" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Pro Merchant Tier -->
+        <div class="bg-[#19D98B]/5 border-2 border-[#19D98B]/30 rounded-2xl p-6 space-y-5 relative">
+          <div class="flex items-center justify-between pb-3 border-b border-white/10">
+            <div>
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-[#19D98B]/20 text-[#19D98B]">Pro Merchant</span>
+              <div class="text-xs text-white/60 mt-1">Most Popular Seller Tier</div>
+            </div>
+            <span class="text-xl">⚡</span>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-white/70 font-semibold mb-1">Monthly Price (₦)</label>
+                <input type="number" id="price_pro_monthly" value="<%= settings.pro_monthly_price || plans.pro.price_monthly || 5000 %>" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+              </div>
+              <div>
+                <label class="block text-white/70 font-semibold mb-1">Yearly Price (₦)</label>
+                <input type="number" id="price_pro_yearly" value="<%= settings.pro_yearly_price || plans.pro.price_yearly || 50000 %>" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+              </div>
+            </div>
+            <div>
+              <label class="block text-white/70 font-semibold mb-1">Max Stores per Account</label>
+              <input type="number" id="limit_pro_stores" value="<%= plans.pro.limits.max_stores || 3 %>" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+            </div>
+            <div>
+              <label class="block text-white/70 font-semibold mb-1">Product Catalog Limit (-1 = Unlimited)</label>
+              <input type="number" id="limit_pro_max_products" value="<%= plans.pro.limits.max_products || 500 %>" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+            </div>
+            <div>
+              <label class="block text-white/70 font-semibold mb-1">Photos per Product</label>
+              <input type="number" id="limit_pro_photos" value="<%= plans.pro.limits.photos_per_product || 5 %>" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+            </div>
+            <div>
+              <label class="block text-white/70 font-semibold mb-1">Additional Staff Accounts</label>
+              <input type="number" id="limit_pro_staff" value="<%= plans.pro.limits.staff_accounts || 1 %>" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Business Growth Tier -->
+        <div class="bg-blue-500/5 border border-blue-500/30 rounded-2xl p-6 space-y-5">
+          <div class="flex items-center justify-between pb-3 border-b border-white/10">
+            <div>
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-blue-500/20 text-blue-400">Business Growth</span>
+              <div class="text-xs text-white/60 mt-1">Multi-Store & Teams Tier</div>
+            </div>
+            <span class="text-xl">🚀</span>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-white/70 font-semibold mb-1">Monthly Price (₦)</label>
+                <input type="number" id="price_biz_monthly" value="<%= settings.business_monthly_price || plans.business.price_monthly || 9000 %>" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+              </div>
+              <div>
+                <label class="block text-white/70 font-semibold mb-1">Yearly Price (₦)</label>
+                <input type="number" id="price_biz_yearly" value="<%= settings.business_yearly_price || plans.business.price_yearly || 90000 %>" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+              </div>
+            </div>
+            <div>
+              <label class="block text-white/70 font-semibold mb-1">Max Stores per Account</label>
+              <input type="number" id="limit_biz_stores" value="<%= plans.business.limits.max_stores || 10 %>" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+            </div>
+            <div>
+              <label class="block text-white/70 font-semibold mb-1">Product Catalog Limit (-1 = Unlimited)</label>
+              <input type="number" id="limit_biz_max_products" value="<%= plans.business.limits.max_products ?? -1 %>" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+            </div>
+            <div>
+              <label class="block text-white/70 font-semibold mb-1">Photos per Product</label>
+              <input type="number" id="limit_biz_photos" value="<%= plans.business.limits.photos_per_product || 10 %>" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+            </div>
+            <div>
+              <label class="block text-white/70 font-semibold mb-1">Staff Accounts with Roles</label>
+              <input type="number" id="limit_biz_staff" value="<%= plans.business.limits.staff_accounts || 5 %>" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Interactive Feature Selection Checkboxes Grid -->
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+          <div>
+            <h3 class="text-base font-bold font-display text-white">Live Feature Permission Checkboxes</h3>
+            <p class="text-xs text-white/60">Tick or untick any feature box to grant or lock capabilities across merchant dashboards and storefronts</p>
+          </div>
+          <div class="flex items-center gap-6 text-xs">
+            <span class="inline-flex items-center gap-1.5 font-medium"><span class="w-3 h-3 rounded bg-white/30 inline-block"></span> Free</span>
+            <span class="inline-flex items-center gap-1.5 font-semibold text-[#19D98B]"><span class="w-3 h-3 rounded bg-[#19D98B] inline-block"></span> Pro</span>
+            <span class="inline-flex items-center gap-1.5 font-semibold text-blue-400"><span class="w-3 h-3 rounded bg-blue-500 inline-block"></span> Business</span>
+          </div>
+        </div>
+
+        <!-- Grouped Feature Rows -->
+        <% 
+          const categories = ['Branding & Storefront', 'Catalog & Inventory', 'Sales, Ledger & Debts', 'Marketing, Pixels & Growth', 'Teams, Multi-Store & Branches', 'Support & Onboarding'];
+          categories.forEach(cat => {
+            const featsInCat = (featureDefinitions || []).filter(f => f.category === cat);
+            if (featsInCat.length === 0) return;
+        %>
+          <div class="space-y-3 pt-2">
+            <h4 class="text-xs uppercase tracking-wider font-bold text-[#19D98B] font-display flex items-center gap-2">
+              <span>●</span>
+              <span><%= cat %></span>
+            </h4>
+
+            <div class="bg-white/5 rounded-xl border border-white/10 overflow-hidden divide-y divide-white/5">
+              <% featsInCat.forEach(feat => { %>
+                <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white/5 transition">
+                  <div class="space-y-0.5 max-w-xl">
+                    <div class="font-semibold text-white text-xs flex items-center gap-2">
+                      <span><%= feat.name %></span>
+                      <code class="text-[10px] text-white/40 font-mono"><%= feat.key %></code>
+                    </div>
+                    <p class="text-[11px] text-white/50 leading-relaxed"><%= feat.description %></p>
+                  </div>
+
+                  <div class="flex items-center gap-8 shrink-0">
+                    <!-- Free Checkbox -->
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                      <input type="checkbox" id="feat_free_<%= feat.key %>" class="feat-box w-4 h-4 rounded bg-white/10 border-white/20 text-[#19D98B] focus:ring-0 focus:ring-offset-0 cursor-pointer" <%= (plans.free.features && plans.free.features[feat.key]) ? 'checked' : '' %>>
+                      <span class="text-xs font-medium text-white/70">Free</span>
+                    </label>
+
+                    <!-- Pro Checkbox -->
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                      <input type="checkbox" id="feat_pro_<%= feat.key %>" class="feat-box w-4 h-4 rounded bg-white/10 border-white/20 text-[#19D98B] focus:ring-0 focus:ring-offset-0 cursor-pointer" <%= (plans.pro.features && plans.pro.features[feat.key]) ? 'checked' : '' %>>
+                      <span class="text-xs font-semibold text-[#19D98B]">Pro</span>
+                    </label>
+
+                    <!-- Business Checkbox -->
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                      <input type="checkbox" id="feat_biz_<%= feat.key %>" class="feat-box w-4 h-4 rounded bg-white/10 border-white/20 text-blue-400 focus:ring-0 focus:ring-offset-0 cursor-pointer" <%= (plans.business.features && plans.business.features[feat.key]) ? 'checked' : '' %>>
+                      <span class="text-xs font-semibold text-blue-400">Business</span>
+                    </label>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        <% }); %>
+
+        <!-- Save Button Bottom Bar -->
+        <div class="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="text-xs text-white/60">
+            Changes will take effect instantly across merchant dashboards, checkout, and feature lock screens.
+          </div>
+          <button type="button" onclick="savePlansMatrix(event)" class="w-full sm:w-auto bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] font-bold font-display px-8 py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2">
+            <span>💾</span>
+            <span>Save & Sync All Plans</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: GATEWAYS & SMTP -->
+    <div id="tab-integrations" class="tab-content space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Paystack Config -->
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2.5">
+              <span class="text-xl">💳</span>
+              <div>
+                <h2 class="text-base font-bold font-display text-white">Paystack Gateway</h2>
+                <p class="text-xs text-white/60">Subscription checkout & live card processing</p>
+              </div>
+            </div>
+            <label class="flex items-center gap-2 cursor-pointer bg-white/10 px-3 py-1.5 rounded-lg border border-white/15">
+              <input type="checkbox" id="paystackEnabled" <%= settings.paystack_enabled ? 'checked' : '' %> class="rounded accent-[#19D98B]">
+              <span class="text-xs font-semibold text-white">Gateway Active</span>
+            </label>
+          </div>
+
+          <form onsubmit="savePaystackSettings(event)" class="space-y-4 text-xs mt-4">
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="block font-semibold text-white/80">Environment Mode</label>
+                <span id="paystackModeBadge" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full <%= settings.paystack_mode === 'live' ? 'bg-emerald-500/20 text-[#19D98B] border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30' %>">
+                  <%= settings.paystack_mode === 'live' ? '● LIVE PRODUCTION' : '● TEST SANDBOX' %>
+                </span>
+              </div>
+              <select id="paystackMode" onchange="updatePaystackModeUI()" class="w-full px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none">
+                <option value="test" <%= settings.paystack_mode === 'test' ? 'selected' : '' %>>Test Mode (Sandbox - fake cards)</option>
+                <option value="live" <%= settings.paystack_mode === 'live' ? 'selected' : '' %>>Live Production (Real Card & Transfer Processing)</option>
+              </select>
+            </div>
+
+            <!-- Test Credentials -->
+            <div class="p-4 rounded-xl border border-white/10 bg-white/[0.03] space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                  <span>🧪</span> Test Keys (Sandbox)
+                </span>
+                <span class="text-[10px] text-white/40">Active when in Test Mode</span>
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-white/70 mb-1">Test Public Key (pk_test_...)</label>
+                <input type="text" id="paystackTestPub" value="<%= settings.paystack_test_public_key || '' %>" placeholder="pk_test_..." class="w-full px-3.5 py-2 rounded-lg bg-white/10 border border-white/15 text-white font-mono text-xs outline-none focus:border-[#19D98B]">
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-white/70 mb-1">Test Secret Key (sk_test_...)</label>
+                <div class="relative">
+                  <input type="password" id="paystackTestSec" value="<%= settings.paystack_test_secret_key || '' %>" placeholder="sk_test_..." class="w-full px-3.5 py-2 pr-10 rounded-lg bg-white/10 border border-white/15 text-white font-mono text-xs outline-none focus:border-[#19D98B]">
+                  <button type="button" onclick="togglePasswordVisibility('paystackTestSec')" class="absolute right-2.5 top-2 text-white/50 hover:text-white text-xs">👁</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Live Credentials -->
+            <div class="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.03] space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-[#19D98B] flex items-center gap-1.5">
+                  <span>🚀</span> Live Production Keys
+                </span>
+                <span class="text-[10px] text-white/40">Required to charge real money</span>
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-white/70 mb-1">Live Public Key (pk_live_...)</label>
+                <input type="text" id="paystackLivePub" value="<%= settings.paystack_live_public_key || '' %>" placeholder="pk_live_..." class="w-full px-3.5 py-2 rounded-lg bg-white/10 border border-white/15 text-white font-mono text-xs outline-none focus:border-[#19D98B]">
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-white/70 mb-1">Live Secret Key (sk_live_...)</label>
+                <div class="relative">
+                  <input type="password" id="paystackLiveSec" value="<%= settings.paystack_live_secret_key || '' %>" placeholder="sk_live_..." class="w-full px-3.5 py-2 pr-10 rounded-lg bg-white/10 border border-white/15 text-white font-mono text-xs outline-none focus:border-[#19D98B]">
+                  <button type="button" onclick="togglePasswordVisibility('paystackLiveSec')" class="absolute right-2.5 top-2 text-white/50 hover:text-white text-xs">👁</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Webhook URL & Secret -->
+            <div class="p-4 rounded-xl border border-white/10 bg-white/[0.02] space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-white/90">Webhook Configuration</span>
+                <span class="text-[10px] text-white/40">Paystack Dashboard &gt; Webhooks</span>
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-white/70 mb-1">Platform Webhook URL</label>
+                <div class="flex items-center gap-2">
+                  <input type="text" id="paystackWebhookUrl" readonly value="/api/webhooks/paystack" class="w-full px-3.5 py-2 rounded-lg bg-white/5 border border-white/10 text-white/80 font-mono text-xs select-all outline-none">
+                  <button type="button" onclick="copyWebhookUrl()" class="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-semibold text-xs whitespace-nowrap transition">Copy URL</button>
+                </div>
+              </div>
+              <div>
+                <label class="block text-[11px] font-medium text-white/70 mb-1">Webhook Secret Key (Optional HMAC)</label>
+                <input type="password" id="paystackWebhookSec" value="<%= settings.paystack_webhook_secret || '' %>" placeholder="sk_live_... or custom secret" class="w-full px-3.5 py-2 rounded-lg bg-white/10 border border-white/15 text-white font-mono text-xs outline-none focus:border-[#19D98B]">
+              </div>
+            </div>
+
+            <button type="submit" class="w-full bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] font-bold font-display py-3 rounded-lg transition shadow-xs">
+              Save Paystack Configuration
+            </button>
+          </form>
+        </div>
+
+        <!-- SMTP Config -->
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-base font-bold font-display text-white mb-1">SMTP Transactional Mailer</h2>
+              <p class="text-xs text-white/60">High-reliability transactional email engine</p>
+            </div>
+            <label class="flex items-center gap-2 cursor-pointer bg-white/10 px-3 py-1.5 rounded-lg border border-white/15">
+              <input type="checkbox" id="smtpEnabled" <%= settings.smtp_enabled ? 'checked' : '' %> class="rounded accent-[#19D98B]">
+              <span class="text-xs font-semibold text-white">Live SMTP Active</span>
+            </label>
+          </div>
+
+          <!-- Quick Provider Presets -->
+          <div class="mb-5 p-3 rounded-xl bg-white/5 border border-white/10 flex flex-wrap items-center gap-2">
+            <span class="text-[11px] text-white/60 font-semibold mr-1">Quick Presets:</span>
+            <button type="button" onclick="applySmtpPreset('zoho_ssl')" class="px-2.5 py-1 rounded bg-[#19D98B]/20 hover:bg-[#19D98B]/30 text-[#19D98B] font-semibold text-[11px] transition">
+              Zoho (SSL 465)
+            </button>
+            <button type="button" onclick="applySmtpPreset('zoho_tls')" class="px-2.5 py-1 rounded bg-white/10 hover:bg-white/20 text-white font-semibold text-[11px] transition">
+              Zoho (TLS 587)
+            </button>
+            <button type="button" onclick="applySmtpPreset('gmail')" class="px-2.5 py-1 rounded bg-white/10 hover:bg-white/20 text-white font-semibold text-[11px] transition">
+              Gmail / Google
+            </button>
+          </div>
+
+          <form onsubmit="saveSmtpSettings(event)" class="space-y-4 text-xs">
+            <div>
+              <label class="block font-semibold text-white/80 mb-1.5">SMTP Host</label>
+              <input type="text" id="smtpHost" value="<%= settings.smtp_host || 'smtppro.zoho.com' %>" placeholder="smtppro.zoho.com or smtp.zoho.com" class="w-full px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none font-mono">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block font-semibold text-white/80 mb-1.5">Port</label>
+                <input type="number" id="smtpPort" value="<%= settings.smtp_port || 465 %>" placeholder="465" class="w-full px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none font-mono">
+              </div>
+              <div>
+                <label class="block font-semibold text-white/80 mb-1.5">Encryption</label>
+                <select id="smtpEnc" class="w-full px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none">
+                  <option value="ssl" <%= settings.smtp_encryption === 'ssl' || (!settings.smtp_encryption && settings.smtp_port === 465) ? 'selected' : '' %>>SSL / Direct TLS (Port 465 - Recommended)</option>
+                  <option value="tls" <%= settings.smtp_encryption === 'tls' ? 'selected' : '' %>>TLS / STARTTLS (Port 587)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block font-semibold text-white/80 mb-1.5">SMTP Username / Email</label>
+                <input type="text" id="smtpUsername" value="<%= settings.smtp_username || '' %>" placeholder="zlik@omastery.com" class="w-full px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none font-mono">
+              </div>
+              <div>
+                <label class="block font-semibold text-white/80 mb-1.5">SMTP Password / App Password</label>
+                <div class="relative">
+                  <input type="password" id="smtpPassword" value="<%= settings.smtp_password || '' %>" placeholder="••••••••••••" class="w-full px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none font-mono pr-10">
+                  <button type="button" onclick="togglePasswordVisibility('smtpPassword')" class="absolute right-3 top-2.5 text-white/50 hover:text-white text-xs">👁</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block font-semibold text-white/80 mb-1.5">Sender Name (From Name)</label>
+                <input type="text" id="smtpFromName" value="<%= settings.smtp_from_name || 'Zlik' %>" placeholder="Zlik" class="w-full px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none">
+              </div>
+              <div>
+                <label class="block font-semibold text-white/80 mb-1.5">Sender Email (From Address)</label>
+                <input type="email" id="smtpFromEmail" value="<%= settings.smtp_from_email || settings.smtp_username || 'zlik@omastery.com' %>" placeholder="zlik@omastery.com" class="w-full px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none font-mono">
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-semibold text-white/80 mb-1.5">Reply-To Email (Optional)</label>
+              <input type="email" id="smtpReplyTo" value="<%= settings.smtp_reply_to || '' %>" placeholder="zlik@omastery.com" class="w-full px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none font-mono">
+            </div>
+
+            <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[11px] text-amber-200/90 leading-relaxed">
+              <strong>💡 Zoho Mail Setup Note:</strong> For custom domain mailboxes (e.g. <code>zlik@omastery.com</code>), use <strong>Host:</strong> <code>smtppro.zoho.com</code> (or <code>smtp.zoho.com</code>), <strong>Port:</strong> <code>465</code>, <strong>Encryption:</strong> <code>SSL</code>. If 2-Factor Authentication (2FA) is turned on in your Zoho account, generate and enter a dedicated <strong>Application-Specific Password</strong> from Zoho Accounts &rarr; Security &rarr; App Passwords.
+            </div>
+
+            <div class="flex items-center gap-3 pt-2">
+              <button type="submit" id="saveSmtpBtn" class="bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] font-bold font-display px-5 py-2.5 rounded-lg transition">
+                Save SMTP Settings
+              </button>
+              <button type="button" id="testSmtpBtn" onclick="testSmtp()" class="bg-white/10 hover:bg-white/20 text-white font-semibold px-4 py-2.5 rounded-lg transition">
+                Test Dispatch ✉️
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: ADMIN TEAM -->
+    <div id="tab-team" class="tab-content space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold font-display text-white">Platform Administrators</h2>
+          <p class="text-xs text-white/60">Manage staff access and granular role-based permissions</p>
+        </div>
+        <button onclick="openNewAdminModal()" class="bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] font-bold font-display text-xs px-4 py-2.5 rounded-lg transition">
+          + Add Admin User
+        </button>
+      </div>
+
+      <div class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-white/5 border-b border-white/10 text-white/60 font-semibold">
+            <tr>
+              <th class="p-4">Name & Email</th>
+              <th class="p-4">Role</th>
+              <th class="p-4">Last Login</th>
+              <th class="p-4 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            <% adminUsers.forEach(u => { %>
+              <tr>
+                <td class="p-4">
+                  <div class="font-bold text-white text-sm"><%= u.name %></div>
+                  <div class="text-white/60 text-xs"><%= u.email %></div>
+                </td>
+                <td class="p-4">
+                  <span class="px-2.5 py-1 rounded text-[10px] font-bold uppercase bg-[#19D98B]/20 text-[#19D98B]">
+                    <%= u.role || 'super_admin' %>
+                  </span>
+                </td>
+                <td class="p-4 text-white/60"><%= u.last_login_at || 'Never' %></td>
+                <td class="p-4 text-right">
+                  <% if (currentAdmin && currentAdmin.id !== u.id) { %>
+                    <button onclick="deleteAdminUser(<%= u.id %>)" class="text-rose-400 hover:underline font-semibold">
+                      Remove
+                    </button>
+                  <% } else { %>
+                    <span class="text-white/40 text-[11px]">(Current user)</span>
+                  <% } %>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 7: LEADS -->
+    <div id="tab-leads" class="tab-content space-y-6">
+      <h2 class="text-lg font-bold font-display text-white">Enterprise Inbound Inquiries</h2>
+      <div class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-white/5 border-b border-white/10 text-white/60 font-semibold">
+            <tr>
+              <th class="p-4">Contact</th>
+              <th class="p-4">Business</th>
+              <th class="p-4">Volume</th>
+              <th class="p-4">Status</th>
+              <th class="p-4 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            <% if (enterpriseLeads.length === 0) { %>
+              <tr><td colspan="5" class="p-8 text-center text-white/50">No enterprise inquiries yet.</td></tr>
+            <% } else { %>
+              <% enterpriseLeads.forEach(l => { %>
+                <tr>
+                  <td class="p-4">
+                    <div class="font-bold text-white"><%= l.name %></div>
+                    <div class="text-white/60"><%= l.email %> &bull; <%= l.phone %></div>
+                  </td>
+                  <td class="p-4 font-semibold text-white"><%= l.business_name || 'N/A' %></td>
+                  <td class="p-4 text-white/70"><%= l.store_volume || 'N/A' %></td>
+                  <td class="p-4">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= l.status === 'contacted' ? 'bg-blue-500/20 text-blue-400' : 'bg-amber-500/20 text-amber-400' %>">
+                      <%= l.status || 'new' %>
+                    </span>
+                  </td>
+                  <td class="p-4 text-right">
+                    <button onclick="updateLeadStatus(<%= l.id %>, 'contacted')" class="text-xs text-[#19D98B] hover:underline font-semibold">
+                      Mark Contacted
+                    </button>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 8: AUDIT LOGS & MAINTENANCE -->
+    <div id="tab-audit" class="tab-content space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold font-display text-white">System Operations & Audit Trail</h2>
+          <p class="text-xs text-white/60">Live immutable record of platform configuration updates</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <button onclick="clearCache()" class="px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold text-xs transition">
+            Purge Cache 🧹
+          </button>
+          <button onclick="backupDb()" class="px-3.5 py-2 rounded-lg bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] font-bold font-display text-xs transition">
+            Database Snapshot 💾
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
+        <h3 class="text-sm font-bold font-display uppercase tracking-wider text-white mb-4">Recent Audit Records</h3>
+        <div id="auditLogsContainer" class="text-xs space-y-2 text-white/70">
+          <div class="text-white/40 italic">Loading audit records...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plan Override Modal -->
+  <div id="planModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#08110D] border border-white/15 rounded-2xl max-w-md w-full p-6 text-xs space-y-4">
+      <div class="border-b border-white/10 pb-3">
+        <h3 class="text-base font-bold font-display text-white mb-0.5">Assign Merchant Tier</h3>
+        <p class="text-white/60 text-[11px]" id="planModalStoreName"></p>
+      </div>
+      
+      <input type="hidden" id="planModalStoreId">
+      <div class="space-y-3">
+        <div>
+          <label class="block font-semibold text-white/80 mb-1">Plan Tier</label>
+          <select id="planModalTier" onchange="updatePlanModalHint(this.value)" class="w-full px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+            <option value="free">Free Starter (10 Products, 1 Photo, 7d Ledger)</option>
+            <option value="pro">Pro Plan (500 Products, 5 Photos, Lifetime Ledger, 1 Staff)</option>
+            <option value="business">Business Plan (Unlimited Products, Video, Domains, 5 Staff)</option>
+            <option value="enterprise">Enterprise Plan (Custom Limits & Dedicated SLA)</option>
+          </select>
+        </div>
+
+        <div id="planModalTierHint" class="p-3 rounded-lg bg-white/5 border border-white/10 text-[11px] text-white/70 leading-relaxed">
+          <strong class="text-white">Free Starter:</strong> 10 products, 1 photo/item, 5 themes, 7-day sales ledger history, 3 active debts, Zlik watermark.
+        </div>
+
+        <div>
+          <label class="block font-semibold text-white/80 mb-1">Duration (Days &bull; Enter 0 for Lifetime / Permanent)</label>
+          <input type="number" id="planModalDays" value="30" class="w-full px-3 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B]">
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button onclick="closePlanModal()" class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold">Cancel</button>
+        <button onclick="submitPlanUpdate()" class="px-4 py-2 rounded-lg bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] font-bold">Apply Plan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Store Template & Category Modal -->
+  <div id="adminTemplateModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#08110D] border border-white/15 rounded-2xl max-w-lg w-full p-6 text-xs space-y-4">
+      <div class="flex items-center justify-between pb-2 border-b border-white/10">
+        <div>
+          <h3 class="text-base font-bold font-display text-white">Assign Store Theme & Category</h3>
+          <p class="text-white/60 text-[11px]" id="adminTemplateModalStoreName"></p>
+        </div>
+        <button onclick="closeAdminTemplateModal()" class="text-white/50 hover:text-white text-sm font-bold">✕</button>
+      </div>
+
+      <input type="hidden" id="adminTemplateStoreId">
+      <input type="hidden" id="adminSelectedTemplateSlug">
+
+      <div class="space-y-3">
+        <div>
+          <label class="block font-semibold text-white/80 mb-1.5">Industry Category Dropdown</label>
+          <select id="adminCategorySelect" onchange="onAdminCategoryChange(this.value)" class="w-full px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B] font-display">
+            <% Object.values(storeCategories || {}).forEach(c => { %>
+              <option value="<%= c.id %>" class="bg-[#08110D] text-white"><%= c.icon %> <%= c.name %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-white/80 mb-1.5">Choose 1 of 3 Category Templates (1 Free, 2 Pro)</label>
+          <div id="adminTemplatesOptionsList" class="space-y-2 max-h-64 overflow-y-auto pr-1">
+            <!-- Populated via Javascript -->
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2 border-t border-white/10">
+        <button type="button" onclick="closeAdminTemplateModal()" class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold">Cancel</button>
+        <button type="button" onclick="submitAdminTemplateUpdate()" class="px-4 py-2 rounded-lg bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] font-bold">Save Template</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client-side Scripts -->
+  <script>
+    const allTemplatesData = <%- JSON.stringify(allTemplates || {}) %>;
+    const storeCategoriesData = <%- JSON.stringify(storeCategories || {}) %>;
+    let currentAdminStoreSelectedTpl = 'general_clean';
+
+    function openAdminTemplateModal(storeId, storeName, currentTemplateSlug) {
+      document.getElementById('adminTemplateStoreId').value = storeId;
+      document.getElementById('adminTemplateModalStoreName').textContent = `Assigning storefront design for "${storeName}"`;
+      
+      const tpl = allTemplatesData[currentTemplateSlug] || allTemplatesData.general_clean;
+      currentAdminStoreSelectedTpl = tpl ? tpl.id : 'general_clean';
+      document.getElementById('adminSelectedTemplateSlug').value = currentAdminStoreSelectedTpl;
+      
+      const catId = tpl ? tpl.category_id : 'general';
+      const catSelect = document.getElementById('adminCategorySelect');
+      if (catSelect) catSelect.value = catId;
+      
+      renderAdminTemplateOptions(catId);
+      document.getElementById('adminTemplateModal').classList.remove('hidden');
+    }
+
+    function closeAdminTemplateModal() {
+      document.getElementById('adminTemplateModal').classList.add('hidden');
+    }
+
+    function onAdminCategoryChange(catId) {
+      const catTemplates = Object.values(allTemplatesData).filter(t => t.category_id === catId);
+      if (catTemplates.length > 0) {
+        currentAdminStoreSelectedTpl = catTemplates[0].id;
+        document.getElementById('adminSelectedTemplateSlug').value = currentAdminStoreSelectedTpl;
+      }
+      renderAdminTemplateOptions(catId);
+    }
+
+    function renderAdminTemplateOptions(catId) {
+      const container = document.getElementById('adminTemplatesOptionsList');
+      if (!container) return;
+      const catTemplates = Object.values(allTemplatesData).filter(t => t.category_id === catId);
+
+      container.innerHTML = catTemplates.map(t => {
+        const isSelected = currentAdminStoreSelectedTpl === t.id;
+        const tierBadge = t.is_pro 
+          ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#19D98B]/20 text-[#19D98B] border border-[#19D98B]/30">💎 PRO</span>'
+          : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-white/10 text-white/70">FREE</span>';
+
+        return `
+          <div onclick="selectAdminTemplate('${t.id}')" class="p-3 rounded-xl border transition cursor-pointer flex items-center justify-between ${isSelected ? 'border-[#19D98B] bg-[#19D98B]/10 ring-1 ring-[#19D98B]' : 'border-white/10 bg-white/5 hover:border-white/20'}">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-16 h-10 rounded-lg overflow-hidden border border-white/15 shrink-0 bg-[#08110D]">
+                <img src="${t.preview_image || ('/assets/images/templates/' + t.id + '.svg')}" alt="${t.name}" class="w-full h-full object-cover object-top">
+              </div>
+              <div class="min-w-0">
+                <div class="font-bold text-white text-xs flex items-center gap-2">
+                  <span>${t.icon}</span>
+                  <span>${t.name}</span>
+                  ${tierBadge}
+                </div>
+                <div class="text-[11px] text-white/60 truncate">${t.tagline}</div>
+              </div>
+            </div>
+            <div class="shrink-0 ml-2">
+              <span class="w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-[#19D98B] bg-[#19D98B]' : 'border-white/30'}">
+                ${isSelected ? '<span class="w-1.5 h-1.5 rounded-full bg-[#08110D]"></span>' : ''}
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function selectAdminTemplate(tplId) {
+      currentAdminStoreSelectedTpl = tplId;
+      document.getElementById('adminSelectedTemplateSlug').value = tplId;
+      const catId = document.getElementById('adminCategorySelect').value;
+      renderAdminTemplateOptions(catId);
+    }
+
+    async function submitAdminTemplateUpdate() {
+      const storeId = document.getElementById('adminTemplateStoreId').value;
+      const templateSlug = document.getElementById('adminSelectedTemplateSlug').value;
+
+      try {
+        const res = await fetch('/api/admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'update_template', store_id: storeId, template_slug: templateSlug })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('Store template updated successfully!');
+          location.reload();
+        } else {
+          alert(data.error || 'Failed to update template');
+        }
+      } catch (err) {
+        alert('Network error updating template');
+      }
+    }
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+      
+      const tab = document.getElementById('tab-' + tabId);
+      const btn = document.getElementById('tab-btn-' + tabId);
+      if (tab) tab.classList.add('active');
+      if (btn) btn.classList.add('active');
+
+      if (tabId === 'audit') {
+        loadAuditLogs();
+      }
+    }
+
+    function filterMerchants() {
+      const q = document.getElementById('merchantSearch').value.toLowerCase();
+      document.querySelectorAll('.merchant-row').forEach(row => {
+        const text = row.getAttribute('data-search') || '';
+        row.style.display = text.includes(q) ? '' : 'none';
+      });
+    }
+
+    function filterCatalog() {
+      const q = document.getElementById('catalogSearch').value.toLowerCase();
+      document.querySelectorAll('.catalog-row').forEach(row => {
+        const text = row.getAttribute('data-search') || '';
+        row.style.display = text.includes(q) ? '' : 'none';
+      });
+    }
+
+    async function impersonateMerchant(storeId) {
+      try {
+        const res = await fetch('/api/admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'impersonate_merchant', store_id: storeId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          window.location.href = data.redirect || '/merchant';
+        } else {
+          alert(data.error || 'Failed to impersonate');
+        }
+      } catch (e) {
+        alert('Error connecting to server');
+      }
+    }
+
+    async function toggleStoreStatus(storeId, newStatus) {
+      if (!confirm(`Are you sure you want to change this store status to ${newStatus}?`)) return;
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update_status', store_id: storeId, status: newStatus })
+      });
+      const data = await res.json();
+      if (data.success) location.reload();
+      else alert(data.error);
+    }
+
+    async function toggleVerification(storeId, isVerified) {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'toggle_verification', store_id: storeId, is_verified: isVerified })
+      });
+      const data = await res.json();
+      if (data.success) location.reload();
+      else alert(data.error);
+    }
+
+    function updatePlanModalHint(tier) {
+      const hintEl = document.getElementById('planModalTierHint');
+      if (!hintEl) return;
+      if (tier === 'free') {
+        hintEl.innerHTML = '<strong class="text-white">Free Starter:</strong> 10 products, 1 photo/item, 5 themes, 7-day sales ledger history, 3 active debts, Zlik watermark.';
+      } else if (tier === 'pro') {
+        hintEl.innerHTML = '<strong class="text-[#19D98B]">Pro Plan:</strong> 3 stores, 500 products, 5 photos/item, 15 themes, Lifetime sales ledger + CSV, Unlimited debts, 1 staff account, no watermark.';
+      } else if (tier === 'business') {
+        hintEl.innerHTML = '<strong class="text-blue-400">Business Plan:</strong> 10 stores, Unlimited products, 10 photos + video, Custom domains, 5 staff accounts (roles & permissions), multi-branch inventory.';
+      } else {
+        hintEl.innerHTML = '<strong class="text-purple-400">Enterprise Plan:</strong> Custom limits, dedicated infrastructure, SLA & custom integration support.';
+      }
+    }
+
+    function openPlanModal(storeId, storeName, currentTier) {
+      document.getElementById('planModalStoreId').value = storeId;
+      document.getElementById('planModalStoreName').textContent = `Configuring tier for "${storeName}"`;
+      document.getElementById('planModalTier').value = currentTier || 'free';
+      updatePlanModalHint(currentTier || 'free');
+      document.getElementById('planModal').classList.remove('hidden');
+    }
+
+    function closePlanModal() {
+      document.getElementById('planModal').classList.add('hidden');
+    }
+
+    async function submitPlanUpdate() {
+      const storeId = document.getElementById('planModalStoreId').value;
+      const tier = document.getElementById('planModalTier').value;
+      const days = document.getElementById('planModalDays').value;
+
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'update_plan', store_id: storeId, plan_tier: tier, days: days })
+      });
+      const data = await res.json();
+      if (data.success) location.reload();
+      else alert(data.error);
+    }
+
+    async function moderateItem(itemId, isAvailable) {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'moderate_item', item_id: itemId, is_available: isAvailable })
+      });
+      const data = await res.json();
+      if (data.success) location.reload();
+      else alert(data.error);
+    }
+
+    async function savePlansMatrix(e) {
+      if (e) e.preventDefault();
+
+      const featureKeys = [
+        'powered_by_zlik', 'brand_color_logo_controls', 'order_notification_sound_library', 'custom_audio_alerts',
+        'seller_branded_receipts', 'custom_receipt_templates', 'custom_domain', 'whatsapp_orders_online_checkout',
+        'basic_order_management', 'full_order_management', 'stock_tracking_low_stock_alerts', 'bulk_product_import',
+        'advanced_bulk_import_image_matching', 'full_sales_ledger_export', 'daily_sales_summary_whatsapp',
+        'unlimited_debts_whatsapp_reminders', 'sales_reports_by_staff_branch_product', 'daily_sales_summary_by_branch_staff',
+        'core_live_chat_persistent_history', 'basic_customer_records', 'store_product_sharing_seo_qr',
+        'pixels_integration', 'unlimited_status_posters', 'whatsapp_daily_autoposter',
+        'customer_broadcasts_discounts_bundles_preorders', 'marketplace_listings_discovery',
+        'customer_reviews_verification_eligibility', 'debt_reminders_staff_access', 'branch_level_inventory',
+        'staff_roles_permissions', 'audit_logs_multi_store_reporting', 'whatsapp_support', 'priority_support_onboarding'
+      ];
+
+      const freeFeatures = {};
+      const proFeatures = {};
+      const bizFeatures = {};
+
+      featureKeys.forEach(k => {
+        freeFeatures[k] = Boolean(document.getElementById(`feat_free_${k}`)?.checked);
+        proFeatures[k] = Boolean(document.getElementById(`feat_pro_${k}`)?.checked);
+        bizFeatures[k] = Boolean(document.getElementById(`feat_biz_${k}`)?.checked);
+      });
+
+      const proMonthly = parseFloat(document.getElementById('price_pro_monthly')?.value || 5000);
+      const proYearly = parseFloat(document.getElementById('price_pro_yearly')?.value || 50000);
+      const bizMonthly = parseFloat(document.getElementById('price_biz_monthly')?.value || 9000);
+      const bizYearly = parseFloat(document.getElementById('price_biz_yearly')?.value || 90000);
+
+      const plansConfig = {
+        free: {
+          limits: {
+            max_stores: 1,
+            max_products: parseInt(document.getElementById('limit_free_max_products')?.value || 10),
+            photos_per_product: parseInt(document.getElementById('limit_free_photos')?.value || 1),
+            storefront_designs: parseInt(document.getElementById('limit_free_themes')?.value || 5),
+            sales_ledger_days: parseInt(document.getElementById('limit_free_ledger_days')?.value || 7),
+            active_debts_limit: parseInt(document.getElementById('limit_free_debts')?.value || 3),
+            staff_accounts: 0,
+            max_delivery_zones: 3,
+            max_active_orders: 50
+          },
+          features: freeFeatures
+        },
+        pro: {
+          price_monthly: proMonthly,
+          price_yearly: proYearly,
+          limits: {
+            max_stores: parseInt(document.getElementById('limit_pro_stores')?.value || 3),
+            max_products: parseInt(document.getElementById('limit_pro_max_products')?.value || 500),
+            photos_per_product: parseInt(document.getElementById('limit_pro_photos')?.value || 5),
+            storefront_designs: 15,
+            sales_ledger_days: -1,
+            active_debts_limit: -1,
+            staff_accounts: parseInt(document.getElementById('limit_pro_staff')?.value || 1),
+            max_delivery_zones: -1,
+            max_active_orders: -1
+          },
+          features: proFeatures
+        },
+        business: {
+          price_monthly: bizMonthly,
+          price_yearly: bizYearly,
+          limits: {
+            max_stores: parseInt(document.getElementById('limit_biz_stores')?.value || 10),
+            max_products: parseInt(document.getElementById('limit_biz_max_products')?.value || -1),
+            photos_per_product: parseInt(document.getElementById('limit_biz_photos')?.value || 10),
+            storefront_designs: 15,
+            sales_ledger_days: -1,
+            active_debts_limit: -1,
+            staff_accounts: parseInt(document.getElementById('limit_biz_staff')?.value || 5),
+            max_delivery_zones: -1,
+            max_active_orders: -1
+          },
+          features: bizFeatures
+        }
+      };
+
+      const payload = {
+        action: 'save_plans_matrix',
+        pro_monthly_price: proMonthly,
+        pro_yearly_price: proYearly,
+        business_monthly_price: bizMonthly,
+        business_yearly_price: bizYearly,
+        free_product_limit: parseInt(document.getElementById('limit_free_max_products')?.value || 10),
+        free_weekly_posters: parseInt(document.getElementById('limit_free_posters')?.value || 3),
+        plans_config: plansConfig
+      };
+
+      try {
+        const res = await fetch('/api/admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('✓ Success! Platform plans, pricing, and feature permissions have been synchronized across the website.');
+          location.reload();
+        } else {
+          alert(data.error || 'Failed to save settings');
+        }
+      } catch (err) {
+        alert('Network error while saving settings');
+      }
+    }
+
+    function updatePaystackModeUI() {
+      const mode = document.getElementById('paystackMode').value;
+      const badge = document.getElementById('paystackModeBadge');
+      if (badge) {
+        if (mode === 'live') {
+          badge.textContent = '● LIVE PRODUCTION';
+          badge.className = 'text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-[#19D98B] border border-emerald-500/30';
+        } else {
+          badge.textContent = '● TEST SANDBOX';
+          badge.className = 'text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30';
+        }
+      }
+    }
+
+    function copyWebhookUrl() {
+      const fullUrl = window.location.origin + '/api/webhooks/paystack';
+      navigator.clipboard.writeText(fullUrl).then(() => {
+        alert('Copied Webhook URL to clipboard:\n' + fullUrl);
+      }).catch(() => {
+        prompt('Copy your Webhook URL below:', fullUrl);
+      });
+    }
+
+    async function savePaystackSettings(e) {
+      e.preventDefault();
+      const mode = document.getElementById('paystackMode').value;
+      const testPub = document.getElementById('paystackTestPub').value.trim();
+      const testSec = document.getElementById('paystackTestSec').value.trim();
+      const livePub = document.getElementById('paystackLivePub').value.trim();
+      const liveSec = document.getElementById('paystackLiveSec').value.trim();
+      const webhookSec = document.getElementById('paystackWebhookSec').value.trim();
+      const isEnabled = document.getElementById('paystackEnabled').checked ? 1 : 0;
+
+      // Friendly validation warnings
+      if (mode === 'test') {
+        if (testPub && !testPub.startsWith('pk_test_')) {
+          alert('Note: Paystack Test Public Key usually begins with "pk_test_"');
+        }
+        if (testSec && !testSec.startsWith('sk_test_') && !testSec.startsWith('mock')) {
+          alert('Note: Paystack Test Secret Key must begin with "sk_test_" to verify test transactions');
+        }
+      } else if (mode === 'live') {
+        if (!livePub || !livePub.startsWith('pk_live_')) {
+          alert('Note: Live Public Key must begin with "pk_live_" to charge live cards');
+        }
+        if (!liveSec || !liveSec.startsWith('sk_live_')) {
+          alert('Note: Live Secret Key must begin with "sk_live_" to verify live transactions');
+        }
+      }
+
+      const payload = {
+        action: 'update_settings',
+        paystack_enabled: isEnabled,
+        paystack_mode: mode,
+        paystack_test_public_key: testPub,
+        paystack_test_secret_key: testSec,
+        paystack_live_public_key: livePub,
+        paystack_live_secret_key: liveSec,
+        paystack_webhook_secret: webhookSec
+      };
+
+      try {
+        const res = await fetch('/api/admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('✅ Paystack Gateway settings saved successfully!');
+        } else {
+          alert(data.error || 'Failed to save Paystack settings');
+        }
+      } catch (err) {
+        alert('Network error while saving Paystack settings');
+      }
+    }
+
+    function togglePasswordVisibility(fieldId) {
+      const input = document.getElementById(fieldId);
+      if (input) {
+        input.type = input.type === 'password' ? 'text' : 'password';
+      }
+    }
+
+    function applySmtpPreset(preset) {
+      if (preset === 'zoho_ssl') {
+        document.getElementById('smtpHost').value = 'smtppro.zoho.com';
+        document.getElementById('smtpPort').value = '465';
+        document.getElementById('smtpEnc').value = 'ssl';
+        if (!document.getElementById('smtpUsername').value) {
+          document.getElementById('smtpUsername').value = 'zlik@omastery.com';
+        }
+        if (!document.getElementById('smtpFromEmail').value) {
+          document.getElementById('smtpFromEmail').value = 'zlik@omastery.com';
+        }
+      } else if (preset === 'zoho_tls') {
+        document.getElementById('smtpHost').value = 'smtppro.zoho.com';
+        document.getElementById('smtpPort').value = '587';
+        document.getElementById('smtpEnc').value = 'tls';
+        if (!document.getElementById('smtpUsername').value) {
+          document.getElementById('smtpUsername').value = 'zlik@omastery.com';
+        }
+        if (!document.getElementById('smtpFromEmail').value) {
+          document.getElementById('smtpFromEmail').value = 'zlik@omastery.com';
+        }
+      } else if (preset === 'gmail') {
+        document.getElementById('smtpHost').value = 'smtp.gmail.com';
+        document.getElementById('smtpPort').value = '465';
+        document.getElementById('smtpEnc').value = 'ssl';
+      }
+    }
+
+    async function saveSmtpSettings(e) {
+      e.preventDefault();
+      const btn = document.getElementById('saveSmtpBtn');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      const payload = {
+        action: 'update_settings',
+        smtp_enabled: document.getElementById('smtpEnabled').checked ? 1 : 0,
+        smtp_host: document.getElementById('smtpHost').value.trim(),
+        smtp_port: parseInt(document.getElementById('smtpPort').value || '465'),
+        smtp_encryption: document.getElementById('smtpEnc').value,
+        smtp_username: document.getElementById('smtpUsername').value.trim(),
+        smtp_password: document.getElementById('smtpPassword').value,
+        smtp_from_name: document.getElementById('smtpFromName').value.trim(),
+        smtp_from_email: document.getElementById('smtpFromEmail').value.trim(),
+        smtp_reply_to: document.getElementById('smtpReplyTo').value.trim()
+      };
+
+      try {
+        const res = await fetch('/api/admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('✓ SMTP mail configuration saved successfully!');
+        } else {
+          alert(data.error || 'Failed to save SMTP settings');
+        }
+      } catch (err) {
+        alert('Network error saving SMTP settings');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save SMTP Settings';
+      }
+    }
+
+    async function testSmtp() {
+      const email = prompt('Enter recipient email for live SMTP test dispatch:', document.getElementById('smtpFromEmail').value || 'zlik@omastery.com');
+      if (!email) return;
+
+      const btn = document.getElementById('testSmtpBtn');
+      btn.disabled = true;
+      btn.textContent = 'Dispatching...';
+
+      try {
+        const res = await fetch('/api/admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'test_smtp', target_email: email })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('🎉 Live SMTP Test Email Dispatched Successfully to: ' + email);
+        } else {
+          alert('❌ SMTP Test Failed:\n\n' + (data.message || data.error || 'Check credentials and connection'));
+        }
+      } catch (err) {
+        alert('Network error testing SMTP');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Test Dispatch ✉️';
+      }
+    }
+
+    async function loadAuditLogs() {
+      const container = document.getElementById('auditLogsContainer');
+      const res = await fetch('/api/admin?action=get_audit_logs');
+      const data = await res.json();
+      if (data.success && data.logs) {
+        if (data.logs.length === 0) {
+          container.innerHTML = '<div class="text-white/40">No audit logs found.</div>';
+          return;
+        }
+        container.innerHTML = data.logs.map(l => `
+          <div class="py-2 px-3 rounded-lg bg-white/5 border border-white/5 flex items-center justify-between">
+            <div>
+              <span class="font-bold text-white">${l.action}</span>
+              <span class="text-white/50 ml-2">&bull; ${l.details || ''}</span>
+            </div>
+            <div class="text-[11px] text-white/40">${l.created_at}</div>
+          </div>
+        `).join('');
+      }
+    }
+
+    async function clearCache() {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'clear_cache' })
+      });
+      const data = await res.json();
+      alert(data.message || 'Cache cleared');
+    }
+
+    async function backupDb() {
+      const res = await fetch('/api/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'backup_database' })
+      });
+      const data = await res.json();
+      alert(data.message || 'Backup complete');
+    }
+  </script>
+</body>
+</html>

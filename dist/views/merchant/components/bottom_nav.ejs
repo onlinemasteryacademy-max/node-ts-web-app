@@ -1,0 +1,52 @@
+<!-- Mobile App Sticky Bottom Navigation Bar -->
+<nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-lg border-t border-[#E3E9E5] px-2 py-1.5 flex items-center justify-around shadow-[0_-4px_20px_rgba(0,0,0,0.06)] pb-safe">
+    <!-- Orders / Home -->
+    <a href="/merchant" class="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'orders') ? 'text-[#087A50] font-bold' : 'text-[#6B756F] hover:text-[#08110D]' %>">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="<%= (typeof activeTab !== 'undefined' && activeTab === 'orders') ? '2.3' : '1.8' %>" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+        </svg>
+        <span class="text-[10px] tracking-tight leading-tight">Orders</span>
+    </a>
+
+    <!-- Products -->
+    <a href="/merchant/items" class="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'products') ? 'text-[#087A50] font-bold' : 'text-[#6B756F] hover:text-[#08110D]' %>">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="<%= (typeof activeTab !== 'undefined' && activeTab === 'products') ? '2.3' : '1.8' %>" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+        </svg>
+        <span class="text-[10px] tracking-tight leading-tight">Products</span>
+    </a>
+
+    <!-- Sales Ledger -->
+    <a href="/merchant/ledger" class="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'ledger') ? 'text-[#087A50] font-bold' : 'text-[#6B756F] hover:text-[#08110D]' %>">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="<%= (typeof activeTab !== 'undefined' && activeTab === 'ledger') ? '2.3' : '1.8' %>" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        <span class="text-[10px] tracking-tight leading-tight">Ledger</span>
+    </a>
+
+    <!-- Debts -->
+    <a href="/merchant/debts" class="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'debts') ? 'text-[#087A50] font-bold' : 'text-[#6B756F] hover:text-[#08110D]' %>">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="<%= (typeof activeTab !== 'undefined' && activeTab === 'debts') ? '2.3' : '1.8' %>" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span class="text-[10px] tracking-tight leading-tight">Debts</span>
+    </a>
+
+    <!-- Live Chat Inbox -->
+    <a href="/merchant/messages" class="relative flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'chat') ? 'text-[#087A50] font-bold' : 'text-[#6B756F] hover:text-[#08110D]' %>">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="<%= (typeof activeTab !== 'undefined' && activeTab === 'chat') ? '2.3' : '1.8' %>" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+        </svg>
+        <span class="text-[10px] tracking-tight leading-tight">Chat</span>
+        <span id="mobileNavChatBadge" class="hidden absolute top-1 right-2 w-2.5 h-2.5 rounded-full bg-[#19D98B] ring-2 ring-white"></span>
+    </a>
+
+    <!-- Store Settings -->
+    <a href="/merchant/settings" class="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'settings') ? 'text-[#087A50] font-bold' : 'text-[#6B756F] hover:text-[#08110D]' %>">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="<%= (typeof activeTab !== 'undefined' && activeTab === 'settings') ? '2.3' : '1.8' %>" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="<%= (typeof activeTab !== 'undefined' && activeTab === 'settings') ? '2.3' : '1.8' %>" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        <span class="text-[10px] tracking-tight leading-tight">Settings</span>
+    </a>
+</nav>

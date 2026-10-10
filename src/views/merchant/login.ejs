@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in — zlik</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        zlikDark: '#08110D',
+                        zlikGreen: '#19D98B',
+                        zlikDeep: '#087A50',
+                        zlikBg: '#F8FAF8',
+                        zlikWhite: '#FFFFFF',
+                        zlikMuted: '#6B756F',
+                        zlikBorder: '#E3E9E5'
+                    },
+                    fontFamily: {
+                        display: ['Montserrat', 'sans-serif'],
+                        body: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAF8; color: #08110D; }
+        .font-display { font-family: 'Montserrat', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#F8FAF8] text-[#08110D] antialiased min-h-screen flex flex-col justify-between selection:bg-[#08110D] selection:text-[#19D98B]">
+
+    <!-- Header Navigation -->
+    <header class="border-b border-[#E3E9E5] bg-[#F8FAF8]/95 backdrop-blur-md sticky top-0 z-40 transition-colors">
+        <div class="max-w-[1240px] mx-auto px-6 h-20 flex items-center justify-between">
+            <a href="/" class="hover:opacity-90 transition inline-flex items-center gap-1">
+                <span class="font-display font-semibold text-2xl text-[#08110D]">zlik</span>
+            </a>
+            <div class="flex items-center gap-3">
+                <a href="/#pricing" class="bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] text-sm font-semibold font-display px-5 py-2.5 rounded-lg transition-all shadow-xs">
+                    Create store
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Login Area -->
+    <main class="flex-1 flex items-center justify-center px-4 py-16">
+        <div class="max-w-md w-full bg-white rounded-2xl border border-[#E3E9E5] p-8 sm:p-10 shadow-zlik">
+            <div class="mb-8 text-center">
+                <h1 class="text-2xl font-bold font-display tracking-tight text-[#08110D]">Seller sign in</h1>
+                <p class="text-xs text-[#6B756F] mt-1.5">Manage your orders, products, and online store.</p>
+            </div>
+
+            <form onsubmit="handleMerchantLogin(event)" class="space-y-4 text-xs font-body">
+                <div>
+                    <label class="block font-semibold text-[#08110D] mb-1.5">Email address or WhatsApp phone</label>
+                    <input type="text" id="merchantIdentifier" required placeholder="name@store.com or 08012345678" class="w-full px-3.5 py-3 rounded-lg bg-white border border-[#E3E9E5] text-sm text-[#08110D] outline-none focus:border-[#08110D] transition">
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block font-semibold text-[#08110D]">Password</label>
+                    </div>
+                    <input type="password" id="merchantPassword" required placeholder="••••••••" class="w-full px-3.5 py-3 rounded-lg bg-white border border-[#E3E9E5] text-sm text-[#08110D] outline-none focus:border-[#08110D] transition">
+                </div>
+
+                <div id="loginError" class="text-xs text-[#D94A4A] font-medium hidden"></div>
+
+                <button type="submit" id="loginBtn" class="w-full bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] font-semibold font-display text-sm py-3.5 rounded-lg shadow-xs transition duration-200 mt-2">
+                    Sign in to dashboard
+                </button>
+            </form>
+
+            <div class="mt-8 pt-6 border-t border-[#E3E9E5] text-center text-xs text-[#6B756F]">
+                <span>Don't have an account?</span>
+                <a href="/#pricing" class="font-semibold text-[#08110D] hover:underline ml-1">Create free store &rarr;</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#08110D] text-white border-t border-[#08110D] py-8 font-body">
+        <div class="max-w-[1240px] mx-auto px-6 text-center text-xs text-[#E3E9E5]/50">
+            &copy; <%= new Date().getFullYear() %> zlik. All rights reserved. &bull; Selling, Made Slick
+        </div>
+    </footer>
+
+    <script>
+        async function handleMerchantLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const err = document.getElementById('loginError');
+            btn.disabled = true;
+            btn.textContent = 'Signing in...';
+            err.classList.add('hidden');
+
+            const payload = {
+                identifier: document.getElementById('merchantIdentifier').value.trim(),
+                password: document.getElementById('merchantPassword').value
+            };
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    window.location.href = result.redirect || '/merchant';
+                } else {
+                    err.textContent = result.error || 'Invalid credentials';
+                    err.classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.textContent = 'Sign in to dashboard';
+                }
+            } catch (e) {
+                err.textContent = 'Connection error. Please try again.';
+                err.classList.remove('hidden');
+                btn.disabled = false;
+                btn.textContent = 'Sign in to dashboard';
+            }
+        }
+    </script>
+</body>
+</html>

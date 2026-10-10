@@ -1,0 +1,117 @@
+import { dbFetchOne, dbFetchAll, dbInsert } from '../../db/db.js';
+
+export interface AdminRole {
+  id: string;
+  name: string;
+  description: string;
+  is_system: boolean;
+  permissions: string[];
+}
+
+export const PREDEFINED_ROLES: Record<string, AdminRole> = {
+  super_admin: {
+    id: 'super_admin',
+    name: 'Super Admin (Owner)',
+    description: 'Full unrestricted platform access (Pricing, Paystack API, Team management, Backups, Bans)',
+    is_system: true,
+    permissions: ['*']
+  },
+  support_lead: {
+    id: 'support_lead',
+    name: 'Operations & Support Lead',
+    description: 'Merchant CRM, 1-Click Store Impersonation, Store suspension, KYC badges, Orders view',
+    is_system: true,
+    permissions: ['manage_merchants', 'impersonate_merchants', 'manage_verification', 'manage_broadcasts', 'view_audit_logs']
+  },
+  moderator: {
+    id: 'moderator',
+    name: 'Trust & Safety Moderator',
+    description: 'Global product catalog search, prohibited items flagging, seller verification reviews',
+    is_system: true,
+    permissions: ['manage_catalog', 'manage_verification', 'view_audit_logs']
+  },
+  finance_analyst: {
+    id: 'finance_analyst',
+    name: 'Financial & Billing Analyst',
+    description: 'View GMV, MRR, Paystack transaction logs, subscription ledger, revenue metrics',
+    is_system: true,
+    permissions: ['manage_pricing', 'view_audit_logs']
+  }
+};
+
+export const SYSTEM_PERMISSIONS: Record<string, { label: string; desc: string }> = {
+  manage_merchants: { label: 'Manage Merchants', desc: 'Edit merchant profiles, passwords, store status, and manual tier overrides' },
+  impersonate_merchants: { label: '1-Click Merchant Impersonation', desc: 'Securely enter merchant dashboard to assist sellers in real-time' },
+  manage_catalog: { label: 'Global Catalog Moderation', desc: 'Audit products platform-wide and toggle prohibited item status' },
+  manage_pricing: { label: 'Pricing & Plan Engine', desc: 'Change subscription fees and tier product limits' },
+  manage_integrations: { label: 'API & Gateway Keys', desc: 'Manage Paystack public/secret keys, webhooks, and SMTP dispatch settings' },
+  manage_broadcasts: { label: 'Platform Announcements', desc: 'Broadcast global system announcements to active seller portals' },
+  manage_team: { label: 'Admin Team & Roles', desc: 'Invite administrators and configure custom RBAC permissions' },
+  manage_verification: { label: 'Merchant Verification Badges', desc: 'Approve or revoke verified checkmarks on merchant stores' },
+  manage_system_ops: { label: 'System Maintenance & Backups', desc: 'Perform live database snapshots and purge caches' },
+  view_audit_logs: { label: 'Platform Audit Trails', desc: 'Inspect administrative audit records and transactional mail logs' }
+};
+
+export function getAdminRoles(): Record<string, AdminRole> {
+  const roles: Record<string, AdminRole> = { ...PREDEFINED_ROLES };
+  try {
+    const customRoles = dbFetchAll<any>('admin_roles');
+    for (const cr of customRoles) {
+      let perms: string[] = [];
+      try {
+        perms = typeof cr.permissions_json === 'string' ? JSON.parse(cr.permissions_json) : (cr.permissions || []);
+      } catch (e) {}
+      roles[cr.id] = {
+        id: cr.id,
+        name: cr.name,
+        description: cr.description || '',
+        is_system: false,
+        permissions: Array.isArray(perms) ? perms : []
+      };
+    }
+  } catch (e) {}
+  return roles;
+}
+
+export function getAdminUser(adminId: number | string): any | null {
+  const id = Number(adminId);
+  if (!id) return null;
+  const admin = dbFetchOne<any>('super_admins', { id });
+  if (!admin) return null;
+
+  const role = admin.role || 'super_admin';
+  const roles = getAdminRoles();
+  admin.role_info = roles[role] || roles.super_admin;
+  admin.effective_permissions = admin.role_info?.permissions || [];
+  return admin;
+}
+
+export function hasAdminPermission(permissionKey: string, adminId: number | string): boolean {
+  const admin = getAdminUser(adminId);
+  if (!admin) return false;
+  const perms = admin.effective_permissions || [];
+  return perms.includes('*') || perms.includes(permissionKey);
+}
+
+export function logAdminAction(
+  adminId: number | string,
+  action: string,
+  targetType: string = '',
+  targetId: number | string = '',
+  details: any = '',
+  ip: string = '127.0.0.1'
+): number {
+  const admin = getAdminUser(adminId);
+  const adminName = admin ? `${admin.name} (${admin.email})` : `Admin #${adminId}`;
+
+  return dbInsert('admin_audit_logs', {
+    admin_id: Number(adminId) || 0,
+    admin_name: adminName,
+    action: String(action),
+    target_type: String(targetType),
+    target_id: Number(targetId) || null,
+    details: typeof details === 'object' ? JSON.stringify(details) : String(details),
+    ip_address: ip,
+    created_at: new Date().toISOString().slice(0, 19).replace('T', ' ')
+  });
+}

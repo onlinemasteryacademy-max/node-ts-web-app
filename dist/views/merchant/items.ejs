@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Products & Inventory — <%= store.store_name %> | zlik</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        zlikDark: '#08110D',
+                        zlikGreen: '#19D98B',
+                        zlikDeep: '#087A50',
+                        zlikBg: '#F8FAF8',
+                        zlikWhite: '#FFFFFF',
+                        zlikMuted: '#6B756F',
+                        zlikBorder: '#E3E9E5'
+                    },
+                    fontFamily: {
+                        display: ['Montserrat', 'sans-serif'],
+                        body: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAF8; color: #08110D; }
+        .font-display { font-family: 'Montserrat', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0.5rem); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E3E9E5] shadow-2xs">
+        <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-4">
+            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                <a href="/merchant" class="text-xs font-medium text-[#6B756F] hover:text-[#08110D] flex items-center gap-1 transition shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    <span class="hidden sm:inline">Dashboard</span>
+                </a>
+                <span class="text-gray-300 hidden sm:inline">/</span>
+                <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                    <h1 class="text-xs sm:text-sm font-semibold text-[#08110D] truncate">Products</h1>
+                    <span class="text-[9px] sm:text-[10px] font-medium px-1.5 sm:px-2 py-0.5 rounded-full border border-[#E3E9E5] bg-[#F8FAF8] text-[#08110D] shrink-0">
+                        <span><%= templateConfig ? templateConfig.name : 'General' %></span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 sm:gap-2">
+                <button type="button" onclick="openDailyAutoPoster()" title="Daily Auto-Poster" class="bg-white hover:bg-gray-50 text-[#08110D] border border-[#E3E9E5] text-xs font-semibold p-2 sm:px-3 sm:py-2 rounded-xl transition flex items-center gap-1.5 shadow-2xs">
+                    <span>🌟</span>
+                    <span class="hidden sm:inline">Auto-Poster</span>
+                </button>
+                <% if (isPro) { %>
+                    <button type="button" onclick="openBulkImportModal()" title="Bulk Import CSV" class="bg-white hover:bg-gray-50 text-[#08110D] border border-[#E3E9E5] text-xs font-semibold p-2 sm:px-3 sm:py-2 rounded-xl transition flex items-center gap-1.5 shadow-2xs">
+                        <span>📥</span>
+                        <span class="hidden sm:inline">Import</span>
+                    </button>
+                <% } else { %>
+                    <button type="button" onclick="openProUpgradeModal('Bulk CSV Product Import')" title="Bulk Import (Pro)" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] border border-[#E3E9E5] text-xs font-medium p-2 sm:px-3 sm:py-2 rounded-xl transition flex items-center gap-1.5">
+                        <span>🔒</span>
+                        <span class="hidden sm:inline">Import (Pro)</span>
+                    </button>
+                <% } %>
+                <button type="button" onclick="openAddProductModal()" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs px-3 sm:px-4 py-2 rounded-xl transition flex items-center gap-1 shadow-2xs">
+                    <span class="text-sm leading-none">+</span>
+                    <span>Add</span>
+                    <span class="hidden sm:inline">Product</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="hidden sm:flex max-w-7xl mx-auto px-4 items-center gap-2 overflow-x-auto text-xs font-medium border-t border-[#E3E9E5]/60 pt-2 pb-2">
+            <a href="/merchant" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Orders</a>
+            <a href="/merchant/items" class="px-3.5 py-1.5 rounded-xl bg-[#08110D] text-white font-semibold">Products</a>
+            <a href="/merchant/ledger" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Sales Ledger</a>
+            <a href="/merchant/debts" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Debts</a>
+            <a href="/merchant/messages" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Live Chat</a>
+            <a href="/merchant/settings" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Settings</a>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24 sm:pb-8 flex-1 w-full space-y-5 sm:space-y-6">
+
+        <!-- Plan Product Capacity Notice for Free Tier -->
+        <% if (!isPro) { %>
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-7 h-7 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center text-xs font-mono font-bold shrink-0"><%= items.length %>/10</span>
+                    <div>
+                        <h4 class="font-semibold text-amber-950">Free Starter Capacity: <%= items.length %> / 10 Products Used</h4>
+                        <p class="text-[11px] text-amber-800 mt-0.5">
+                            Free plan includes 10 active products and 1 photo per item. Upgrade to Pro for 500 products, 5 photos per item, and bulk CSV imports.
+                        </p>
+                    </div>
+                </div>
+                <button type="button" onclick="openProUpgradeModal('500 Products & 5 Photos')" class="shrink-0 bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs px-3.5 py-2 rounded-xl transition shadow-2xs">
+                    Upgrade to Pro ⚡
+                </button>
+            </div>
+        <% } %>
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+                <h2 class="text-base font-extrabold text-[#08110D] font-display flex items-center gap-2">
+                    <span>Store Products (<%= items.length %>)</span>
+                    <span class="text-xs font-normal text-[#6B756F]">• Configured for <%= templateConfig ? templateConfig.name : 'General' %></span>
+                </h2>
+                <p class="text-xs text-[#6B756F]">Manage items, structured variants, customizable option groups, technical specs, and in-stock inventory</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="/<%= store.slug %>" target="_blank" class="bg-white hover:bg-gray-50 text-[#08110D] border border-[#E3E9E5] text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1">
+                    <span>View Storefront ↗</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <% if (items.length === 0) { %>
+                <div class="col-span-full p-12 text-center bg-white rounded-3xl border border-[#E3E9E5] text-[#6B756F] text-xs space-y-3">
+                    <div class="text-4xl"><%= templateConfig ? templateConfig.icon : '🛍️' %></div>
+                    <div class="font-bold text-[#08110D] text-sm">No products added yet</div>
+                    <p class="max-w-sm mx-auto text-xs text-[#6B756F]">Click the button below to add your first <%= templateConfig ? templateConfig.product_label_singular : 'product' %> with <%= templateConfig ? templateConfig.name : 'store' %> features.</p>
+                    <button type="button" onclick="openAddProductModal()" class="bg-[#08110D] text-[#19D98B] font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-2xs">
+                        + Add First <%= templateConfig ? templateConfig.product_label_singular : 'Product' %>
+                    </button>
+                </div>
+            <% } else { %>
+                <% items.forEach(item => { 
+                    let variantsList = [];
+                    let optionGroupsList = [];
+                    let specsList = [];
+                    let attributesData = {};
+                    try { if (item.variants_json) variantsList = typeof item.variants_json === 'string' ? JSON.parse(item.variants_json) : item.variants_json; } catch(e){}
+                    try { if (item.option_groups_json) optionGroupsList = typeof item.option_groups_json === 'string' ? JSON.parse(item.option_groups_json) : item.option_groups_json; } catch(e){}
+                    try { if (item.specs_json) specsList = typeof item.specs_json === 'string' ? JSON.parse(item.specs_json) : item.specs_json; } catch(e){}
+                    try { if (item.attributes_json) attributesData = typeof item.attributes_json === 'string' ? JSON.parse(item.attributes_json) : item.attributes_json; } catch(e){}
+                %>
+                    <div class="bg-white rounded-2xl border border-[#E3E9E5] p-3.5 flex flex-col justify-between hover:shadow-md transition group">
+                        <div>
+                            <div class="aspect-square bg-[#F8FAF8] rounded-xl overflow-hidden mb-3 border border-[#E3E9E5]/50 flex items-center justify-center relative">
+                                <% if (item.image_url) { %>
+                                    <img src="<%= item.image_url %>" alt="<%= item.title %>" class="w-full h-full object-cover">
+                                <% } else { %>
+                                    <span class="text-3xl text-gray-300"><%= templateConfig ? templateConfig.icon : '🛍️' %></span>
+                                <% } %>
+                                <% if (item.badge) { %>
+                                    <span class="absolute top-2 left-2 bg-[#08110D]/80 backdrop-blur-xs text-[#19D98B] text-[9px] font-bold px-2 py-0.5 rounded-md">
+                                        <%= item.badge %>
+                                    </span>
+                                <% } %>
+                                <% if (item.is_preorder) { %>
+                                    <span class="absolute top-2 right-2 bg-purple-900/90 backdrop-blur-xs text-purple-200 text-[9px] font-bold px-2 py-0.5 rounded-md">
+                                        PRE-ORDER
+                                    </span>
+                                <% } %>
+                            </div>
+
+                            <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                                <span class="text-[9px] font-bold uppercase bg-[#F8FAF8] text-[#6B756F] px-2 py-0.5 rounded-md border border-[#E3E9E5]"><%= item.category %></span>
+                                <% if (variantsList && variantsList.length > 0) { %>
+                                    <span class="text-[9px] font-bold bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded-md border border-purple-200">
+                                        <%= variantsList.length %> Variants
+                                    </span>
+                                <% } %>
+                                <% if (optionGroupsList && optionGroupsList.length > 0) { %>
+                                    <span class="text-[9px] font-bold bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded-md border border-amber-200">
+                                        <%= optionGroupsList.length %> Option Groups
+                                    </span>
+                                <% } %>
+                                <% if (specsList && specsList.length > 0) { %>
+                                    <span class="text-[9px] font-bold bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-md border border-blue-200">
+                                        Specs Set
+                                    </span>
+                                <% } %>
+                            </div>
+
+                            <h3 class="font-bold text-xs text-[#08110D] line-clamp-1 group-hover:text-[#087A50] transition"><%= item.title %></h3>
+                            <p class="text-[11px] text-[#6B756F] line-clamp-2 my-1"><%= item.description || 'No description provided' %></p>
+                            
+                            <div class="flex items-baseline gap-2 mt-1">
+                                <span class="text-xs font-extrabold text-[#087A50] font-mono">₦<%= Number(item.price).toLocaleString('en-US', {minimumFractionDigits: 2}) %></span>
+                                <% if (item.compare_price && item.compare_price > item.price) { %>
+                                    <span class="text-[10px] text-[#6B756F] line-through font-mono">₦<%= Number(item.compare_price).toLocaleString('en-US') %></span>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 mt-3 border-t border-[#E3E9E5]/60 flex items-center justify-between text-xs">
+                            <span class="text-[10px] font-bold <%= item.is_available ? 'text-emerald-700' : 'text-gray-400' %>">
+                                <%= item.is_available ? '● Available' : '○ Hidden' %>
+                            </span>
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" onclick="openSocialPosterModal(<%= JSON.stringify(item) %>)" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-bold text-[11px] px-2 py-1 rounded-lg border border-[#E3E9E5] transition" title="Create Social Status Poster">
+                                    📸 Poster
+                                </button>
+                                <button type="button" onclick="openEditProductModal(<%= JSON.stringify(item) %>)" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-bold text-[11px] px-2 py-1 rounded-lg border border-[#E3E9E5] transition">
+                                    ✏️ Edit
+                                </button>
+                                <button type="button" onclick="deleteProduct(<%= item.id %>)" class="text-red-600 hover:text-red-700 font-bold p-1 rounded-lg hover:bg-red-50 transition" title="Delete Product">
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            <% } %>
+        </div>
+    </main>
+
+    <!-- Comprehensive Product Create & Edit Modal -->
+    <div id="productModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-0 shadow-2xl border border-[#E3E9E5] overflow-hidden max-h-[92vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 border-b border-[#E3E9E5] flex items-center justify-between bg-[#F8FAF8] shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="p-1.5 rounded-xl bg-gray-100 text-base"><%= templateConfig ? templateConfig.icon : '🛍️' %></span>
+                    <div>
+                        <h3 id="productModalHeading" class="font-extrabold text-sm text-[#08110D] font-display">Add Product</h3>
+                        <p class="text-[10.5px] text-[#6B756F]">Store Template: <%= templateConfig ? templateConfig.name : 'General' %></p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeProductModal()" class="w-7 h-7 rounded-full bg-white border border-[#E3E9E5] text-[#6B756F] hover:text-black flex items-center justify-center font-bold text-xs">✕</button>
+            </div>
+
+            <!-- Modal Body Form (Scrollable) -->
+            <form id="productForm" onsubmit="handleSaveProduct(event)" class="overflow-y-auto p-5 sm:p-6 space-y-5 flex-1 text-xs">
+                <input type="hidden" id="prodId" value="">
+
+                <!-- Tab 1: Core Product Information -->
+                <div class="space-y-3.5">
+                    <h4 class="text-[11px] font-extrabold uppercase tracking-wider text-[#6B756F] border-b border-[#E3E9E5] pb-1">1. Basic Details & Direct Photos</h4>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="sm:col-span-2">
+                            <label class="block font-bold text-[#08110D] mb-1">Product Title *</label>
+                            <input type="text" id="prodTitle" required placeholder="e.g. Classic Oxford Cotton Shirt" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none focus:border-[#08110D]">
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-[#08110D] mb-1">Category</label>
+                            <input type="text" id="prodCategory" placeholder="e.g. Apparel, Main Dish, Skincare" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none focus:border-[#08110D]">
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-[#08110D] mb-1">Promotional Badge (Optional)</label>
+                            <input type="text" id="prodBadge" placeholder="e.g. 20% OFF, Chef Special, Best Seller" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none focus:border-[#08110D]">
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-[#08110D] mb-1">Base Price (₦) *</label>
+                            <input type="number" step="0.01" id="prodPrice" required placeholder="5000" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none focus:border-[#08110D] font-mono font-bold">
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-[#08110D] mb-1">Compare Price (₦ - Strikethrough)</label>
+                            <input type="number" step="0.01" id="prodComparePrice" placeholder="7500" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none focus:border-[#08110D] font-mono">
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-[#08110D] mb-1">Stock Quantity</label>
+                            <input type="number" id="prodStock" placeholder="100" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none focus:border-[#08110D]">
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-[#08110D] mb-1">SKU / Item Code</label>
+                            <input type="text" id="prodSku" placeholder="e.g. SHIRT-OXF-01" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none focus:border-[#08110D] font-mono">
+                        </div>
+
+                        <!-- Direct Multi-Image Uploader (Up to 10MB per file) -->
+                        <div class="sm:col-span-2 space-y-2 pt-1">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                <label class="block font-bold text-[#08110D]">
+                                    Product Photos (Max <%= isPro ? '5' : '1' %> on <%= isPro ? 'Pro' : 'Free' %> Plan)
+                                </label>
+                                <span class="text-[10.5px] text-[#6B756F]">
+                                    <%= isPro ? 'Upload up to 5 photos • First is main cover' : '🔒 Free includes 1 photo per item (5 on Pro)' %>
+                                </span>
+                            </div>
+                            
+                            <!-- Dropzone Box -->
+                            <div id="productImageDropzone" onclick="document.getElementById('productImageFileInput').click()" class="border-2 border-dashed border-[#E3E9E5] hover:border-[#08110D] p-4 sm:p-5 rounded-2xl bg-[#F8FAF8] hover:bg-[#F0F4F1] transition cursor-pointer text-center space-y-1.5 group">
+                                <input type="file" id="productImageFileInput" multiple accept="image/*" onchange="handleProductFilesUpload(this.files)" class="hidden">
+                                <div class="text-2xl group-hover:scale-110 transition-transform">📸</div>
+                                <div class="text-xs font-bold text-[#08110D]">Click to upload or drag & drop product photos</div>
+                                <div class="text-[10.5px] text-[#6B756F]">Direct upload: JPG, PNG, WEBP, GIF, SVG (Up to 10MB each)</div>
+                            </div>
+
+                            <!-- Upload Spinner / Status -->
+                            <div id="uploadStatusBox" class="hidden p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-bold flex items-center gap-2">
+                                <span class="animate-spin">⏳</span>
+                                <span id="uploadStatusText">Uploading images...</span>
+                            </div>
+
+                            <!-- Multi-Image Thumbnails Gallery -->
+                            <div id="productGalleryContainer" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5 pt-1">
+                                <!-- Injected via JavaScript -->
+                            </div>
+
+                            <input type="hidden" id="prodImageUrl" value="">
+                            <input type="hidden" id="prodGalleryJson" value="[]">
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label class="block font-bold text-[#08110D] mb-1">Description</label>
+                            <textarea id="prodDesc" rows="2" placeholder="Describe the item, ingredients, fit, features..." class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none focus:border-[#08110D]"></textarea>
+                        </div>
+
+                        <!-- Pre-Order Settings -->
+                        <div class="sm:col-span-2 p-3 bg-[#F8FAF8] rounded-xl border border-[#E3E9E5] space-y-2">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-bold text-[#08110D] text-xs">Accept Pre-Orders</div>
+                                    <div class="text-[10px] text-[#6B756F]">Allow customers to purchase before stock arrives</div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="prodIsPreorder" onchange="togglePreorderDateInput(this.checked)" class="sr-only peer">
+                                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#087A50]"></div>
+                                </label>
+                            </div>
+                            <div id="preorderDateContainer" class="hidden pt-2 border-t border-[#E3E9E5]/60">
+                                <label class="block font-bold text-[#08110D] text-[11px] mb-1">Estimated Dispatch / Availability Date</label>
+                                <input type="date" id="prodPreorderDispatchDate" class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2 outline-none text-xs">
+                            </div>
+                        </div>
+
+                        <!-- Product Video Showcase (Business Plan) -->
+                        <div class="sm:col-span-2">
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block font-bold text-[#08110D]">Product Showcase Video URL (Optional)</label>
+                                <span class="text-[9.5px] font-semibold bg-[#08110D] text-[#19D98B] px-2 py-0.5 rounded-md font-mono">🔒 BUSINESS PLAN</span>
+                            </div>
+                            <input type="url" id="prodVideoUrl" placeholder="https://cdn.example.com/video.mp4 or YouTube / Vimeo URL" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none focus:border-[#08110D] font-mono text-xs">
+                            <span class="text-[10px] text-[#6B756F] mt-0.5 block">Plays an interactive video showcase inside the product modal on your storefront.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Template-Specific Dynamic Section -->
+                <% const categoryId = (templateConfig && templateConfig.category_id) || 'general'; %>
+
+                <% if (categoryId === 'fashion') { %>
+                    <!-- Fashion: Sizes, Colors, and Variant Matrix with Optional Images -->
+                    <div class="space-y-3.5 pt-3 border-t border-[#E3E9E5]">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-[11px] font-extrabold uppercase tracking-wider text-[#08110D] flex items-center gap-1.5">
+                                <span>👗 Fashion Specifications (Sizes & Colors)</span>
+                            </h4>
+                            <span class="text-[10px] text-[#6B756F]">Configure combinations with photos</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#F8FAF8] p-3.5 rounded-2xl border border-[#E3E9E5]">
+                            <div>
+                                <label class="block font-bold text-[#08110D] mb-1">Available Sizes (Comma separated)</label>
+                                <input type="text" id="fashionSizes" oninput="generateFashionVariantMatrix()" placeholder="XS, S, M, L, XL, XXL" class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2.5 outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-[#08110D] mb-1">Available Colors (Comma separated)</label>
+                                <input type="text" id="fashionColors" oninput="generateFashionVariantMatrix()" placeholder="Black, White, Navy Blue, Beige" class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2.5 outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-[#08110D] mb-1">Fabric & Material</label>
+                                <input type="text" id="fashionMaterial" placeholder="100% Organic Cotton" class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2.5 outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-[#08110D] mb-1">Fit & Care Instructions</label>
+                                <input type="text" id="fashionCare" placeholder="Regular fit, Machine wash cold" class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2.5 outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Variant Matrix with Variant Photos -->
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-[11px] text-[#08110D]">Variation Items & Optional Photos:</span>
+                                <span class="text-[10.5px] text-[#6B756F]">Upload photo for each color/size</span>
+                            </div>
+                            <div id="variantMatrixContainer" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                <!-- Generated dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                <% } else if (categoryId === 'food') { %>
+                    <!-- Food & Restaurant: Option Groups & Prep Time -->
+                    <div class="space-y-3.5 pt-3 border-t border-[#E3E9E5]">
+                        <div class="flex items-center justify-between">
+                            <h4 class="text-[11px] font-extrabold uppercase tracking-wider text-[#08110D] flex items-center gap-1.5">
+                                <span>🍔 Food Menu Customizer & Option Groups</span>
+                            </h4>
+                            <button type="button" onclick="addFoodOptionGroup()" class="text-[10px] font-bold bg-[#08110D] text-[#19D98B] px-2.5 py-1 rounded-lg">
+                                + Add Option Group
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#F8FAF8] p-3 rounded-2xl border border-[#E3E9E5]">
+                            <div>
+                                <label class="block font-bold text-[#08110D] mb-1">Estimated Preparation Time</label>
+                                <input type="text" id="foodPrepTime" placeholder="e.g. 15-20 mins" class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2.5 outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-[#08110D] mb-1">Dietary Tags</label>
+                                <input type="text" id="foodDietary" placeholder="e.g. Spicy, Halal, Freshly Grilled" class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2.5 outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Option Groups Dynamic Container -->
+                        <div id="foodOptionGroupsContainer" class="space-y-3">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+                <% } else if (categoryId === 'beauty') { %>
+                    <!-- Beauty: Shades, Volumes, Ingredients with Optional Shade Photos -->
+                    <div class="space-y-3.5 pt-3 border-t border-[#E3E9E5]">
+                        <h4 class="text-[11px] font-extrabold uppercase tracking-wider text-[#08110D] flex items-center gap-1.5">
+                            <span>✨ Beauty & Cosmetic Specifications</span>
+                        </h4>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#F8FAF8] p-3.5 rounded-2xl border border-[#E3E9E5]">
+                            <div>
+                                <label class="block font-bold text-[#08110D] mb-1">Formulation Type</label>
+                                <input type="text" id="beautyFormulation" placeholder="e.g. Serum, Cream, Gel, Oil, Mist" class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2.5 outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-[#08110D] mb-1">Volume Sizes (Comma separated)</label>
+                                <input type="text" id="beautyVolumes" oninput="generateBeautyVariantMatrix()" placeholder="30ml, 50ml, 100ml" class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2.5 outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-[#08110D] mb-1">Shades / Tones (Comma separated)</label>
+                                <input type="text" id="beautyShades" oninput="generateBeautyVariantMatrix()" placeholder="Fair, Medium Honey, Deep Cocoa, Nude" class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2.5 outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-[#08110D] mb-1">Target Skin / Hair Concern</label>
+                                <input type="text" id="beautyConcerns" placeholder="e.g. Hydration, Anti-Aging, Radiance" class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2.5 outline-none">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block font-bold text-[#08110D] mb-1">Key Ingredients & Benefits</label>
+                                <textarea id="beautyIngredients" rows="2" placeholder="Hyaluronic Acid, Niacinamide 10%, Vitamin C..." class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2.5 outline-none"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Beauty Variant Matrix with Photos -->
+                        <div class="space-y-2">
+                            <span class="font-bold text-[11px] text-[#08110D]">Shade & Volume Variations:</span>
+                            <div id="beautyVariantMatrixContainer" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+                        </div>
+                    </div>
+                <% } else if (categoryId === 'electronics') { %>
+                    <!-- Electronics: Condition, Warranty, Technical Specs & Config Photos -->
+                    <div class="space-y-3.5 pt-3 border-t border-[#E3E9E5]">
+                        <h4 class="text-[11px] font-extrabold uppercase tracking-wider text-[#08110D] flex items-center gap-1.5">
+                            <span>⚡ Electronics Specs & Device Conditions</span>
+                        </h4>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#F8FAF8] p-3.5 rounded-2xl border border-[#E3E9E5]">
+                            <div>
+                                <label class="block font-bold text-[#08110D] mb-1">Device Condition</label>
+                                <select id="techCondition" class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2.5 outline-none font-bold">
+                                    <option value="Brand New">✨ Brand New (Sealed)</option>
+                                    <option value="Open Box">📦 Open Box</option>
+                                    <option value="Refurbished">🔧 Certified Refurbished</option>
+                                    <option value="Pre-Owned">📱 Clean Pre-Owned</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-bold text-[#08110D] mb-1">Warranty Period</label>
+                                <input type="text" id="techWarranty" placeholder="e.g. 1 Year Official Apple Warranty" class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2.5 outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-[#08110D] mb-1">Storage / RAM Variants (Comma separated)</label>
+                                <input type="text" id="techConfigs" oninput="generateTechVariantMatrix()" placeholder="128GB, 256GB, 512GB, 1TB" class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2.5 outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-[#08110D] mb-1">In-The-Box Contents</label>
+                                <input type="text" id="techBoxContents" placeholder="Device, USB-C Cable, Documentation" class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2.5 outline-none">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block font-bold text-[#08110D] mb-1">Technical Specs</label>
+                                <input type="text" id="techSpecsText" placeholder="Display: 6.7 inch | RAM: 8GB | Battery: 5000mAh | OS: Android 14" class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2.5 outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Tech Config Matrix with Photos -->
+                        <div class="space-y-2">
+                            <span class="font-bold text-[11px] text-[#08110D]">Storage & Model Variations:</span>
+                            <div id="techVariantMatrixContainer" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+                        </div>
+                    </div>
+                <% } %>
+
+                <div class="flex items-center gap-2 pt-3 border-t border-[#E3E9E5]">
+                    <button type="button" onclick="closeProductModal()" class="w-1/3 bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-bold text-xs py-3 rounded-xl border border-[#E3E9E5] transition">
+                        Cancel
+                    </button>
+                    <button type="submit" id="saveProdBtn" class="w-2/3 bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs py-3 rounded-xl transition shadow-2xs font-display flex items-center justify-center gap-2">
+                        <span>Save Product ✓</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Social Status Poster Generator Modal -->
+    <div id="posterModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-4xl w-full p-0 shadow-2xl border border-[#E3E9E5] overflow-hidden max-h-[95vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 border-b border-[#E3E9E5] flex items-center justify-between bg-[#F8FAF8] shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="p-1.5 rounded-xl bg-emerald-100 text-emerald-900 text-base">📸</span>
+                    <div>
+                        <h3 class="font-extrabold text-sm text-[#08110D] font-display">Social Status & Story Poster</h3>
+                        <p class="text-[10.5px] text-[#6B756F]">Generate high-res status posters for WhatsApp Status, Instagram Stories & Posts</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeSocialPosterModal()" class="w-7 h-7 rounded-full bg-white border border-[#E3E9E5] text-[#6B756F] hover:text-black flex items-center justify-center font-bold text-xs">✕</button>
+            </div>
+
+            <!-- Modal Content Grid -->
+            <div class="p-5 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-12 gap-6 items-start text-xs">
+                <!-- Controls Sidebar (5 cols) -->
+                <div class="md:col-span-5 space-y-4">
+                    <!-- Format Selector -->
+                    <div>
+                        <label class="block font-bold text-[#08110D] mb-1.5">1. Aspect Ratio / Format</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" id="fmtStoryBtn" onclick="setPosterFormat('story')" class="p-3 rounded-xl border-2 border-[#08110D] bg-[#08110D] text-white text-left transition flex flex-col justify-between">
+                                <div class="font-bold text-xs">Story / Status</div>
+                                <div class="text-[10px] text-gray-300">9:16 (1080 × 1920)</div>
+                            </button>
+                            <button type="button" id="fmtSquareBtn" onclick="setPosterFormat('square')" class="p-3 rounded-xl border border-[#E3E9E5] bg-[#F8FAF8] text-[#08110D] text-left hover:border-[#08110D] transition flex flex-col justify-between">
+                                <div class="font-bold text-xs">Feed / Square</div>
+                                <div class="text-[10px] text-[#6B756F]">1:1 (1080 × 1080)</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Theme Selector -->
+                    <div>
+                        <label class="block font-bold text-[#08110D] mb-1.5">2. Visual Theme</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="setPosterTheme('dark')" class="p-2.5 rounded-xl border border-[#E3E9E5] hover:border-black flex items-center gap-2 bg-[#08110D] text-white font-bold text-[11px]">
+                                <span class="w-3 h-3 rounded-full bg-[#19D98B]"></span> Dark Luxury
+                            </button>
+                            <button type="button" onclick="setPosterTheme('light')" class="p-2.5 rounded-xl border border-[#E3E9E5] hover:border-black flex items-center gap-2 bg-white text-[#08110D] font-bold text-[11px]">
+                                <span class="w-3 h-3 rounded-full bg-[#087A50]"></span> Minimal Sage
+                            </button>
+                            <button type="button" onclick="setPosterTheme('midnight')" class="p-2.5 rounded-xl border border-[#E3E9E5] hover:border-black flex items-center gap-2 bg-[#0A1128] text-white font-bold text-[11px]">
+                                <span class="w-3 h-3 rounded-full bg-[#00E5FF]"></span> Midnight Cyan
+                            </button>
+                            <button type="button" onclick="setPosterTheme('sunset')" class="p-2.5 rounded-xl border border-[#E3E9E5] hover:border-black flex items-center gap-2 bg-[#1E1022] text-white font-bold text-[11px]">
+                                <span class="w-3 h-3 rounded-full bg-[#FF6B6B]"></span> Sunset Velvet
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Options -->
+                    <div class="p-3 bg-[#F8FAF8] rounded-2xl border border-[#E3E9E5] space-y-2">
+                        <label class="flex items-center gap-2 font-bold text-[#08110D] cursor-pointer">
+                            <input type="checkbox" id="posterShowQr" checked onchange="renderPosterCanvas()" class="rounded">
+                            <span>Include Store QR Code</span>
+                        </label>
+                        <label class="flex items-center gap-2 font-bold text-[#08110D] cursor-pointer">
+                            <input type="checkbox" id="posterShowBadge" checked onchange="renderPosterCanvas()" class="rounded">
+                            <span>Show Promotional / Pre-Order Badge</span>
+                        </label>
+                        <label class="flex items-center gap-2 font-bold text-[#08110D] cursor-pointer">
+                            <input type="checkbox" id="posterShowComparePrice" checked onchange="renderPosterCanvas()" class="rounded">
+                            <span>Show Strikethrough Compare Price</span>
+                        </label>
+                    </div>
+
+                    <!-- Download Action -->
+                    <div class="pt-2">
+                        <button type="button" onclick="downloadPoster()" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs py-3.5 rounded-xl transition shadow-md font-display flex items-center justify-center gap-2">
+                            <span>⬇️ Download Poster (PNG)</span>
+                        </button>
+                        <p class="text-[10px] text-center text-[#6B756F] mt-1.5">Directly post to WhatsApp Status, Instagram, or Facebook</p>
+                    </div>
+                </div>
+
+                <!-- Live Preview Canvas Container (7 cols) -->
+                <div class="md:col-span-7 flex flex-col items-center justify-center bg-[#EAEFEA] p-4 rounded-2xl border border-[#E3E9E5] min-h-[420px] overflow-hidden">
+                    <canvas id="posterCanvas" class="max-h-[500px] max-w-full rounded-xl shadow-lg transition-all"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Product Import Modal -->
+    <div id="bulkImportModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-0 shadow-2xl border border-[#E3E9E5] overflow-hidden max-h-[92vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 border-b border-[#E3E9E5] flex items-center justify-between bg-[#F8FAF8] shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="p-1.5 rounded-xl bg-blue-100 text-blue-900 text-base">📥</span>
+                    <div>
+                        <h3 class="font-extrabold text-sm text-[#08110D] font-display">Bulk Import Products</h3>
+                        <p class="text-[10.5px] text-[#6B756F]">Upload a CSV file to add multiple products at once</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeBulkImportModal()" class="w-7 h-7 rounded-full bg-white border border-[#E3E9E5] text-[#6B756F] hover:text-black flex items-center justify-center font-bold text-xs">✕</button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-5 overflow-y-auto flex-1 space-y-4 text-xs">
+                <!-- Template Banner -->
+                <div class="bg-[#F8FAF8] border border-[#E3E9E5] rounded-2xl p-3.5 flex items-center justify-between gap-3">
+                    <div class="space-y-0.5">
+                        <div class="font-bold text-[#08110D] text-xs">Need the official template?</div>
+                        <div class="text-[11px] text-[#6B756F]">Download our pre-formatted CSV template with sample data</div>
+                    </div>
+                    <a href="/api/merchant/items/sample-csv" download class="bg-white hover:bg-gray-50 border border-[#E3E9E5] text-[#08110D] font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shrink-0 shadow-2xs">
+                        <span>📄 Download CSV</span>
+                    </a>
+                </div>
+
+                <!-- Dropzone Box -->
+                <div id="csvDropzone" onclick="document.getElementById('csvFileInput').click()" class="border-2 border-dashed border-[#E3E9E5] hover:border-[#08110D] p-5 rounded-2xl bg-[#F8FAF8] hover:bg-[#F0F4F1] transition cursor-pointer text-center space-y-1.5 group">
+                    <input type="file" id="csvFileInput" accept=".csv,text/csv" onchange="handleCSVFileSelect(this.files)" class="hidden">
+                    <div class="text-3xl group-hover:scale-110 transition-transform">📊</div>
+                    <div class="text-xs font-bold text-[#08110D]">Click to choose CSV file or drag & drop here</div>
+                    <div class="text-[10.5px] text-[#6B756F]">Standard comma-delimited (.csv) format</div>
+                </div>
+
+                <!-- Paste CSV Direct Option -->
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block font-bold text-[#08110D]">Or paste CSV text directly:</label>
+                        <button type="button" onclick="loadSampleCSVInTextarea()" class="text-[10.5px] font-bold text-[#087A50] hover:underline">Insert Sample Data</button>
+                    </div>
+                    <textarea id="bulkCsvTextarea" rows="4" oninput="handleCSVTextChange()" placeholder="Title,Category,Price,Compare Price,Stock Quantity,Low Stock Threshold,SKU,Description,Image URL,Is Preorder,Preorder Date&#10;&quot;Oxford Shirt&quot;,&quot;Fashion&quot;,15000,18000,50,5,&quot;SHIRT-01&quot;,&quot;Cotton shirt&quot;,&quot;https://...&quot;,0,&quot;&quot;" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 font-mono text-[11px] outline-none focus:border-[#08110D]"></textarea>
+                </div>
+
+                <!-- Preview Table -->
+                <div id="csvPreviewContainer" class="hidden space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-[#08110D] text-[11px]">Preview (<span id="csvParsedRowCount">0</span> valid products detected):</span>
+                        <span class="text-[10.5px] text-emerald-700 font-bold">✓ Ready for import</span>
+                    </div>
+                    <div class="max-h-48 overflow-y-auto border border-[#E3E9E5] rounded-xl bg-white">
+                        <table class="w-full text-left text-[11px]">
+                            <thead class="bg-[#F8FAF8] border-b border-[#E3E9E5] text-[#6B756F] font-bold">
+                                <tr>
+                                    <th class="p-2">Title</th>
+                                    <th class="p-2">Category</th>
+                                    <th class="p-2 font-mono">Price</th>
+                                    <th class="p-2">Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody id="csvPreviewTableBody" class="divide-y divide-[#E3E9E5]">
+                                <!-- Injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Import Status / Error Banner -->
+                <div id="bulkImportStatusBox" class="hidden p-3 rounded-xl text-xs font-bold"></div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-5 py-3 border-t border-[#E3E9E5] bg-[#F8FAF8] flex items-center justify-end gap-2 shrink-0">
+                <button type="button" onclick="closeBulkImportModal()" class="bg-white hover:bg-gray-100 text-[#08110D] font-bold text-xs px-4 py-2.5 rounded-xl border border-[#E3E9E5] transition">
+                    Cancel
+                </button>
+                <button type="button" id="executeImportBtn" onclick="executeBulkImport()" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs px-5 py-2.5 rounded-xl transition shadow-2xs font-display disabled:opacity-50">
+                    Import Products ✓
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pro Upgrade Modal -->
+    <div id="proUpgradeModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 border border-[#E3E9E5] shadow-2xl text-center">
+            <div class="space-y-1.5">
+                <span class="text-[10px] font-semibold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-[#19D98B]/20 text-[#087A50] font-mono">
+                    Pro Feature
+                </span>
+                <h3 class="text-base font-semibold text-[#08110D]" id="proModalTitle">Unlock Pro Capacity</h3>
+                <p class="text-xs text-[#6B756F]" id="proModalDesc">
+                    This feature requires Zlik Pro. Upgrade to unlock 500 products, 5 photos per item, bulk CSV imports, and 3 stores.
+                </p>
+            </div>
+
+            <div class="bg-[#F8FAF8] rounded-2xl p-4 border border-[#E3E9E5] text-left space-y-2 text-xs">
+                <div class="font-semibold text-[11px] text-[#08110D] uppercase tracking-wider">Included in Zlik Pro (₦5,000/mo or ₦50,000/yr):</div>
+                <ul class="space-y-1.5 text-xs text-[#08110D]">
+                    <li class="flex items-center gap-2">
+                        <span class="text-[#087A50] font-bold">•</span>
+                        <span>Up to 3 stores & 500 products (5 photos/item)</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="text-[#087A50] font-bold">•</span>
+                        <span>CSV / Excel bulk product import</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="text-[#087A50] font-bold">•</span>
+                        <span>All 15 storefront designs & custom covers</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="text-[#087A50] font-bold">•</span>
+                        <span>Remove “Powered by Zlik” watermark</span>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="text-[#087A50] font-bold">•</span>
+                        <span>Full sales ledger history & CSV export</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="flex items-center gap-2 pt-1">
+                <button type="button" onclick="closeProUpgradeModal()" class="w-1/2 bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-medium text-xs py-3 rounded-xl border border-[#E3E9E5] transition">
+                    Maybe Later
+                </button>
+                <a href="/merchant/settings" class="w-1/2 bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs py-3 rounded-xl transition shadow-2xs text-center flex items-center justify-center">
+                    Upgrade to Pro ⚡
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openProUpgradeModal(featureName) {
+            const title = document.getElementById('proModalTitle');
+            const desc = document.getElementById('proModalDesc');
+            if (featureName) {
+                title.textContent = `Unlock ${featureName}`;
+                desc.textContent = `${featureName} is included in Zlik Pro. Upgrade now to scale your catalog and unlocks unlimited power.`;
+            }
+            document.getElementById('proUpgradeModal').classList.remove('hidden');
+        }
+
+        function closeProUpgradeModal() {
+            document.getElementById('proUpgradeModal').classList.add('hidden');
+        }
+        const storeTemplateSlug = '<%= store.template_slug || "general_clean" %>';
+        const currentTemplateCat = '<%= (templateConfig && templateConfig.category_id) || "general" %>';
+        let foodOptionGroups = [];
+        let uploadedProductGallery = [];
+        let customVariantsList = [];
+
+        function togglePreorderDateInput(isChecked) {
+            const dateContainer = document.getElementById('preorderDateContainer');
+            if (dateContainer) {
+                if (isChecked) {
+                    dateContainer.classList.remove('hidden');
+                } else {
+                    dateContainer.classList.add('hidden');
+                    const dateInput = document.getElementById('prodPreorderDispatchDate');
+                    if (dateInput) dateInput.value = '';
+                }
+            }
+        }
+
+        const isProAccount = <%= isPro ? 'true' : 'false' %>;
+        const currentProductsCount = <%= items.length %>;
+
+        function openAddProductModal() {
+            if (!isProAccount && currentProductsCount >= 10) {
+                openProUpgradeModal('500 Products Allowance');
+                return;
+            }
+            document.getElementById('prodId').value = '';
+            document.getElementById('productModalHeading').textContent = 'Add New Product';
+            document.getElementById('productForm').reset();
+            const preCheck = document.getElementById('prodIsPreorder');
+            if (preCheck) preCheck.checked = false;
+            togglePreorderDateInput(false);
+            if (document.getElementById('prodVideoUrl')) document.getElementById('prodVideoUrl').value = '';
+            foodOptionGroups = [];
+            uploadedProductGallery = [];
+            customVariantsList = [];
+            renderGalleryThumbnails();
+            renderFoodOptionGroups();
+            renderVariantMatrix();
+            document.getElementById('productModal').classList.remove('hidden');
+        }
+
+        function openEditProductModal(item) {
+            document.getElementById('prodId').value = item.id;
+            document.getElementById('productModalHeading').textContent = 'Edit Product #' + item.id;
+            document.getElementById('prodTitle').value = item.title || '';
+            document.getElementById('prodCategory').value = item.category || 'General';
+            document.getElementById('prodBadge').value = item.badge || '';
+            document.getElementById('prodPrice').value = item.price || '';
+            document.getElementById('prodComparePrice').value = item.compare_price || '';
+            document.getElementById('prodStock').value = item.stock_quantity || '';
+            document.getElementById('prodSku').value = item.sku || '';
+            document.getElementById('prodDesc').value = item.description || '';
+            if (document.getElementById('prodVideoUrl')) document.getElementById('prodVideoUrl').value = item.video_url || '';
+
+            const isPre = Boolean(item.is_preorder);
+            const preCheck = document.getElementById('prodIsPreorder');
+            if (preCheck) preCheck.checked = isPre;
+            togglePreorderDateInput(isPre);
+            if (document.getElementById('prodPreorderDispatchDate')) {
+                document.getElementById('prodPreorderDispatchDate').value = item.preorder_dispatch_date || '';
+            }
+
+            // Load Gallery Images
+            uploadedProductGallery = [];
+            try {
+                if (item.gallery_json) {
+                    uploadedProductGallery = typeof item.gallery_json === 'string' ? JSON.parse(item.gallery_json) : item.gallery_json;
+                }
+            } catch(e) {}
+            if (uploadedProductGallery.length === 0 && item.image_url) {
+                uploadedProductGallery = [item.image_url];
+            }
+            renderGalleryThumbnails();
+
+            // Load Variants
+            customVariantsList = [];
+            try {
+                if (item.variants_json) {
+                    customVariantsList = typeof item.variants_json === 'string' ? JSON.parse(item.variants_json) : item.variants_json;
+                }
+            } catch(e) {}
+
+            // Template specifics
+            let attr = {};
+            let specs = [];
+            try { if (item.attributes_json) attr = typeof item.attributes_json === 'string' ? JSON.parse(item.attributes_json) : item.attributes_json; } catch(e){}
+            try { if (item.specs_json) specs = typeof item.specs_json === 'string' ? JSON.parse(item.specs_json) : item.specs_json; } catch(e){}
+            try { if (item.option_groups_json) foodOptionGroups = typeof item.option_groups_json === 'string' ? JSON.parse(item.option_groups_json) : item.option_groups_json; } catch(e){ foodOptionGroups = []; }
+
+            if (document.getElementById('fashionSizes')) document.getElementById('fashionSizes').value = attr.sizes || '';
+            if (document.getElementById('fashionColors')) document.getElementById('fashionColors').value = attr.colors || '';
+            if (document.getElementById('fashionMaterial')) document.getElementById('fashionMaterial').value = attr.material || '';
+            if (document.getElementById('fashionCare')) document.getElementById('fashionCare').value = attr.care || '';
+
+            if (document.getElementById('foodPrepTime')) document.getElementById('foodPrepTime').value = attr.prep_time || '';
+            if (document.getElementById('foodDietary')) document.getElementById('foodDietary').value = attr.dietary || '';
+
+            if (document.getElementById('beautyFormulation')) document.getElementById('beautyFormulation').value = attr.formulation || '';
+            if (document.getElementById('beautyVolumes')) document.getElementById('beautyVolumes').value = attr.volumes || '';
+            if (document.getElementById('beautyShades')) document.getElementById('beautyShades').value = attr.shades || '';
+            if (document.getElementById('beautyConcerns')) document.getElementById('beautyConcerns').value = attr.concerns || '';
+            if (document.getElementById('beautyIngredients')) document.getElementById('beautyIngredients').value = attr.ingredients || '';
+
+            if (document.getElementById('techCondition')) document.getElementById('techCondition').value = attr.condition || 'Brand New';
+            if (document.getElementById('techWarranty')) document.getElementById('techWarranty').value = attr.warranty || '';
+            if (document.getElementById('techConfigs')) document.getElementById('techConfigs').value = attr.configs || '';
+            if (document.getElementById('techBoxContents')) document.getElementById('techBoxContents').value = attr.box_contents || '';
+            if (document.getElementById('techSpecsText')) document.getElementById('techSpecsText').value = attr.specs_text || '';
+
+            renderFoodOptionGroups();
+            renderVariantMatrix();
+            document.getElementById('productModal').classList.remove('hidden');
+        }
+
+        function closeProductModal() {
+            document.getElementById('productModal').classList.add('hidden');
+        }
+
+        // Direct Multi-File Upload Handler (Up to 10MB each)
+        async function handleProductFilesUpload(files) {
+            if (!files || files.length === 0) return;
+
+            const maxFileSize = 10 * 1024 * 1024; // 10MB
+            for (let i = 0; i < files.length; i++) {
+                if (files[i].size > maxFileSize) {
+                    alert(`"${files[i].name}" exceeds 10MB limit (${(files[i].size / (1024 * 1024)).toFixed(1)}MB). Please choose a file under 10MB.`);
+                    return;
+                }
+            }
+
+            const statusBox = document.getElementById('uploadStatusBox');
+            const statusText = document.getElementById('uploadStatusText');
+            statusBox.classList.remove('hidden');
+            statusText.textContent = `Uploading ${files.length} photo(s)...`;
+
+            const formData = new FormData();
+            for (let i = 0; i < files.length; i++) {
+                formData.append('files', files[i]);
+            }
+
+            try {
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success && data.urls) {
+                    data.urls.forEach(u => uploadedProductGallery.push(u));
+                    renderGalleryThumbnails();
+                    statusBox.classList.add('hidden');
+                } else {
+                    alert(data.error || 'Failed to upload images');
+                    statusBox.classList.add('hidden');
+                }
+            } catch (err) {
+                alert('Network error uploading images');
+                statusBox.classList.add('hidden');
+            }
+        }
+
+        function renderGalleryThumbnails() {
+            const container = document.getElementById('productGalleryContainer');
+            if (!container) return;
+
+            // Sync hidden inputs
+            const primaryUrl = uploadedProductGallery.length > 0 ? uploadedProductGallery[0] : '';
+            document.getElementById('prodImageUrl').value = primaryUrl;
+            document.getElementById('prodGalleryJson').value = JSON.stringify(uploadedProductGallery);
+
+            if (uploadedProductGallery.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center py-2 text-[#6B756F] text-[11px] italic">No photos uploaded yet.</div>';
+                return;
+            }
+
+            container.innerHTML = uploadedProductGallery.map((imgUrl, idx) => `
+                <div class="relative group/thumb aspect-square rounded-xl overflow-hidden border-2 ${idx === 0 ? 'border-[#087A50] ring-2 ring-[#19D98B]' : 'border-[#E3E9E5]'} bg-gray-100 shadow-2xs">
+                    <img src="${imgUrl}" alt="Product Photo" class="w-full h-full object-cover">
+                    
+                    ${idx === 0 ? `
+                        <span class="absolute top-1.5 left-1.5 bg-[#08110D]/90 text-[#19D98B] text-[8.5px] font-extrabold px-1.5 py-0.5 rounded-md shadow-xs">
+                            COVER
+                        </span>
+                    ` : `
+                        <button type="button" onclick="setAsPrimaryImage(${idx})" title="Set as main cover photo" class="absolute top-1.5 left-1.5 bg-[#08110D]/80 hover:bg-black text-white text-[8.5px] font-bold px-1.5 py-0.5 rounded-md opacity-0 group-hover/thumb:opacity-100 transition shadow-xs">
+                            ★ Make Cover
+                        </button>
+                    `}
+
+                    <button type="button" onclick="removeGalleryImage(${idx})" title="Remove photo" class="absolute top-1.5 right-1.5 bg-red-600/90 hover:bg-red-700 text-white w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold opacity-0 group-hover/thumb:opacity-100 transition shadow-xs">
+                        ✕
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function setAsPrimaryImage(idx) {
+            if (idx <= 0 || idx >= uploadedProductGallery.length) return;
+            const chosen = uploadedProductGallery.splice(idx, 1)[0];
+            uploadedProductGallery.unshift(chosen);
+            renderGalleryThumbnails();
+        }
+
+        function removeGalleryImage(idx) {
+            uploadedProductGallery.splice(idx, 1);
+            renderGalleryThumbnails();
+        }
+
+        // Variant Matrix & Variant Photo Upload
+        function generateFashionVariantMatrix() {
+            const sizesStr = document.getElementById('fashionSizes')?.value || '';
+            const colorsStr = document.getElementById('fashionColors')?.value || '';
+            const sizes = sizesStr.split(',').map(s => s.trim()).filter(Boolean);
+            const colors = colorsStr.split(',').map(c => c.trim()).filter(Boolean);
+            const basePrice = parseFloat(document.getElementById('prodPrice')?.value || 0);
+
+            const existingMap = {};
+            customVariantsList.forEach(v => { existingMap[v.id || v.name] = v; });
+
+            customVariantsList = [];
+            if (sizes.length > 0 && colors.length > 0) {
+                sizes.forEach(s => {
+                    colors.forEach(c => {
+                        const id = `${s}-${c}`.toLowerCase().replace(/\s+/g, '-');
+                        const prev = existingMap[id];
+                        customVariantsList.push({
+                            id,
+                            name: `${s} / ${c}`,
+                            size: s,
+                            color: c,
+                            price: prev?.price || basePrice,
+                            stock: prev?.stock || 50,
+                            image_url: prev?.image_url || null
+                        });
+                    });
+                });
+            } else if (sizes.length > 0) {
+                sizes.forEach(s => {
+                    const id = s.toLowerCase();
+                    const prev = existingMap[id];
+                    customVariantsList.push({
+                        id,
+                        name: `Size: ${s}`,
+                        size: s,
+                        price: prev?.price || basePrice,
+                        stock: prev?.stock || 50,
+                        image_url: prev?.image_url || null
+                    });
+                });
+            } else if (colors.length > 0) {
+                colors.forEach(c => {
+                    const id = c.toLowerCase();
+                    const prev = existingMap[id];
+                    customVariantsList.push({
+                        id,
+                        name: `Color: ${c}`,
+                        color: c,
+                        price: prev?.price || basePrice,
+                        stock: prev?.stock || 50,
+                        image_url: prev?.image_url || null
+                    });
+                });
+            }
+            renderVariantMatrix();
+        }
+
+        function generateBeautyVariantMatrix() {
+            const volumesStr = document.getElementById('beautyVolumes')?.value || '';
+            const shadesStr = document.getElementById('beautyShades')?.value || '';
+            const volumes = volumesStr.split(',').map(v => v.trim()).filter(Boolean);
+            const shades = shadesStr.split(',').map(s => s.trim()).filter(Boolean);
+            const basePrice = parseFloat(document.getElementById('prodPrice')?.value || 0);
+
+            const existingMap = {};
+            customVariantsList.forEach(v => { existingMap[v.id || v.name] = v; });
+
+            customVariantsList = [];
+            if (volumes.length > 0) {
+                volumes.forEach(v => {
+                    const id = v.toLowerCase();
+                    const prev = existingMap[id];
+                    customVariantsList.push({ id, name: v, volume: v, price: prev?.price || basePrice, stock: prev?.stock || 50, image_url: prev?.image_url || null });
+                });
+            } else if (shades.length > 0) {
+                shades.forEach(s => {
+                    const id = s.toLowerCase();
+                    const prev = existingMap[id];
+                    customVariantsList.push({ id, name: s, shade: s, price: prev?.price || basePrice, stock: prev?.stock || 50, image_url: prev?.image_url || null });
+                });
+            }
+            renderVariantMatrix();
+        }
+
+        function generateTechVariantMatrix() {
+            const configsStr = document.getElementById('techConfigs')?.value || '';
+            const configs = configsStr.split(',').map(c => c.trim()).filter(Boolean);
+            const basePrice = parseFloat(document.getElementById('prodPrice')?.value || 0);
+
+            const existingMap = {};
+            customVariantsList.forEach(v => { existingMap[v.id || v.name] = v; });
+
+            customVariantsList = [];
+            if (configs.length > 0) {
+                configs.forEach(c => {
+                    const id = c.toLowerCase();
+                    const prev = existingMap[id];
+                    customVariantsList.push({ id, name: c, config: c, price: prev?.price || basePrice, stock: prev?.stock || 20, image_url: prev?.image_url || null });
+                });
+            }
+            renderVariantMatrix();
+        }
+
+        function renderVariantMatrix() {
+            const containers = [
+                document.getElementById('variantMatrixContainer'),
+                document.getElementById('beautyVariantMatrixContainer'),
+                document.getElementById('techVariantMatrixContainer')
+            ].filter(Boolean);
+
+            if (containers.length === 0) return;
+
+            containers.forEach(container => {
+                if (customVariantsList.length === 0) {
+                    container.innerHTML = `<div class="p-2.5 text-center text-[#6B756F] text-[11px] bg-white rounded-xl border border-dashed border-[#E3E9E5]">No variations generated yet. Add sizes, colors, volumes, or storage options above.</div>`;
+                    return;
+                }
+
+                container.innerHTML = customVariantsList.map((v, vIdx) => `
+                    <div class="bg-white p-2.5 rounded-xl border border-[#E3E9E5] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-2xs">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <!-- Optional Variant Image Thumbnail -->
+                            <div class="relative w-10 h-10 rounded-lg overflow-hidden border border-[#E3E9E5] bg-[#F8FAF8] shrink-0 flex items-center justify-center group/var">
+                                ${v.image_url ? `
+                                    <img src="${v.image_url}" alt="Variant" class="w-full h-full object-cover">
+                                    <button type="button" onclick="removeVariantImage(${vIdx})" class="absolute inset-0 bg-red-600/80 text-white text-[10px] font-bold opacity-0 group-hover/var:opacity-100 transition flex items-center justify-center">✕</button>
+                                ` : `
+                                    <label class="w-full h-full flex items-center justify-center cursor-pointer text-gray-400 hover:text-black hover:bg-gray-200 transition text-xs" title="Upload Photo for ${v.name}">
+                                        📷
+                                        <input type="file" accept="image/*" onchange="uploadVariantPhoto(${vIdx}, this.files[0])" class="hidden">
+                                    </label>
+                                `}
+                            </div>
+                            
+                            <div class="min-w-0">
+                                <div class="font-bold text-xs text-[#08110D] truncate">${v.name}</div>
+                                <div class="text-[10px] text-[#6B756F]">${v.image_url ? '✓ Photo Attached' : '+ Optional Photo'}</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1">
+                                <span class="text-[10px] font-bold text-[#6B756F]">₦</span>
+                                <input type="number" step="0.01" value="${v.price || 0}" oninput="customVariantsList[${vIdx}].price = parseFloat(this.value || 0)" class="w-20 bg-[#F8FAF8] border border-[#E3E9E5] rounded-lg p-1.5 text-xs font-mono font-bold outline-none">
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span class="text-[10px] font-bold text-[#6B756F]">Qty:</span>
+                                <input type="number" value="${v.stock || 50}" oninput="customVariantsList[${vIdx}].stock = parseInt(this.value || 0)" class="w-14 bg-[#F8FAF8] border border-[#E3E9E5] rounded-lg p-1.5 text-xs outline-none">
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            });
+        }
+
+        async function uploadVariantPhoto(variantIndex, file) {
+            if (!file) return;
+            if (file.size > 10 * 1024 * 1024) {
+                alert(`"${file.name}" exceeds 10MB limit. Please choose a file under 10MB.`);
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success && data.url) {
+                    customVariantsList[variantIndex].image_url = data.url;
+                    renderVariantMatrix();
+                } else {
+                    alert(data.error || 'Failed to upload variant image');
+                }
+            } catch (err) {
+                alert('Network error uploading image');
+            }
+        }
+
+        function removeVariantImage(variantIndex) {
+            if (customVariantsList[variantIndex]) {
+                customVariantsList[variantIndex].image_url = null;
+                renderVariantMatrix();
+            }
+        }
+
+        // Food Option Groups Builder
+        function addFoodOptionGroup() {
+            foodOptionGroups.push({
+                name: 'Choose an Option',
+                required: false,
+                options: [
+                    { name: 'Option 1', price: 0 }
+                ]
+            });
+            renderFoodOptionGroups();
+        }
+
+        function removeFoodOptionGroup(idx) {
+            foodOptionGroups.splice(idx, 1);
+            renderFoodOptionGroups();
+        }
+
+        function addChoiceToGroup(groupIdx) {
+            foodOptionGroups[groupIdx].options.push({ name: '', price: 0 });
+            renderFoodOptionGroups();
+        }
+
+        function removeChoiceFromGroup(groupIdx, choiceIdx) {
+            foodOptionGroups[groupIdx].options.splice(choiceIdx, 1);
+            renderFoodOptionGroups();
+        }
+
+        function renderFoodOptionGroups() {
+            const container = document.getElementById('foodOptionGroupsContainer');
+            if (!container) return;
+
+            if (foodOptionGroups.length === 0) {
+                container.innerHTML = `<div class="p-3 text-center text-gray-400 bg-[#F8FAF8] rounded-xl border border-dashed border-[#E3E9E5]">No meal option groups configured. Click "+ Add Option Group" above to add portions, toppings, or sides.</div>`;
+                return;
+            }
+
+            container.innerHTML = foodOptionGroups.map((g, gIdx) => `
+                <div class="bg-white p-3.5 rounded-2xl border border-[#E3E9E5] space-y-2.5 shadow-2xs">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 flex-1">
+                            <input type="text" value="${g.name || ''}" oninput="foodOptionGroups[${gIdx}].name = this.value" placeholder="Group Name (e.g. Choose Protein, Add Extras)" class="font-bold text-xs bg-[#F8FAF8] border border-[#E3E9E5] rounded-lg px-2.5 py-1.5 flex-1 outline-none">
+                            <label class="flex items-center gap-1 text-[11px] text-[#6B756F] font-semibold cursor-pointer">
+                                <input type="checkbox" ${g.required ? 'checked' : ''} onchange="foodOptionGroups[${gIdx}].required = this.checked" class="rounded">
+                                <span>Required</span>
+                            </label>
+                        </div>
+                        <button type="button" onclick="removeFoodOptionGroup(${gIdx})" class="text-red-500 hover:text-red-700 font-bold p-1 text-xs">🗑️</button>
+                    </div>
+
+                    <div class="space-y-1.5 pl-2 border-l-2 border-[#19D98B]">
+                        <div class="text-[10px] font-bold text-[#6B756F] uppercase">Choices & Extra Charges:</div>
+                        ${g.options.map((opt, oIdx) => `
+                            <div class="flex items-center gap-2">
+                                <input type="text" value="${opt.name || ''}" oninput="foodOptionGroups[${gIdx}].options[${oIdx}].name = this.value" placeholder="Choice (e.g. Extra Cheese)" class="bg-[#F8FAF8] border border-[#E3E9E5] rounded-lg px-2 py-1 flex-1 text-xs outline-none">
+                                <span class="text-xs font-mono font-bold text-[#087A50]">+₦</span>
+                                <input type="number" value="${opt.price || 0}" oninput="foodOptionGroups[${gIdx}].options[${oIdx}].price = parseFloat(this.value || 0)" placeholder="0" class="w-20 bg-[#F8FAF8] border border-[#E3E9E5] rounded-lg px-2 py-1 text-xs font-mono font-bold outline-none">
+                                <button type="button" onclick="removeChoiceFromGroup(${gIdx}, ${oIdx})" class="text-gray-400 hover:text-red-500 font-bold px-1">✕</button>
+                            </div>
+                        `).join('')}
+                        <button type="button" onclick="addChoiceToGroup(${gIdx})" class="text-[10.5px] font-bold text-[#087A50] hover:underline pt-1">
+                            + Add Choice
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function handleSaveProduct(e) {
+            e.preventDefault();
+            const btn = document.getElementById('saveProdBtn');
+            btn.disabled = true;
+
+            const id = document.getElementById('prodId').value;
+            const basePrice = parseFloat(document.getElementById('prodPrice').value || 0);
+
+            // Build template-specific payload
+            const attributes = {};
+            let optionGroups = [];
+            let specs = [];
+
+            if (currentTemplateCat === 'fashion') {
+                attributes.sizes = document.getElementById('fashionSizes')?.value || '';
+                attributes.colors = document.getElementById('fashionColors')?.value || '';
+                attributes.material = document.getElementById('fashionMaterial')?.value || '';
+                attributes.care = document.getElementById('fashionCare')?.value || '';
+            } else if (currentTemplateCat === 'food') {
+                attributes.prep_time = document.getElementById('foodPrepTime')?.value || '';
+                attributes.dietary = document.getElementById('foodDietary')?.value || '';
+                optionGroups = foodOptionGroups.filter(g => g.name && g.options.length > 0);
+            } else if (currentTemplateCat === 'beauty') {
+                attributes.formulation = document.getElementById('beautyFormulation')?.value || '';
+                attributes.volumes = document.getElementById('beautyVolumes')?.value || '';
+                attributes.shades = document.getElementById('beautyShades')?.value || '';
+                attributes.concerns = document.getElementById('beautyConcerns')?.value || '';
+                attributes.ingredients = document.getElementById('beautyIngredients')?.value || '';
+            } else if (currentTemplateCat === 'electronics') {
+                attributes.condition = document.getElementById('techCondition')?.value || 'Brand New';
+                attributes.warranty = document.getElementById('techWarranty')?.value || '';
+                attributes.configs = document.getElementById('techConfigs')?.value || '';
+                attributes.box_contents = document.getElementById('techBoxContents')?.value || '';
+                attributes.specs_text = document.getElementById('techSpecsText')?.value || '';
+            }
+
+            const primaryImageUrl = uploadedProductGallery.length > 0 ? uploadedProductGallery[0] : (document.getElementById('prodImageUrl').value.trim() || null);
+
+            const isPreorderChecked = document.getElementById('prodIsPreorder')?.checked ? 1 : 0;
+            const preorderDispatchDate = isPreorderChecked ? (document.getElementById('prodPreorderDispatchDate')?.value || null) : null;
+
+            const payload = {
+                id: id ? parseInt(id) : undefined,
+                title: document.getElementById('prodTitle').value.trim(),
+                category: document.getElementById('prodCategory').value.trim() || 'General',
+                badge: document.getElementById('prodBadge').value.trim() || null,
+                price: basePrice,
+                compare_price: document.getElementById('prodComparePrice').value ? parseFloat(document.getElementById('prodComparePrice').value) : null,
+                stock_quantity: parseInt(document.getElementById('prodStock').value || '0'),
+                sku: document.getElementById('prodSku').value.trim() || null,
+                is_preorder: isPreorderChecked,
+                preorder_dispatch_date: preorderDispatchDate,
+                video_url: document.getElementById('prodVideoUrl')?.value.trim() || null,
+                image_url: primaryImageUrl,
+                gallery_json: uploadedProductGallery.length > 0 ? uploadedProductGallery : null,
+                description: document.getElementById('prodDesc').value.trim() || null,
+                variants_json: customVariantsList.length > 0 ? customVariantsList : null,
+                option_groups_json: optionGroups.length > 0 ? optionGroups : null,
+                specs_json: specs.length > 0 ? specs : null,
+                attributes_json: Object.keys(attributes).length > 0 ? attributes : null
+            };
+
+            try {
+                const res = await fetch('/api/merchant/items', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const d = await res.json();
+                if (d.success) {
+                    location.reload();
+                } else {
+                    alert(d.error || 'Failed to save product');
+                }
+            } catch (err) {
+                alert('Network error saving product');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteProduct(id) {
+            if (!confirm('Are you sure you want to delete this product?')) return;
+            try {
+                const res = await fetch('/api/merchant/items?id=' + id, { method: 'DELETE' });
+                const d = await res.json();
+                if (d.success) location.reload();
+            } catch (err) {}
+        }
+
+        // ==========================================
+        // Social Status Poster Generator (Canvas)
+        // ==========================================
+        let currentPosterItem = null;
+        let currentPosterFormat = 'story'; // 'story' (9:16) | 'square' (1:1)
+        let currentPosterTheme = 'dark'; // 'dark' | 'light' | 'midnight' | 'sunset'
+        const merchantStoreName = `<%= (store.store_name || "Official Store").replace(/"/g, '\\"') %>`;
+        const merchantStoreSlug = `<%= store.slug %>`;
+
+        const posterThemes = {
+            dark: {
+                bgStart: '#08110D',
+                bgEnd: '#11211A',
+                cardBg: 'rgba(255, 255, 255, 0.06)',
+                cardBorder: 'rgba(25, 217, 139, 0.25)',
+                textPrimary: '#FFFFFF',
+                textSecondary: '#9AA6A0',
+                accent: '#19D98B',
+                accentBg: 'rgba(25, 217, 139, 0.15)',
+                badgeBg: '#19D98B',
+                badgeText: '#08110D'
+            },
+            light: {
+                bgStart: '#F4F7F4',
+                bgEnd: '#E4EDE5',
+                cardBg: '#FFFFFF',
+                cardBorder: 'rgba(8, 122, 80, 0.2)',
+                textPrimary: '#08110D',
+                textSecondary: '#6B756F',
+                accent: '#087A50',
+                accentBg: 'rgba(8, 122, 80, 0.1)',
+                badgeBg: '#08110D',
+                badgeText: '#19D98B'
+            },
+            midnight: {
+                bgStart: '#080D1A',
+                bgEnd: '#0F1E3D',
+                cardBg: 'rgba(255, 255, 255, 0.07)',
+                cardBorder: 'rgba(0, 229, 255, 0.3)',
+                textPrimary: '#FFFFFF',
+                textSecondary: '#8CA0C7',
+                accent: '#00E5FF',
+                accentBg: 'rgba(0, 229, 255, 0.15)',
+                badgeBg: '#00E5FF',
+                badgeText: '#080D1A'
+            },
+            sunset: {
+                bgStart: '#1B0B1E',
+                bgEnd: '#331238',
+                cardBg: 'rgba(255, 255, 255, 0.08)',
+                cardBorder: 'rgba(255, 107, 107, 0.35)',
+                textPrimary: '#FFFFFF',
+                textSecondary: '#CCA0B4',
+                accent: '#FF6B6B',
+                accentBg: 'rgba(255, 107, 107, 0.18)',
+                badgeBg: '#FF6B6B',
+                badgeText: '#FFFFFF'
+            }
+        };
+
+        function openSocialPosterModal(item) {
+            currentPosterItem = item;
+            document.getElementById('posterModal').classList.remove('hidden');
+            renderPosterCanvas();
+        }
+
+        function closeSocialPosterModal() {
+            document.getElementById('posterModal').classList.add('hidden');
+        }
+
+        function setPosterFormat(fmt) {
+            currentPosterFormat = fmt;
+            const storyBtn = document.getElementById('fmtStoryBtn');
+            const squareBtn = document.getElementById('fmtSquareBtn');
+            if (fmt === 'story') {
+                storyBtn.className = 'p-3 rounded-xl border-2 border-[#08110D] bg-[#08110D] text-white text-left transition flex flex-col justify-between';
+                squareBtn.className = 'p-3 rounded-xl border border-[#E3E9E5] bg-[#F8FAF8] text-[#08110D] text-left hover:border-[#08110D] transition flex flex-col justify-between';
+            } else {
+                squareBtn.className = 'p-3 rounded-xl border-2 border-[#08110D] bg-[#08110D] text-white text-left transition flex flex-col justify-between';
+                storyBtn.className = 'p-3 rounded-xl border border-[#E3E9E5] bg-[#F8FAF8] text-[#08110D] text-left hover:border-[#08110D] transition flex flex-col justify-between';
+            }
+            renderPosterCanvas();
+        }
+
+        function setPosterTheme(thm) {
+            if (posterThemes[thm]) {
+                currentPosterTheme = thm;
+                renderPosterCanvas();
+            }
+        }
+
+        function drawCanvasRoundRect(ctx, x, y, width, height, radius, fill, stroke) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            if (fill) ctx.fill();
+            if (stroke) ctx.stroke();
+        }
+
+        async function renderPosterCanvas() {
+            if (!currentPosterItem) return;
+            const canvas = document.getElementById('posterCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            const isStory = currentPosterFormat === 'story';
+            const width = 1080;
+            const height = isStory ? 1920 : 1080;
+            canvas.width = width;
+            canvas.height = height;
+
+            const theme = posterThemes[currentPosterTheme] || posterThemes.dark;
+            const showQr = document.getElementById('posterShowQr')?.checked ?? true;
+            const showBadge = document.getElementById('posterShowBadge')?.checked ?? true;
+            const showCompare = document.getElementById('posterShowComparePrice')?.checked ?? true;
+
+            // 1. Background Gradient
+            const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+            bgGrad.addColorStop(0, theme.bgStart);
+            bgGrad.addColorStop(1, theme.bgEnd);
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, width, height);
+
+            // Ambient Glow Rings
+            ctx.save();
+            const glow = ctx.createRadialGradient(width * 0.85, height * 0.15, 10, width * 0.85, height * 0.15, 450);
+            glow.addColorStop(0, theme.accentBg);
+            glow.addColorStop(1, 'transparent');
+            ctx.fillStyle = glow;
+            ctx.fillRect(0, 0, width, height);
+            ctx.restore();
+
+            // 2. Header: Store Branding
+            ctx.save();
+            ctx.font = 'bold 36px Montserrat, Inter, sans-serif';
+            ctx.fillStyle = theme.textPrimary;
+            ctx.fillText(merchantStoreName.toUpperCase(), 70, isStory ? 130 : 90);
+
+            ctx.font = 'bold 20px Inter, sans-serif';
+            ctx.fillStyle = theme.accent;
+            ctx.fillText('● OFFICIAL STOREFRONT', 70, isStory ? 170 : 125);
+            ctx.restore();
+
+            // 3. Product Image Card
+            const imgBoxX = 70;
+            const imgBoxY = isStory ? 230 : 160;
+            const imgBoxW = width - 140;
+            const imgBoxH = isStory ? 880 : 540;
+
+            // Card background & shadow
+            ctx.save();
+            ctx.fillStyle = theme.cardBg;
+            ctx.strokeStyle = theme.cardBorder;
+            ctx.lineWidth = 2;
+            ctx.shadowColor = 'rgba(0,0,0,0.35)';
+            ctx.shadowBlur = 30;
+            ctx.shadowOffsetY = 15;
+            drawCanvasRoundRect(ctx, imgBoxX, imgBoxY, imgBoxW, imgBoxH, 36, true, true);
+            ctx.restore();
+
+            // Load and draw product image
+            if (currentPosterItem.image_url) {
+                try {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    await new Promise((resolve) => {
+                        img.onload = resolve;
+                        img.onerror = resolve;
+                        img.src = currentPosterItem.image_url;
+                    });
+
+                    if (img.width > 0) {
+                        ctx.save();
+                        // Clip to inner card
+                        const pad = 12;
+                        drawCanvasRoundRect(ctx, imgBoxX + pad, imgBoxY + pad, imgBoxW - pad * 2, imgBoxH - pad * 2, 28, false, false);
+                        ctx.clip();
+
+                        // Cover fit math
+                        const hRatio = (imgBoxW - pad * 2) / img.width;
+                        const vRatio = (imgBoxH - pad * 2) / img.height;
+                        const ratio = Math.max(hRatio, vRatio);
+                        const centerShiftX = (imgBoxW - pad * 2 - img.width * ratio) / 2;
+                        const centerShiftY = (imgBoxH - pad * 2 - img.height * ratio) / 2;
+
+                        ctx.drawImage(img, 0, 0, img.width, img.height,
+                            imgBoxX + pad + centerShiftX, imgBoxY + pad + centerShiftY, img.width * ratio, img.height * ratio);
+                        ctx.restore();
+                    }
+                } catch(e) {}
+            }
+
+            // Promotional / Pre-Order Badge on Image
+            if (showBadge && (currentPosterItem.is_preorder || currentPosterItem.badge)) {
+                ctx.save();
+                const badgeText = currentPosterItem.is_preorder ? 'PRE-ORDER NOW' : currentPosterItem.badge.toUpperCase();
+                ctx.font = 'bold 22px Montserrat, Inter, sans-serif';
+                const textWidth = ctx.measureText(badgeText).width;
+                const bPadX = 26;
+                const bH = 46;
+                const bW = textWidth + bPadX * 2;
+                const bX = imgBoxX + 30;
+                const bY = imgBoxY + 30;
+
+                ctx.fillStyle = currentPosterItem.is_preorder ? '#8B5CF6' : theme.badgeBg;
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 15;
+                drawCanvasRoundRect(ctx, bX, bY, bW, bH, 14, true, false);
+
+                ctx.fillStyle = currentPosterItem.is_preorder ? '#FFFFFF' : theme.badgeText;
+                ctx.fillText(badgeText, bX + bPadX, bY + 32);
+                ctx.restore();
+            }
+
+            // 4. Product Details Section
+            const contentY = isStory ? 1170 : 740;
+
+            // Category tag
+            ctx.save();
+            ctx.font = 'bold 20px Montserrat, Inter, sans-serif';
+            ctx.fillStyle = theme.accent;
+            ctx.fillText((currentPosterItem.category || 'STORE PRODUCT').toUpperCase(), 70, contentY);
+
+            // Title (word wrapped)
+            ctx.font = isStory ? 'bold 44px Montserrat, Inter, sans-serif' : 'bold 38px Montserrat, Inter, sans-serif';
+            ctx.fillStyle = theme.textPrimary;
+            const words = (currentPosterItem.title || 'Special Offer').split(' ');
+            let line = '';
+            let curY = contentY + 50;
+            const maxLineWidth = showQr ? 620 : (width - 140);
+
+            for (let n = 0; n < words.length; n++) {
+                const testLine = line + words[n] + ' ';
+                const metrics = ctx.measureText(testLine);
+                if (metrics.width > maxLineWidth && n > 0) {
+                    ctx.fillText(line, 70, curY);
+                    line = words[n] + ' ';
+                    curY += isStory ? 52 : 44;
+                    if (curY > contentY + 120) { line += '...'; break; }
+                } else {
+                    line = testLine;
+                }
+            }
+            ctx.fillText(line, 70, curY);
+
+            // Price Tag
+            const priceY = curY + (isStory ? 75 : 60);
+            ctx.font = isStory ? 'bold 64px JetBrains Mono, Inter, monospace' : 'bold 50px JetBrains Mono, Inter, monospace';
+            ctx.fillStyle = theme.accent;
+            const priceFormatted = '₦' + Number(currentPosterItem.price).toLocaleString('en-US', { minimumFractionDigits: 2 });
+            ctx.fillText(priceFormatted, 70, priceY);
+
+            // Strikethrough compare price
+            if (showCompare && currentPosterItem.compare_price && currentPosterItem.compare_price > currentPosterItem.price) {
+                const priceWidth = ctx.measureText(priceFormatted).width;
+                ctx.font = isStory ? 'bold 36px JetBrains Mono, Inter, monospace' : 'bold 30px JetBrains Mono, Inter, monospace';
+                ctx.fillStyle = theme.textSecondary;
+                const compText = '₦' + Number(currentPosterItem.compare_price).toLocaleString('en-US');
+                const compX = 70 + priceWidth + 24;
+                ctx.fillText(compText, compX, priceY - 6);
+                
+                // Strike line
+                const compWidth = ctx.measureText(compText).width;
+                ctx.strokeStyle = theme.textSecondary;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(compX - 4, priceY - 18);
+                ctx.lineTo(compX + compWidth + 4, priceY - 18);
+                ctx.stroke();
+            }
+
+            // Pre-order dispatch date notice
+            if (currentPosterItem.is_preorder && currentPosterItem.preorder_dispatch_date) {
+                ctx.font = '600 20px Inter, sans-serif';
+                ctx.fillStyle = theme.textSecondary;
+                ctx.fillText('📦 Ships on or before: ' + currentPosterItem.preorder_dispatch_date, 70, priceY + 45);
+            }
+            ctx.restore();
+
+            // 5. Footer & QR Code Box
+            const footerY = isStory ? 1540 : 880;
+            const fullStoreUrl = window.location.origin + '/' + merchantStoreSlug;
+
+            if (showQr) {
+                const qrSize = isStory ? 240 : 160;
+                const qrX = width - 70 - qrSize;
+                const qrY = isStory ? (height - 70 - qrSize - 40) : (height - 50 - qrSize);
+
+                // QR Container Card
+                ctx.save();
+                ctx.fillStyle = '#FFFFFF';
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 20;
+                drawCanvasRoundRect(ctx, qrX - 16, qrY - 16, qrSize + 32, qrSize + 54, 24, true, false);
+
+                // Draw QR Code
+                try {
+                    const qrImg = new Image();
+                    qrImg.crossOrigin = 'anonymous';
+                    const qrApiUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=' + qrSize + 'x' + qrSize + '&data=' + encodeURIComponent(fullStoreUrl);
+                    await new Promise((resolve) => {
+                        qrImg.onload = resolve;
+                        qrImg.onerror = resolve;
+                        qrImg.src = qrApiUrl;
+                    });
+                    if (qrImg.width > 0) {
+                        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+                    }
+                } catch(e) {}
+
+                // Scan label under QR
+                ctx.font = 'bold 13px Montserrat, Inter, sans-serif';
+                ctx.fillStyle = '#08110D';
+                ctx.textAlign = 'center';
+                ctx.fillText('SCAN TO ORDER', qrX + (qrSize / 2), qrY + qrSize + 24);
+                ctx.restore();
+            }
+
+            // Footer Callout Action Banner
+            if (isStory) {
+                ctx.save();
+                const bannerY = height - 160;
+                const bannerH = 90;
+                const bannerW = showQr ? (width - 140 - 290) : (width - 140);
+
+                ctx.fillStyle = theme.accentBg;
+                ctx.strokeStyle = theme.cardBorder;
+                ctx.lineWidth = 1.5;
+                drawCanvasRoundRect(ctx, 70, bannerY, bannerW, bannerH, 20, true, true);
+
+                ctx.font = 'bold 22px Montserrat, Inter, sans-serif';
+                ctx.fillStyle = theme.accent;
+                ctx.fillText('🛒 ORDER ON WHATSAPP & ONLINE', 95, bannerY + 38);
+
+                ctx.font = '500 18px Inter, sans-serif';
+                ctx.fillStyle = theme.textSecondary;
+                ctx.fillText(fullStoreUrl.replace(/^https?:\/\//, ''), 95, bannerY + 68);
+                ctx.restore();
+            }
+        }
+
+        function downloadPoster() {
+            const canvas = document.getElementById('posterCanvas');
+            if (!canvas || !currentPosterItem) return;
+
+            const link = document.createElement('a');
+            const sanitizedTitle = (currentPosterItem.title || 'product').toLowerCase().replace(/[^a-z0-9]/g, '_');
+            link.download = `${merchantStoreSlug}_${sanitizedTitle}_poster.png`;
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // ==========================================
+        // Daily WhatsApp Auto-Poster Opener
+        // ==========================================
+        async function openDailyAutoPoster() {
+            try {
+                const res = await fetch('/api/merchant/auto-poster/featured');
+                const data = await res.json();
+                if (data.success && data.featured_items && data.featured_items.length > 0) {
+                    const topItem = data.featured_items[0];
+                    openSocialPosterModal({
+                        ...topItem,
+                        badge: '🔥 TODAY\'S DROP'
+                    });
+                } else {
+                    alert('Please add at least one product with a photo to generate your Daily Auto-Poster.');
+                }
+            } catch (e) {
+                alert('Failed to load featured products for poster.');
+            }
+        }
+
+        // ==========================================
+        // Bulk CSV Import Controller
+        // ==========================================
+        let parsedCSVRows = [];
+
+        function openBulkImportModal() {
+            document.getElementById('bulkImportModal').classList.remove('hidden');
+            document.getElementById('bulkCsvTextarea').value = '';
+            document.getElementById('csvPreviewContainer').classList.add('hidden');
+            const statusBox = document.getElementById('bulkImportStatusBox');
+            statusBox.className = 'hidden';
+            parsedCSVRows = [];
+        }
+
+        function closeBulkImportModal() {
+            document.getElementById('bulkImportModal').classList.add('hidden');
+        }
+
+        function loadSampleCSVInTextarea() {
+            const sampleText = `Title,Category,Price,Compare Price,Stock Quantity,Low Stock Threshold,SKU,Description,Image URL,Is Preorder,Preorder Date
+"Classic Oxford Cotton Shirt","Fashion",15000,18000,50,5,"SHIRT-OXF-01","Premium breathable cotton casual shirt","https://images.unsplash.com/photo-1596755094514-f87e34085b2c",0,""
+"Smoky Jollof & Grilled Chicken","Food & Restaurant",4500,5000,100,10,"FOOD-JOL-01","Authentic party jollof with spicy grilled quarter chicken","https://images.unsplash.com/photo-1604382355076-af4b0eb60143",0,""
+"Glow Boost Niacinamide Serum","Beauty",8500,10000,40,4,"BEAUTY-SER-01","Hydrating and radiant serum with 10% niacinamide","https://images.unsplash.com/photo-1620916566398-39f1143ab7be",0,""
+"Wireless ANC Earbuds Pro","Electronics",28000,35000,25,3,"TECH-EAR-01","Active noise cancelling bluetooth 5.3 earbuds","https://images.unsplash.com/photo-1590658268037-6bf12165a8df",1,"2026-11-20"`;
+            document.getElementById('bulkCsvTextarea').value = sampleText;
+            handleCSVTextChange();
+        }
+
+        function handleCSVFileSelect(files) {
+            if (!files || files.length === 0) return;
+            const file = files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                document.getElementById('bulkCsvTextarea').value = text;
+                handleCSVTextChange();
+            };
+            reader.readAsText(file);
+        }
+
+        function handleCSVTextChange() {
+            const text = document.getElementById('bulkCsvTextarea').value.trim();
+            if (!text) {
+                document.getElementById('csvPreviewContainer').classList.add('hidden');
+                parsedCSVRows = [];
+                return;
+            }
+
+            // Simple line-by-line parser for preview
+            const rawLines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+            if (rawLines.length < 2) {
+                document.getElementById('csvPreviewContainer').classList.add('hidden');
+                return;
+            }
+
+            const header = rawLines[0].split(',').map(h => h.replace(/^["']|["']$/g, '').trim().toLowerCase());
+            const titleIdx = header.findIndex(h => h.includes('title') || h.includes('name'));
+            const catIdx = header.findIndex(h => h.includes('cat'));
+            const priceIdx = header.findIndex(h => h.includes('price'));
+            const stockIdx = header.findIndex(h => h.includes('stock') || h.includes('qty'));
+
+            parsedCSVRows = [];
+            const tbody = document.getElementById('csvPreviewTableBody');
+            tbody.innerHTML = '';
+
+            for (let i = 1; i < rawLines.length; i++) {
+                // Match regex for quoted values or standard commas
+                const cols = rawLines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || rawLines[i].split(',');
+                const cleanCols = cols.map(c => c.replace(/^["']|["']$/g, '').trim());
+                const title = titleIdx !== -1 && cleanCols[titleIdx] ? cleanCols[titleIdx] : cleanCols[0];
+                const cat = catIdx !== -1 && cleanCols[catIdx] ? cleanCols[catIdx] : (cleanCols[1] || 'General');
+                const price = priceIdx !== -1 && cleanCols[priceIdx] ? cleanCols[priceIdx] : (cleanCols[2] || '0');
+                const stock = stockIdx !== -1 && cleanCols[stockIdx] ? cleanCols[stockIdx] : (cleanCols[4] || '50');
+
+                if (title) {
+                    parsedCSVRows.push({ title, category: cat, price, stock });
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-gray-50';
+                    tr.innerHTML = `
+                        <td class="p-2 font-bold text-[#08110D] truncate max-w-[180px]">${title}</td>
+                        <td class="p-2 text-[#6B756F]">${cat}</td>
+                        <td class="p-2 font-mono font-bold text-[#087A50]">₦${Number(price.replace(/[^0-9.]/g, '') || 0).toLocaleString()}</td>
+                        <td class="p-2 font-mono text-[#6B756F]">${stock}</td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            }
+
+            document.getElementById('csvParsedRowCount').textContent = parsedCSVRows.length;
+            if (parsedCSVRows.length > 0) {
+                document.getElementById('csvPreviewContainer').classList.remove('hidden');
+            } else {
+                document.getElementById('csvPreviewContainer').classList.add('hidden');
+            }
+        }
+
+        async function executeBulkImport() {
+            const text = document.getElementById('bulkCsvTextarea').value.trim();
+            if (!text) {
+                alert('Please upload or paste CSV content first.');
+                return;
+            }
+
+            const btn = document.getElementById('executeImportBtn');
+            const statusBox = document.getElementById('bulkImportStatusBox');
+            btn.disabled = true;
+            btn.textContent = 'Importing...';
+
+            try {
+                const res = await fetch('/api/merchant/items/import-csv', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ csv: text })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    statusBox.className = 'p-3 rounded-xl text-xs font-bold bg-emerald-50 border border-emerald-200 text-emerald-800';
+                    statusBox.innerHTML = `✓ Successfully imported ${data.imported_count} products! Total catalog: ${data.total_products} items.`;
+                    statusBox.classList.remove('hidden');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1200);
+                } else {
+                    statusBox.className = 'p-3 rounded-xl text-xs font-bold bg-red-50 border border-red-200 text-red-800';
+                    statusBox.innerHTML = `✕ Import failed: ${data.error || (data.errors && data.errors[0]) || 'Unknown error'}`;
+                    statusBox.classList.remove('hidden');
+                }
+            } catch (err) {
+                statusBox.className = 'p-3 rounded-xl text-xs font-bold bg-red-50 border border-red-200 text-red-800';
+                statusBox.innerHTML = '✕ Network error while importing CSV.';
+                statusBox.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Import Products ✓';
+            }
+        }
+    </script>
+    <%- include('components/bottom_nav.ejs', { activeTab: 'products' }) %>
+</body>
+</html>

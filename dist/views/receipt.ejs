@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Receipt #<%= order.order_ref %> — <%= store.store_name %> | zlik</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        zlikDark: '#08110D',
+                        zlikGreen: '#19D98B',
+                        zlikDeep: '#087A50',
+                        zlikBg: '#F8FAF8',
+                        zlikWhite: '#FFFFFF',
+                        zlikMuted: '#6B756F',
+                        zlikBorder: '#E3E9E5'
+                    },
+                    fontFamily: {
+                        display: ['Montserrat', 'sans-serif'],
+                        body: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAF8; color: #08110D; }
+        .font-display { font-family: 'Montserrat', sans-serif; }
+        @media print {
+            body { background-color: #FFFFFF !important; }
+            .no-print { display: none !important; }
+            .receipt-box { border: none !important; box-shadow: none !important; padding: 0 !important; max-width: 100% !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 antialiased">
+
+    <div class="receipt-box max-w-lg w-full bg-white rounded-3xl border border-[#E3E9E5] shadow-xl p-6 sm:p-8 space-y-6">
+        
+        <!-- Receipt Header & Store Branding -->
+        <div class="text-center space-y-3 pb-5 border-b border-[#E3E9E5]">
+            <div class="flex items-center justify-center gap-3">
+                <% if (store.logo_url && store.receipt_show_logo !== 0) { %>
+                    <img src="<%= store.logo_url %>" alt="<%= store.store_name %> Logo" class="w-12 h-12 rounded-2xl object-cover border border-[#E3E9E5] shadow-2xs">
+                <% } else { %>
+                    <div class="w-12 h-12 rounded-2xl bg-[#08110D] text-[#19D98B] font-bold text-lg flex items-center justify-center font-display shadow-2xs">
+                        <%= (store.store_name || 'S').charAt(0).toUpperCase() %>
+                    </div>
+                <% } %>
+                <div class="text-left">
+                    <h2 class="text-base sm:text-lg font-bold text-[#08110D] font-display"><%= store.store_name %></h2>
+                    <p class="text-[11px] text-[#6B756F]">Official Order Receipt</p>
+                </div>
+            </div>
+
+            <!-- Payment Status Stamp -->
+            <div>
+                <% if (order.payment_status === 'paid') { %>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
+                        <span>●</span> <span>PAID IN FULL</span>
+                    </span>
+                <% } else if (order.payment_status === 'claimed') { %>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase bg-amber-100 text-amber-900 border border-amber-300">
+                        <span>⏳</span> <span>PAYMENT CLAIMED (AWAITING CONFIRMATION)</span>
+                    </span>
+                <% } else { %>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase bg-gray-100 text-gray-800 border border-gray-300">
+                        <span>●</span> <span>PAYMENT PENDING</span>
+                    </span>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Receipt Order Meta Details -->
+        <div class="grid grid-cols-2 gap-3 text-xs bg-[#F8FAF8] p-4 rounded-2xl border border-[#E3E9E5]">
+            <div>
+                <span class="text-[10px] text-[#6B756F] uppercase font-semibold">Order Reference:</span>
+                <div class="font-mono font-bold text-sm text-[#08110D]">#<%= order.order_ref %></div>
+            </div>
+            <div class="text-right">
+                <span class="text-[10px] text-[#6B756F] uppercase font-semibold">Date & Time:</span>
+                <div class="font-bold text-[#08110D]"><%= new Date(order.created_at).toLocaleDateString() %></div>
+                <div class="text-[10px] text-[#6B756F]"><%= new Date(order.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) %></div>
+            </div>
+            <div class="pt-2 border-t border-[#E3E9E5]/60">
+                <span class="text-[10px] text-[#6B756F] uppercase font-semibold">Customer:</span>
+                <div class="font-semibold text-[#08110D]"><%= order.customer_name %></div>
+                <div class="text-[11px] text-[#6B756F]"><%= order.customer_phone %></div>
+            </div>
+            <div class="text-right pt-2 border-t border-[#E3E9E5]/60">
+                <span class="text-[10px] text-[#6B756F] uppercase font-semibold">Fulfillment:</span>
+                <div class="font-semibold text-[#08110D] capitalize"><%= order.fulfillment_type === 'pickup' ? 'Store Pickup' : 'Direct Delivery' %></div>
+                <% if (order.delivery_address && order.fulfillment_type !== 'pickup') { %>
+                    <div class="text-[10px] text-[#6B756F] truncate max-w-[180px] ml-auto"><%= order.delivery_address %></div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Itemized Products Table -->
+        <div class="space-y-2 text-xs">
+            <div class="flex justify-between items-center text-[10px] font-bold uppercase text-[#6B756F] pb-1 border-b border-[#E3E9E5]">
+                <span>Item</span>
+                <span>Amount</span>
+            </div>
+
+            <div class="divide-y divide-[#E3E9E5]/60">
+                <% (items || []).forEach(item => { %>
+                    <div class="py-2.5 flex justify-between items-start gap-3">
+                        <div class="space-y-0.5">
+                            <div class="font-semibold text-[#08110D]">
+                                <%= item.quantity %>x <%= item.title %>
+                            </div>
+                            <% if (item.variant) { %>
+                                <div class="text-[10px] text-[#6B756F] font-mono">Option: <%= item.variant %></div>
+                            <% } %>
+                            <% if (item.attributes) { %>
+                                <div class="text-[10px] text-[#6B756F]"><%= item.attributes %></div>
+                            <% } %>
+                        </div>
+                        <span class="font-mono font-bold text-[#08110D] shrink-0">
+                            ₦<%= (Number(item.price) * Number(item.quantity)).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
+                        </span>
+                    </div>
+                <% }) %>
+            </div>
+
+            <!-- Financial Totals -->
+            <div class="space-y-1.5 pt-3 border-t border-[#E3E9E5] text-xs">
+                <div class="flex justify-between items-center text-[#6B756F]">
+                    <span>Subtotal:</span>
+                    <span class="font-mono">₦<%= Number(order.subtotal || (order.total_amount - (order.delivery_fee || 0))).toLocaleString('en-US', {minimumFractionDigits: 2}) %></span>
+                </div>
+                <div class="flex justify-between items-center text-[#6B756F]">
+                    <span>Delivery Logistics:</span>
+                    <span class="font-mono">₦<%= Number(order.delivery_fee || 0).toLocaleString('en-US', {minimumFractionDigits: 2}) %></span>
+                </div>
+                <div class="flex justify-between items-center text-base font-bold text-[#087A50] pt-2 border-t border-[#E3E9E5]">
+                    <span class="font-display">Total Paid:</span>
+                    <span class="font-mono font-extrabold text-lg">₦<%= Number(order.total_amount).toLocaleString('en-US', {minimumFractionDigits: 2}) %></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Verification & Proof -->
+        <% if (order.payment_proof_ref || (store.bank_name && store.bank_account_number)) { %>
+            <div class="bg-[#F8FAF8] p-3.5 rounded-2xl border border-[#E3E9E5] text-[11px] text-[#6B756F] space-y-1">
+                <div class="font-semibold text-[#08110D]">Payment Method: <%= order.payment_method === 'bank_transfer' ? 'Direct Bank Transfer' : 'Pay on Delivery' %></div>
+                <% if (order.payment_proof_ref) { %>
+                    <div>Transfer Note / Ref: <strong class="font-mono text-[#08110D]"><%= order.payment_proof_ref %></strong></div>
+                <% } %>
+                <% if (store.bank_name && store.bank_account_number) { %>
+                    <div class="text-[10px] text-[#6B756F] pt-0.5">Verified Account: <%= store.bank_name %> &bull; <%= store.bank_account_number %> (<%= store.bank_account_name || store.store_name %>)</div>
+                <% } %>
+            </div>
+        <% } %>
+
+        <!-- Custom Store Receipt Note / Footer -->
+        <div class="text-center pt-2 text-xs text-[#6B756F] space-y-1">
+            <p class="font-medium text-[#08110D]">
+                <%= store.receipt_custom_note || 'Thank you for supporting our business!' %>
+            </p>
+            <p class="text-[10px] text-[#6B756F]">
+                For questions regarding this order, contact <%= store.store_name %> at <%= store.whatsapp_number || store.email %>.
+            </p>
+        </div>
+
+        <!-- Action Buttons (Print & WhatsApp) -->
+        <div class="no-print pt-4 flex flex-col sm:flex-row items-center gap-2.5 border-t border-[#E3E9E5]">
+            <button onclick="window.print()" class="w-full sm:w-1/2 bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs py-3 rounded-xl transition shadow-2xs flex items-center justify-center gap-2 font-display">
+                <span>🖨️</span> <span>Print / Save PDF</span>
+            </button>
+            <a href="https://wa.me/<%= (store.whatsapp_number || '').replace(/\D/g, '') %>?text=Hello%20<%= encodeURIComponent(store.store_name) %>,%20I%20am%20inquiring%20about%20my%20receipt%20for%20order%20%23<%= order.order_ref %>" target="_blank" class="w-full sm:w-1/2 bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-medium text-xs py-3 rounded-xl border border-[#E3E9E5] transition flex items-center justify-center gap-2">
+                <span>💬</span> <span>Contact Store</span>
+            </a>
+        </div>
+    </div>
+
+</body>
+</html>

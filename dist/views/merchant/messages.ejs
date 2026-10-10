@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Live Chat Desk — <%= store.store_name %> | zlik</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        zlikDark: '#08110D',
+                        zlikGreen: '#19D98B',
+                        zlikDeep: '#087A50',
+                        zlikBg: '#F8FAF8',
+                        zlikWhite: '#FFFFFF',
+                        zlikMuted: '#6B756F',
+                        zlikBorder: '#E3E9E5'
+                    },
+                    fontFamily: {
+                        display: ['Montserrat', 'sans-serif'],
+                        body: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAF8; color: #08110D; }
+        .font-display { font-family: 'Montserrat', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0.5rem); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+    <!-- Merchant Top Navigation -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E3E9E5] shadow-2xs">
+        <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
+            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                <a href="/merchant" class="text-xs font-medium text-[#6B756F] hover:text-[#08110D] flex items-center gap-1 transition shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    <span class="hidden sm:inline">Dashboard</span>
+                </a>
+                <span class="text-gray-300 hidden sm:inline">/</span>
+                <h1 class="text-xs sm:text-sm font-semibold text-[#08110D] flex items-center gap-2 truncate">
+                    <span>Live Chat</span>
+                    <span id="navUnreadBadge" class="hidden bg-[#19D98B] text-[#08110D] text-[9px] sm:text-[10px] font-semibold px-2 py-0.5 rounded-full animate-pulse shadow-2xs">0 new</span>
+                </h1>
+            </div>
+
+            <div class="flex items-center gap-1.5 sm:gap-3">
+                <button onclick="toggleAudio()" id="soundToggle" title="Audio Chimes" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] text-xs font-medium p-2 sm:px-3 sm:py-1.5 rounded-xl border border-[#E3E9E5] transition flex items-center gap-1.5">
+                    <span id="soundToggleIcon" class="text-xs">🔊</span>
+                    <span id="soundToggleText" class="hidden sm:inline">Sound: ON</span>
+                </button>
+                <a href="/<%= store.slug %>" target="_blank" title="View Public Storefront" class="bg-[#08110D] text-[#19D98B] font-medium text-xs p-2 sm:px-3.5 sm:py-1.5 rounded-xl transition flex items-center gap-1 shadow-2xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                    <span class="hidden sm:inline">Storefront ↗</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="hidden sm:flex max-w-7xl mx-auto px-4 items-center gap-2 overflow-x-auto text-xs font-medium border-t border-[#E3E9E5]/60 pt-2 pb-2">
+            <a href="/merchant" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Orders</a>
+            <a href="/merchant/items" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Products</a>
+            <a href="/merchant/ledger" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Sales Ledger</a>
+            <a href="/merchant/debts" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Debts</a>
+            <a href="/merchant/messages" class="px-3.5 py-1.5 rounded-xl bg-[#08110D] text-white font-semibold">Live Chat</a>
+            <a href="/merchant/settings" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Settings</a>
+        </div>
+    </header>
+
+    <!-- Main Chat Workspace (3-Column Responsive Layout) -->
+    <main class="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-4 pb-20 sm:pb-4 flex-1 w-full flex flex-col h-[calc(100vh-65px)]">
+        <div class="flex-1 bg-white rounded-2xl border border-[#E3E9E5] shadow-xs grid grid-cols-1 md:grid-cols-12 overflow-hidden">
+
+            <!-- Col 1: Conversations List (4 cols) -->
+            <div class="md:col-span-4 border-r border-[#E3E9E5] flex flex-col h-full bg-white">
+                <div class="p-3.5 border-b border-[#E3E9E5] space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-extrabold font-display text-[#08110D]">Customer Threads</span>
+                        <span id="convCountBadge" class="text-[10px] font-bold bg-[#F8FAF8] text-[#6B756F] border border-[#E3E9E5] px-2 py-0.5 rounded-full">0 chats</span>
+                    </div>
+                    <div class="relative">
+                        <input type="text" id="convSearchInput" oninput="handleSearchConversations(this.value)" placeholder="Search customer name, phone, message..." class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl px-3.5 py-2 text-xs text-[#08110D] outline-none focus:border-[#08110D] transition">
+                        <span class="absolute right-3 top-2 text-[#6B756F] text-xs">🔍</span>
+                    </div>
+                </div>
+
+                <div id="conversationsListContainer" class="flex-1 overflow-y-auto divide-y divide-[#E3E9E5]/60 text-xs">
+                    <div class="p-8 text-center text-[#6B756F]">Loading conversations...</div>
+                </div>
+            </div>
+
+            <!-- Col 2: Active Message Thread (5 cols) -->
+            <div class="md:col-span-5 flex flex-col h-full bg-[#F8FAF8] border-r border-[#E3E9E5]">
+                <!-- Chat Top Header -->
+                <div id="activeChatHeader" class="p-3.5 bg-white border-b border-[#E3E9E5] flex items-center justify-between shrink-0">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div id="activeChatAvatar" class="w-9 h-9 rounded-xl bg-[#08110D] text-[#19D98B] font-bold text-xs flex items-center justify-center font-display shrink-0 shadow-2xs">
+                            C
+                        </div>
+                        <div class="min-w-0">
+                            <h3 id="activeChatName" class="text-xs font-bold text-[#08110D] truncate font-display">Select Conversation</h3>
+                            <p id="activeChatPhone" class="text-[11px] text-[#6B756F] truncate">Direct Storefront Channel</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages Stream -->
+                <div id="messagesThreadStream" class="flex-1 p-4 overflow-y-auto space-y-3 text-xs">
+                    <div class="p-12 text-center text-[#6B756F]">Select a conversation on the left to start messaging.</div>
+                </div>
+
+                <!-- Quick Replies Bar -->
+                <div class="px-3.5 py-2 bg-white/70 border-t border-[#E3E9E5] flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 text-[11px]">
+                    <button onclick="sendQuickReply('Thanks for contacting us! How can we assist you?')" class="bg-white border border-[#E3E9E5] hover:border-[#08110D] px-2.5 py-1 rounded-lg shrink-0 transition text-[#08110D]">👋 Welcome Reply</button>
+                    <button onclick="sendQuickReply('Yes! This item is currently available in stock and ready for delivery.')" class="bg-white border border-[#E3E9E5] hover:border-[#08110D] px-2.5 py-1 rounded-lg shrink-0 transition text-[#08110D]">📦 In Stock</button>
+                    <button onclick="sendQuickReply('Your order has been confirmed and is being packaged for dispatch.')" class="bg-white border border-[#E3E9E5] hover:border-[#08110D] px-2.5 py-1 rounded-lg shrink-0 transition text-[#08110D]">🚚 Order Processing</button>
+                </div>
+
+                <!-- Message Input -->
+                <form id="merchantChatForm" onsubmit="handleSendMerchantMessage(event)" class="p-3 bg-white border-t border-[#E3E9E5] flex items-center gap-2 shrink-0">
+                    <input type="text" id="merchantMsgInput" placeholder="Type a reply..." autocomplete="off" class="flex-1 bg-[#F8FAF8] border border-[#E3E9E5] text-xs text-[#08110D] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#08110D] transition">
+                    <button type="submit" id="merchantSendBtn" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-2xs shrink-0 flex items-center gap-1.5">
+                        <span>Send</span> <span>↗</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Col 3: Customer Context & Orders Sidebar (3 cols) -->
+            <div class="hidden md:flex md:col-span-3 flex-col h-full bg-white p-4 overflow-y-auto space-y-4">
+                <div>
+                    <h4 class="text-xs font-extrabold text-[#08110D] uppercase tracking-wider font-display mb-3">Customer Profile</h4>
+                    <div class="p-3.5 bg-[#F8FAF8] rounded-xl border border-[#E3E9E5] space-y-2 text-xs">
+                        <div class="font-bold text-[#08110D]" id="contextCustName">Customer</div>
+                        <div class="text-[11px] text-[#6B756F]" id="contextCustPhone">No phone specified</div>
+                        <div class="text-[11px] text-[#6B756F]" id="contextCustEmail"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-xs font-extrabold text-[#08110D] uppercase tracking-wider font-display mb-3">Customer Lifetime</h4>
+                    <div class="grid grid-cols-2 gap-2 text-center">
+                        <div class="p-3 bg-[#F8FAF8] rounded-xl border border-[#E3E9E5]">
+                            <div class="text-base font-extrabold text-[#08110D] font-display" id="contextTotalOrders">0</div>
+                            <div class="text-[10px] text-[#6B756F] uppercase font-bold">Orders</div>
+                        </div>
+                        <div class="p-3 bg-[#F8FAF8] rounded-xl border border-[#E3E9E5]">
+                            <div class="text-xs font-extrabold text-[#087A50] font-display truncate" id="contextTotalSpent">₦0.00</div>
+                            <div class="text-[10px] text-[#6B756F] uppercase font-bold">Total Spent</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-1">
+                    <h4 class="text-xs font-extrabold text-[#08110D] uppercase tracking-wider font-display mb-3">Recent Orders</h4>
+                    <div id="contextOrdersList" class="space-y-2 text-xs">
+                        <div class="p-3 text-center text-[#6B756F] text-[11px] bg-[#F8FAF8] rounded-xl border border-[#E3E9E5]">No orders placed yet.</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="/assets/js/sound_engine.js"></script>
+    <script>
+        const storeData = <%- JSON.stringify(store) %>;
+        let currentConvId = 0;
+        let lastMessageId = 0;
+        let activeConversations = [];
+        let audioEnabled = true;
+        let chatWs = null;
+        let chatSSE = null;
+
+        function playMessageAudio() {
+            if (!audioEnabled) return;
+            try {
+                const soundType = storeData.alert_sound || 'chime';
+                const customUrl = storeData.custom_sound_url || '';
+                playNotificationSound(soundType, customUrl);
+            } catch (e) {}
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            document.getElementById('soundToggle').innerHTML = audioEnabled ? '<span>🔊</span><span class="hidden sm:inline">Sound: ON</span>' : '<span>🔇</span><span class="hidden sm:inline">Sound: OFF</span>';
+        }
+
+        async function loadConversationsList(search = '') {
+            try {
+                const res = await fetch(`/api/chat?action=merchant_list_conversations&search=${encodeURIComponent(search)}`);
+                const data = await res.json();
+                if (data.success) {
+                    activeConversations = data.conversations || [];
+                    renderConversationsList(activeConversations);
+                    updateTopUnreadBadges(data.total_unread_count || 0);
+                    if (currentConvId === 0 && activeConversations.length > 0) {
+                        selectConversation(activeConversations[0].id);
+                    }
+                }
+            } catch (e) {}
+        }
+
+        function renderConversationsList(convs) {
+            const container = document.getElementById('conversationsListContainer');
+            document.getElementById('convCountBadge').textContent = convs.length + ' chats';
+
+            if (convs.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-[#6B756F]">No conversations found.</div>`;
+                return;
+            }
+
+            container.innerHTML = convs.map(c => {
+                const isSelected = (parseInt(c.id) === currentConvId);
+                const unread = parseInt(c.unread_merchant_count || 0);
+                const time = c.last_message_at ? new Date(c.last_message_at.replace(/-/g, '/')).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+                const initial = (c.customer_name || 'S').charAt(0).toUpperCase();
+
+                return `
+                    <div onclick="selectConversation(${c.id})" class="p-3.5 cursor-pointer transition flex items-start gap-3 ${isSelected ? 'bg-[#08110D]/5 border-l-4 border-[#08110D]' : 'hover:bg-[#F8FAF8]'}">
+                        <div class="w-9 h-9 rounded-full ${unread > 0 ? 'bg-[#19D98B] text-[#08110D]' : 'bg-[#08110D] text-white'} flex items-center justify-center font-bold text-xs shrink-0 font-display">
+                            ${initial}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between mb-0.5">
+                                <h4 class="text-xs font-bold text-[#08110D] truncate ${unread > 0 ? 'font-extrabold' : ''}">${escapeHtml(c.customer_name)}</h4>
+                                <span class="text-[10px] text-[#6B756F] shrink-0">${time}</span>
+                            </div>
+                            <p class="text-[11px] text-[#6B756F] truncate ${unread > 0 ? 'font-semibold text-[#08110D]' : ''}">
+                                ${escapeHtml(c.last_message_preview || 'New message')}
+                            </p>
+                            <div class="flex items-center justify-between mt-1.5">
+                                <span class="text-[9px] font-bold text-[#087A50] bg-[#19D98B]/15 px-1.5 py-0.2 rounded">
+                                    ${c.total_orders_count > 0 ? c.total_orders_count + ' Orders' : 'Storefront Inquiry'}
+                                </span>
+                                ${unread > 0 ? `<span class="bg-[#19D98B] text-[#08110D] text-[9px] font-bold px-2 py-0.2 rounded-full">${unread} new</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function selectConversation(convId) {
+            currentConvId = parseInt(convId);
+            lastMessageId = 0;
+            const conv = activeConversations.find(c => parseInt(c.id) === currentConvId);
+
+            if (conv) {
+                document.getElementById('activeChatAvatar').textContent = (conv.customer_name || 'S').charAt(0).toUpperCase();
+                document.getElementById('activeChatName').textContent = conv.customer_name;
+                document.getElementById('activeChatPhone').textContent = conv.customer_phone ? '📞 ' + conv.customer_phone : (conv.customer_email || 'Direct Storefront Channel');
+            }
+
+            renderConversationsList(activeConversations);
+            await loadMessages(true);
+            await loadCustomerContext();
+            connectRealtimeStream();
+        }
+
+        async function loadMessages(initial = false) {
+            if (!currentConvId) return;
+            try {
+                const res = await fetch(`/api/chat?action=get_messages&conversation_id=${currentConvId}&after_id=${lastMessageId}`);
+                const data = await res.json();
+                if (data.success && data.messages) {
+                    if (initial) document.getElementById('messagesThreadStream').innerHTML = '';
+                    if (data.messages.length > 0) renderThreadMessages(data.messages, initial);
+                }
+            } catch (e) {}
+        }
+
+        function renderThreadMessages(messages, initial = false) {
+            const stream = document.getElementById('messagesThreadStream');
+            let hasIncoming = false;
+
+            messages.forEach(msg => {
+                if (parseInt(msg.id) > lastMessageId) lastMessageId = parseInt(msg.id);
+                if (msg.idempotency_key) {
+                    const temp = document.getElementById('temp-merchant-msg-' + msg.idempotency_key);
+                    if (temp) temp.remove();
+                }
+                if (document.getElementById('merchant-msg-' + msg.id)) return;
+
+                const isMerchant = (msg.sender_type === 'merchant');
+                if (!isMerchant) hasIncoming = true;
+
+                const time = msg.created_at ? new Date(msg.created_at.replace(/-/g, '/')).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+                const row = document.createElement('div');
+                row.id = 'merchant-msg-' + msg.id;
+                row.className = 'flex flex-col ' + (isMerchant ? 'items-end' : 'items-start') + ' space-y-1';
+                row.innerHTML = `
+                    <div class="max-w-[80%] px-4 py-2.5 rounded-2xl shadow-2xs ${isMerchant ? 'bg-[#08110D] text-white rounded-br-xs' : 'bg-white border border-[#E3E9E5] text-[#08110D] rounded-bl-xs'}">
+                        <div class="leading-relaxed break-words whitespace-pre-line text-xs">${escapeHtml(msg.message)}</div>
+                        <div class="text-[9px] mt-1 text-right ${isMerchant ? 'text-white/60' : 'text-[#6B756F]'} flex items-center justify-end gap-1">
+                            <span>${time}</span>
+                            ${isMerchant ? '<span class="text-[#19D98B]">✓</span>' : ''}
+                        </div>
+                    </div>
+                `;
+                stream.appendChild(row);
+            });
+
+            stream.scrollTop = stream.scrollHeight;
+            if (hasIncoming && !initial) playMessageAudio();
+        }
+
+        async function loadCustomerContext() {
+            if (!currentConvId) return;
+            try {
+                const res = await fetch(`/api/chat?action=merchant_get_customer_context&conversation_id=${currentConvId}`);
+                const data = await res.json();
+                if (data.success) {
+                    const cust = data.customer || {};
+                    document.getElementById('contextCustName').textContent = cust.name || 'Customer';
+                    document.getElementById('contextCustPhone').textContent = cust.phone ? '📞 ' + cust.phone : 'No phone specified';
+                    document.getElementById('contextCustEmail').textContent = cust.email ? '✉️ ' + cust.email : '';
+                    document.getElementById('contextTotalOrders').textContent = cust.total_orders || 0;
+                    document.getElementById('contextTotalSpent').textContent = '₦' + (cust.total_spent || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+                    const ordersContainer = document.getElementById('contextOrdersList');
+                    const orders = data.orders || [];
+                    if (orders.length === 0) {
+                        ordersContainer.innerHTML = `<div class="p-3 text-center text-[#6B756F] text-[11px] bg-[#F8FAF8] rounded-xl border border-[#E3E9E5]">No orders placed yet.</div>`;
+                    } else {
+                        ordersContainer.innerHTML = orders.map(ord => `
+                            <div class="p-3 bg-[#F8FAF8] rounded-xl border border-[#E3E9E5] space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-[#08110D]">#${ord.order_ref}</span>
+                                    <span class="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">${ord.order_status}</span>
+                                </div>
+                                <div class="text-[11px] text-[#6B756F] flex items-center justify-between">
+                                    <span>₦${parseFloat(ord.total_amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                                    <span>${ord.payment_status === 'paid' ? '🟢 Paid' : '🟡 Unpaid'}</span>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (e) {}
+        }
+
+        async function handleSendMerchantMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('merchantMsgInput');
+            const text = input.value.trim();
+            if (!text || !currentConvId) return;
+
+            input.value = '';
+            const key = 'mk_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+            const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            // Optimistic UI update (0ms lag)
+            const stream = document.getElementById('messagesThreadStream');
+            const temp = document.createElement('div');
+            temp.id = 'temp-merchant-msg-' + key;
+            temp.className = 'flex flex-col items-end space-y-1 opacity-90';
+            temp.innerHTML = `
+                <div class="max-w-[80%] px-4 py-2.5 rounded-2xl shadow-2xs bg-[#08110D] text-white rounded-br-xs">
+                    <div class="leading-relaxed break-words whitespace-pre-line text-xs">${escapeHtml(text)}</div>
+                    <div class="text-[9px] mt-1 text-right text-white/60 flex items-center justify-end gap-1">
+                        <span>${nowTime}</span>
+                        <span class="text-[#19D98B] animate-pulse">🕒 Sending...</span>
+                    </div>
+                </div>
+            `;
+            stream.appendChild(temp);
+            stream.scrollTop = stream.scrollHeight;
+
+            if (chatWs && chatWs.readyState === WebSocket.OPEN) {
+                chatWs.send(JSON.stringify({
+                    type: 'send_message',
+                    conversation_id: currentConvId,
+                    message: text,
+                    idempotency_key: key
+                }));
+            } else {
+                fetch('/api/chat?action=send_message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ conversation_id: currentConvId, message: text, idempotency_key: key })
+                }).then(r => r.json()).then(d => {
+                    if (d.success && d.message) {
+                        renderThreadMessages([d.message], true);
+                        loadConversationsList();
+                    }
+                });
+            }
+        }
+
+        function sendQuickReply(text) {
+            document.getElementById('merchantMsgInput').value = text;
+            document.getElementById('merchantChatForm').dispatchEvent(new Event('submit'));
+        }
+
+        function updateTopUnreadBadges(count) {
+            const navBadge = document.getElementById('navUnreadBadge');
+            if (navBadge) {
+                if (count > 0) {
+                    navBadge.textContent = count + ' new';
+                    navBadge.classList.remove('hidden');
+                } else {
+                    navBadge.classList.add('hidden');
+                }
+            }
+        }
+
+        function handleSearchConversations(query) {
+            loadConversationsList(query);
+        }
+
+        function connectRealtimeStream() {
+            // 1. WebSocket
+            try {
+                const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                chatWs = new WebSocket(`${proto}//${window.location.host}/ws/chat`);
+                chatWs.onopen = () => {
+                    chatWs.send(JSON.stringify({ type: 'auth', role: 'merchant', store_id: storeData.id }));
+                };
+                chatWs.onmessage = (e) => {
+                    try {
+                        const payload = JSON.parse(e.data);
+                        if (payload.event === 'chat_message' || payload.type === 'message_ack') {
+                            const msg = payload.data || payload.message;
+                            if (msg) {
+                                renderThreadMessages([msg], false);
+                                loadConversationsList();
+                            }
+                        }
+                    } catch (err) {}
+                };
+                chatWs.onerror = () => connectSSEFallback();
+            } catch (e) {
+                connectSSEFallback();
+            }
+        }
+
+        function connectSSEFallback() {
+            if (chatSSE || typeof EventSource === 'undefined') return;
+            chatSSE = new EventSource('/api/stream?channel=merchant');
+            chatSSE.addEventListener('chat_message', (e) => {
+                try {
+                    const msg = JSON.parse(e.data);
+                    renderThreadMessages([msg], false);
+                    loadConversationsList();
+                } catch (err) {}
+            });
+            chatSSE.addEventListener('notification', (e) => {
+                try {
+                    const notif = JSON.parse(e.data);
+                    if (notif.event_type === 'chat_message') loadConversationsList();
+                } catch (err) {}
+            });
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadConversationsList();
+            connectRealtimeStream();
+        });
+    </script>
+    <%- include('components/bottom_nav.ejs', { activeTab: 'chat' }) %>
+</body>
+</html>
