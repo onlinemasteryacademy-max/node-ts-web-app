@@ -326,9 +326,19 @@
                         <div class="sm:col-span-2">
                             <div class="flex items-center justify-between mb-1">
                                 <label class="block font-bold text-[#08110D]">Product Showcase Video URL (Optional)</label>
-                                <span class="text-[9.5px] font-semibold bg-[#08110D] text-[#19D98B] px-2 py-0.5 rounded-md font-mono">🔒 BUSINESS PLAN</span>
+                                <span class="text-[9.5px] font-semibold bg-[#087A50] text-white px-2 py-0.5 rounded-md font-mono">BUSINESS</span>
                             </div>
-                            <input type="url" id="prodVideoUrl" placeholder="https://cdn.example.com/video.mp4 or YouTube / Vimeo URL" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none focus:border-[#08110D] font-mono text-xs">
+                            <div class="relative rounded-xl overflow-hidden">
+                                <input type="url" id="prodVideoUrl" placeholder="https://cdn.example.com/video.mp4 or YouTube / Vimeo URL" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none focus:border-[#08110D] font-mono text-xs <%= store.plan_tier === 'business' ? '' : 'blur-[1px] opacity-60 pointer-events-none select-none' %>" <%= store.plan_tier === 'business' ? '' : 'disabled' %>>
+                                <% if (store.plan_tier !== 'business') { %>
+                                    <div class="absolute inset-0 bg-white/40 backdrop-blur-[2px] rounded-xl flex items-center justify-center p-2 z-10">
+                                        <button type="button" onclick="openBusinessUpgradeModal('Product Showcase Video')" class="inline-flex items-center gap-1.5 bg-[#08110D] hover:bg-black text-[#19D98B] px-3.5 py-1.5 rounded-lg text-xs font-bold font-display shadow-xs hover:scale-105 transition-all">
+                                            <span>🔒</span>
+                                            <span>Upgrade</span>
+                                        </button>
+                                    </div>
+                                <% } %>
+                            </div>
                             <span class="text-[10px] text-[#6B756F] mt-0.5 block">Plays an interactive video showcase inside the product modal on your storefront.</span>
                         </div>
                     </div>
@@ -666,70 +676,7 @@
         </div>
     </div>
 
-    <!-- Pro Upgrade Modal -->
-    <div id="proUpgradeModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 border border-[#E3E9E5] shadow-2xl text-center">
-            <div class="space-y-1.5">
-                <span class="text-[10px] font-semibold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-[#19D98B]/20 text-[#087A50] font-mono">
-                    Pro Feature
-                </span>
-                <h3 class="text-base font-semibold text-[#08110D]" id="proModalTitle">Unlock Pro Capacity</h3>
-                <p class="text-xs text-[#6B756F]" id="proModalDesc">
-                    This feature requires Zlik Pro. Upgrade to unlock 500 products, 5 photos per item, bulk CSV imports, and 3 stores.
-                </p>
-            </div>
-
-            <div class="bg-[#F8FAF8] rounded-2xl p-4 border border-[#E3E9E5] text-left space-y-2 text-xs">
-                <div class="font-semibold text-[11px] text-[#08110D] uppercase tracking-wider">Included in Zlik Pro (₦5,000/mo or ₦50,000/yr):</div>
-                <ul class="space-y-1.5 text-xs text-[#08110D]">
-                    <li class="flex items-center gap-2">
-                        <span class="text-[#087A50] font-bold">•</span>
-                        <span>Up to 3 stores & 500 products (5 photos/item)</span>
-                    </li>
-                    <li class="flex items-center gap-2">
-                        <span class="text-[#087A50] font-bold">•</span>
-                        <span>CSV / Excel bulk product import</span>
-                    </li>
-                    <li class="flex items-center gap-2">
-                        <span class="text-[#087A50] font-bold">•</span>
-                        <span>All 15 storefront designs & custom covers</span>
-                    </li>
-                    <li class="flex items-center gap-2">
-                        <span class="text-[#087A50] font-bold">•</span>
-                        <span>Remove “Powered by Zlik” watermark</span>
-                    </li>
-                    <li class="flex items-center gap-2">
-                        <span class="text-[#087A50] font-bold">•</span>
-                        <span>Full sales ledger history & CSV export</span>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="flex items-center gap-2 pt-1">
-                <button type="button" onclick="closeProUpgradeModal()" class="w-1/2 bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-medium text-xs py-3 rounded-xl border border-[#E3E9E5] transition">
-                    Maybe Later
-                </button>
-                <a href="/merchant/settings" class="w-1/2 bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs py-3 rounded-xl transition shadow-2xs text-center flex items-center justify-center">
-                    Upgrade to Pro ⚡
-                </a>
-            </div>
-        </div>
-    </div>
-
     <script>
-        function openProUpgradeModal(featureName) {
-            const title = document.getElementById('proModalTitle');
-            const desc = document.getElementById('proModalDesc');
-            if (featureName) {
-                title.textContent = `Unlock ${featureName}`;
-                desc.textContent = `${featureName} is included in Zlik Pro. Upgrade now to scale your catalog and unlocks unlimited power.`;
-            }
-            document.getElementById('proUpgradeModal').classList.remove('hidden');
-        }
-
-        function closeProUpgradeModal() {
-            document.getElementById('proUpgradeModal').classList.add('hidden');
-        }
         const storeTemplateSlug = '<%= store.template_slug || "general_clean" %>';
         const currentTemplateCat = '<%= (templateConfig && templateConfig.category_id) || "general" %>';
         let foodOptionGroups = [];

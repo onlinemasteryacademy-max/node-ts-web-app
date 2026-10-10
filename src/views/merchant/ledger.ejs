@@ -420,17 +420,6 @@
     </div>
 
     <script>
-        function openProUpgradeModal(featureName) {
-            if (featureName) {
-                document.getElementById('proModalTitle').textContent = `Unlock "${featureName}"`;
-            }
-            document.getElementById('proUpgradeModal').classList.remove('hidden');
-        }
-
-        function closeProUpgradeModal() {
-            document.getElementById('proUpgradeModal').classList.add('hidden');
-        }
-
         const isProStore = <%= isPro ? 'true' : 'false' %>;
         let currentLedgerPeriod = 'all_free';
 

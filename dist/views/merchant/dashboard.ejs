@@ -42,11 +42,6 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
-    <!-- Audio Unlock Banner -->
-    <div id="audioUnlockBanner" onclick="unlockAudio()" class="bg-[#08110D] text-[#19D98B] py-2 px-3 sm:px-4 text-center text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer border-b border-[#19D98B]/20">
-        <span>🔔 Tap to enable live sound chimes for incoming orders & chat</span>
-    </div>
-
     <!-- Merchant Header -->
     <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E3E9E5] shadow-2xs">
         <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-4">
@@ -450,22 +445,7 @@
         let dashboardSSE = null;
 
         function triggerUpgradeModal(featureName) {
-            const title = document.getElementById('proModalTitle');
-            const desc = document.getElementById('proModalDesc');
-            if (featureName === 'ledger') {
-                if (title) title.textContent = 'Unlock Lifetime Sales Ledger';
-                if (desc) desc.textContent = 'Extended revenue timeframes and lifetime historical records are exclusively unlocked on Zlik Pro.';
-            } else if (featureName) {
-                if (title) title.textContent = `Unlock ${featureName}`;
-                if (desc) desc.textContent = `${featureName} is available on Zlik Pro. Upgrade now for full access and capacity.`;
-            }
-            const modal = document.getElementById('upgradePromptModal') || document.getElementById('proUpgradeModal');
-            if (modal) modal.classList.remove('hidden');
-        }
-
-        function closeProUpgradeModal() {
-            const modal = document.getElementById('upgradePromptModal') || document.getElementById('proUpgradeModal');
-            if (modal) modal.classList.add('hidden');
+            openProUpgradeModal(featureName === 'ledger' ? 'Extended & Lifetime Sales Ledger' : (featureName || 'Pro Features'));
         }
 
         let currentVisitorPeriod = 'today';
@@ -495,16 +475,6 @@
             } catch (e) {}
         }
 
-        function unlockAudio() {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                ctx.resume();
-                playChime();
-                document.getElementById('audioUnlockBanner').innerHTML = '<span>✓ Live Audible Order & Chat Chimes Active</span>';
-                setTimeout(() => document.getElementById('audioUnlockBanner').classList.add('hidden'), 2500);
-            } catch(e) {}
-        }
-
         function toggleAudio() {
             audioEnabled = !audioEnabled;
             const icon = document.getElementById('soundToggleIcon');
@@ -520,7 +490,7 @@
             const gated = ['month', '3months', '6months', 'yearly', 'lifetime'];
             if (!isProStore && gated.includes(period)) {
                 document.getElementById('timeframeSelect').value = currentPeriod;
-                triggerUpgradeModal('ledger');
+                openProUpgradeModal('Extended & Lifetime Sales Ledger');
                 return;
             }
             currentPeriod = period;

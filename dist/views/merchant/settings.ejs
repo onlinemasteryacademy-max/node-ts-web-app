@@ -205,51 +205,57 @@
                     const isCurrentTemplatePro = Boolean(templateConfig && templateConfig.is_pro);
                 %>
                 <!-- Store Cover Image & Banner Overlay (Pro Feature) -->
-                <div id="coverCustomizationSection" class="space-y-4 pt-3 border-t border-[#E3E9E5]/60 relative rounded-2xl overflow-hidden">
-                    <div id="coverControlsWrapper" class="space-y-4 <%= isCurrentTemplatePro ? '' : 'blur-[1px] opacity-60 pointer-events-none select-none' %>">
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between">
-                                <label class="block font-medium text-[#08110D]">Store Cover Image</label>
-                                <span class="text-[10px] text-[#6B756F]">Shown on storefront hero banner</span>
-                            </div>
-                            <div class="space-y-3">
-                                <div id="coverPreviewContainer" class="w-full aspect-[21/9] sm:aspect-[24/8] max-h-40 rounded-2xl border border-[#E3E9E5] bg-[#08110D] flex items-center justify-center overflow-hidden relative shadow-2xs">
-                                    <img id="coverPreviewImg" src="<%= store.cover_url || (templateConfig ? templateConfig.default_cover_image : '') || '/assets/images/templates/general_modern.png' %>" alt="Cover Preview" class="w-full h-full object-cover">
-                                </div>
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <label id="coverUploadBtn" class="cursor-pointer bg-[#08110D] hover:bg-black text-[#19D98B] font-medium text-xs px-3.5 py-2 rounded-xl transition shadow-2xs">
-                                        <span>Upload Cover</span>
-                                        <input type="file" id="coverFileInput" accept="image/*" onchange="handleCoverUpload(this.files[0])" class="hidden" <%= isCurrentTemplatePro ? '' : 'disabled' %>>
-                                    </label>
-                                    <button type="button" onclick="removeStoreCover()" id="removeCoverBtn" class="bg-[#F8FAF8] hover:bg-red-50 hover:text-red-700 text-[#6B756F] font-medium text-xs px-3 py-2 rounded-xl border border-[#E3E9E5] transition <%= store.cover_url ? '' : 'hidden' %>">
-                                        Reset to Default
-                                    </button>
-                                </div>
-                            </div>
-                            <input type="hidden" id="coverUrl" value="<%= store.cover_url || '' %>">
+                <div id="coverCustomizationSection" class="space-y-3 pt-3 border-t border-[#E3E9E5]/60">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <label class="block font-medium text-[#08110D]">Store Cover Image & Banner Tint</label>
+                            <span class="text-[10px] text-[#6B756F]">Shown on storefront hero banner (Included in Pro & Business templates)</span>
                         </div>
-
-                        <!-- Cover Overlay Color (Customizable for Overlay CTA Templates) -->
-                        <div class="space-y-2 pt-3 border-t border-[#E3E9E5]/60">
-                            <div class="flex items-center justify-between">
-                                <label for="coverOverlayColor" class="block font-medium text-[#08110D]">Banner Overlay Color</label>
-                                <span class="text-[10px] text-[#6B756F]">Customizable dark tint for hero banner text</span>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <input type="color" id="coverOverlayColor" value="<%= store.cover_overlay_color || '#08110D' %>" onchange="document.getElementById('coverOverlayColorHex').value = this.value" class="w-10 h-10 rounded-xl border border-[#E3E9E5] cursor-pointer p-0.5 bg-white" <%= isCurrentTemplatePro ? '' : 'disabled' %>>
-                                <input type="text" id="coverOverlayColorHex" value="<%= store.cover_overlay_color || '#08110D' %>" oninput="document.getElementById('coverOverlayColor').value = this.value" class="flex-1 bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none font-mono text-xs text-[#08110D]" <%= isCurrentTemplatePro ? '' : 'disabled' %>>
-                            </div>
-                        </div>
+                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[#08110D] text-[#19D98B]">PRO</span>
                     </div>
 
-                    <% if (!isCurrentTemplatePro) { %>
-                        <div class="absolute inset-0 bg-white/40 backdrop-blur-[2px] rounded-2xl flex items-center justify-center p-4 z-10">
-                            <button type="button" onclick="openProUpgradeModal('Pro Storefront Covers')" class="inline-flex items-center gap-2 bg-[#08110D] hover:bg-black text-[#19D98B] px-4 py-2 rounded-xl text-xs font-bold font-display shadow-md hover:scale-105 transition-all">
-                                <span>🔒</span>
-                                <span>Upgrade</span>
-                            </button>
+                    <div class="relative rounded-2xl overflow-hidden">
+                        <div id="coverControlsWrapper" class="space-y-4 <%= isCurrentTemplatePro ? '' : 'blur-[1px] opacity-60 pointer-events-none select-none' %>">
+                            <div class="space-y-2">
+                                <div class="space-y-3">
+                                    <div id="coverPreviewContainer" class="w-full aspect-[21/9] sm:aspect-[24/8] max-h-40 rounded-2xl border border-[#E3E9E5] bg-[#08110D] flex items-center justify-center overflow-hidden relative shadow-2xs">
+                                        <img id="coverPreviewImg" src="<%= store.cover_url || (templateConfig ? templateConfig.default_cover_image : '') || '/assets/images/templates/general_modern.png' %>" alt="Cover Preview" class="w-full h-full object-cover">
+                                    </div>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <label id="coverUploadBtn" class="cursor-pointer bg-[#08110D] hover:bg-black text-[#19D98B] font-medium text-xs px-3.5 py-2 rounded-xl transition shadow-2xs">
+                                            <span>Upload Cover</span>
+                                            <input type="file" id="coverFileInput" accept="image/*" onchange="handleCoverUpload(this.files[0])" class="hidden" <%= isCurrentTemplatePro ? '' : 'disabled' %>>
+                                        </label>
+                                        <button type="button" onclick="removeStoreCover()" id="removeCoverBtn" class="bg-[#F8FAF8] hover:bg-red-50 hover:text-red-700 text-[#6B756F] font-medium text-xs px-3 py-2 rounded-xl border border-[#E3E9E5] transition <%= store.cover_url ? '' : 'hidden' %>">
+                                            Reset to Default
+                                        </button>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="coverUrl" value="<%= store.cover_url || '' %>">
+                            </div>
+
+                            <!-- Cover Overlay Color (Customizable for Overlay CTA Templates) -->
+                            <div class="space-y-2 pt-3 border-t border-[#E3E9E5]/60">
+                                <div class="flex items-center justify-between">
+                                    <label for="coverOverlayColor" class="block font-medium text-[#08110D]">Banner Overlay Color</label>
+                                    <span class="text-[10px] text-[#6B756F]">Customizable dark tint for hero banner text</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <input type="color" id="coverOverlayColor" value="<%= store.cover_overlay_color || '#08110D' %>" onchange="document.getElementById('coverOverlayColorHex').value = this.value" class="w-10 h-10 rounded-xl border border-[#E3E9E5] cursor-pointer p-0.5 bg-white" <%= isCurrentTemplatePro ? '' : 'disabled' %>>
+                                    <input type="text" id="coverOverlayColorHex" value="<%= store.cover_overlay_color || '#08110D' %>" oninput="document.getElementById('coverOverlayColor').value = this.value" class="flex-1 bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none font-mono text-xs text-[#08110D]" <%= isCurrentTemplatePro ? '' : 'disabled' %>>
+                                </div>
+                            </div>
                         </div>
-                    <% } %>
+
+                        <% if (!isCurrentTemplatePro) { %>
+                            <div class="absolute inset-0 bg-white/40 backdrop-blur-[2px] rounded-2xl flex items-center justify-center p-4 z-10">
+                                <button type="button" onclick="openProUpgradeModal('Pro Storefront Covers')" class="inline-flex items-center gap-2 bg-[#08110D] hover:bg-black text-[#19D98B] px-4 py-2 rounded-xl text-xs font-bold font-display shadow-md hover:scale-105 transition-all">
+                                    <span>🔒</span>
+                                    <span>Upgrade</span>
+                                </button>
+                            </div>
+                        <% } %>
+                    </div>
                 </div>
             </div>
 
@@ -294,41 +300,46 @@
             </div>
 
             <!-- Seller-Branded Receipts Customization (Pro Feature) -->
-            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs relative overflow-hidden">
+            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs">
                 <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
                     <div>
-                        <h3 class="font-semibold text-sm text-[#08110D]">Seller-Branded Digital Receipts</h3>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-semibold text-sm text-[#08110D]">Seller-Branded Digital Receipts</h3>
+                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[#08110D] text-[#19D98B]">PRO</span>
+                        </div>
                         <p class="text-[11px] text-[#6B756F] mt-0.5">Customize PDF/printable receipts sent to customers.</p>
                     </div>
                 </div>
 
-                <div class="space-y-4 <%= isPro ? '' : 'blur-[1px] opacity-60 pointer-events-none select-none' %>">
-                    <div>
-                        <label class="block font-medium text-[#08110D] mb-1">Receipt Custom Note / Payment Policy</label>
-                        <input type="text" id="receiptCustomNote" value="<%= store.receipt_custom_note || '' %>" placeholder="e.g. Thank you for your order! Goods once sold are not refundable." class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]" <%= isPro ? '' : 'disabled' %>>
-                        <span class="text-[10px] text-[#6B756F] mt-1 block">Printed on printable digital receipts & invoices.</span>
-                    </div>
-
-                    <div class="flex items-center justify-between pt-1">
+                <div class="relative rounded-2xl overflow-hidden">
+                    <div class="space-y-4 <%= isPro ? '' : 'blur-[1px] opacity-60 pointer-events-none select-none' %>">
                         <div>
-                            <span class="font-medium text-[#08110D] block">Display Store Logo on Receipt</span>
-                            <span class="text-[10px] text-[#6B756F]">Show store logo in receipt header</span>
+                            <label class="block font-medium text-[#08110D] mb-1">Receipt Custom Note / Payment Policy</label>
+                            <input type="text" id="receiptCustomNote" value="<%= store.receipt_custom_note || '' %>" placeholder="e.g. Thank you for your order! Goods once sold are not refundable." class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]" <%= isPro ? '' : 'disabled' %>>
+                            <span class="text-[10px] text-[#6B756F] mt-1 block">Printed on printable digital receipts & invoices.</span>
                         </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="receiptShowLogo" class="sr-only peer" <%= store.receipt_show_logo !== 0 ? 'checked' : '' %> <%= isPro ? '' : 'disabled' %>>
-                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#08110D]"></div>
-                        </label>
-                    </div>
-                </div>
 
-                <% if (!isPro) { %>
-                    <div class="absolute inset-0 bg-white/40 backdrop-blur-[2px] rounded-3xl flex items-center justify-center p-4 z-10">
-                        <button type="button" onclick="openProUpgradeModal('Seller-Branded Receipts')" class="inline-flex items-center gap-2 bg-[#08110D] hover:bg-black text-[#19D98B] px-4 py-2 rounded-xl text-xs font-bold font-display shadow-md hover:scale-105 transition-all">
-                            <span>🔒</span>
-                            <span>Upgrade</span>
-                        </button>
+                        <div class="flex items-center justify-between pt-1">
+                            <div>
+                                <span class="font-medium text-[#08110D] block">Display Store Logo on Receipt</span>
+                                <span class="text-[10px] text-[#6B756F]">Show store logo in receipt header</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="receiptShowLogo" class="sr-only peer" <%= store.receipt_show_logo !== 0 ? 'checked' : '' %> <%= isPro ? '' : 'disabled' %>>
+                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#08110D]"></div>
+                            </label>
+                        </div>
                     </div>
-                <% } %>
+
+                    <% if (!isPro) { %>
+                        <div class="absolute inset-0 bg-white/40 backdrop-blur-[2px] rounded-2xl flex items-center justify-center p-4 z-10">
+                            <button type="button" onclick="openProUpgradeModal('Seller-Branded Receipts')" class="inline-flex items-center gap-2 bg-[#08110D] hover:bg-black text-[#19D98B] px-4 py-2 rounded-xl text-xs font-bold font-display shadow-md hover:scale-105 transition-all">
+                                <span>🔒</span>
+                                <span>Upgrade</span>
+                            </button>
+                        </div>
+                    <% } %>
+                </div>
             </div>
 
             <!-- Marketing Pixels & Ads Tracking (Meta, Google, TikTok) -->
@@ -398,11 +409,12 @@
             </div>
 
             <!-- Multi-Store Management (1 Free, 3 Pro, 10 Business) -->
-            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs relative overflow-hidden">
+            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs">
                 <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
                     <div>
                         <div class="flex items-center gap-2">
                             <h3 class="font-semibold text-sm text-[#08110D]">Multi-Store Management</h3>
+                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[#08110D] text-[#19D98B]">PRO</span>
                         </div>
                         <p class="text-[11px] text-[#6B756F] mt-0.5">Manage multiple store brands under one login account (1 Free, 3 Pro, 10 Business).</p>
                     </div>
@@ -413,27 +425,30 @@
                     <% } %>
                 </div>
 
-                <div id="myStoresListContainer" class="space-y-2 <%= isPro ? '' : 'blur-[1px] opacity-60 pointer-events-none select-none' %>">
-                    <!-- Injected via JS -->
-                    <div class="p-3 bg-[#F8FAF8] rounded-2xl border border-[#E3E9E5] text-[11px] text-[#6B756F]">Loading your stores...</div>
-                </div>
-
-                <% if (!isPro) { %>
-                    <div class="absolute inset-0 bg-white/40 backdrop-blur-[2px] rounded-3xl flex items-center justify-center p-4 z-10">
-                        <button type="button" onclick="openProUpgradeModal('Multi-Store Management')" class="inline-flex items-center gap-2 bg-[#08110D] hover:bg-black text-[#19D98B] px-4 py-2 rounded-xl text-xs font-bold font-display shadow-md hover:scale-105 transition-all">
-                            <span>🔒</span>
-                            <span>Upgrade</span>
-                        </button>
+                <div class="relative rounded-2xl overflow-hidden">
+                    <div id="myStoresListContainer" class="space-y-2 <%= isPro ? '' : 'blur-[1px] opacity-60 pointer-events-none select-none' %>">
+                        <!-- Injected via JS -->
+                        <div class="p-3 bg-[#F8FAF8] rounded-2xl border border-[#E3E9E5] text-[11px] text-[#6B756F]">Loading your stores...</div>
                     </div>
-                <% } %>
+
+                    <% if (!isPro) { %>
+                        <div class="absolute inset-0 bg-white/40 backdrop-blur-[2px] rounded-2xl flex items-center justify-center p-4 z-10">
+                            <button type="button" onclick="openProUpgradeModal('Multi-Store Management')" class="inline-flex items-center gap-2 bg-[#08110D] hover:bg-black text-[#19D98B] px-4 py-2 rounded-xl text-xs font-bold font-display shadow-md hover:scale-105 transition-all">
+                                <span>🔒</span>
+                                <span>Upgrade</span>
+                            </button>
+                        </div>
+                    <% } %>
+                </div>
             </div>
 
             <!-- Team & Staff Accounts (1 Pro, 5 Business) -->
-            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs relative overflow-hidden">
+            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs">
                 <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
                     <div>
                         <div class="flex items-center gap-2">
                             <h3 class="font-semibold text-sm text-[#08110D]">Team Members & Staff Accounts</h3>
+                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[#08110D] text-[#19D98B]">PRO</span>
                         </div>
                         <p class="text-[11px] text-[#6B756F] mt-0.5">Grant employee access with role-based permissions (1 Pro, 5 Business).</p>
                     </div>
@@ -444,27 +459,30 @@
                     <% } %>
                 </div>
 
-                <div id="staffListContainer" class="space-y-2 <%= isPro ? '' : 'blur-[1px] opacity-60 pointer-events-none select-none' %>">
-                    <!-- Injected via JS -->
-                    <div class="p-3 bg-[#F8FAF8] rounded-2xl border border-[#E3E9E5] text-[11px] text-[#6B756F]">Loading team members...</div>
-                </div>
-
-                <% if (!isPro) { %>
-                    <div class="absolute inset-0 bg-white/40 backdrop-blur-[2px] rounded-3xl flex items-center justify-center p-4 z-10">
-                        <button type="button" onclick="openProUpgradeModal('Staff Accounts & Permissions')" class="inline-flex items-center gap-2 bg-[#08110D] hover:bg-black text-[#19D98B] px-4 py-2 rounded-xl text-xs font-bold font-display shadow-md hover:scale-105 transition-all">
-                            <span>🔒</span>
-                            <span>Upgrade</span>
-                        </button>
+                <div class="relative rounded-2xl overflow-hidden">
+                    <div id="staffListContainer" class="space-y-2 <%= isPro ? '' : 'blur-[1px] opacity-60 pointer-events-none select-none' %>">
+                        <!-- Injected via JS -->
+                        <div class="p-3 bg-[#F8FAF8] rounded-2xl border border-[#E3E9E5] text-[11px] text-[#6B756F]">Loading team members...</div>
                     </div>
-                <% } %>
+
+                    <% if (!isPro) { %>
+                        <div class="absolute inset-0 bg-white/40 backdrop-blur-[2px] rounded-2xl flex items-center justify-center p-4 z-10">
+                            <button type="button" onclick="openProUpgradeModal('Staff Accounts & Permissions')" class="inline-flex items-center gap-2 bg-[#08110D] hover:bg-black text-[#19D98B] px-4 py-2 rounded-xl text-xs font-bold font-display shadow-md hover:scale-105 transition-all">
+                                <span>🔒</span>
+                                <span>Upgrade</span>
+                            </button>
+                        </div>
+                    <% } %>
+                </div>
             </div>
 
             <!-- Physical Store Branches (Business Feature) -->
-            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs relative overflow-hidden">
+            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs">
                 <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
                     <div>
                         <div class="flex items-center gap-2">
                             <h3 class="font-semibold text-sm text-[#08110D]">Physical Store Branches</h3>
+                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[#087A50] text-white">BUSINESS</span>
                         </div>
                         <p class="text-[11px] text-[#6B756F] mt-0.5">Track inventory and sales per physical pickup/outlet branch.</p>
                     </div>
@@ -475,55 +493,60 @@
                     <% } %>
                 </div>
 
-                <div id="branchesListContainer" class="space-y-2 <%= store.plan_tier === 'business' ? '' : 'blur-[1px] opacity-60 pointer-events-none select-none' %>">
-                    <!-- Injected via JS -->
-                    <div class="p-3 bg-[#F8FAF8] rounded-2xl border border-[#E3E9E5] text-[11px] text-[#6B756F]">Loading branch locations...</div>
-                </div>
-
-                <% if (store.plan_tier !== 'business') { %>
-                    <div class="absolute inset-0 bg-white/40 backdrop-blur-[2px] rounded-3xl flex items-center justify-center p-4 z-10">
-                        <button type="button" onclick="openBusinessUpgradeModal('Physical Store Branches')" class="inline-flex items-center gap-2 bg-[#08110D] hover:bg-black text-[#19D98B] px-4 py-2 rounded-xl text-xs font-bold font-display shadow-md hover:scale-105 transition-all">
-                            <span>🔒</span>
-                            <span>Upgrade</span>
-                        </button>
+                <div class="relative rounded-2xl overflow-hidden">
+                    <div id="branchesListContainer" class="space-y-2 <%= store.plan_tier === 'business' ? '' : 'blur-[1px] opacity-60 pointer-events-none select-none' %>">
+                        <!-- Injected via JS -->
+                        <div class="p-3 bg-[#F8FAF8] rounded-2xl border border-[#E3E9E5] text-[11px] text-[#6B756F]">Loading branch locations...</div>
                     </div>
-                <% } %>
+
+                    <% if (store.plan_tier !== 'business') { %>
+                        <div class="absolute inset-0 bg-white/40 backdrop-blur-[2px] rounded-2xl flex items-center justify-center p-4 z-10">
+                            <button type="button" onclick="openBusinessUpgradeModal('Physical Store Branches')" class="inline-flex items-center gap-2 bg-[#08110D] hover:bg-black text-[#19D98B] px-4 py-2 rounded-xl text-xs font-bold font-display shadow-md hover:scale-105 transition-all">
+                                <span>🔒</span>
+                                <span>Upgrade</span>
+                            </button>
+                        </div>
+                    <% } %>
+                </div>
             </div>
 
             <!-- Custom Domain Mapping (Business Feature) -->
-            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs relative overflow-hidden">
+            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs">
                 <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
                     <div>
                         <div class="flex items-center gap-2">
                             <h3 class="font-semibold text-sm text-[#08110D]">Custom Domain Mapping</h3>
+                            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-[#087A50] text-white">BUSINESS</span>
                         </div>
                         <p class="text-[11px] text-[#6B756F] mt-0.5">Connect your own web domain (e.g. shop.yourbrand.com).</p>
                     </div>
                 </div>
 
-                <div class="space-y-3 <%= store.plan_tier === 'business' ? '' : 'blur-[1px] opacity-60 pointer-events-none select-none' %>">
-                    <div>
-                        <label class="block font-medium text-[#08110D] mb-1">Your Custom Domain</label>
-                        <div class="flex items-center gap-2">
-                            <input type="text" id="customDomainInput" value="<%= store.custom_domain || '' %>" placeholder="shop.yourbrand.com" class="flex-1 bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none font-mono text-xs">
-                            <button type="button" onclick="saveCustomDomain()" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs px-4 py-3 rounded-xl transition shadow-2xs">
-                                Connect Domain
-                            </button>
+                <div class="relative rounded-2xl overflow-hidden">
+                    <div class="space-y-3 <%= store.plan_tier === 'business' ? '' : 'blur-[1px] opacity-60 pointer-events-none select-none' %>">
+                        <div>
+                            <label class="block font-medium text-[#08110D] mb-1">Your Custom Domain</label>
+                            <div class="flex items-center gap-2">
+                                <input type="text" id="customDomainInput" value="<%= store.custom_domain || '' %>" placeholder="shop.yourbrand.com" class="flex-1 bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none font-mono text-xs">
+                                <button type="button" onclick="saveCustomDomain()" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs px-4 py-3 rounded-xl transition shadow-2xs">
+                                    Connect Domain
+                                </button>
+                            </div>
+                        </div>
+                        <div id="domainStatusBox" class="p-3 bg-[#F8FAF8] rounded-xl border border-[#E3E9E5] text-[11px] text-[#6B756F]">
+                            DNS Target: Point your CNAME record to <code class="font-mono font-bold text-[#08110D]">cname.zlik.me</code>
                         </div>
                     </div>
-                    <div id="domainStatusBox" class="p-3 bg-[#F8FAF8] rounded-xl border border-[#E3E9E5] text-[11px] text-[#6B756F]">
-                        DNS Target: Point your CNAME record to <code class="font-mono font-bold text-[#08110D]">cname.zlik.me</code>
-                    </div>
-                </div>
 
-                <% if (store.plan_tier !== 'business') { %>
-                    <div class="absolute inset-0 bg-white/40 backdrop-blur-[2px] rounded-3xl flex items-center justify-center p-4 z-10">
-                        <button type="button" onclick="openBusinessUpgradeModal('Custom Domain Mapping')" class="inline-flex items-center gap-2 bg-[#08110D] hover:bg-black text-[#19D98B] px-4 py-2 rounded-xl text-xs font-bold font-display shadow-md hover:scale-105 transition-all">
-                            <span>🔒</span>
-                            <span>Upgrade</span>
-                        </button>
-                    </div>
-                <% } %>
+                    <% if (store.plan_tier !== 'business') { %>
+                        <div class="absolute inset-0 bg-white/40 backdrop-blur-[2px] rounded-2xl flex items-center justify-center p-4 z-10">
+                            <button type="button" onclick="openBusinessUpgradeModal('Custom Domain Mapping')" class="inline-flex items-center gap-2 bg-[#08110D] hover:bg-black text-[#19D98B] px-4 py-2 rounded-xl text-xs font-bold font-display shadow-md hover:scale-105 transition-all">
+                                <span>🔒</span>
+                                <span>Upgrade</span>
+                            </button>
+                        </div>
+                    <% } %>
+                </div>
             </div>
 
             <button type="submit" id="saveBtn" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs py-3.5 rounded-2xl transition shadow-2xs font-display">

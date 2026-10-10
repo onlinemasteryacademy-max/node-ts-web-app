@@ -244,7 +244,14 @@
     </div>
 
     <script>
+        const isProStore = <%= isPro ? 'true' : 'false' %>;
+        const activeDebtsCount = <%= stats.active_count || 0 %>;
+
         function openNewDebtModal() {
+            if (!isProStore && activeDebtsCount >= 3) {
+                openProUpgradeModal('Unlimited Debt Tracker (3 Active Debts Allowance)');
+                return;
+            }
             document.getElementById('newDebtModal').classList.remove('hidden');
         }
 
