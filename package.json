@@ -2,7 +2,7 @@
   "name": "odivo-node-ts",
   "version": "1.0.0",
   "description": "High-Performance, Scalable Real-Time E-Commerce Platform",
-  "main": "dist/server.js",
+  "main": "server.js",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
