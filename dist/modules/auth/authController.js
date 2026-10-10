@@ -8,7 +8,7 @@ const node_crypto_1 = __importDefault(require("node:crypto"));
 const db_js_1 = require("../../db/db.js");
 const helpers_js_1 = require("../../utils/helpers.js");
 const mailer_js_1 = require("../email/mailer.js");
-const OTP_LIFETIME_SECONDS = 59;
+const OTP_LIFETIME_SECONDS = 300; // 5 minutes validity
 function parseDateMs(dateStr) {
     if (!dateStr)
         return 0;
@@ -266,7 +266,7 @@ async function authRoutes(fastify) {
         });
     });
     /**
-     * 3. Resend Email OTP (Refreshes 59-Second Code)
+     * 3. Resend Email OTP (Refreshes 5-Minute Code)
      */
     fastify.post('/api/auth/signup/resend_otp', async (req, reply) => {
         const body = (req.body || {});

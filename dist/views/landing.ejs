@@ -413,6 +413,10 @@
                   <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
                   <span>Social status poster generator</span>
                 </li>
+                <li class="flex items-start gap-2.5">
+                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                  <span>Store QR Code</span>
+                </li>
               </ul>
             </div>
           </div>
@@ -695,6 +699,20 @@
                 <td class="p-4 text-center text-[#6B756F]">Automated API Sync</td>
               </tr>
               <tr>
+                <td class="p-4 font-semibold text-[#08110D]">Store QR Code</td>
+                <td class="p-4 text-center text-[#087A50]">✓ Included</td>
+                <td class="p-4 text-center text-[#087A50] bg-[#08110D]/5 font-semibold">✓ Included</td>
+                <td class="p-4 text-center text-[#087A50] font-semibold">✓ Included</td>
+                <td class="p-4 text-center text-[#087A50]">✓ Included</td>
+              </tr>
+              <tr>
+                <td class="p-4 font-semibold text-[#08110D]">Custom Alert Sound</td>
+                <td class="p-4 text-center text-[#6B756F]">Standard Chime</td>
+                <td class="p-4 text-center text-[#087A50] bg-[#08110D]/5 font-semibold">✓ Custom Alert Sounds</td>
+                <td class="p-4 text-center text-[#087A50] font-semibold">✓ Custom Alert Sounds</td>
+                <td class="p-4 text-center text-[#087A50]">✓ Custom Alert Sounds</td>
+              </tr>
+              <tr>
                 <td class="p-4 font-semibold text-[#08110D]">Support</td>
                 <td class="p-4 text-center text-[#6B756F]">Help Center</td>
                 <td class="p-4 text-center text-[#08110D] bg-[#08110D]/5 font-semibold">WhatsApp Support</td>
@@ -931,16 +949,10 @@
             </select>
           </div>
           
-          <div>
-            <label class="block text-xs font-semibold text-[#08110D] mb-1">Store layout design</label>
-            <input type="hidden" name="template_slug" id="selectedTemplateSlug" value="general-store">
-            <input type="hidden" name="template_id" id="selectedTemplateId" value="16">
-            <input type="hidden" name="business_type" id="hiddenBusinessType" value="retail">
-            
-            <div id="templateCardsContainer" class="grid grid-cols-3 gap-2 mt-1">
-              <!-- Populated dynamically via JS -->
-            </div>
-          </div>
+          <!-- Automatic layout defaults mapped to selected category (customizable in merchant settings) -->
+          <input type="hidden" name="template_slug" id="selectedTemplateSlug" value="general-store">
+          <input type="hidden" name="template_id" id="selectedTemplateId" value="16">
+          <input type="hidden" name="business_type" id="hiddenBusinessType" value="retail">
 
           <div id="registerError" class="text-xs text-[#D94A4A] bg-red-50 border border-red-200 rounded-xl p-3 font-medium hidden"></div>
 
@@ -970,10 +982,10 @@
           <div>
             <div class="flex items-center justify-between mb-2">
               <label class="block text-xs font-semibold text-[#08110D]">Enter 6-Digit Code</label>
-              <!-- Live 59-Second Countdown Timer Badge -->
+              <!-- Live 5-Minute Countdown Timer Badge -->
               <div id="otpTimerBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-mono font-semibold text-[#087A50] transition-colors">
                 <span id="otpTimerIcon">⏱</span>
-                <span>Expires in: <strong id="otpCountdownText" class="font-bold">00:59</strong></span>
+                <span>Expires in: <strong id="otpCountdownText" class="font-bold">05:00</strong></span>
               </div>
             </div>
             <div class="max-w-xs mx-auto">
@@ -997,7 +1009,7 @@
           </button>
 
           <button type="button" id="resendOtpBtn" onclick="handleResendOtp()" class="text-[#6B756F] font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed">
-            Resend Code (59s)
+            Resend Code (5:00)
           </button>
         </div>
       </div>
@@ -1187,28 +1199,14 @@
 
     function handleIndustryChange(indId) {
       const list = industryTemplatesData[indId] || industryTemplatesData[6];
-      const container = document.getElementById('templateCardsContainer');
-      
-      container.innerHTML = list.map((t, idx) => `
-        <div onclick="selectTemplateCard(${t.id}, '${t.slug}', '${t.btype}', this)" class="template-choice-card border ${idx === 0 ? 'border-[#08110D] bg-[#F8FAF8] font-semibold' : 'border-[#E3E9E5] bg-white'} p-2 rounded-lg cursor-pointer text-center hover:border-[#08110D] transition">
-          <div class="text-xs text-[#08110D] line-clamp-1">${t.name}</div>
-          <div class="text-[10px] text-[#6B756F] mt-0.5 line-clamp-1">${t.desc}</div>
-        </div>
-      `).join('');
-
-      selectTemplateCard(list[0].id, list[0].slug, list[0].btype, container.firstElementChild);
-    }
-
-    function selectTemplateCard(id, slug, btype, el) {
-      document.getElementById('selectedTemplateId').value = id;
-      document.getElementById('selectedTemplateSlug').value = slug;
-      document.getElementById('hiddenBusinessType').value = btype;
-      
-      document.querySelectorAll('.template-choice-card').forEach(c => {
-        c.className = 'template-choice-card border border-[#E3E9E5] bg-white p-2 rounded-lg cursor-pointer text-center hover:border-[#08110D] transition';
-      });
-      if (el) {
-        el.className = 'template-choice-card border-2 border-[#08110D] bg-[#F8FAF8] font-semibold p-2 rounded-lg cursor-pointer text-center transition';
+      if (list && list[0]) {
+        const t = list[0];
+        const tplIdEl = document.getElementById('selectedTemplateId');
+        const tplSlugEl = document.getElementById('selectedTemplateSlug');
+        const bTypeEl = document.getElementById('hiddenBusinessType');
+        if (tplIdEl) tplIdEl.value = t.id;
+        if (tplSlugEl) tplSlugEl.value = t.slug;
+        if (bTypeEl) bTypeEl.value = t.btype;
       }
     }
 
@@ -1389,9 +1387,9 @@
     }
 
     let otpTimerInterval = null;
-    let otpSecondsRemaining = 59;
+    let otpSecondsRemaining = 300;
 
-    function startOtpCountdown(duration = 59) {
+    function startOtpCountdown(duration = 300) {
       if (otpTimerInterval) clearInterval(otpTimerInterval);
       otpSecondsRemaining = duration;
       updateOtpTimerDisplay();
@@ -1401,7 +1399,9 @@
         resendBtn.disabled = true;
         resendBtn.classList.remove('text-[#087A50]', 'hover:underline', 'font-bold');
         resendBtn.classList.add('text-[#6B756F]', 'opacity-60', 'cursor-not-allowed');
-        resendBtn.textContent = `Resend Code (${otpSecondsRemaining}s)`;
+        const min = Math.floor(otpSecondsRemaining / 60);
+        const sec = otpSecondsRemaining % 60;
+        resendBtn.textContent = `Resend Code (${min}:${String(sec).padStart(2, '0')})`;
       }
 
       otpTimerInterval = setInterval(() => {
@@ -1414,7 +1414,9 @@
         } else {
           updateOtpTimerDisplay();
           if (resendBtn) {
-            resendBtn.textContent = `Resend Code (${otpSecondsRemaining}s)`;
+            const min = Math.floor(otpSecondsRemaining / 60);
+            const sec = otpSecondsRemaining % 60;
+            resendBtn.textContent = `Resend Code (${min}:${String(sec).padStart(2, '0')})`;
           }
         }
       }, 1000);
@@ -1430,7 +1432,7 @@
       const sec = otpSecondsRemaining % 60;
       text.textContent = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
 
-      if (otpSecondsRemaining > 15) {
+      if (otpSecondsRemaining > 30) {
         badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[11px] font-mono font-semibold text-[#087A50] transition-colors';
         if (hint) hint.innerHTML = '<span class="text-[#6B756F]">Only the 6-digit code sent to your email is accepted.</span>';
       } else if (otpSecondsRemaining > 0) {
@@ -1464,7 +1466,7 @@
       document.getElementById('signupStep3').classList.add('hidden');
     }
 
-    function goToStep2(email, expiresIn = 59) {
+    function goToStep2(email, expiresIn = 300) {
       document.getElementById('signupStep1').classList.add('hidden');
       document.getElementById('signupStep2').classList.remove('hidden');
       document.getElementById('signupStep3').classList.add('hidden');
@@ -1475,7 +1477,7 @@
       const err = document.getElementById('verifyError');
       if (err) err.classList.add('hidden');
 
-      startOtpCountdown(expiresIn || 59);
+      startOtpCountdown(expiresIn || 300);
       setTimeout(() => otpInput.focus(), 150);
     }
 
@@ -1512,7 +1514,7 @@
         if (result.success) {
           activeSignupToken = result.token;
           activeSignupEmail = result.email;
-          goToStep2(result.email, result.expires_in || 59);
+          goToStep2(result.email, result.expires_in || 300);
         } else {
           err.textContent = result.error || 'Registration failed. Please check your information.';
           err.classList.remove('hidden');
@@ -1660,7 +1662,7 @@
         });
         const result = await res.json();
         if (result.success) {
-          startOtpCountdown(result.expires_in || 59);
+          startOtpCountdown(result.expires_in || 300);
           const otpInput = document.getElementById('otpCodeInput');
           if (otpInput) {
             otpInput.value = '';

@@ -304,7 +304,7 @@ async function sendEmailVerificationOtp(email, name, otpCode, verifyUrl) {
     <div style="background-color: #08110D; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0;">
       <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #19D98B; letter-spacing: 1px; margin-bottom: 8px;">6-DIGIT VERIFICATION CODE</div>
       <div style="font-size: 36px; font-weight: 800; color: #FFFFFF; letter-spacing: 8px; font-family: monospace;">${otpCode}</div>
-      <div style="font-size: 12px; color: #9CA3AF; margin-top: 8px;">Valid for the next 15 minutes</div>
+      <div style="font-size: 12px; color: #9CA3AF; margin-top: 8px;">Valid for the next 5 minutes</div>
     </div>
 
     ${magicLinkBtn}

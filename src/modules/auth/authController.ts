@@ -4,7 +4,7 @@ import { dbFetchOne, dbFetchAll, dbInsert, dbUpdate } from '../../db/db.js';
 import { normalizePhoneNumber, hashPassword, comparePassword, validateStoreSlugAvailability, getPlatformSettings, getEffectivePlans } from '../../utils/helpers.js';
 import { sendEmailVerificationOtp, sendMerchantWelcomeEmail } from '../email/mailer.js';
 
-const OTP_LIFETIME_SECONDS = 59;
+const OTP_LIFETIME_SECONDS = 300; // 5 minutes validity
 
 function parseDateMs(dateStr: string | number | Date | null | undefined): number {
   if (!dateStr) return 0;
@@ -286,7 +286,7 @@ export async function authRoutes(fastify: FastifyInstance) {
   });
 
   /**
-   * 3. Resend Email OTP (Refreshes 59-Second Code)
+   * 3. Resend Email OTP (Refreshes 5-Minute Code)
    */
   fastify.post('/api/auth/signup/resend_otp', async (req: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
     const body = (req.body || {}) as any;
