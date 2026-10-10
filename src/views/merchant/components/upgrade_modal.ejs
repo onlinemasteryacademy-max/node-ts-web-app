@@ -1,102 +1,262 @@
-<!-- Contextual Pro Upgrade Modal Component -->
-<div id="upgradePromptModal" class="fixed inset-0 bg-[#08110D]/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden" onclick="if(event.target === this) closeUpgradeModal();">
-    <div class="bg-white max-w-lg w-full rounded-t-3xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl border border-[#E3E9E5] relative space-y-6 transform transition-all scale-100 max-h-[90vh] overflow-y-auto">
-        <button onclick="closeUpgradeModal()" class="absolute top-5 right-5 text-[#6B756F] hover:text-[#08110D] font-bold text-xl p-1 rounded-full hover:bg-[#F8FAF8] transition">✕</button>
+<!-- Unified Contextual Pro & Business Upgrade Modal Component -->
+<script src="https://js.paystack.co/v1/inline.js"></script>
 
-        <!-- Dynamic Header -->
-        <div class="text-center space-y-2">
-            <div id="upgradeBadge" class="inline-flex items-center gap-1.5 bg-[#19D98B]/15 text-[#087A50] text-xs font-bold px-3.5 py-1.5 rounded-full border border-[#19D98B]/30 font-display">
+<div id="upgradePromptModal" class="fixed inset-0 bg-[#08110D]/70 backdrop-blur-xs z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden" onclick="if(event.target === this) closeUpgradeModal();">
+    <div class="bg-white max-w-2xl w-full rounded-t-3xl sm:rounded-3xl p-5 sm:p-7 shadow-2xl border border-[#E3E9E5] relative space-y-5 transform transition-all scale-100 max-h-[92vh] overflow-y-auto font-body">
+        <button onclick="closeUpgradeModal()" class="absolute top-4 right-4 text-[#6B756F] hover:text-[#08110D] font-bold text-lg w-8 h-8 rounded-full flex items-center justify-center hover:bg-[#F8FAF8] transition">✕</button>
+
+        <!-- Header -->
+        <div class="text-center space-y-1.5 pt-1">
+            <div id="upgradeBadge" class="inline-flex items-center gap-1.5 bg-[#19D98B]/15 text-[#087A50] text-[11px] font-bold px-3 py-1 rounded-full border border-[#19D98B]/30 font-display">
                 <span>⭐</span>
-                <span id="upgradeBadgeText">Pro Feature</span>
+                <span id="upgradeBadgeText">Upgrade Your Plan</span>
             </div>
-            <h3 id="upgradeTitle" class="text-xl sm:text-2xl font-extrabold text-[#08110D] tracking-tight font-display">Run your store like a high-growth brand</h3>
+            <h3 id="upgradeTitle" class="text-xl sm:text-2xl font-bold text-[#08110D] tracking-tight font-display">Scale your online business with Zlik</h3>
             <p id="upgradeDescription" class="text-xs text-[#6B756F] max-w-md mx-auto leading-relaxed">
-                Upgrade to Zlik Pro to unlock multi-period sales analytics, custom domains, 500 products, and all 15 storefront templates.
+                Choose the plan that best matches your store volume and team requirements. Zero platform commission fees on all plans.
             </p>
         </div>
 
-        <!-- Pro Feature Perks -->
-        <div class="bg-[#F8FAF8] p-4 rounded-2xl border border-[#E3E9E5] space-y-2 text-xs text-[#08110D]">
-            <div class="flex items-center gap-2.5">
-                <span class="w-4 h-4 rounded-full bg-[#19D98B]/20 text-[#087A50] font-bold flex items-center justify-center text-[10px]">✓</span>
-                <span><strong>Full Sales Ledger & Multi-Period Analytics</strong> (Month, 3M, 6M, Year, Lifetime)</span>
-            </div>
-            <div class="flex items-center gap-2.5">
-                <span class="w-4 h-4 rounded-full bg-[#19D98B]/20 text-[#087A50] font-bold flex items-center justify-center text-[10px]">✓</span>
-                <span><strong>500 Products Allowance</strong> (5 photos/item + CSV import)</span>
-            </div>
-            <div class="flex items-center gap-2.5">
-                <span class="w-4 h-4 rounded-full bg-[#19D98B]/20 text-[#087A50] font-bold flex items-center justify-center text-[10px]">✓</span>
-                <span><strong>All 15 Industry Storefront Designs</strong> & Custom Branding</span>
-            </div>
-            <div class="flex items-center gap-2.5">
-                <span class="w-4 h-4 rounded-full bg-[#19D98B]/20 text-[#087A50] font-bold flex items-center justify-center text-[10px]">✓</span>
-                <span><strong>CSV Ledger Export & White-Label Clean Receipts</strong></span>
+        <!-- Billing Cycle Toggle (Monthly vs Annual) -->
+        <div class="flex justify-center">
+            <div class="inline-flex items-center bg-[#F8FAF8] p-1 rounded-xl border border-[#E3E9E5] text-xs font-semibold">
+                <button type="button" onclick="selectUpgradeCycle('monthly')" id="upCycleBtn-monthly" class="px-4 py-1.5 rounded-lg text-xs font-bold transition bg-[#08110D] text-white shadow-2xs">
+                    Monthly
+                </button>
+                <button type="button" onclick="selectUpgradeCycle('yearly')" id="upCycleBtn-yearly" class="px-4 py-1.5 rounded-lg text-xs font-bold transition text-[#6B756F] hover:text-[#08110D] flex items-center gap-1.5">
+                    <span>Annual</span>
+                    <span class="bg-[#19D98B] text-[#08110D] text-[9px] font-extrabold px-1.5 py-0.5 rounded font-display">Save 2 Mo</span>
+                </button>
             </div>
         </div>
 
-        <!-- Billing Options (Monthly vs Annual) -->
-        <div class="grid grid-cols-2 gap-3 text-xs">
-            <div onclick="selectBillingCycle('monthly')" id="cycleCard-monthly" class="cursor-pointer border-2 border-[#08110D] bg-[#F8FAF8] p-3.5 sm:p-4 rounded-2xl text-center transition flex flex-col justify-between shadow-xs">
-                <div>
-                    <div class="text-[10px] uppercase font-bold text-[#6B756F]">Monthly Plan</div>
-                    <div class="text-base sm:text-lg font-extrabold text-[#08110D] mt-0.5 font-display">₦5,000</div>
+        <!-- 2 Plans Grid: Pro vs Business -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 items-stretch text-left">
+            
+            <!-- Pro Plan Card -->
+            <div onclick="selectUpgradePlanTier('pro')" id="planCard-pro" class="cursor-pointer border-2 border-[#08110D] bg-[#08110D] text-white p-4 sm:p-5 rounded-2xl transition-all relative flex flex-col justify-between shadow-md">
+                <div class="absolute -top-2.5 right-4 bg-[#19D98B] text-[#08110D] text-[9px] font-extrabold uppercase px-2.5 py-0.5 rounded-full font-display">
+                    Recommended
                 </div>
-                <span class="text-[10px] text-[#6B756F] mt-1">Billed monthly</span>
+
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] font-mono uppercase font-bold text-[#19D98B]">Pro Seller</span>
+                            <div class="text-2xl font-bold font-display text-white mt-0.5" id="proPriceText">₦5,000 <span class="text-xs font-normal text-white/70">/ mo</span></div>
+                        </div>
+                        <div id="proRadioDot" class="w-5 h-5 rounded-full border-2 border-[#19D98B] bg-[#19D98B] flex items-center justify-center text-[#08110D] text-[10px] font-bold">✓</div>
+                    </div>
+                    <p class="text-[11px] text-white/80 leading-snug">Ideal for growing brands wanting multiple stores, full ledger history & pro designs.</p>
+
+                    <div class="border-t border-white/10 pt-3">
+                        <ul class="space-y-2 text-[11px] text-[#D1DCD6]">
+                            <li class="flex items-center gap-2">
+                                <span class="text-[#19D98B] font-bold shrink-0">✓</span>
+                                <span><strong>Up to 3 stores</strong> & 500 products</span>
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-[#19D98B] font-bold shrink-0">✓</span>
+                                <span><strong>5 photos</strong> per product</span>
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-[#19D98B] font-bold shrink-0">✓</span>
+                                <span><strong>All 15 industry storefront templates</strong></span>
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-[#19D98B] font-bold shrink-0">✓</span>
+                                <span><strong>Custom alert sound</strong> & branded receipts</span>
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-[#19D98B] font-bold shrink-0">✓</span>
+                                <span><strong>Full Sales Ledger</strong> & CSV exports</span>
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-[#19D98B] font-bold shrink-0">✓</span>
+                                <span><strong>1 staff account</strong> with permissions</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-white/10 text-[10px] text-[#19D98B] font-medium" id="proSavingsSub">
+                    Billed monthly
+                </div>
             </div>
 
-            <div onclick="selectBillingCycle('yearly')" id="cycleCard-yearly" class="cursor-pointer border border-[#E3E9E5] bg-white p-3.5 sm:p-4 rounded-2xl text-center transition relative flex flex-col justify-between">
-                <span class="absolute -top-2.5 right-2 bg-[#19D98B] text-[#08110D] text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full font-display">
-                    Save ₦10,000
-                </span>
-                <div>
-                    <div class="text-[10px] uppercase font-bold text-[#087A50]">Annual Plan</div>
-                    <div class="text-base sm:text-lg font-extrabold text-[#087A50] mt-0.5 font-display">₦50,000</div>
+            <!-- Business Plan Card -->
+            <div onclick="selectUpgradePlanTier('business')" id="planCard-business" class="cursor-pointer border border-[#E3E9E5] bg-[#F8FAF8] hover:border-gray-400 text-[#08110D] p-4 sm:p-5 rounded-2xl transition-all relative flex flex-col justify-between">
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] font-mono uppercase font-bold text-[#087A50]">Business Tier</span>
+                            <div class="text-2xl font-bold font-display text-[#08110D] mt-0.5" id="bizPriceText">₦9,000 <span class="text-xs font-normal text-[#6B756F]">/ mo</span></div>
+                        </div>
+                        <div id="bizRadioDot" class="w-5 h-5 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center text-transparent text-[10px] font-bold">✓</div>
+                    </div>
+                    <p class="text-[11px] text-[#6B756F] leading-snug">For multi-store businesses with physical outlets, custom domains, and staff teams.</p>
+
+                    <div class="border-t border-[#E3E9E5] pt-3">
+                        <ul class="space-y-2 text-[11px] text-[#4A5550]">
+                            <li class="flex items-center gap-2">
+                                <span class="text-[#087A50] font-bold shrink-0">✓</span>
+                                <span><strong>Up to 10 stores</strong> & unlimited products</span>
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-[#087A50] font-bold shrink-0">✓</span>
+                                <span><strong>10 photos + video</strong> per product</span>
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-[#087A50] font-bold shrink-0">✓</span>
+                                <span><strong>Custom Domain</strong> mapping (SSL)</span>
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-[#087A50] font-bold shrink-0">✓</span>
+                                <span><strong>Physical branches</strong> & location inventory</span>
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-[#087A50] font-bold shrink-0">✓</span>
+                                <span><strong>5 staff accounts</strong> with custom RBAC</span>
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="text-[#087A50] font-bold shrink-0">✓</span>
+                                <span><strong>Priority support</strong> & account manager</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
-                <span class="text-[10px] text-[#087A50] font-bold mt-1">₦4,166 / mo equivalent</span>
+
+                <div class="mt-4 pt-3 border-t border-[#E3E9E5] text-[10px] text-[#087A50] font-medium" id="bizSavingsSub">
+                    Billed monthly
+                </div>
             </div>
         </div>
 
-        <!-- Direct Upgrade CTA Actions -->
+        <!-- Checkout Action Button -->
         <div class="space-y-2 pt-1">
-            <button type="button" id="upgradeCheckoutBtn" onclick="handleUpgradeDirectPayment()" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-extrabold text-xs uppercase tracking-wider py-3.5 sm:py-4 rounded-2xl shadow-md transition duration-200 flex items-center justify-center gap-2 font-display">
-                <span>Unlock Pro (₦5,000/mo)</span>
+            <button type="button" id="upgradeCheckoutBtn" onclick="handleExecutePlanUpgrade()" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs uppercase tracking-wider py-3.5 sm:py-4 rounded-xl shadow-md transition duration-200 flex items-center justify-center gap-2 font-display">
+                <span id="upgradeCheckoutBtnLabel">Unlock Pro (₦5,000/mo)</span>
                 <span>→</span>
             </button>
-            <button type="button" onclick="closeUpgradeModal()" class="w-full text-center text-xs font-semibold text-[#6B756F] hover:text-[#08110D] py-2 transition">
-                Not now, continue with Free plan
+            <button type="button" onclick="closeUpgradeModal()" class="w-full text-center text-xs font-semibold text-[#6B756F] hover:text-[#08110D] py-1.5 transition">
+                Continue with Free plan
             </button>
         </div>
 
         <div class="text-center text-[10px] text-[#6B756F] pb-safe">
-            🔒 Direct Instant Activation • Cancel anytime • Zero hidden fees
+            🔒 Direct Instant Activation • Cancel anytime • Zero hidden platform fees
+        </div>
+    </div>
+</div>
+
+<!-- Reusable Info Modal (For Coming Soon / Notices) -->
+<div id="merchantInfoModal" class="fixed inset-0 bg-[#08110D]/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden" onclick="if(event.target === this) closeMerchantInfoModal();">
+    <div class="bg-white max-w-sm w-full rounded-2xl p-6 shadow-2xl border border-[#E3E9E5] text-center space-y-4 font-body">
+        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-[#087A50] flex items-center justify-center text-xl mx-auto border border-emerald-200 font-bold" id="merchantInfoIcon">
+            ✓
+        </div>
+        <div class="space-y-1.5">
+            <h3 class="text-base font-bold text-[#08110D] font-display" id="merchantInfoTitle">Notice</h3>
+            <p class="text-xs text-[#6B756F] leading-relaxed" id="merchantInfoMessage">Details here</p>
+        </div>
+        <div class="pt-2 flex flex-col gap-2" id="merchantInfoActions">
+            <button type="button" onclick="closeMerchantInfoModal()" class="w-full bg-[#08110D] hover:bg-black text-white font-semibold text-xs py-3 rounded-xl transition">
+                Got it
+            </button>
         </div>
     </div>
 </div>
 
 <script>
-    let selectedCycle = 'monthly';
+    let selectedUpgradePlan = 'pro';
+    let selectedUpgradeCycle = 'monthly';
 
-    function selectBillingCycle(cycle) {
-        selectedCycle = cycle;
-        const monthlyCard = document.getElementById('cycleCard-monthly');
-        const yearlyCard = document.getElementById('cycleCard-yearly');
-        const btn = document.getElementById('upgradeCheckoutBtn');
+    const upgradePrices = {
+        pro: { monthly: 5000, yearly: 50000 },
+        business: { monthly: 9000, yearly: 90000 }
+    };
 
-        if (cycle === 'monthly') {
-            monthlyCard.className = 'cursor-pointer border-2 border-[#08110D] bg-[#F8FAF8] p-3.5 sm:p-4 rounded-2xl text-center transition flex flex-col justify-between shadow-xs';
-            yearlyCard.className = 'cursor-pointer border border-[#E3E9E5] bg-white p-3.5 sm:p-4 rounded-2xl text-center transition relative flex flex-col justify-between';
-            btn.innerHTML = '<span>Unlock Pro (₦5,000/mo)</span> <span>→</span>';
+    function selectUpgradeCycle(cycle) {
+        selectedUpgradeCycle = cycle;
+        const monthlyBtn = document.getElementById('upCycleBtn-monthly');
+        const yearlyBtn = document.getElementById('upCycleBtn-yearly');
+        
+        if (cycle === 'yearly') {
+            monthlyBtn.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition text-[#6B756F] hover:text-[#08110D]';
+            yearlyBtn.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition bg-[#08110D] text-white shadow-2xs flex items-center gap-1.5';
+            
+            document.getElementById('proPriceText').innerHTML = '₦50,000 <span class="text-xs font-normal text-white/70">/ yr</span>';
+            document.getElementById('bizPriceText').innerHTML = '₦90,000 <span class="text-xs font-normal text-[#6B756F]">/ yr</span>';
+            
+            document.getElementById('proSavingsSub').textContent = '₦4,166/mo equivalent (Save ₦10,000)';
+            document.getElementById('bizSavingsSub').textContent = '₦7,500/mo equivalent (Save ₦18,000)';
         } else {
-            monthlyCard.className = 'cursor-pointer border border-[#E3E9E5] bg-white p-3.5 sm:p-4 rounded-2xl text-center transition flex flex-col justify-between';
-            yearlyCard.className = 'cursor-pointer border-2 border-[#19D98B] bg-emerald-50/50 p-3.5 sm:p-4 rounded-2xl text-center transition relative flex flex-col justify-between shadow-xs';
-            btn.innerHTML = '<span>Unlock Annual Pro (₦50,000/yr - Save ₦10,000)</span> <span>→</span>';
+            monthlyBtn.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition bg-[#08110D] text-white shadow-2xs';
+            yearlyBtn.className = 'px-4 py-1.5 rounded-lg text-xs font-bold transition text-[#6B756F] hover:text-[#08110D] flex items-center gap-1.5';
+            
+            document.getElementById('proPriceText').innerHTML = '₦5,000 <span class="text-xs font-normal text-white/70">/ mo</span>';
+            document.getElementById('bizPriceText').innerHTML = '₦9,000 <span class="text-xs font-normal text-[#6B756F]">/ mo</span>';
+            
+            document.getElementById('proSavingsSub').textContent = 'Billed monthly';
+            document.getElementById('bizSavingsSub').textContent = 'Billed monthly';
         }
+
+        updateUpgradeCtaButton();
     }
 
-    function triggerUpgradeModal(feature = 'general') {
+    function selectUpgradePlanTier(tier) {
+        selectedUpgradePlan = tier;
+        const proCard = document.getElementById('planCard-pro');
+        const bizCard = document.getElementById('planCard-business');
+        const proRadio = document.getElementById('proRadioDot');
+        const bizRadio = document.getElementById('bizRadioDot');
+
+        if (tier === 'pro') {
+            proCard.className = 'cursor-pointer border-2 border-[#08110D] bg-[#08110D] text-white p-4 sm:p-5 rounded-2xl transition-all relative flex flex-col justify-between shadow-md';
+            bizCard.className = 'cursor-pointer border border-[#E3E9E5] bg-[#F8FAF8] hover:border-gray-400 text-[#08110D] p-4 sm:p-5 rounded-2xl transition-all relative flex flex-col justify-between';
+            
+            proRadio.className = 'w-5 h-5 rounded-full border-2 border-[#19D98B] bg-[#19D98B] flex items-center justify-center text-[#08110D] text-[10px] font-bold';
+            bizRadio.className = 'w-5 h-5 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center text-transparent text-[10px] font-bold';
+        } else {
+            proCard.className = 'cursor-pointer border border-gray-700 bg-[#08110D]/90 text-white/80 p-4 sm:p-5 rounded-2xl transition-all relative flex flex-col justify-between';
+            bizCard.className = 'cursor-pointer border-2 border-[#087A50] bg-emerald-50/40 text-[#08110D] p-4 sm:p-5 rounded-2xl transition-all relative flex flex-col justify-between shadow-md';
+            
+            proRadio.className = 'w-5 h-5 rounded-full border-2 border-white/40 bg-transparent flex items-center justify-center text-transparent text-[10px] font-bold';
+            bizRadio.className = 'w-5 h-5 rounded-full border-2 border-[#087A50] bg-[#087A50] flex items-center justify-center text-white text-[10px] font-bold';
+        }
+
+        updateUpgradeCtaButton();
+    }
+
+    function updateUpgradeCtaButton() {
+        const btnLabel = document.getElementById('upgradeCheckoutBtnLabel');
+        const amount = upgradePrices[selectedUpgradePlan][selectedUpgradeCycle];
+        const formattedAmount = Number(amount).toLocaleString();
+        const cycleLabel = selectedUpgradeCycle === 'yearly' ? '/yr' : '/mo';
+        const planName = selectedUpgradePlan === 'business' ? 'Business' : 'Pro';
+
+        btnLabel.textContent = `Unlock ${planName} (₦${formattedAmount}${cycleLabel})`;
+    }
+
+    function triggerUpgradeModal(featureName = '') {
         const modal = document.getElementById('upgradePromptModal');
-        if (modal) modal.classList.remove('hidden');
+        if (!modal) return;
+
+        if (featureName) {
+            const badgeText = document.getElementById('upgradeBadgeText');
+            if (badgeText) badgeText.textContent = `${featureName}`;
+        }
+        modal.classList.remove('hidden');
+    }
+
+    function openProUpgradeModal(featureName = '') {
+        selectUpgradePlanTier('pro');
+        triggerUpgradeModal(featureName);
+    }
+
+    function openBusinessUpgradeModal(featureName = '') {
+        selectUpgradePlanTier('business');
+        triggerUpgradeModal(featureName);
     }
 
     function closeUpgradeModal() {
@@ -104,28 +264,106 @@
         if (modal) modal.classList.add('hidden');
     }
 
-    async function handleUpgradeDirectPayment() {
+    function showMerchantInfo(title, message, icon = '✓', actionBtn = null) {
+        document.getElementById('merchantInfoTitle').textContent = title;
+        document.getElementById('merchantInfoMessage').textContent = message;
+        document.getElementById('merchantInfoIcon').textContent = icon;
+        
+        const actionsContainer = document.getElementById('merchantInfoActions');
+        if (actionBtn) {
+            actionsContainer.innerHTML = actionBtn;
+        } else {
+            actionsContainer.innerHTML = `<button type="button" onclick="closeMerchantInfoModal()" class="w-full bg-[#08110D] hover:bg-black text-white font-semibold text-xs py-3 rounded-xl transition">Got it</button>`;
+        }
+
+        document.getElementById('merchantInfoModal').classList.remove('hidden');
+    }
+
+    function closeMerchantInfoModal() {
+        document.getElementById('merchantInfoModal').classList.add('hidden');
+    }
+
+    async function handleExecutePlanUpgrade() {
         const btn = document.getElementById('upgradeCheckoutBtn');
+        const originalText = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = '<span>Processing upgrade...</span>';
+        btn.innerHTML = '<span>Initializing checkout...</span>';
 
         try {
-            const res = await fetch('/api/merchant/upgrade_plan', {
+            const res = await fetch('/api/billing/initiate_upgrade', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cycle: selectedCycle, plan: 'pro' })
+                body: JSON.stringify({
+                    plan_tier: selectedUpgradePlan,
+                    billing_cycle: selectedUpgradeCycle
+                })
+            });
+
+            const data = await res.json();
+            if (!data.success) {
+                alert(data.error || 'Failed to initialize upgrade checkout');
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                return;
+            }
+
+            // Launch Paystack Inline Checkout Popup
+            if (typeof PaystackPop === 'undefined') {
+                alert('Payment gateway is loading. Please click Upgrade again in a moment.');
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                return;
+            }
+
+            const handler = PaystackPop.setup({
+                key: data.paystack_public_key || 'pk_test_sample',
+                email: data.email || 'merchant@zlik.store',
+                amount: data.amount_kobo,
+                ref: data.reference,
+                currency: 'NGN',
+                metadata: {
+                    custom_fields: [
+                        { display_name: 'Store ID', variable_name: 'store_id', value: data.store_id },
+                        { display_name: 'Plan Tier', variable_name: 'plan_tier', value: data.plan_tier },
+                        { display_name: 'Billing Cycle', variable_name: 'billing_cycle', value: data.billing_cycle }
+                    ]
+                },
+                callback: function(response) {
+                    btn.innerHTML = '<span>Activating subscription...</span>';
+                    verifyCompletedUpgrade(response.reference);
+                },
+                onClose: function() {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            });
+
+            handler.openIframe();
+        } catch (e) {
+            alert('Network error initiating upgrade checkout. Please try again.');
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+
+    async function verifyCompletedUpgrade(reference) {
+        try {
+            const res = await fetch('/api/billing/verify_subscription', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reference })
             });
             const data = await res.json();
             if (data.success) {
-                alert('🎉 Pro plan successfully activated! You now have full access to all multi-period analytics, ledger history, and unlimited features.');
+                alert(`🎉 Congratulations! Your store has been upgraded to ${selectedUpgradePlan.toUpperCase()} plan.`);
                 location.reload();
             } else {
-                alert(data.error || 'Failed to activate plan');
+                alert(data.error || 'Payment verification failed. Please contact support with reference: ' + reference);
+                location.reload();
             }
         } catch (e) {
-            alert('Network error activating upgrade');
-        } finally {
-            btn.disabled = false;
+            alert('Verification response pending. Reloading dashboard...');
+            location.reload();
         }
     }
 </script>

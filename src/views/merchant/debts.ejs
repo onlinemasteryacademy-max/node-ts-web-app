@@ -75,23 +75,7 @@
 
     <main class="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24 sm:pb-8 flex-1 w-full space-y-5 sm:space-y-6">
 
-        <!-- Plan Limit Notice for Free Plan -->
-        <% if (!isPro && stats && stats.max_active_limit === 3) { %>
-            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                <div class="flex items-center gap-2.5">
-                    <span class="w-7 h-7 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center text-xs font-mono font-bold shrink-0">3</span>
-                    <div>
-                        <h4 class="font-semibold text-amber-950">Free Tier Limit: 3 Active Debts</h4>
-                        <p class="text-[11px] text-amber-800 mt-0.5">
-                            You are currently using <strong><%= stats.active_count %> / 3</strong> active debt slots. Upgrade to Pro for unlimited debts & automated reminders.
-                        </p>
-                    </div>
-                </div>
-                <a href="/merchant/settings" class="shrink-0 bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs px-3.5 py-2 rounded-xl transition shadow-2xs">
-                    Upgrade to Pro
-                </a>
-            </div>
-        <% } %>
+
 
         <!-- Debt KPI Summary Metrics -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
@@ -379,6 +363,7 @@
             });
         }
     </script>
+    <%- include('components/upgrade_modal.ejs') %>
     <%- include('components/bottom_nav.ejs', { activeTab: 'debts' }) %>
 </body>
 </html>

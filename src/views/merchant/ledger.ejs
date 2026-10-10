@@ -89,23 +89,7 @@
 
     <main class="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24 sm:pb-8 flex-1 w-full space-y-5 sm:space-y-6">
 
-        <!-- Free Tier Timeframe Notice -->
-        <% if (!isPro) { %>
-            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                <div class="flex items-center gap-2.5">
-                    <span class="w-7 h-7 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center text-xs font-mono font-bold shrink-0">Free</span>
-                    <div>
-                        <h4 class="font-semibold text-amber-950">Free Tier Sales Ledger (Up to Last Month)</h4>
-                        <p class="text-[11px] text-amber-800 mt-0.5">
-                            Free plan includes records for <strong>Today, Yesterday, This Week, This Month, and Last Month</strong>. Upgrade to Pro for full lifetime sales ledger history, 3M/6M/Yearly ranges, and 1-click CSV exports.
-                        </p>
-                    </div>
-                </div>
-                <button onclick="openProUpgradeModal('Full Lifetime Sales Ledger')" class="shrink-0 bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs px-3.5 py-2 rounded-xl transition shadow-2xs">
-                    Upgrade to Pro ⚡
-                </button>
-            </div>
-        <% } %>
+
 
         <!-- Timeframe Filter Tabs (Today, Yesterday, This Week, This Month, Last Month, 3M, 6M, Yearly, Lifetime) -->
         <div class="bg-white rounded-2xl border border-[#E3E9E5] p-3 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
@@ -714,6 +698,7 @@
             }).join('');
         }
     </script>
+    <%- include('components/upgrade_modal.ejs') %>
     <%- include('components/bottom_nav.ejs', { activeTab: 'ledger' }) %>
 </body>
 </html>
