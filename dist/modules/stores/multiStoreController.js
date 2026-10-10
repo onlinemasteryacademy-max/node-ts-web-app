@@ -1,15 +1,18 @@
-import { dbFetchOne, dbInsert, getDb } from '../../db/db.js';
-import { getStorePlanDetails } from '../../utils/helpers.js';
-export const multiStoreRoutes = async (fastify) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.multiStoreRoutes = void 0;
+const db_js_1 = require("../../db/db.js");
+const helpers_js_1 = require("../../utils/helpers.js");
+const multiStoreRoutes = async (fastify) => {
     // 1. List All Stores Owned By Current Merchant
     fastify.get('/api/merchant/my-stores', async (req, reply) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const { config, isPro, isBusiness } = getStorePlanDetails(currentStore);
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const { config, isPro, isBusiness } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
         const maxStores = config.limits.max_stores;
-        const db = getDb();
+        const db = (0, db_js_1.getDb)();
         const ownerId = currentStore.owner_id || currentStore.id;
         const stmt = db.prepare(`
       SELECT * FROM stores 
@@ -41,10 +44,10 @@ export const multiStoreRoutes = async (fastify) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
         const body = (req.body || {});
         const targetStoreId = parseInt(body.store_id || '0');
-        const db = getDb();
+        const db = (0, db_js_1.getDb)();
         const ownerId = currentStore.owner_id || currentStore.id;
         // Verify ownership of the target store
         const targetStore = db.prepare(`
@@ -62,10 +65,10 @@ export const multiStoreRoutes = async (fastify) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const { config, isPro, isBusiness } = getStorePlanDetails(currentStore);
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const { config, isPro, isBusiness } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
         const maxStores = config.limits.max_stores;
-        const db = getDb();
+        const db = (0, db_js_1.getDb)();
         const ownerId = currentStore.owner_id || currentStore.id;
         const myStores = db.prepare(`
       SELECT id FROM stores 
@@ -89,11 +92,11 @@ export const multiStoreRoutes = async (fastify) => {
             slug = storeName.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Math.floor(1000 + Math.random() * 9000);
         }
         // Check slug uniqueness
-        const existingSlug = dbFetchOne('stores', { slug });
+        const existingSlug = (0, db_js_1.dbFetchOne)('stores', { slug });
         if (existingSlug) {
             slug = `${slug}-${Math.floor(1000 + Math.random() * 9000)}`;
         }
-        const newStoreId = dbInsert('stores', {
+        const newStoreId = (0, db_js_1.dbInsert)('stores', {
             store_name: storeName,
             slug,
             whatsapp_number: whatsapp,
@@ -105,7 +108,8 @@ export const multiStoreRoutes = async (fastify) => {
             primary_color: currentStore.primary_color || '#08110D',
             status: 'active'
         });
-        const createdStore = dbFetchOne('stores', { id: newStoreId });
+        const createdStore = (0, db_js_1.dbFetchOne)('stores', { id: newStoreId });
         return reply.send({ success: true, store: createdStore });
     });
 };
+exports.multiStoreRoutes = multiStoreRoutes;

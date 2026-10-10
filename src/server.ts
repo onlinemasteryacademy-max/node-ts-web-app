@@ -8,7 +8,6 @@ import fastifyFormbody from '@fastify/formbody';
 import fastifyCors from '@fastify/cors';
 import ejs from 'ejs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { getDb, dbFetchOne, dbFetchAll, dbInsert, dbUpdate, dbDelete } from './db/db.js';
 import { getStorePlanDetails, calculateStoreRevenueMetrics, validateStoreSlugAvailability, getStoreCategoryInfo, STORE_MARKETPLACE_CATEGORIES, NIGERIAN_STATES, getEffectivePlans, getPlatformSettings } from './utils/helpers.js';
@@ -39,9 +38,6 @@ import { pipeline } from 'node:stream/promises';
 
 import { ENV } from './config/env.js';
 import { initSuperAdminAccount } from './modules/admin/adminSecurity.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const fastify = Fastify({
   logger: false,
@@ -556,17 +552,24 @@ fastify.get('/store/:slug', renderStorefront);
 fastify.get('/:slug', renderStorefront);
 
 // Start High-Speed Server
-const PORT = ENV.PORT;
-const HOST = ENV.HOST;
+async function startServer() {
+  const PORT = ENV.PORT;
+  const HOST = ENV.HOST;
 
-fastify.listen({ port: PORT, host: HOST }, (err, address) => {
-  if (err) {
+  try {
+    await fastify.listen({ port: PORT, host: HOST });
+    console.log(`⚡ Zlik High-Speed Server running in [${ENV.NODE_ENV}] mode on http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
+  } catch (err) {
     console.error('⚡ Server listen error:', err);
     process.exit(1);
   }
-  console.log(`⚡ Zlik High-Speed Server running in [${ENV.NODE_ENV}] mode on ${address}`);
+}
+
+startServer().catch((err) => {
+  console.error('⚡ Fatal server startup error:', err);
+  process.exit(1);
 });
 
 export default fastify;
-export { fastify };
+export { fastify, startServer };
 

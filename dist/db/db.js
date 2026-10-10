@@ -1,19 +1,30 @@
-import { DatabaseSync } from 'node:sqlite';
-import path from 'node:path';
-import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const dataDir = path.resolve(__dirname, '../../data');
-if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getDb = getDb;
+exports.initSchema = initSchema;
+exports.dbFetchOne = dbFetchOne;
+exports.dbFetchAll = dbFetchAll;
+exports.dbInsert = dbInsert;
+exports.dbUpdate = dbUpdate;
+exports.dbDelete = dbDelete;
+exports.dbQuery = dbQuery;
+exports.dbRun = dbRun;
+const node_sqlite_1 = require("node:sqlite");
+const node_path_1 = __importDefault(require("node:path"));
+const node_fs_1 = __importDefault(require("node:fs"));
+const dataDir = node_path_1.default.resolve(__dirname, '../../data');
+if (!node_fs_1.default.existsSync(dataDir)) {
+    node_fs_1.default.mkdirSync(dataDir, { recursive: true });
 }
-const dbPath = path.join(dataDir, 'odivo.sqlite');
+const dbPath = node_path_1.default.join(dataDir, 'odivo.sqlite');
 let dbInstance = null;
-export function getDb(customPath) {
+function getDb(customPath) {
     if (!dbInstance || customPath) {
         const targetPath = customPath || dbPath;
-        const db = new DatabaseSync(targetPath);
+        const db = new node_sqlite_1.DatabaseSync(targetPath);
         try {
             db.exec('PRAGMA journal_mode = WAL;');
             db.exec('PRAGMA synchronous = NORMAL;');
@@ -31,7 +42,7 @@ export function getDb(customPath) {
     }
     return dbInstance;
 }
-export function initSchema(db) {
+function initSchema(db) {
     db.exec(`
     CREATE TABLE IF NOT EXISTS super_admins (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -553,7 +564,7 @@ export function initSchema(db) {
 /**
  * DB Fetch One
  */
-export function dbFetchOne(table, conditions = {}) {
+function dbFetchOne(table, conditions = {}) {
     const db = getDb();
     const keys = Object.keys(conditions);
     let sql = `SELECT * FROM ${table}`;
@@ -570,7 +581,7 @@ export function dbFetchOne(table, conditions = {}) {
 /**
  * DB Fetch All
  */
-export function dbFetchAll(table, conditions = {}, orderBy, limit) {
+function dbFetchAll(table, conditions = {}, orderBy, limit) {
     const db = getDb();
     const keys = Object.keys(conditions);
     let sql = `SELECT * FROM ${table}`;
@@ -591,7 +602,7 @@ export function dbFetchAll(table, conditions = {}, orderBy, limit) {
 /**
  * DB Insert
  */
-export function dbInsert(table, data) {
+function dbInsert(table, data) {
     const db = getDb();
     const keys = Object.keys(data);
     const placeholders = keys.map(() => '?').join(', ');
@@ -610,7 +621,7 @@ export function dbInsert(table, data) {
 /**
  * DB Update
  */
-export function dbUpdate(table, data, conditions) {
+function dbUpdate(table, data, conditions) {
     const db = getDb();
     const setKeys = Object.keys(data);
     const condKeys = Object.keys(conditions);
@@ -630,7 +641,7 @@ export function dbUpdate(table, data, conditions) {
 /**
  * DB Delete
  */
-export function dbDelete(table, conditions) {
+function dbDelete(table, conditions) {
     const db = getDb();
     const condKeys = Object.keys(conditions);
     if (condKeys.length === 0)
@@ -644,7 +655,7 @@ export function dbDelete(table, conditions) {
 /**
  * DB Raw Query
  */
-export function dbQuery(sql, params = []) {
+function dbQuery(sql, params = []) {
     const db = getDb();
     const stmt = db.prepare(sql);
     return stmt.all(...params) || [];
@@ -652,7 +663,7 @@ export function dbQuery(sql, params = []) {
 /**
  * DB Raw Run
  */
-export function dbRun(sql, params = []) {
+function dbRun(sql, params = []) {
     const db = getDb();
     const stmt = db.prepare(sql);
     const res = stmt.run(...params);

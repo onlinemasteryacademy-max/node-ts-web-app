@@ -1,59 +1,64 @@
-import Fastify from 'fastify';
-import fastifyWebsocket from '@fastify/websocket';
-import fastifyStatic from '@fastify/static';
-import fastifyView from '@fastify/view';
-import fastifyCookie from '@fastify/cookie';
-import fastifySession from '@fastify/session';
-import fastifyFormbody from '@fastify/formbody';
-import fastifyCors from '@fastify/cors';
-import ejs from 'ejs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { getDb, dbFetchOne, dbFetchAll, dbInsert, dbUpdate, dbDelete } from './db/db.js';
-import { getStorePlanDetails, calculateStoreRevenueMetrics, validateStoreSlugAvailability, getStoreCategoryInfo, STORE_MARKETPLACE_CATEGORIES, NIGERIAN_STATES, getEffectivePlans, getPlatformSettings } from './utils/helpers.js';
-import { STORE_TEMPLATES, STORE_CATEGORIES, getStoreTemplateConfig } from './config/templates.js';
-import { getSampleDataForTemplate } from './config/sampleTemplatesData.js';
-import { chatRoutes } from './modules/chat/chatController.js';
-import { chatWebSocketRoutes } from './modules/chat/chatWs.js';
-import { ordersRoutes } from './modules/orders/ordersController.js';
-import { authRoutes } from './modules/auth/authController.js';
-import { adminRoutes } from './modules/admin/adminController.js';
-import { debtsRoutes } from './modules/debts/debtsController.js';
-import { ledgerRoutes } from './modules/ledger/ledgerController.js';
-import { marketingRoutes } from './modules/marketing/marketingController.js';
-import { reviewsRoutes } from './modules/reviews/reviewsController.js';
-import { bulkRoutes } from './modules/bulk/bulkController.js';
-import { broadcastsRoutes } from './modules/broadcasts/broadcastsController.js';
-import { teamsRoutes } from './modules/teams/teamsController.js';
-import { branchesRoutes } from './modules/branches/branchesController.js';
-import { domainsRoutes } from './modules/domains/domainsController.js';
-import { multiStoreRoutes } from './modules/stores/multiStoreController.js';
-import { analyticsRoutes, recordStoreVisit, getStoreVisitorMetrics } from './modules/analytics/analyticsController.js';
-import { billingRoutes } from './modules/billing/billingController.js';
-import fastifyMultipart from '@fastify/multipart';
-import fs from 'node:fs';
-import crypto from 'node:crypto';
-import { pipeline } from 'node:stream/promises';
-import { ENV } from './config/env.js';
-import { initSuperAdminAccount } from './modules/admin/adminSecurity.js';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const fastify = Fastify({
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.fastify = void 0;
+exports.startServer = startServer;
+const fastify_1 = __importDefault(require("fastify"));
+const websocket_1 = __importDefault(require("@fastify/websocket"));
+const static_1 = __importDefault(require("@fastify/static"));
+const view_1 = __importDefault(require("@fastify/view"));
+const cookie_1 = __importDefault(require("@fastify/cookie"));
+const session_1 = __importDefault(require("@fastify/session"));
+const formbody_1 = __importDefault(require("@fastify/formbody"));
+const cors_1 = __importDefault(require("@fastify/cors"));
+const ejs_1 = __importDefault(require("ejs"));
+const node_path_1 = __importDefault(require("node:path"));
+const db_js_1 = require("./db/db.js");
+const helpers_js_1 = require("./utils/helpers.js");
+const templates_js_1 = require("./config/templates.js");
+const sampleTemplatesData_js_1 = require("./config/sampleTemplatesData.js");
+const chatController_js_1 = require("./modules/chat/chatController.js");
+const chatWs_js_1 = require("./modules/chat/chatWs.js");
+const ordersController_js_1 = require("./modules/orders/ordersController.js");
+const authController_js_1 = require("./modules/auth/authController.js");
+const adminController_js_1 = require("./modules/admin/adminController.js");
+const debtsController_js_1 = require("./modules/debts/debtsController.js");
+const ledgerController_js_1 = require("./modules/ledger/ledgerController.js");
+const marketingController_js_1 = require("./modules/marketing/marketingController.js");
+const reviewsController_js_1 = require("./modules/reviews/reviewsController.js");
+const bulkController_js_1 = require("./modules/bulk/bulkController.js");
+const broadcastsController_js_1 = require("./modules/broadcasts/broadcastsController.js");
+const teamsController_js_1 = require("./modules/teams/teamsController.js");
+const branchesController_js_1 = require("./modules/branches/branchesController.js");
+const domainsController_js_1 = require("./modules/domains/domainsController.js");
+const multiStoreController_js_1 = require("./modules/stores/multiStoreController.js");
+const analyticsController_js_1 = require("./modules/analytics/analyticsController.js");
+const billingController_js_1 = require("./modules/billing/billingController.js");
+const multipart_1 = __importDefault(require("@fastify/multipart"));
+const node_fs_1 = __importDefault(require("node:fs"));
+const node_crypto_1 = __importDefault(require("node:crypto"));
+const promises_1 = require("node:stream/promises");
+const env_js_1 = require("./config/env.js");
+const adminSecurity_js_1 = require("./modules/admin/adminSecurity.js");
+const fastify = (0, fastify_1.default)({
     logger: false,
     bodyLimit: 25 * 1024 * 1024 // 25MB body limit
 });
+exports.fastify = fastify;
 // Middleware & Plugins
-fastify.register(fastifyCors, { origin: true, credentials: true });
-fastify.register(fastifyMultipart, {
+fastify.register(cors_1.default, { origin: true, credentials: true });
+fastify.register(multipart_1.default, {
     limits: {
         fileSize: 10 * 1024 * 1024, // 10MB per file
         files: 10 // Up to 10 images simultaneously
     }
 });
-fastify.register(fastifyFormbody);
-fastify.register(fastifyCookie);
-fastify.register(fastifySession, {
-    secret: ENV.SESSION_SECRET,
+fastify.register(formbody_1.default);
+fastify.register(cookie_1.default);
+fastify.register(session_1.default, {
+    secret: env_js_1.ENV.SESSION_SECRET,
     cookie: {
         secure: process.env.COOKIE_SECURE === 'true',
         httpOnly: true,
@@ -62,42 +67,42 @@ fastify.register(fastifySession, {
     }
 });
 // Initialize Super Admin Credentials & Security Baseline
-initSuperAdminAccount();
-fastify.register(fastifyWebsocket);
+(0, adminSecurity_js_1.initSuperAdminAccount)();
+fastify.register(websocket_1.default);
 // Static Assets & Views Path Resolution (supports both tsx dev and compiled dist)
-const publicDir = fs.existsSync(path.join(__dirname, 'public'))
-    ? path.join(__dirname, 'public')
-    : path.resolve(process.cwd(), 'src', 'public');
-const viewsDir = fs.existsSync(path.join(__dirname, 'views'))
-    ? path.join(__dirname, 'views')
-    : path.resolve(process.cwd(), 'src', 'views');
-fastify.register(fastifyStatic, {
+const publicDir = node_fs_1.default.existsSync(node_path_1.default.join(__dirname, 'public'))
+    ? node_path_1.default.join(__dirname, 'public')
+    : node_path_1.default.resolve(process.cwd(), 'src', 'public');
+const viewsDir = node_fs_1.default.existsSync(node_path_1.default.join(__dirname, 'views'))
+    ? node_path_1.default.join(__dirname, 'views')
+    : node_path_1.default.resolve(process.cwd(), 'src', 'views');
+fastify.register(static_1.default, {
     root: publicDir,
     prefix: '/'
 });
 // View Engine (EJS)
-fastify.register(fastifyView, {
-    engine: { ejs },
+fastify.register(view_1.default, {
+    engine: { ejs: ejs_1.default },
     root: viewsDir
 });
 // Register API Routes
-fastify.register(chatRoutes);
-fastify.register(chatWebSocketRoutes);
-fastify.register(ordersRoutes);
-fastify.register(authRoutes);
-fastify.register(adminRoutes);
-fastify.register(debtsRoutes);
-fastify.register(ledgerRoutes);
-fastify.register(marketingRoutes);
-fastify.register(reviewsRoutes);
-fastify.register(bulkRoutes);
-fastify.register(broadcastsRoutes);
-fastify.register(teamsRoutes);
-fastify.register(branchesRoutes);
-fastify.register(domainsRoutes);
-fastify.register(multiStoreRoutes);
-fastify.register(analyticsRoutes);
-fastify.register(billingRoutes);
+fastify.register(chatController_js_1.chatRoutes);
+fastify.register(chatWs_js_1.chatWebSocketRoutes);
+fastify.register(ordersController_js_1.ordersRoutes);
+fastify.register(authController_js_1.authRoutes);
+fastify.register(adminController_js_1.adminRoutes);
+fastify.register(debtsController_js_1.debtsRoutes);
+fastify.register(ledgerController_js_1.ledgerRoutes);
+fastify.register(marketingController_js_1.marketingRoutes);
+fastify.register(reviewsController_js_1.reviewsRoutes);
+fastify.register(bulkController_js_1.bulkRoutes);
+fastify.register(broadcastsController_js_1.broadcastsRoutes);
+fastify.register(teamsController_js_1.teamsRoutes);
+fastify.register(branchesController_js_1.branchesRoutes);
+fastify.register(domainsController_js_1.domainsRoutes);
+fastify.register(multiStoreController_js_1.multiStoreRoutes);
+fastify.register(analyticsController_js_1.analyticsRoutes);
+fastify.register(billingController_js_1.billingRoutes);
 // Direct High-Speed Image Upload API (Up to 10MB per image, single or multiple)
 fastify.post('/api/upload', async (req, reply) => {
     const store = req.session?.merchantStore;
@@ -105,22 +110,22 @@ fastify.post('/api/upload', async (req, reply) => {
     if (!store && !adminId) {
         return reply.code(401).send({ success: false, error: 'Unauthorized: Login required to upload files' });
     }
-    const uploadDir = path.join(publicDir, 'uploads');
-    if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
+    const uploadDir = node_path_1.default.join(publicDir, 'uploads');
+    if (!node_fs_1.default.existsSync(uploadDir)) {
+        node_fs_1.default.mkdirSync(uploadDir, { recursive: true });
     }
     const uploadedFiles = [];
     try {
         const parts = req.files();
         for await (const part of parts) {
-            const ext = path.extname(part.filename || '').toLowerCase() || '.png';
+            const ext = node_path_1.default.extname(part.filename || '').toLowerCase() || '.png';
             const allowedExts = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg', '.avif'];
             if (!allowedExts.includes(ext)) {
                 return reply.code(400).send({ success: false, error: `Invalid image type '${ext}'. Supported: JPG, PNG, WEBP, GIF, SVG, AVIF.` });
             }
-            const randomName = `img_${Date.now()}_${crypto.randomBytes(6).toString('hex')}${ext}`;
-            const targetPath = path.join(uploadDir, randomName);
-            await pipeline(part.file, fs.createWriteStream(targetPath));
+            const randomName = `img_${Date.now()}_${node_crypto_1.default.randomBytes(6).toString('hex')}${ext}`;
+            const targetPath = node_path_1.default.join(uploadDir, randomName);
+            await (0, promises_1.pipeline)(part.file, node_fs_1.default.createWriteStream(targetPath));
             uploadedFiles.push(`/uploads/${randomName}`);
         }
     }
@@ -172,16 +177,16 @@ fastify.post('/api/merchant/items', async (req, reply) => {
     };
     let item;
     if (body.id) {
-        const existing = dbFetchOne('items', { id: parseInt(body.id), store_id: store.id });
+        const existing = (0, db_js_1.dbFetchOne)('items', { id: parseInt(body.id), store_id: store.id });
         if (!existing)
             return reply.code(404).send({ success: false, error: 'Product not found' });
-        dbUpdate('items', itemPayload, { id: existing.id });
-        item = dbFetchOne('items', { id: existing.id });
+        (0, db_js_1.dbUpdate)('items', itemPayload, { id: existing.id });
+        item = (0, db_js_1.dbFetchOne)('items', { id: existing.id });
     }
     else {
         itemPayload.created_at = now;
-        const itemId = dbInsert('items', itemPayload);
-        item = dbFetchOne('items', { id: itemId });
+        const itemId = (0, db_js_1.dbInsert)('items', itemPayload);
+        item = (0, db_js_1.dbFetchOne)('items', { id: itemId });
     }
     return reply.send({ success: true, item });
 });
@@ -190,7 +195,7 @@ fastify.delete('/api/merchant/items', async (req, reply) => {
     if (!store)
         return reply.code(401).send({ success: false, error: 'Unauthorized' });
     const id = parseInt(req.query?.id || '0');
-    dbDelete('items', { id, store_id: store.id });
+    (0, db_js_1.dbDelete)('items', { id, store_id: store.id });
     return reply.send({ success: true });
 });
 fastify.post('/api/merchant/settings', async (req, reply) => {
@@ -200,20 +205,20 @@ fastify.post('/api/merchant/settings', async (req, reply) => {
     const body = (req.body || {});
     const updates = {};
     if (body.slug && body.slug !== store.slug) {
-        const slugCheck = validateStoreSlugAvailability(body.slug, store.id);
+        const slugCheck = (0, helpers_js_1.validateStoreSlugAvailability)(body.slug, store.id);
         if (!slugCheck.valid) {
             return reply.send({ success: false, error: slugCheck.error });
         }
         const newSlug = slugCheck.normalizedSlug;
         // Archive any old deleted store that had this slug
-        const deletedStore = dbFetchOne('stores', { slug: newSlug, status: 'deleted' });
+        const deletedStore = (0, db_js_1.dbFetchOne)('stores', { slug: newSlug, status: 'deleted' });
         if (deletedStore) {
-            dbUpdate('stores', { slug: `${newSlug}_archived_${deletedStore.id}` }, { id: deletedStore.id });
+            (0, db_js_1.dbUpdate)('stores', { slug: `${newSlug}_archived_${deletedStore.id}` }, { id: deletedStore.id });
         }
         updates.slug = newSlug;
     }
     if (body.template_slug !== undefined) {
-        const validTemplates = Object.keys(STORE_TEMPLATES);
+        const validTemplates = Object.keys(templates_js_1.STORE_TEMPLATES);
         if (validTemplates.includes(body.template_slug)) {
             updates.template_slug = body.template_slug;
         }
@@ -248,15 +253,15 @@ fastify.post('/api/merchant/settings', async (req, reply) => {
         updates.alert_sound = body.alert_sound;
     if (body.delivery_fee !== undefined)
         updates.delivery_fee = parseFloat(body.delivery_fee || 0);
-    dbUpdate('stores', updates, { id: store.id });
+    (0, db_js_1.dbUpdate)('stores', updates, { id: store.id });
     req.session.merchantStore = { ...store, ...updates };
     return reply.send({ success: true, store: req.session.merchantStore });
 });
 // SSR Page Routes
 // 1. Landing Page
 fastify.get('/', async (req, reply) => {
-    const settings = getPlatformSettings();
-    const plans = getEffectivePlans();
+    const settings = (0, helpers_js_1.getPlatformSettings)();
+    const plans = (0, helpers_js_1.getEffectivePlans)();
     return reply.view('landing.ejs', { settings, plans });
 });
 // 1b. Terms of Service
@@ -269,12 +274,12 @@ fastify.get('/privacy', async (req, reply) => {
 });
 // 2. Marketplace Directory
 fastify.get('/marketplace', async (req, reply) => {
-    const rawStores = dbFetchAll('stores', { status: 'active' });
+    const rawStores = (0, db_js_1.dbFetchAll)('stores', { status: 'active' });
     const stores = rawStores.map(s => ({
         ...s,
-        category_info: getStoreCategoryInfo(s)
+        category_info: (0, helpers_js_1.getStoreCategoryInfo)(s)
     }));
-    return reply.view('marketplace.ejs', { stores, categories: STORE_MARKETPLACE_CATEGORIES, states: NIGERIAN_STATES });
+    return reply.view('marketplace.ejs', { stores, categories: helpers_js_1.STORE_MARKETPLACE_CATEGORIES, states: helpers_js_1.NIGERIAN_STATES });
 });
 // 3. Merchant Login View & Aliases
 fastify.get('/login', async (req, reply) => {
@@ -294,14 +299,14 @@ fastify.get('/merchant', async (req, reply) => {
     const store = req.session?.merchantStore;
     if (!store)
         return reply.redirect('/merchant/login');
-    const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-    const orders = dbFetchAll('orders', { store_id: currentStore.id }, 'id DESC');
-    const items = dbFetchAll('items', { store_id: currentStore.id, is_available: 1 });
+    const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+    const orders = (0, db_js_1.dbFetchAll)('orders', { store_id: currentStore.id }, 'id DESC');
+    const items = (0, db_js_1.dbFetchAll)('items', { store_id: currentStore.id, is_available: 1 });
     const lowStockItems = items.filter(i => i.stock_quantity > -1 && i.stock_quantity <= (i.low_stock_threshold || 5));
-    const revenueMetrics = calculateStoreRevenueMetrics(orders);
-    const visitorMetrics = getStoreVisitorMetrics(currentStore.id);
-    const { isPro, config } = getStorePlanDetails(currentStore);
-    const templateConfig = getStoreTemplateConfig(currentStore.template_slug);
+    const revenueMetrics = (0, helpers_js_1.calculateStoreRevenueMetrics)(orders);
+    const visitorMetrics = (0, analyticsController_js_1.getStoreVisitorMetrics)(currentStore.id);
+    const { isPro, config } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
+    const templateConfig = (0, templates_js_1.getStoreTemplateConfig)(currentStore.template_slug);
     return reply.view('merchant/dashboard.ejs', {
         store: currentStore,
         orders,
@@ -311,7 +316,7 @@ fastify.get('/merchant', async (req, reply) => {
         isPro,
         planConfig: config,
         templateConfig,
-        allTemplates: STORE_TEMPLATES
+        allTemplates: templates_js_1.STORE_TEMPLATES
     });
 });
 // 5. Merchant Live Chat Messages View
@@ -319,7 +324,7 @@ fastify.get('/merchant/messages', async (req, reply) => {
     const store = req.session?.merchantStore;
     if (!store)
         return reply.redirect('/merchant/login');
-    const currentStore = dbFetchOne('stores', { id: store.id }) || store;
+    const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
     return reply.view('merchant/messages.ejs', { store: currentStore });
 });
 // 6. Merchant Items View
@@ -327,15 +332,15 @@ fastify.get('/merchant/items', async (req, reply) => {
     const store = req.session?.merchantStore;
     if (!store)
         return reply.redirect('/merchant/login');
-    const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-    const items = dbFetchAll('items', { store_id: currentStore.id }, 'id DESC');
-    const templateConfig = getStoreTemplateConfig(currentStore.template_slug);
-    const { isPro, config } = getStorePlanDetails(currentStore);
+    const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+    const items = (0, db_js_1.dbFetchAll)('items', { store_id: currentStore.id }, 'id DESC');
+    const templateConfig = (0, templates_js_1.getStoreTemplateConfig)(currentStore.template_slug);
+    const { isPro, config } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
     return reply.view('merchant/items.ejs', {
         store: currentStore,
         items,
         templateConfig,
-        allTemplates: STORE_TEMPLATES,
+        allTemplates: templates_js_1.STORE_TEMPLATES,
         isPro,
         planConfig: config
     });
@@ -345,9 +350,9 @@ fastify.get('/merchant/ledger', async (req, reply) => {
     const store = req.session?.merchantStore;
     if (!store)
         return reply.redirect('/merchant/login');
-    const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-    const { isPro, config } = getStorePlanDetails(currentStore);
-    const db = getDb();
+    const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+    const { isPro, config } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
+    const db = (0, db_js_1.getDb)();
     let orders = [];
     const now = new Date();
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
@@ -361,7 +366,7 @@ fastify.get('/merchant/ledger', async (req, reply) => {
         orders = stmt.all(currentStore.id, lastMonthStart);
     }
     else {
-        orders = dbFetchAll('orders', { store_id: currentStore.id }, 'id DESC');
+        orders = (0, db_js_1.dbFetchAll)('orders', { store_id: currentStore.id }, 'id DESC');
     }
     const paidOrders = orders.filter(o => o.payment_status === 'paid');
     const totalSalesRevenue = paidOrders.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
@@ -389,9 +394,9 @@ fastify.get('/merchant/debts', async (req, reply) => {
     const store = req.session?.merchantStore;
     if (!store)
         return reply.redirect('/merchant/login');
-    const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-    const { isPro, config } = getStorePlanDetails(currentStore);
-    const debts = dbFetchAll('debts', { store_id: currentStore.id }, 'id DESC');
+    const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+    const { isPro, config } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
+    const debts = (0, db_js_1.dbFetchAll)('debts', { store_id: currentStore.id }, 'id DESC');
     const activeDebts = debts.filter(d => d.status === 'pending');
     const paidDebts = debts.filter(d => d.status === 'paid');
     const totalOutstanding = activeDebts.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
@@ -416,14 +421,14 @@ fastify.get('/merchant/settings', async (req, reply) => {
     const store = req.session?.merchantStore;
     if (!store)
         return reply.redirect('/merchant/login');
-    const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-    const { isPro, config } = getStorePlanDetails(currentStore);
-    const templateConfig = getStoreTemplateConfig(currentStore.template_slug);
+    const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+    const { isPro, config } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
+    const templateConfig = (0, templates_js_1.getStoreTemplateConfig)(currentStore.template_slug);
     return reply.view('merchant/settings.ejs', {
         store: currentStore,
         templateConfig,
-        allTemplates: STORE_TEMPLATES,
-        storeCategories: STORE_CATEGORIES,
+        allTemplates: templates_js_1.STORE_TEMPLATES,
+        storeCategories: templates_js_1.STORE_CATEGORIES,
         isPro,
         planConfig: config
     });
@@ -431,10 +436,10 @@ fastify.get('/merchant/settings', async (req, reply) => {
 // 8. Order Tracking View
 fastify.get('/order/:ref', async (req, reply) => {
     const ref = req.params.ref;
-    const order = dbFetchOne('orders', { order_ref: ref });
+    const order = (0, db_js_1.dbFetchOne)('orders', { order_ref: ref });
     if (!order)
         return reply.code(404).send('Order not found');
-    const store = dbFetchOne('stores', { id: order.store_id });
+    const store = (0, db_js_1.dbFetchOne)('stores', { id: order.store_id });
     let items = [];
     try {
         items = typeof order.items_json === 'string' ? JSON.parse(order.items_json) : order.items_json;
@@ -445,10 +450,10 @@ fastify.get('/order/:ref', async (req, reply) => {
 // 9. Order Receipt View
 fastify.get('/receipt/:ref', async (req, reply) => {
     const ref = req.params.ref;
-    const order = dbFetchOne('orders', { order_ref: ref });
+    const order = (0, db_js_1.dbFetchOne)('orders', { order_ref: ref });
     if (!order)
         return reply.code(404).send('Receipt not found');
-    const store = dbFetchOne('stores', { id: order.store_id });
+    const store = (0, db_js_1.dbFetchOne)('stores', { id: order.store_id });
     let items = [];
     try {
         items = typeof order.items_json === 'string' ? JSON.parse(order.items_json) : order.items_json;
@@ -459,10 +464,10 @@ fastify.get('/receipt/:ref', async (req, reply) => {
 // 10. Checkout Page View (/store/:slug/checkout or /:slug/checkout)
 const renderCheckout = async (req, reply) => {
     const slug = req.params.slug;
-    const store = dbFetchOne('stores', { slug });
+    const store = (0, db_js_1.dbFetchOne)('stores', { slug });
     if (!store || store.status === 'deleted')
         return reply.code(404).send('Store not found');
-    const templateConfig = getStoreTemplateConfig(store.template_slug);
+    const templateConfig = (0, templates_js_1.getStoreTemplateConfig)(store.template_slug);
     return reply.view('checkout.ejs', { store, templateConfig });
 };
 fastify.get('/store/:slug/checkout', renderCheckout);
@@ -470,15 +475,15 @@ fastify.get('/:slug/checkout', renderCheckout);
 // 11. Template Live Demo / Sample Preview View (/demo/:slug or /preview/:slug)
 const renderTemplateDemo = async (req, reply) => {
     const templateSlug = req.params.slug;
-    const sampleData = getSampleDataForTemplate(templateSlug);
-    const templateConfig = getStoreTemplateConfig(templateSlug);
+    const sampleData = (0, sampleTemplatesData_js_1.getSampleDataForTemplate)(templateSlug);
+    const templateConfig = (0, templates_js_1.getStoreTemplateConfig)(templateSlug);
     const categories = Array.from(new Set(sampleData.items.map(i => i.category || 'General')));
     return reply.view('store.ejs', {
         store: sampleData.store,
         items: sampleData.items,
         categories,
         templateConfig,
-        allTemplates: STORE_TEMPLATES,
+        allTemplates: templates_js_1.STORE_TEMPLATES,
         isDemo: true
     });
 };
@@ -487,23 +492,23 @@ fastify.get('/preview/:slug', renderTemplateDemo);
 // 12. Public Storefront View (/store/:slug or /:slug)
 const renderStorefront = async (req, reply) => {
     const slug = req.params.slug;
-    const store = dbFetchOne('stores', { slug });
+    const store = (0, db_js_1.dbFetchOne)('stores', { slug });
     if (!store || store.status === 'deleted')
         return reply.code(404).send('Store not found');
     try {
-        recordStoreVisit(store.id, req.ip, req.headers['user-agent']);
+        (0, analyticsController_js_1.recordStoreVisit)(store.id, req.ip, req.headers['user-agent']);
     }
     catch (e) { }
-    const items = dbFetchAll('items', { store_id: store.id, is_available: 1 }, 'id DESC');
+    const items = (0, db_js_1.dbFetchAll)('items', { store_id: store.id, is_available: 1 }, 'id DESC');
     const categories = Array.from(new Set(items.map(i => i.category || 'General')));
-    const planDetails = getStorePlanDetails(store);
-    const templateConfig = getStoreTemplateConfig(store.template_slug);
+    const planDetails = (0, helpers_js_1.getStorePlanDetails)(store);
+    const templateConfig = (0, templates_js_1.getStoreTemplateConfig)(store.template_slug);
     return reply.view('store.ejs', {
         store,
         items,
         categories,
         templateConfig,
-        allTemplates: STORE_TEMPLATES,
+        allTemplates: templates_js_1.STORE_TEMPLATES,
         isDemo: false,
         isPro: planDetails.isPro,
         showPoweredBy: Boolean(planDetails.config.features.powered_by_zlik)
@@ -512,14 +517,20 @@ const renderStorefront = async (req, reply) => {
 fastify.get('/store/:slug', renderStorefront);
 fastify.get('/:slug', renderStorefront);
 // Start High-Speed Server
-const PORT = ENV.PORT;
-const HOST = ENV.HOST;
-fastify.listen({ port: PORT, host: HOST }, (err, address) => {
-    if (err) {
+async function startServer() {
+    const PORT = env_js_1.ENV.PORT;
+    const HOST = env_js_1.ENV.HOST;
+    try {
+        await fastify.listen({ port: PORT, host: HOST });
+        console.log(`⚡ Zlik High-Speed Server running in [${env_js_1.ENV.NODE_ENV}] mode on http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
+    }
+    catch (err) {
         console.error('⚡ Server listen error:', err);
         process.exit(1);
     }
-    console.log(`⚡ Zlik High-Speed Server running in [${ENV.NODE_ENV}] mode on ${address}`);
+}
+startServer().catch((err) => {
+    console.error('⚡ Fatal server startup error:', err);
+    process.exit(1);
 });
-export default fastify;
-export { fastify };
+exports.default = fastify;

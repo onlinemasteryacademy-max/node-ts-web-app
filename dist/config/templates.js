@@ -1,8 +1,13 @@
+"use strict";
 /**
  * Zlik Storefront Templates Architecture
  * 5 Industry Categories x 3 Templates Per Category (1 Free, 2 Pro) = 15 Specialized Templates
  */
-export const STORE_CATEGORIES = {
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.STORE_TEMPLATES = exports.STORE_CATEGORIES = void 0;
+exports.getStoreTemplateConfig = getStoreTemplateConfig;
+exports.getTemplatesByCategory = getTemplatesByCategory;
+exports.STORE_CATEGORIES = {
     general: {
         id: 'general',
         name: 'General Store',
@@ -44,7 +49,7 @@ export const STORE_CATEGORIES = {
         accent_bg: '#DBEAFE'
     }
 };
-export const STORE_TEMPLATES = {
+exports.STORE_TEMPLATES = {
     // -------------------------------------------------------------
     // 1. GENERAL STORE CATEGORY (1 Free, 2 Pro)
     // -------------------------------------------------------------
@@ -532,38 +537,38 @@ export const STORE_TEMPLATES = {
     }
 };
 // Automatically set high-resolution preview image paths
-Object.keys(STORE_TEMPLATES).forEach(key => {
-    STORE_TEMPLATES[key].preview_image = `/assets/images/templates/${key}.svg`;
+Object.keys(exports.STORE_TEMPLATES).forEach(key => {
+    exports.STORE_TEMPLATES[key].preview_image = `/assets/images/templates/${key}.svg`;
 });
 /**
  * Get Template Config by Identifier with Safe Default Fallback
  */
-export function getStoreTemplateConfig(templateSlug) {
+function getStoreTemplateConfig(templateSlug) {
     const normalized = String(templateSlug || '').toLowerCase().trim();
     // 1. Direct exact template match (e.g. fashion_runway, food_menu)
-    if (STORE_TEMPLATES[normalized]) {
-        return STORE_TEMPLATES[normalized];
+    if (exports.STORE_TEMPLATES[normalized]) {
+        return exports.STORE_TEMPLATES[normalized];
     }
     // 2. Category aliases / legacy identifier fallbacks -> Return default Free starter template
     if (normalized.includes('food') || normalized.includes('restaurant') || normalized.includes('bistro') || normalized.includes('menu')) {
-        return STORE_TEMPLATES.food_menu;
+        return exports.STORE_TEMPLATES.food_menu;
     }
     if (normalized.includes('fashion') || normalized.includes('boutique') || normalized.includes('lookbook') || normalized.includes('apparel')) {
-        return STORE_TEMPLATES.fashion_lookbook;
+        return exports.STORE_TEMPLATES.fashion_lookbook;
     }
     if (normalized.includes('beauty') || normalized.includes('cosmetic') || normalized.includes('glow') || normalized.includes('skincare')) {
-        return STORE_TEMPLATES.beauty_cosmetic;
+        return exports.STORE_TEMPLATES.beauty_cosmetic;
     }
     if (normalized.includes('electronic') || normalized.includes('tech') || normalized.includes('gadget') || normalized.includes('device')) {
-        return STORE_TEMPLATES.electronics_tech;
+        return exports.STORE_TEMPLATES.electronics_tech;
     }
-    return STORE_TEMPLATES.general_clean;
+    return exports.STORE_TEMPLATES.general_clean;
 }
 /**
  * Get all 3 templates for a given category (1 Free, 2 Pro)
  */
-export function getTemplatesByCategory(categoryId) {
+function getTemplatesByCategory(categoryId) {
     const cat = String(categoryId || 'general').toLowerCase().trim();
-    const matchedCat = STORE_CATEGORIES[cat] ? cat : 'general';
-    return Object.values(STORE_TEMPLATES).filter(t => t.category_id === matchedCat);
+    const matchedCat = exports.STORE_CATEGORIES[cat] ? cat : 'general';
+    return Object.values(exports.STORE_TEMPLATES).filter(t => t.category_id === matchedCat);
 }

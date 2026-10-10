@@ -1,15 +1,18 @@
-import { dbFetchOne, dbFetchAll, dbInsert, dbUpdate, dbDelete } from '../../db/db.js';
-import { getStorePlanDetails } from '../../utils/helpers.js';
-export const teamsRoutes = async (fastify) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.teamsRoutes = void 0;
+const db_js_1 = require("../../db/db.js");
+const helpers_js_1 = require("../../utils/helpers.js");
+const teamsRoutes = async (fastify) => {
     // 1. List Staff Accounts
     fastify.get('/api/merchant/staff', async (req, reply) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const { config, isPro, isBusiness } = getStorePlanDetails(currentStore);
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const { config, isPro, isBusiness } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
         const staffLimit = config.limits.staff_accounts;
-        const staffList = dbFetchAll('staff_accounts', { store_id: currentStore.id });
+        const staffList = (0, db_js_1.dbFetchAll)('staff_accounts', { store_id: currentStore.id });
         return reply.send({
             success: true,
             staff: staffList.map(s => ({
@@ -29,8 +32,8 @@ export const teamsRoutes = async (fastify) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const { config, isPro, isBusiness } = getStorePlanDetails(currentStore);
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const { config, isPro, isBusiness } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
         const staffLimit = config.limits.staff_accounts;
         if (staffLimit <= 0) {
             return reply.code(403).send({
@@ -38,7 +41,7 @@ export const teamsRoutes = async (fastify) => {
                 error: 'Staff accounts are available on Pro (1 staff) and Business (5 staff). Please upgrade to add team members.'
             });
         }
-        const existingStaff = dbFetchAll('staff_accounts', { store_id: currentStore.id, status: 'active' });
+        const existingStaff = (0, db_js_1.dbFetchAll)('staff_accounts', { store_id: currentStore.id, status: 'active' });
         if (existingStaff.length >= staffLimit) {
             return reply.code(403).send({
                 success: false,
@@ -55,7 +58,7 @@ export const teamsRoutes = async (fastify) => {
         if (!name || !phone) {
             return reply.code(400).send({ success: false, error: 'Staff name and phone number are required.' });
         }
-        const staffId = dbInsert('staff_accounts', {
+        const staffId = (0, db_js_1.dbInsert)('staff_accounts', {
             store_id: currentStore.id,
             name,
             phone,
@@ -67,7 +70,7 @@ export const teamsRoutes = async (fastify) => {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
         });
-        const createdStaff = dbFetchOne('staff_accounts', { id: staffId });
+        const createdStaff = (0, db_js_1.dbFetchOne)('staff_accounts', { id: staffId });
         return reply.send({ success: true, staff: createdStaff });
     });
     // 3. Update / Toggle Staff Member Status
@@ -77,11 +80,11 @@ export const teamsRoutes = async (fastify) => {
             return reply.code(401).send({ success: false, error: 'Unauthorized' });
         const body = (req.body || {});
         const staffId = parseInt(body.id || '0');
-        const existing = dbFetchOne('staff_accounts', { id: staffId, store_id: store.id });
+        const existing = (0, db_js_1.dbFetchOne)('staff_accounts', { id: staffId, store_id: store.id });
         if (!existing)
             return reply.code(404).send({ success: false, error: 'Staff account not found' });
         const newStatus = existing.status === 'active' ? 'inactive' : 'active';
-        dbUpdate('staff_accounts', { status: newStatus, updated_at: new Date().toISOString() }, { id: staffId });
+        (0, db_js_1.dbUpdate)('staff_accounts', { status: newStatus, updated_at: new Date().toISOString() }, { id: staffId });
         return reply.send({ success: true, status: newStatus });
     });
     // 4. Delete Staff Member
@@ -91,7 +94,8 @@ export const teamsRoutes = async (fastify) => {
             return reply.code(401).send({ success: false, error: 'Unauthorized' });
         const body = (req.body || {});
         const staffId = parseInt(body.id || '0');
-        dbDelete('staff_accounts', { id: staffId, store_id: store.id });
+        (0, db_js_1.dbDelete)('staff_accounts', { id: staffId, store_id: store.id });
         return reply.send({ success: true });
     });
 };
+exports.teamsRoutes = teamsRoutes;

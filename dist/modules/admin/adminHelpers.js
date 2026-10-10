@@ -1,5 +1,12 @@
-import { dbFetchOne, dbFetchAll, dbInsert } from '../../db/db.js';
-export const PREDEFINED_ROLES = {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SYSTEM_PERMISSIONS = exports.PREDEFINED_ROLES = void 0;
+exports.getAdminRoles = getAdminRoles;
+exports.getAdminUser = getAdminUser;
+exports.hasAdminPermission = hasAdminPermission;
+exports.logAdminAction = logAdminAction;
+const db_js_1 = require("../../db/db.js");
+exports.PREDEFINED_ROLES = {
     super_admin: {
         id: 'super_admin',
         name: 'Super Admin (Owner)',
@@ -29,7 +36,7 @@ export const PREDEFINED_ROLES = {
         permissions: ['manage_pricing', 'view_audit_logs']
     }
 };
-export const SYSTEM_PERMISSIONS = {
+exports.SYSTEM_PERMISSIONS = {
     manage_merchants: { label: 'Manage Merchants', desc: 'Edit merchant profiles, passwords, store status, and manual tier overrides' },
     impersonate_merchants: { label: '1-Click Merchant Impersonation', desc: 'Securely enter merchant dashboard to assist sellers in real-time' },
     manage_catalog: { label: 'Global Catalog Moderation', desc: 'Audit products platform-wide and toggle prohibited item status' },
@@ -41,10 +48,10 @@ export const SYSTEM_PERMISSIONS = {
     manage_system_ops: { label: 'System Maintenance & Backups', desc: 'Perform live database snapshots and purge caches' },
     view_audit_logs: { label: 'Platform Audit Trails', desc: 'Inspect administrative audit records and transactional mail logs' }
 };
-export function getAdminRoles() {
-    const roles = { ...PREDEFINED_ROLES };
+function getAdminRoles() {
+    const roles = { ...exports.PREDEFINED_ROLES };
     try {
-        const customRoles = dbFetchAll('admin_roles');
+        const customRoles = (0, db_js_1.dbFetchAll)('admin_roles');
         for (const cr of customRoles) {
             let perms = [];
             try {
@@ -63,11 +70,11 @@ export function getAdminRoles() {
     catch (e) { }
     return roles;
 }
-export function getAdminUser(adminId) {
+function getAdminUser(adminId) {
     const id = Number(adminId);
     if (!id)
         return null;
-    const admin = dbFetchOne('super_admins', { id });
+    const admin = (0, db_js_1.dbFetchOne)('super_admins', { id });
     if (!admin)
         return null;
     const role = admin.role || 'super_admin';
@@ -76,17 +83,17 @@ export function getAdminUser(adminId) {
     admin.effective_permissions = admin.role_info?.permissions || [];
     return admin;
 }
-export function hasAdminPermission(permissionKey, adminId) {
+function hasAdminPermission(permissionKey, adminId) {
     const admin = getAdminUser(adminId);
     if (!admin)
         return false;
     const perms = admin.effective_permissions || [];
     return perms.includes('*') || perms.includes(permissionKey);
 }
-export function logAdminAction(adminId, action, targetType = '', targetId = '', details = '', ip = '127.0.0.1') {
+function logAdminAction(adminId, action, targetType = '', targetId = '', details = '', ip = '127.0.0.1') {
     const admin = getAdminUser(adminId);
     const adminName = admin ? `${admin.name} (${admin.email})` : `Admin #${adminId}`;
-    return dbInsert('admin_audit_logs', {
+    return (0, db_js_1.dbInsert)('admin_audit_logs', {
         admin_id: Number(adminId) || 0,
         admin_name: adminName,
         action: String(action),

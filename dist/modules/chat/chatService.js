@@ -1,5 +1,13 @@
-import { getDb, dbFetchOne, dbFetchAll, dbInsert, dbUpdate } from '../../db/db.js';
-import { normalizePhoneNumber } from '../../utils/helpers.js';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.realtimeHub = void 0;
+exports.getOrCreateCustomerSession = getOrCreateCustomerSession;
+exports.sendMessage = sendMessage;
+exports.getConversationMessages = getConversationMessages;
+exports.listMerchantConversations = listMerchantConversations;
+exports.getCustomerChatContext = getCustomerChatContext;
+const db_js_1 = require("../../db/db.js");
+const helpers_js_1 = require("../../utils/helpers.js");
 class RealtimeHub {
     merchantSockets = new Map();
     customerSockets = new Map();
@@ -118,15 +126,15 @@ class RealtimeHub {
         }
     }
 }
-export const realtimeHub = new RealtimeHub();
+exports.realtimeHub = new RealtimeHub();
 /**
  * Initialize or get Customer Chat Session
  */
-export function getOrCreateCustomerSession(storeId, sessionToken, customerName, customerPhone, customerEmail) {
+function getOrCreateCustomerSession(storeId, sessionToken, customerName, customerPhone, customerEmail) {
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
     let token = sessionToken?.trim();
     if (token) {
-        const existing = dbFetchOne('chat_conversations', {
+        const existing = (0, db_js_1.dbFetchOne)('chat_conversations', {
             store_id: storeId,
             customer_session_token: token
         });
@@ -141,7 +149,7 @@ export function getOrCreateCustomerSession(storeId, sessionToken, customerName, 
                 updates.customer_email = customerEmail;
             if (Object.keys(updates).length > 0) {
                 updates.updated_at = now;
-                dbUpdate('chat_conversations', updates, { id: existing.id });
+                (0, db_js_1.dbUpdate)('chat_conversations', updates, { id: existing.id });
                 return { conversation: { ...existing, ...updates }, isNew: false };
             }
             return { conversation: existing, isNew: false };
@@ -152,7 +160,7 @@ export function getOrCreateCustomerSession(storeId, sessionToken, customerName, 
         token = 'cs_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
     }
     const cleanName = customerName?.trim() || 'Shopper ' + Math.floor(1000 + Math.random() * 9000);
-    const convId = dbInsert('chat_conversations', {
+    const convId = (0, db_js_1.dbInsert)('chat_conversations', {
         store_id: storeId,
         customer_session_token: token,
         customer_name: cleanName,
@@ -168,7 +176,7 @@ export function getOrCreateCustomerSession(storeId, sessionToken, customerName, 
     });
     // Seed welcome system message
     const welcomeMsg = '👋 Hello! Welcome to our store. How can we help you today? Feel free to ask about products, orders, or delivery!';
-    dbInsert('chat_messages', {
+    (0, db_js_1.dbInsert)('chat_messages', {
         conversation_id: convId,
         store_id: storeId,
         sender_type: 'system',
@@ -177,23 +185,23 @@ export function getOrCreateCustomerSession(storeId, sessionToken, customerName, 
         is_read: 1,
         created_at: now
     });
-    const newConv = dbFetchOne('chat_conversations', { id: convId });
+    const newConv = (0, db_js_1.dbFetchOne)('chat_conversations', { id: convId });
     return { conversation: newConv, isNew: true };
 }
 /**
  * Send Chat Message with Idempotency and Real-Time Push
  */
-export function sendMessage(conversationId, senderType, senderName, messageText, options = {}) {
+function sendMessage(conversationId, senderType, senderName, messageText, options = {}) {
     const text = messageText?.trim();
     if (!text)
         return { success: false, error: 'Message text cannot be empty' };
-    const conv = dbFetchOne('chat_conversations', { id: conversationId });
+    const conv = (0, db_js_1.dbFetchOne)('chat_conversations', { id: conversationId });
     if (!conv)
         return { success: false, error: 'Conversation not found' };
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
     // Idempotency check: deduplicate if same key sent within recent window
     if (options.idempotencyKey) {
-        const existing = dbFetchOne('chat_messages', {
+        const existing = (0, db_js_1.dbFetchOne)('chat_messages', {
             conversation_id: conversationId,
             idempotency_key: options.idempotencyKey
         });
@@ -201,7 +209,7 @@ export function sendMessage(conversationId, senderType, senderName, messageText,
             return { success: true, message: existing, conversation: conv, duplicate: true };
         }
     }
-    const msgId = dbInsert('chat_messages', {
+    const msgId = (0, db_js_1.dbInsert)('chat_messages', {
         conversation_id: conversationId,
         store_id: conv.store_id,
         sender_type: senderType,
@@ -227,13 +235,13 @@ export function sendMessage(conversationId, senderType, senderName, messageText,
         updates.unread_customer_count = (conv.unread_customer_count || 0) + 1;
         updates.unread_merchant_count = 0; // Merchant replied, reset merchant unread
     }
-    dbUpdate('chat_conversations', updates, { id: conv.id });
-    const updatedConv = dbFetchOne('chat_conversations', { id: conv.id });
-    const newMsg = dbFetchOne('chat_messages', { id: msgId });
+    (0, db_js_1.dbUpdate)('chat_conversations', updates, { id: conv.id });
+    const updatedConv = (0, db_js_1.dbFetchOne)('chat_conversations', { id: conv.id });
+    const newMsg = (0, db_js_1.dbFetchOne)('chat_messages', { id: msgId });
     // Emit Notification Event for sound alerts if customer sent message
     if (senderType === 'customer') {
         try {
-            dbInsert('notification_events', {
+            (0, db_js_1.dbInsert)('notification_events', {
                 store_id: conv.store_id,
                 event_type: 'chat_message',
                 event_reference: `chat_${conv.id}_${msgId}`,
@@ -246,8 +254,8 @@ export function sendMessage(conversationId, senderType, senderName, messageText,
         }
         catch (e) { }
         // Push real-time to merchant
-        realtimeHub.broadcastToMerchant(conv.store_id, 'chat_message', newMsg);
-        realtimeHub.broadcastToMerchant(conv.store_id, 'notification', {
+        exports.realtimeHub.broadcastToMerchant(conv.store_id, 'chat_message', newMsg);
+        exports.realtimeHub.broadcastToMerchant(conv.store_id, 'notification', {
             store_id: conv.store_id,
             event_type: 'chat_message',
             event_reference: `chat_${conv.id}_${msgId}`,
@@ -257,15 +265,15 @@ export function sendMessage(conversationId, senderType, senderName, messageText,
     }
     else {
         // Merchant reply -> push real-time to customer
-        realtimeHub.broadcastToCustomer(conv.customer_session_token, 'chat_message', newMsg);
+        exports.realtimeHub.broadcastToCustomer(conv.customer_session_token, 'chat_message', newMsg);
     }
     return { success: true, message: newMsg, conversation: updatedConv };
 }
 /**
  * Get Messages for a Conversation (with Delta Polling support)
  */
-export function getConversationMessages(conversationId, afterId = 0, markAsReadSender) {
-    const db = getDb();
+function getConversationMessages(conversationId, afterId = 0, markAsReadSender) {
+    const db = (0, db_js_1.getDb)();
     let sql = 'SELECT * FROM chat_messages WHERE conversation_id = ?';
     const params = [conversationId];
     if (afterId > 0) {
@@ -291,8 +299,8 @@ export function getConversationMessages(conversationId, afterId = 0, markAsReadS
 /**
  * List Merchant Conversations with Customer Order Aggregations
  */
-export function listMerchantConversations(storeId, search = '') {
-    const db = getDb();
+function listMerchantConversations(storeId, search = '') {
+    const db = (0, db_js_1.getDb)();
     let sql = `
     SELECT 
       c.*,
@@ -318,18 +326,18 @@ export function listMerchantConversations(storeId, search = '') {
 /**
  * Get Customer Order Context for Sidebar in Merchant Live Chat
  */
-export function getCustomerChatContext(conversationId, storeId) {
-    const conv = dbFetchOne('chat_conversations', { id: conversationId, store_id: storeId });
+function getCustomerChatContext(conversationId, storeId) {
+    const conv = (0, db_js_1.dbFetchOne)('chat_conversations', { id: conversationId, store_id: storeId });
     if (!conv)
         return { customer: null, orders: [] };
-    const phoneNorm = conv.customer_phone ? normalizePhoneNumber(conv.customer_phone) : '';
-    let customerProfile = phoneNorm ? dbFetchOne('customers', { store_id: storeId, phone_normalized: phoneNorm }) : null;
+    const phoneNorm = conv.customer_phone ? (0, helpers_js_1.normalizePhoneNumber)(conv.customer_phone) : '';
+    let customerProfile = phoneNorm ? (0, db_js_1.dbFetchOne)('customers', { store_id: storeId, phone_normalized: phoneNorm }) : null;
     // Retrieve customer orders
-    const allOrders = dbFetchAll('orders', { store_id: storeId }, 'id DESC');
+    const allOrders = (0, db_js_1.dbFetchAll)('orders', { store_id: storeId }, 'id DESC');
     const matchingOrders = allOrders.filter(o => {
         if (!conv.customer_phone)
             return false;
-        const oNorm = normalizePhoneNumber(o.customer_phone);
+        const oNorm = (0, helpers_js_1.normalizePhoneNumber)(o.customer_phone);
         return oNorm === phoneNorm || (phoneNorm && oNorm.endsWith(phoneNorm.slice(-10)));
     });
     const totalSpent = matchingOrders

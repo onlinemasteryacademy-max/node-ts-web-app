@@ -1,5 +1,8 @@
-import { dbFetchOne, dbFetchAll, dbInsert, dbUpdate } from '../../db/db.js';
-export const reviewsRoutes = async (fastify) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.reviewsRoutes = void 0;
+const db_js_1 = require("../../db/db.js");
+const reviewsRoutes = async (fastify) => {
     // 1. Get Reviews for Storefront (Public)
     fastify.get('/api/stores/:storeId/reviews', async (req, reply) => {
         const storeId = parseInt(req.params.storeId, 10);
@@ -9,10 +12,10 @@ export const reviewsRoutes = async (fastify) => {
         const itemId = query.item_id ? parseInt(query.item_id, 10) : null;
         let reviews = [];
         if (itemId) {
-            reviews = dbFetchAll('reviews', { store_id: storeId, item_id: itemId, status: 'published' }, 'id DESC');
+            reviews = (0, db_js_1.dbFetchAll)('reviews', { store_id: storeId, item_id: itemId, status: 'published' }, 'id DESC');
         }
         else {
-            reviews = dbFetchAll('reviews', { store_id: storeId, status: 'published' }, 'id DESC');
+            reviews = (0, db_js_1.dbFetchAll)('reviews', { store_id: storeId, status: 'published' }, 'id DESC');
         }
         const totalReviews = reviews.length;
         const avgRating = totalReviews > 0
@@ -39,7 +42,7 @@ export const reviewsRoutes = async (fastify) => {
         if (!comment) {
             return reply.code(400).send({ success: false, error: 'Please write a brief review comment' });
         }
-        const reviewId = dbInsert('reviews', {
+        const reviewId = (0, db_js_1.dbInsert)('reviews', {
             store_id: storeId,
             item_id: itemId,
             customer_name: customerName,
@@ -48,7 +51,7 @@ export const reviewsRoutes = async (fastify) => {
             comment,
             status: 'published'
         });
-        const newReview = dbFetchOne('reviews', { id: reviewId });
+        const newReview = (0, db_js_1.dbFetchOne)('reviews', { id: reviewId });
         return reply.send({ success: true, review: newReview, message: 'Review submitted successfully!' });
     });
     // 3. List All Reviews (Merchant Console)
@@ -56,7 +59,7 @@ export const reviewsRoutes = async (fastify) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const reviews = dbFetchAll('reviews', { store_id: store.id }, 'id DESC');
+        const reviews = (0, db_js_1.dbFetchAll)('reviews', { store_id: store.id }, 'id DESC');
         return reply.send({ success: true, reviews });
     });
     // 4. Toggle Review Visibility (Merchant Console)
@@ -66,11 +69,12 @@ export const reviewsRoutes = async (fastify) => {
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
         const body = (req.body || {});
         const reviewId = parseInt(body.id, 10);
-        const review = dbFetchOne('reviews', { id: reviewId, store_id: store.id });
+        const review = (0, db_js_1.dbFetchOne)('reviews', { id: reviewId, store_id: store.id });
         if (!review)
             return reply.code(404).send({ success: false, error: 'Review not found' });
         const newStatus = review.status === 'published' ? 'hidden' : 'published';
-        dbUpdate('reviews', { status: newStatus }, { id: reviewId });
+        (0, db_js_1.dbUpdate)('reviews', { status: newStatus }, { id: reviewId });
         return reply.send({ success: true, status: newStatus });
     });
 };
+exports.reviewsRoutes = reviewsRoutes;

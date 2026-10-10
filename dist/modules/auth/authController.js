@@ -1,7 +1,13 @@
-import crypto from 'node:crypto';
-import { dbFetchOne, dbFetchAll, dbInsert, dbUpdate } from '../../db/db.js';
-import { normalizePhoneNumber, hashPassword, comparePassword, validateStoreSlugAvailability, getPlatformSettings } from '../../utils/helpers.js';
-import { sendEmailVerificationOtp, sendMerchantWelcomeEmail } from '../email/mailer.js';
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.authRoutes = authRoutes;
+const node_crypto_1 = __importDefault(require("node:crypto"));
+const db_js_1 = require("../../db/db.js");
+const helpers_js_1 = require("../../utils/helpers.js");
+const mailer_js_1 = require("../email/mailer.js");
 const OTP_LIFETIME_SECONDS = 59;
 function parseDateMs(dateStr) {
     if (!dateStr)
@@ -17,7 +23,7 @@ function parseDateMs(dateStr) {
         return new Date(s + 'Z').getTime();
     return new Date(s.replace(' ', 'T') + 'Z').getTime();
 }
-export async function authRoutes(fastify) {
+async function authRoutes(fastify) {
     /**
      * 1. Initiate Merchant Registration (Generates 6-Digit Email OTP)
      */
@@ -38,31 +44,31 @@ export async function authRoutes(fastify) {
             return reply.send({ success: false, error: 'Please enter a valid email address' });
         }
         // Validate username / slug uniqueness & reservation
-        const slugCheck = validateStoreSlugAvailability(rawSlug);
+        const slugCheck = (0, helpers_js_1.validateStoreSlugAvailability)(rawSlug);
         if (!slugCheck.valid) {
             return reply.send({ success: false, error: slugCheck.error });
         }
         const slug = slugCheck.normalizedSlug;
         // Check if an active store with this email already exists
-        const existingStoreByEmail = dbFetchOne('stores', { email, status: 'active' });
+        const existingStoreByEmail = (0, db_js_1.dbFetchOne)('stores', { email, status: 'active' });
         if (existingStoreByEmail) {
             return reply.send({ success: false, error: 'A store account with this email address already exists. Please sign in.' });
         }
         // Check if an active store with this phone already exists
-        const phoneNorm = normalizePhoneNumber(phone);
-        const allStores = dbFetchAll('stores', { status: 'active' });
+        const phoneNorm = (0, helpers_js_1.normalizePhoneNumber)(phone);
+        const allStores = (0, db_js_1.dbFetchAll)('stores', { status: 'active' });
         const existingStoreByPhone = allStores.find(s => {
-            const sNorm = normalizePhoneNumber(s.whatsapp_number);
+            const sNorm = (0, helpers_js_1.normalizePhoneNumber)(s.whatsapp_number);
             return sNorm === phoneNorm || (phoneNorm && sNorm.endsWith(phoneNorm.slice(-10)));
         });
         if (existingStoreByPhone) {
             return reply.send({ success: false, error: 'A store account with this WhatsApp number already exists. Please sign in.' });
         }
         // Generate cryptographically secure 6-digit numeric OTP and token
-        const otpCode = String(crypto.randomInt(100000, 999999));
-        const otpHash = crypto.createHash('sha256').update(otpCode).digest('hex');
-        const token = crypto.randomUUID();
-        const passHash = await hashPassword(password);
+        const otpCode = String(node_crypto_1.default.randomInt(100000, 999999));
+        const otpHash = node_crypto_1.default.createHash('sha256').update(otpCode).digest('hex');
+        const token = node_crypto_1.default.randomUUID();
+        const passHash = await (0, helpers_js_1.hashPassword)(password);
         const nowMs = Date.now();
         const expiresAt = new Date(nowMs + OTP_LIFETIME_SECONDS * 1000).toISOString();
         const pendingPayload = {
@@ -80,7 +86,7 @@ export async function authRoutes(fastify) {
             business_type: body.business_type || 'retail'
         };
         // Save pending verification record
-        dbInsert('email_verifications', {
+        (0, db_js_1.dbInsert)('email_verifications', {
             email,
             otp_hash: otpHash,
             token,
@@ -92,7 +98,7 @@ export async function authRoutes(fastify) {
         });
         // Send Verification Email
         const verifyUrl = `${req.protocol}://${req.hostname}/verify-email?token=${token}&code=${otpCode}`;
-        await sendEmailVerificationOtp(email, ownerName, otpCode, verifyUrl);
+        await (0, mailer_js_1.sendEmailVerificationOtp)(email, ownerName, otpCode, verifyUrl);
         return reply.send({
             success: true,
             token,
@@ -116,10 +122,10 @@ export async function authRoutes(fastify) {
         }
         let verif = null;
         if (token) {
-            verif = dbFetchOne('email_verifications', { token, used: 0 });
+            verif = (0, db_js_1.dbFetchOne)('email_verifications', { token, used: 0 });
         }
         else if (email) {
-            const rows = dbFetchAll('email_verifications', { email, used: 0 });
+            const rows = (0, db_js_1.dbFetchAll)('email_verifications', { email, used: 0 });
             verif = rows.sort((a, b) => b.id - a.id)[0];
         }
         if (!verif) {
@@ -135,9 +141,9 @@ export async function authRoutes(fastify) {
             return reply.send({ success: false, error: 'Too many incorrect attempts. Please request a new verification code.' });
         }
         // Check hash - strictly matches the 6-digit code sent to the email
-        const inputHash = crypto.createHash('sha256').update(otpCode).digest('hex');
+        const inputHash = node_crypto_1.default.createHash('sha256').update(otpCode).digest('hex');
         if (inputHash !== verif.otp_hash) {
-            dbUpdate('email_verifications', { attempts: (verif.attempts || 0) + 1 }, { id: verif.id });
+            (0, db_js_1.dbUpdate)('email_verifications', { attempts: (verif.attempts || 0) + 1 }, { id: verif.id });
             const remaining = 4 - (verif.attempts || 0);
             return reply.send({
                 success: false,
@@ -145,19 +151,19 @@ export async function authRoutes(fastify) {
             });
         }
         // Mark as verified
-        dbUpdate('email_verifications', { used: 1 }, { id: verif.id });
+        (0, db_js_1.dbUpdate)('email_verifications', { used: 1 }, { id: verif.id });
         // Parse pending registration data
         const payload = JSON.parse(verif.payload_json);
         const slug = payload.slug;
         // Archive any old deleted store with the same slug
-        const deletedStore = dbFetchOne('stores', { slug, status: 'deleted' });
+        const deletedStore = (0, db_js_1.dbFetchOne)('stores', { slug, status: 'deleted' });
         if (deletedStore) {
-            dbUpdate('stores', { slug: `${slug}_archived_${deletedStore.id}` }, { id: deletedStore.id });
+            (0, db_js_1.dbUpdate)('stores', { slug: `${slug}_archived_${deletedStore.id}` }, { id: deletedStore.id });
         }
         const now = new Date();
         const isPaidPlan = payload.plan_tier === 'pro' || payload.plan_tier === 'business';
         // Insert Store Record
-        const storeId = dbInsert('stores', {
+        const storeId = (0, db_js_1.dbInsert)('stores', {
             slug: payload.slug,
             store_name: payload.store_name,
             owner_name: payload.owner_name,
@@ -190,13 +196,13 @@ export async function authRoutes(fastify) {
             created_at: now.toISOString().slice(0, 19).replace('T', ' '),
             updated_at: now.toISOString().slice(0, 19).replace('T', ' ')
         });
-        const newStore = dbFetchOne('stores', { id: storeId });
+        const newStore = (0, db_js_1.dbFetchOne)('stores', { id: storeId });
         req.session.merchantStore = newStore;
         // ==========================================
         // Free Plan Branch -> Instant Launch
         // ==========================================
         if (!isPaidPlan) {
-            sendMerchantWelcomeEmail(newStore).catch(() => { });
+            (0, mailer_js_1.sendMerchantWelcomeEmail)(newStore).catch(() => { });
             return reply.send({
                 success: true,
                 requires_payment: false,
@@ -207,7 +213,7 @@ export async function authRoutes(fastify) {
         // ==========================================
         // Paid Plan Branch -> Initialize Paystack Payment
         // ==========================================
-        const settings = getPlatformSettings();
+        const settings = (0, helpers_js_1.getPlatformSettings)();
         let amount = 5000;
         if (payload.plan_tier === 'pro') {
             amount = payload.billing_cycle === 'yearly'
@@ -220,7 +226,7 @@ export async function authRoutes(fastify) {
                 : Number(settings.business_monthly_price || 9000);
         }
         const reference = `sub_${storeId}_${Date.now()}`;
-        dbInsert('subscription_payments', {
+        (0, db_js_1.dbInsert)('subscription_payments', {
             store_id: storeId,
             email: payload.email,
             reference,
@@ -268,28 +274,28 @@ export async function authRoutes(fastify) {
         const email = body.email?.toLowerCase().trim();
         let verif = null;
         if (token) {
-            verif = dbFetchOne('email_verifications', { token, used: 0 });
+            verif = (0, db_js_1.dbFetchOne)('email_verifications', { token, used: 0 });
         }
         else if (email) {
-            const rows = dbFetchAll('email_verifications', { email, used: 0 });
+            const rows = (0, db_js_1.dbFetchAll)('email_verifications', { email, used: 0 });
             verif = rows.sort((a, b) => b.id - a.id)[0];
         }
         if (!verif) {
             return reply.send({ success: false, error: 'No active signup session found. Please start registration again.' });
         }
         const payload = JSON.parse(verif.payload_json);
-        const newOtp = String(crypto.randomInt(100000, 999999));
-        const newHash = crypto.createHash('sha256').update(newOtp).digest('hex');
+        const newOtp = String(node_crypto_1.default.randomInt(100000, 999999));
+        const newHash = node_crypto_1.default.createHash('sha256').update(newOtp).digest('hex');
         const nowMs = Date.now();
         const expiresAt = new Date(nowMs + OTP_LIFETIME_SECONDS * 1000).toISOString();
-        dbUpdate('email_verifications', {
+        (0, db_js_1.dbUpdate)('email_verifications', {
             otp_hash: newHash,
             attempts: 0,
             expires_at: expiresAt,
             created_at: new Date(nowMs).toISOString()
         }, { id: verif.id });
         const verifyUrl = `${req.protocol}://${req.hostname}/verify-email?token=${verif.token}&code=${newOtp}`;
-        await sendEmailVerificationOtp(verif.email, payload.owner_name, newOtp, verifyUrl);
+        await (0, mailer_js_1.sendEmailVerificationOtp)(verif.email, payload.owner_name, newOtp, verifyUrl);
         return reply.send({
             success: true,
             expires_in: OTP_LIFETIME_SECONDS,
@@ -305,7 +311,7 @@ export async function authRoutes(fastify) {
         if (!token || !code) {
             return reply.redirect('/?error=invalid_verification_link');
         }
-        const verif = dbFetchOne('email_verifications', { token, used: 0 });
+        const verif = (0, db_js_1.dbFetchOne)('email_verifications', { token, used: 0 });
         if (!verif) {
             return reply.redirect('/?error=verification_session_not_found');
         }
@@ -313,22 +319,22 @@ export async function authRoutes(fastify) {
         if (Date.now() > expiryMs) {
             return reply.redirect('/?error=verification_link_expired');
         }
-        const inputHash = crypto.createHash('sha256').update(code).digest('hex');
+        const inputHash = node_crypto_1.default.createHash('sha256').update(code).digest('hex');
         if (inputHash !== verif.otp_hash) {
             return reply.redirect('/?error=invalid_verification_code');
         }
         // Mark as used
-        dbUpdate('email_verifications', { used: 1 }, { id: verif.id });
+        (0, db_js_1.dbUpdate)('email_verifications', { used: 1 }, { id: verif.id });
         const payload = JSON.parse(verif.payload_json);
         const slug = payload.slug;
         // Archive any old deleted store
-        const deletedStore = dbFetchOne('stores', { slug, status: 'deleted' });
+        const deletedStore = (0, db_js_1.dbFetchOne)('stores', { slug, status: 'deleted' });
         if (deletedStore) {
-            dbUpdate('stores', { slug: `${slug}_archived_${deletedStore.id}` }, { id: deletedStore.id });
+            (0, db_js_1.dbUpdate)('stores', { slug: `${slug}_archived_${deletedStore.id}` }, { id: deletedStore.id });
         }
         const now = new Date();
         const isPaidPlan = payload.plan_tier === 'pro' || payload.plan_tier === 'business';
-        const storeId = dbInsert('stores', {
+        const storeId = (0, db_js_1.dbInsert)('stores', {
             slug: payload.slug,
             store_name: payload.store_name,
             owner_name: payload.owner_name,
@@ -351,10 +357,10 @@ export async function authRoutes(fastify) {
             created_at: now.toISOString().slice(0, 19).replace('T', ' '),
             updated_at: now.toISOString().slice(0, 19).replace('T', ' ')
         });
-        const newStore = dbFetchOne('stores', { id: storeId });
+        const newStore = (0, db_js_1.dbFetchOne)('stores', { id: storeId });
         req.session.merchantStore = newStore;
         if (!isPaidPlan) {
-            sendMerchantWelcomeEmail(newStore).catch(() => { });
+            (0, mailer_js_1.sendMerchantWelcomeEmail)(newStore).catch(() => { });
             return reply.redirect('/merchant?verified=1');
         }
         else {
@@ -376,18 +382,18 @@ export async function authRoutes(fastify) {
             return reply.send({ success: false, error: 'Store name, WhatsApp phone number, and password are required' });
         }
         // Validate username / slug uniqueness & reservation
-        const slugCheck = validateStoreSlugAvailability(rawSlug);
+        const slugCheck = (0, helpers_js_1.validateStoreSlugAvailability)(rawSlug);
         if (!slugCheck.valid) {
             return reply.send({ success: false, error: slugCheck.error });
         }
         const slug = slugCheck.normalizedSlug;
-        const deletedStore = dbFetchOne('stores', { slug, status: 'deleted' });
+        const deletedStore = (0, db_js_1.dbFetchOne)('stores', { slug, status: 'deleted' });
         if (deletedStore) {
-            dbUpdate('stores', { slug: `${slug}_archived_${deletedStore.id}` }, { id: deletedStore.id });
+            (0, db_js_1.dbUpdate)('stores', { slug: `${slug}_archived_${deletedStore.id}` }, { id: deletedStore.id });
         }
-        const passHash = await hashPassword(password);
+        const passHash = await (0, helpers_js_1.hashPassword)(password);
         const now = new Date();
-        const storeId = dbInsert('stores', {
+        const storeId = (0, db_js_1.dbInsert)('stores', {
             slug,
             store_name: storeName,
             owner_name: ownerName,
@@ -410,7 +416,7 @@ export async function authRoutes(fastify) {
             created_at: now.toISOString().slice(0, 19).replace('T', ' '),
             updated_at: now.toISOString().slice(0, 19).replace('T', ' ')
         });
-        const newStore = dbFetchOne('stores', { id: storeId });
+        const newStore = (0, db_js_1.dbFetchOne)('stores', { id: storeId });
         req.session.merchantStore = newStore;
         return reply.send({ success: true, store: newStore, redirect: '/merchant' });
     });
@@ -427,21 +433,21 @@ export async function authRoutes(fastify) {
         let store = null;
         // 1. Try Email
         if (identifier.includes('@')) {
-            store = dbFetchOne('stores', { email: identifier.toLowerCase() });
+            store = (0, db_js_1.dbFetchOne)('stores', { email: identifier.toLowerCase() });
         }
         // 2. Try Phone
         if (!store) {
-            const phoneNorm = normalizePhoneNumber(identifier);
-            const allStores = dbFetchAll('stores');
+            const phoneNorm = (0, helpers_js_1.normalizePhoneNumber)(identifier);
+            const allStores = (0, db_js_1.dbFetchAll)('stores');
             store = allStores.find(s => {
-                const sNorm = normalizePhoneNumber(s.whatsapp_number);
+                const sNorm = (0, helpers_js_1.normalizePhoneNumber)(s.whatsapp_number);
                 return sNorm === phoneNorm || (phoneNorm && sNorm.endsWith(phoneNorm.slice(-10)));
             });
         }
         if (!store) {
             return reply.send({ success: false, error: 'No store account found with this email or phone number' });
         }
-        const matches = await comparePassword(password, store.password_hash);
+        const matches = await (0, helpers_js_1.comparePassword)(password, store.password_hash);
         if (!matches) {
             return reply.send({ success: false, error: 'Incorrect password' });
         }
@@ -462,11 +468,11 @@ export async function authRoutes(fastify) {
         const body = (req.body || {});
         const email = body.email?.toLowerCase().trim();
         const password = body.password;
-        const admin = dbFetchOne('super_admins', { email });
+        const admin = (0, db_js_1.dbFetchOne)('super_admins', { email });
         if (!admin) {
             return reply.send({ success: false, error: 'Invalid admin credentials' });
         }
-        const matches = await comparePassword(password, admin.password_hash);
+        const matches = await (0, helpers_js_1.comparePassword)(password, admin.password_hash);
         if (!matches) {
             return reply.send({ success: false, error: 'Invalid admin credentials' });
         }
@@ -474,7 +480,7 @@ export async function authRoutes(fastify) {
         req.session.admin_name = admin.name;
         req.session.admin_role = admin.role;
         req.session.superAdmin = admin;
-        dbUpdate('super_admins', {
+        (0, db_js_1.dbUpdate)('super_admins', {
             last_login_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
             last_login_ip: req.ip
         }, { id: admin.id });

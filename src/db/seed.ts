@@ -1,11 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { getDb, initSchema } from './db.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const phpJsonPath = path.resolve(__dirname, '../../../php-web-app/data/db_store.json');
 const phpDbPath = path.resolve(__dirname, '../../../php-web-app/data/odivo.sqlite');

@@ -1,7 +1,10 @@
+"use strict";
 /**
  * Business Types & Template Customization Definitions
  */
-export const BUSINESS_TYPES = {
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.BUSINESS_TYPES = void 0;
+exports.BUSINESS_TYPES = {
     retail: {
         name: 'Retail & Supermarket',
         category: 'retail',

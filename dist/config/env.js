@@ -1,24 +1,28 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ENV = void 0;
+exports.loadEnv = loadEnv;
+const node_fs_1 = __importDefault(require("node:fs"));
+const node_path_1 = __importDefault(require("node:path"));
 /**
  * Universal Environment Loader
  * Loads .env file into process.env if present
  */
-export function loadEnv() {
+function loadEnv() {
     const candidatePaths = [
-        path.resolve(process.cwd(), '.env'),
-        path.resolve(process.cwd(), 'node-ts-web-app', '.env'),
-        path.resolve(__dirname, '..', '..', '.env'),
-        path.resolve(__dirname, '..', '.env')
+        node_path_1.default.resolve(process.cwd(), '.env'),
+        node_path_1.default.resolve(process.cwd(), 'node-ts-web-app', '.env'),
+        node_path_1.default.resolve(__dirname, '..', '..', '.env'),
+        node_path_1.default.resolve(__dirname, '..', '.env')
     ];
-    const envPath = candidatePaths.find(p => fs.existsSync(p));
+    const envPath = candidatePaths.find(p => node_fs_1.default.existsSync(p));
     if (!envPath)
         return;
     try {
-        const content = fs.readFileSync(envPath, 'utf-8');
+        const content = node_fs_1.default.readFileSync(envPath, 'utf-8');
         const lines = content.split('\n');
         for (const line of lines) {
             const trimmed = line.trim();
@@ -45,7 +49,7 @@ export function loadEnv() {
 }
 // Automatically load on import
 loadEnv();
-export const ENV = {
+exports.ENV = {
     NODE_ENV: process.env.NODE_ENV || 'development',
     IS_PRODUCTION: (process.env.NODE_ENV || '').toLowerCase() === 'production',
     PORT: parseInt(process.env.PORT || '3000', 10),

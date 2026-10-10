@@ -1,14 +1,20 @@
-import { dbFetchOne, dbUpdate } from '../../db/db.js';
-import { getStorePlanDetails } from '../../utils/helpers.js';
-import dns from 'node:dns/promises';
-export const domainsRoutes = async (fastify) => {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.domainsRoutes = void 0;
+const db_js_1 = require("../../db/db.js");
+const helpers_js_1 = require("../../utils/helpers.js");
+const promises_1 = __importDefault(require("node:dns/promises"));
+const domainsRoutes = async (fastify) => {
     // 1. Get Custom Domain Status
     fastify.get('/api/merchant/custom-domain/status', async (req, reply) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const { isBusiness } = getStorePlanDetails(currentStore);
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const { isBusiness } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
         if (!currentStore.custom_domain) {
             return reply.send({
                 success: true,
@@ -21,7 +27,7 @@ export const domainsRoutes = async (fastify) => {
         let verified = false;
         let dnsRecordFound = false;
         try {
-            const cnames = await dns.resolveCname(currentStore.custom_domain);
+            const cnames = await promises_1.default.resolveCname(currentStore.custom_domain);
             if (cnames && cnames.length > 0) {
                 dnsRecordFound = true;
                 verified = true;
@@ -33,7 +39,7 @@ export const domainsRoutes = async (fastify) => {
         }
         const currentStatus = verified ? 'verified' : 'pending_dns';
         if (currentStore.custom_domain_status !== currentStatus) {
-            dbUpdate('stores', { custom_domain_status: currentStatus }, { id: currentStore.id });
+            (0, db_js_1.dbUpdate)('stores', { custom_domain_status: currentStatus }, { id: currentStore.id });
         }
         return reply.send({
             success: true,
@@ -49,8 +55,8 @@ export const domainsRoutes = async (fastify) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const { isBusiness } = getStorePlanDetails(currentStore);
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const { isBusiness } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
         if (!isBusiness) {
             return reply.code(403).send({
                 success: false,
@@ -65,11 +71,11 @@ export const domainsRoutes = async (fastify) => {
         // Sanitize domain
         domain = domain.replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/:\d+$/, '');
         // Check if domain is already claimed by another store
-        const existing = dbFetchOne('stores', { custom_domain: domain });
+        const existing = (0, db_js_1.dbFetchOne)('stores', { custom_domain: domain });
         if (existing && existing.id !== currentStore.id) {
             return reply.code(400).send({ success: false, error: 'This domain is already mapped to another store on Zlik.' });
         }
-        dbUpdate('stores', {
+        (0, db_js_1.dbUpdate)('stores', {
             custom_domain: domain,
             custom_domain_status: 'pending_dns'
         }, { id: currentStore.id });
@@ -86,10 +92,11 @@ export const domainsRoutes = async (fastify) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized' });
-        dbUpdate('stores', {
+        (0, db_js_1.dbUpdate)('stores', {
             custom_domain: null,
             custom_domain_status: 'unverified'
         }, { id: store.id });
         return reply.send({ success: true });
     });
 };
+exports.domainsRoutes = domainsRoutes;

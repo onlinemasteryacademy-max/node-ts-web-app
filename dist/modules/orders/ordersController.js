@@ -1,5 +1,8 @@
-import { createOrder, submitPaymentClaim, confirmOrderPayment, rejectOrderPayment, updateOrderStatus, pollOrdersAndEvents } from './ordersService.js';
-export async function ordersRoutes(fastify) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ordersRoutes = ordersRoutes;
+const ordersService_js_1 = require("./ordersService.js");
+async function ordersRoutes(fastify) {
     const handleOrdersApi = async (req, reply) => {
         const action = req.query?.action || req.body?.action;
         const store = req.session?.merchantStore;
@@ -7,7 +10,7 @@ export async function ordersRoutes(fastify) {
             // 1. Create Order
             if (action === 'create_order') {
                 const body = (req.body || {});
-                const result = createOrder({
+                const result = (0, ordersService_js_1.createOrder)({
                     store_id: parseInt(body.store_id || '0'),
                     customer_name: body.customer_name,
                     customer_phone: body.customer_phone,
@@ -32,7 +35,7 @@ export async function ordersRoutes(fastify) {
                 const receiptUrl = body.receipt_url || null;
                 if (!orderId)
                     return reply.send({ success: false, error: 'order_id is required' });
-                const result = submitPaymentClaim(orderId, ref, receiptUrl);
+                const result = (0, ordersService_js_1.submitPaymentClaim)(orderId, ref, receiptUrl);
                 return reply.send(result);
             }
             // 3. Confirm Payment (Merchant)
@@ -41,7 +44,7 @@ export async function ordersRoutes(fastify) {
                     return reply.code(401).send({ success: false, error: 'Unauthorized' });
                 const body = (req.body || {});
                 const orderId = parseInt(body.order_id || '0');
-                const res = confirmOrderPayment(orderId, store.id);
+                const res = (0, ordersService_js_1.confirmOrderPayment)(orderId, store.id);
                 return reply.send(res);
             }
             // 4. Reject Payment (Merchant)
@@ -50,7 +53,7 @@ export async function ordersRoutes(fastify) {
                     return reply.code(401).send({ success: false, error: 'Unauthorized' });
                 const body = (req.body || {});
                 const orderId = parseInt(body.order_id || '0');
-                const res = rejectOrderPayment(orderId, store.id);
+                const res = (0, ordersService_js_1.rejectOrderPayment)(orderId, store.id);
                 return reply.send(res);
             }
             // 5. Update Status (Merchant)
@@ -60,7 +63,7 @@ export async function ordersRoutes(fastify) {
                 const body = (req.body || {});
                 const orderId = parseInt(body.order_id || '0');
                 const status = body.status || body.order_status;
-                const res = updateOrderStatus(orderId, store.id, status);
+                const res = (0, ordersService_js_1.updateOrderStatus)(orderId, store.id, status);
                 return reply.send(res);
             }
             // 6. Poll Events
@@ -69,7 +72,7 @@ export async function ordersRoutes(fastify) {
                     return reply.code(401).send({ success: false, error: 'Unauthorized' });
                 const sinceOrderId = parseInt(req.query?.since_id || '0');
                 const sinceEventId = parseInt(req.query?.since_event_id || '0');
-                const data = pollOrdersAndEvents(store.id, sinceOrderId, sinceEventId);
+                const data = (0, ordersService_js_1.pollOrdersAndEvents)(store.id, sinceOrderId, sinceEventId);
                 return reply.send({ success: true, ...data });
             }
             return reply.send({ success: false, error: 'Invalid orders action' });

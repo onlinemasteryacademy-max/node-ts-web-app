@@ -1,12 +1,35 @@
-import bcrypt from 'bcryptjs';
-import crypto from 'node:crypto';
-import { PLANS } from '../config/plans.js';
-import { dbFetchOne, dbFetchAll, dbInsert, dbUpdate } from '../db/db.js';
-import { ENV } from '../config/env.js';
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.NIGERIAN_STATES = exports.STORE_MARKETPLACE_CATEGORIES = exports.RESERVED_USERNAMES = void 0;
+exports.normalizePhoneNumber = normalizePhoneNumber;
+exports.formatCurrency = formatCurrency;
+exports.hashPassword = hashPassword;
+exports.verifyPassword = verifyPassword;
+exports.comparePassword = comparePassword;
+exports.getPlatformSettings = getPlatformSettings;
+exports.getEffectivePlans = getEffectivePlans;
+exports.getStorePlanDetails = getStorePlanDetails;
+exports.can = can;
+exports.limit = limit;
+exports.resolveOrCreateCustomer = resolveOrCreateCustomer;
+exports.checkCustomerOpenOrdersLimit = checkCustomerOpenOrdersLimit;
+exports.calculateStoreRevenueMetrics = calculateStoreRevenueMetrics;
+exports.generatePasswordResetToken = generatePasswordResetToken;
+exports.normalizeStoreSlug = normalizeStoreSlug;
+exports.validateStoreSlugAvailability = validateStoreSlugAvailability;
+exports.getStoreCategoryInfo = getStoreCategoryInfo;
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const node_crypto_1 = __importDefault(require("node:crypto"));
+const plans_js_1 = require("../config/plans.js");
+const db_js_1 = require("../db/db.js");
+const env_js_1 = require("../config/env.js");
 /**
  * Normalize phone number into canonical Nigerian standard (+2348012345678)
  */
-export function normalizePhoneNumber(phone) {
+function normalizePhoneNumber(phone) {
     if (!phone)
         return '';
     const cleaned = String(phone).trim().replace(/[^\d+]/g, '');
@@ -31,35 +54,35 @@ export function normalizePhoneNumber(phone) {
 /**
  * Format currency with locale commas
  */
-export function formatCurrency(amount, symbol = '₦') {
+function formatCurrency(amount, symbol = '₦') {
     const num = typeof amount === 'string' ? parseFloat(amount) : (Number(amount) || 0);
     return symbol + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 /**
  * Hash password securely
  */
-export function hashPassword(password) {
-    const salt = bcrypt.genSaltSync(10);
-    return bcrypt.hashSync(password, salt);
+function hashPassword(password) {
+    const salt = bcryptjs_1.default.genSaltSync(10);
+    return bcryptjs_1.default.hashSync(password, salt);
 }
 /**
  * Verify password against hash
  */
-export function verifyPassword(password, hash) {
+function verifyPassword(password, hash) {
     if (!password || !hash)
         return false;
-    return bcrypt.compareSync(password, hash);
+    return bcryptjs_1.default.compareSync(password, hash);
 }
-export function comparePassword(password, hash) {
+function comparePassword(password, hash) {
     if (!password || !hash)
         return Promise.resolve(false);
-    return bcrypt.compare(password, hash);
+    return bcryptjs_1.default.compare(password, hash);
 }
 /**
  * Get Platform Settings
  */
-export function getPlatformSettings() {
-    const settings = dbFetchOne('platform_settings');
+function getPlatformSettings() {
+    const settings = (0, db_js_1.dbFetchOne)('platform_settings');
     return settings || {
         platform_name: 'Zlik',
         pro_monthly_price: 5000,
@@ -75,7 +98,7 @@ export function getPlatformSettings() {
  * Dynamic resolution of all platform plans, limits, and feature toggles.
  * Merges baseline defaults with active database settings (platform_settings.plans_config_json).
  */
-export function getEffectivePlans() {
+function getEffectivePlans() {
     const settings = getPlatformSettings();
     const proMonthly = Number(settings.pro_monthly_price || 5000);
     const proYearly = Number(settings.pro_yearly_price || 50000);
@@ -84,7 +107,7 @@ export function getEffectivePlans() {
     const freeLimit = Number(settings.free_product_limit || 10);
     const freePosters = Number(settings.free_weekly_posters || 3);
     // Deep clone baseline PLANS
-    const resolved = JSON.parse(JSON.stringify(PLANS));
+    const resolved = JSON.parse(JSON.stringify(plans_js_1.PLANS));
     // Sync pricing numbers
     resolved.free.price_monthly = 0;
     resolved.free.price_yearly = 0;
@@ -125,7 +148,7 @@ export function getEffectivePlans() {
 /**
  * Get active plan and configuration details for a store
  */
-export function getStorePlanDetails(store) {
+function getStorePlanDetails(store) {
     const now = new Date();
     let planKey = (store?.plan_tier || store?.plan || 'free').toLowerCase();
     // Check 7-day Pro trial
@@ -155,28 +178,28 @@ export function getStorePlanDetails(store) {
 /**
  * Universal Feature Gating Check
  */
-export function can(store, featureKey) {
+function can(store, featureKey) {
     const { config } = getStorePlanDetails(store);
     return Boolean(config.features[featureKey]);
 }
 /**
  * Universal Limits Check
  */
-export function limit(store, limitKey) {
+function limit(store, limitKey) {
     const { config } = getStorePlanDetails(store);
     return config.limits[limitKey] ?? 0;
 }
 /**
  * Resolve existing customer or create a new one using (store_id + phone_normalized)
  */
-export function resolveOrCreateCustomer(storeId, phoneRaw, name, email, address) {
+function resolveOrCreateCustomer(storeId, phoneRaw, name, email, address) {
     const phoneNorm = normalizePhoneNumber(phoneRaw);
     const phoneDisplay = String(phoneRaw || '').trim();
     const cleanName = String(name || '').trim();
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
     if (!phoneNorm)
         return null;
-    const existing = dbFetchOne('customers', {
+    const existing = (0, db_js_1.dbFetchOne)('customers', {
         store_id: storeId,
         phone_normalized: phoneNorm
     });
@@ -192,11 +215,11 @@ export function resolveOrCreateCustomer(storeId, phoneRaw, name, email, address)
             updates.email = email.toLowerCase().trim();
         if (address)
             updates.address = address.trim();
-        dbUpdate('customers', updates, { id: existing.id });
+        (0, db_js_1.dbUpdate)('customers', updates, { id: existing.id });
         return { ...existing, ...updates };
     }
     else {
-        const newId = dbInsert('customers', {
+        const newId = (0, db_js_1.dbInsert)('customers', {
             store_id: storeId,
             phone_normalized: phoneNorm,
             phone_display: phoneDisplay,
@@ -210,18 +233,18 @@ export function resolveOrCreateCustomer(storeId, phoneRaw, name, email, address)
             created_at: now,
             updated_at: now
         });
-        return dbFetchOne('customers', { id: newId });
+        return (0, db_js_1.dbFetchOne)('customers', { id: newId });
     }
 }
 /**
  * Open-Orders Anti-Spam Check
  */
-export function checkCustomerOpenOrdersLimit(storeId, phoneRaw) {
+function checkCustomerOpenOrdersLimit(storeId, phoneRaw) {
     const phoneNorm = normalizePhoneNumber(phoneRaw);
     if (!phoneNorm) {
         return { allowed: true, open_count: 0, open_orders: [] };
     }
-    const allOrders = dbFetchAll('orders', { store_id: storeId }, 'id DESC');
+    const allOrders = (0, db_js_1.dbFetchAll)('orders', { store_id: storeId }, 'id DESC');
     const openOrders = allOrders.filter(o => {
         const norm = normalizePhoneNumber(o.customer_phone);
         const status = (o.order_status || 'pending').toLowerCase();
@@ -239,7 +262,7 @@ export function checkCustomerOpenOrdersLimit(storeId, phoneRaw) {
  * Free Periods: today, yesterday, this_week, this_month, last_month
  * Paid (Pro/Business) Periods: 3months, 6months, yearly, lifetime
  */
-export function calculateStoreRevenueMetrics(orders) {
+function calculateStoreRevenueMetrics(orders) {
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const yesterdayStart = todayStart - 86400000;
@@ -349,26 +372,26 @@ export function calculateStoreRevenueMetrics(orders) {
 /**
  * Generate Crypto Reset Token
  */
-export function generatePasswordResetToken() {
-    const token = crypto.randomBytes(32).toString('hex');
-    const hash = crypto.createHash('sha256').update(token).digest('hex');
+function generatePasswordResetToken() {
+    const token = node_crypto_1.default.randomBytes(32).toString('hex');
+    const hash = node_crypto_1.default.createHash('sha256').update(token).digest('hex');
     return { token, hash };
 }
 /**
  * Reserved System Usernames / Paths
  */
-export const RESERVED_USERNAMES = new Set([
+exports.RESERVED_USERNAMES = new Set([
     'admin', 'api', 'assets', 'merchant', 'login', 'register', 'logout', 'marketplace',
     'store', 'order', 'receipt', 'favicon.ico', 'robots.txt', 'sitemap.xml', 'terms',
     'privacy', 'pricing', 'checkout', 'dashboard', 'settings', 'messages', 'items',
     'chat', 'feed', 'auth', 'webhook', 'webhooks', 'help', 'support', 'billing', 'upgrade',
     'test', 'null', 'undefined', 'static', 'public', 'superadmin', 'super-admin',
-    'zlik-ops-9x7q2m8b', ENV.ADMIN_SECRET_PATH.toLowerCase()
+    'zlik-ops-9x7q2m8b', env_js_1.ENV.ADMIN_SECRET_PATH.toLowerCase()
 ]);
 /**
  * Normalize username / slug into clean lowercase format
  */
-export function normalizeStoreSlug(input) {
+function normalizeStoreSlug(input) {
     if (!input)
         return '';
     return input
@@ -381,7 +404,7 @@ export function normalizeStoreSlug(input) {
 /**
  * Validate and ensure a store username/slug is unique and available (unless previous store is deleted)
  */
-export function validateStoreSlugAvailability(rawSlug, excludeStoreId) {
+function validateStoreSlugAvailability(rawSlug, excludeStoreId) {
     const slug = normalizeStoreSlug(rawSlug);
     if (!slug || slug.length < 3) {
         return { valid: false, normalizedSlug: slug, error: 'Store username must be at least 3 characters long.' };
@@ -389,11 +412,11 @@ export function validateStoreSlugAvailability(rawSlug, excludeStoreId) {
     if (slug.length > 30) {
         return { valid: false, normalizedSlug: slug, error: 'Store username cannot exceed 30 characters.' };
     }
-    if (RESERVED_USERNAMES.has(slug)) {
+    if (exports.RESERVED_USERNAMES.has(slug)) {
         return { valid: false, normalizedSlug: slug, error: `The username "${slug}" is reserved for system routes. Please choose another.` };
     }
     // Check if assigned to any other active/non-deleted store
-    const allStores = dbFetchAll('stores', { slug });
+    const allStores = (0, db_js_1.dbFetchAll)('stores', { slug });
     const conflict = allStores.find(s => {
         if (excludeStoreId && s.id === excludeStoreId)
             return false;
@@ -408,7 +431,7 @@ export function validateStoreSlugAvailability(rawSlug, excludeStoreId) {
     }
     return { valid: true, normalizedSlug: slug };
 }
-export const STORE_MARKETPLACE_CATEGORIES = {
+exports.STORE_MARKETPLACE_CATEGORIES = {
     all: {
         id: 'all',
         name: 'All Categories',
@@ -473,35 +496,35 @@ export const STORE_MARKETPLACE_CATEGORIES = {
         accent_bg: '#EAF7F0'
     }
 };
-export function getStoreCategoryInfo(store) {
+function getStoreCategoryInfo(store) {
     if (!store)
-        return STORE_MARKETPLACE_CATEGORIES.general;
+        return exports.STORE_MARKETPLACE_CATEGORIES.general;
     const raw = `${store.business_type || ''} ${store.category || ''} ${store.store_name || ''} ${store.bio || ''}`.toLowerCase();
     const indId = Number(store.industry_id);
     if (raw.includes('fashion') || raw.includes('clothing') || raw.includes('apparel') || raw.includes('boutique') || raw.includes('shoes') || raw.includes('wear') || raw.includes('jewelry') || indId === 2) {
-        return STORE_MARKETPLACE_CATEGORIES.fashion;
+        return exports.STORE_MARKETPLACE_CATEGORIES.fashion;
     }
     if (raw.includes('food') || raw.includes('restaurant') || raw.includes('bakery') || raw.includes('kitchen') || raw.includes('cafe') || raw.includes('grocer') || raw.includes('chop') || raw.includes('cater') || indId === 3) {
-        return STORE_MARKETPLACE_CATEGORIES.food;
+        return exports.STORE_MARKETPLACE_CATEGORIES.food;
     }
     if (raw.includes('beauty') || raw.includes('cosmetic') || raw.includes('skin') || raw.includes('hair') || raw.includes('makeup') || raw.includes('fragrance') || raw.includes('perfume') || raw.includes('spa') || indId === 4) {
-        return STORE_MARKETPLACE_CATEGORIES.beauty;
+        return exports.STORE_MARKETPLACE_CATEGORIES.beauty;
     }
     if (raw.includes('electronic') || raw.includes('gadget') || raw.includes('phone') || raw.includes('tech') || raw.includes('computer') || raw.includes('laptop') || raw.includes('audio') || indId === 5) {
-        return STORE_MARKETPLACE_CATEGORIES.electronics;
+        return exports.STORE_MARKETPLACE_CATEGORIES.electronics;
     }
     if (raw.includes('home') || raw.includes('furniture') || raw.includes('decor') || raw.includes('bedding') || raw.includes('interior')) {
-        return STORE_MARKETPLACE_CATEGORIES.home;
+        return exports.STORE_MARKETPLACE_CATEGORIES.home;
     }
     if (raw.includes('service') || raw.includes('booking') || raw.includes('consult') || raw.includes('repair') || raw.includes('logistics') || indId === 6) {
-        return STORE_MARKETPLACE_CATEGORIES.services;
+        return exports.STORE_MARKETPLACE_CATEGORIES.services;
     }
     if (raw.includes('digital') || raw.includes('ebook') || raw.includes('course') || raw.includes('software') || raw.includes('art') || raw.includes('creative')) {
-        return STORE_MARKETPLACE_CATEGORIES.digital;
+        return exports.STORE_MARKETPLACE_CATEGORIES.digital;
     }
-    return STORE_MARKETPLACE_CATEGORIES.general;
+    return exports.STORE_MARKETPLACE_CATEGORIES.general;
 }
-export const NIGERIAN_STATES = [
+exports.NIGERIAN_STATES = [
     'Abia',
     'Adamawa',
     'Akwa Ibom',

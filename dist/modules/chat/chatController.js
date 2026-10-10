@@ -1,6 +1,9 @@
-import { getOrCreateCustomerSession, sendMessage, getConversationMessages, listMerchantConversations, getCustomerChatContext, realtimeHub } from './chatService.js';
-import { dbFetchOne } from '../../db/db.js';
-export async function chatRoutes(fastify) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.chatRoutes = chatRoutes;
+const chatService_js_1 = require("./chatService.js");
+const db_js_1 = require("../../db/db.js");
+async function chatRoutes(fastify) {
     // 1. Unified REST API endpoint for Live Chat (/api/chat and /api/chat.php)
     const handleChatApi = async (req, reply) => {
         const action = req.query?.action || req.body?.action;
@@ -15,7 +18,7 @@ export async function chatRoutes(fastify) {
                 const custEmail = req.query?.customer_email || req.body?.customer_email;
                 if (!storeId)
                     return reply.send({ success: false, error: 'store_id is required' });
-                const result = getOrCreateCustomerSession(storeId, sessionToken, custName, custPhone, custEmail);
+                const result = (0, chatService_js_1.getOrCreateCustomerSession)(storeId, sessionToken, custName, custPhone, custEmail);
                 return reply.send({
                     success: true,
                     conversation: result.conversation,
@@ -39,12 +42,12 @@ export async function chatRoutes(fastify) {
                 if (senderType === 'merchant') {
                     if (!store)
                         return reply.code(401).send({ success: false, error: 'Unauthorized merchant session' });
-                    const conv = dbFetchOne('chat_conversations', { id: conversationId });
+                    const conv = (0, db_js_1.dbFetchOne)('chat_conversations', { id: conversationId });
                     if (!conv || conv.store_id !== store.id) {
                         return reply.code(403).send({ success: false, error: 'Cannot reply to another store conversation' });
                     }
                 }
-                const res = sendMessage(conversationId, senderType, senderName, text, {
+                const res = (0, chatService_js_1.sendMessage)(conversationId, senderType, senderName, text, {
                     orderId,
                     productId,
                     productTitle,
@@ -61,20 +64,20 @@ export async function chatRoutes(fastify) {
                     return reply.send({ success: false, error: 'conversation_id is required' });
                 // Customer Isolation Guard
                 if (customerToken) {
-                    const conv = dbFetchOne('chat_conversations', { id: convId });
+                    const conv = (0, db_js_1.dbFetchOne)('chat_conversations', { id: convId });
                     if (!conv || conv.customer_session_token !== customerToken) {
                         return reply.code(403).send({ success: false, error: 'Unauthorized access to customer conversation' });
                     }
                 }
                 // Merchant Isolation Guard
                 if (store) {
-                    const conv = dbFetchOne('chat_conversations', { id: convId });
+                    const conv = (0, db_js_1.dbFetchOne)('chat_conversations', { id: convId });
                     if (!conv || conv.store_id !== store.id) {
                         return reply.code(403).send({ success: false, error: 'Unauthorized merchant access' });
                     }
                 }
                 const markSender = store ? 'merchant' : 'customer';
-                const msgs = getConversationMessages(convId, afterId, markSender);
+                const msgs = (0, chatService_js_1.getConversationMessages)(convId, afterId, markSender);
                 return reply.send({ success: true, messages: msgs });
             }
             // Action: merchant_list_conversations
@@ -82,7 +85,7 @@ export async function chatRoutes(fastify) {
                 if (!store)
                     return reply.code(401).send({ success: false, error: 'Unauthorized' });
                 const search = req.query?.search || '';
-                const list = listMerchantConversations(store.id, search);
+                const list = (0, chatService_js_1.listMerchantConversations)(store.id, search);
                 return reply.send({
                     success: true,
                     conversations: list.conversations,
@@ -93,7 +96,7 @@ export async function chatRoutes(fastify) {
             if (action === 'merchant_get_unread_count') {
                 if (!store)
                     return reply.code(401).send({ success: false, error: 'Unauthorized' });
-                const list = listMerchantConversations(store.id);
+                const list = (0, chatService_js_1.listMerchantConversations)(store.id);
                 return reply.send({ success: true, unread_count: list.total_unread, total_unread: list.total_unread });
             }
             // Action: merchant_get_customer_context
@@ -101,7 +104,7 @@ export async function chatRoutes(fastify) {
                 if (!store)
                     return reply.code(401).send({ success: false, error: 'Unauthorized' });
                 const convId = parseInt(req.query?.conversation_id || '0');
-                const context = getCustomerChatContext(convId, store.id);
+                const context = (0, chatService_js_1.getCustomerChatContext)(convId, store.id);
                 return reply.send({ success: true, ...context });
             }
             return reply.send({ success: false, error: 'Invalid chat action' });
@@ -125,7 +128,7 @@ export async function chatRoutes(fastify) {
             const custEmail = body.customer_email;
             if (!storeId)
                 return reply.send({ success: false, error: 'store_id is required' });
-            const result = getOrCreateCustomerSession(storeId, sessionToken, custName, custPhone, custEmail);
+            const result = (0, chatService_js_1.getOrCreateCustomerSession)(storeId, sessionToken, custName, custPhone, custEmail);
             return reply.send({
                 success: true,
                 conversation_id: result.conversation.id,
@@ -142,14 +145,14 @@ export async function chatRoutes(fastify) {
             let convId = parseInt(req.query?.conversation_id || '0');
             const token = req.query?.session_token || req.query?.customer_session_token;
             if (!convId && token) {
-                const conv = dbFetchOne('chat_conversations', { customer_session_token: token });
+                const conv = (0, db_js_1.dbFetchOne)('chat_conversations', { customer_session_token: token });
                 if (conv)
                     convId = conv.id;
             }
             const afterId = parseInt(req.query?.after_id || '0');
             if (!convId)
                 return reply.send({ success: false, error: 'conversation_id is required' });
-            const msgs = getConversationMessages(convId, afterId, 'customer');
+            const msgs = (0, chatService_js_1.getConversationMessages)(convId, afterId, 'customer');
             return reply.send({ success: true, messages: msgs });
         }
         catch (e) {
@@ -162,7 +165,7 @@ export async function chatRoutes(fastify) {
             let conversationId = parseInt(body.conversation_id || '0');
             const token = body.session_token || body.customer_session_token || body.sender_id;
             if (!conversationId && token) {
-                const conv = dbFetchOne('chat_conversations', { customer_session_token: token });
+                const conv = (0, db_js_1.dbFetchOne)('chat_conversations', { customer_session_token: token });
                 if (conv)
                     conversationId = conv.id;
             }
@@ -173,7 +176,7 @@ export async function chatRoutes(fastify) {
                 return reply.send({ success: false, error: 'conversation_id is required' });
             if (!text)
                 return reply.send({ success: false, error: 'message is required' });
-            const res = sendMessage(conversationId, senderType, senderName, text, {
+            const res = (0, chatService_js_1.sendMessage)(conversationId, senderType, senderName, text, {
                 orderId: body.order_id ? parseInt(body.order_id) : null,
                 productId: body.product_id ? parseInt(body.product_id) : null
             });
@@ -202,17 +205,17 @@ export async function chatRoutes(fastify) {
             }
         };
         if (channel === 'merchant' && store) {
-            realtimeHub.registerMerchantSSE(store.id, subscriber);
+            chatService_js_1.realtimeHub.registerMerchantSSE(store.id, subscriber);
             req.raw.on('close', () => {
-                realtimeHub.unregisterMerchantSSE(store.id, subscriber);
+                chatService_js_1.realtimeHub.unregisterMerchantSSE(store.id, subscriber);
             });
         }
         else if (channel === 'customer') {
             const sessionToken = req.query?.customer_session_token;
             if (sessionToken) {
-                realtimeHub.registerCustomerSSE(sessionToken, subscriber);
+                chatService_js_1.realtimeHub.registerCustomerSSE(sessionToken, subscriber);
                 req.raw.on('close', () => {
-                    realtimeHub.unregisterCustomerSSE(sessionToken, subscriber);
+                    chatService_js_1.realtimeHub.unregisterCustomerSSE(sessionToken, subscriber);
                 });
             }
         }

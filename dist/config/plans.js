@@ -1,8 +1,11 @@
+"use strict";
 /**
  * Centralized Plan Configuration & Limits
  * Official Zlik Tier Matrix (Free, Pro, Business)
  */
-export const PLANS = {
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PLATFORM_FEATURE_DEFINITIONS = exports.PLANS = void 0;
+exports.PLANS = {
     free: {
         name: 'Free',
         tagline: 'For merchants getting started and building their customer base.',
@@ -232,7 +235,7 @@ export const PLANS = {
         }
     }
 };
-export const PLATFORM_FEATURE_DEFINITIONS = [
+exports.PLATFORM_FEATURE_DEFINITIONS = [
     // 1. Branding & Storefront
     { key: 'powered_by_zlik', name: 'Zlik Watermark Attribution', description: 'Show "Powered by Zlik" watermark on storefront footer', category: 'Branding & Storefront' },
     { key: 'brand_color_logo_controls', name: 'Custom Brand Colors & Logo', description: 'Customize store accent color palette and logo branding', category: 'Branding & Storefront' },

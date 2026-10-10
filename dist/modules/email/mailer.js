@@ -1,9 +1,21 @@
-import nodemailer from 'nodemailer';
-import { dbInsert, dbFetchOne } from '../../db/db.js';
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.sendEmail = sendEmail;
+exports.sendMerchantWelcomeEmail = sendMerchantWelcomeEmail;
+exports.sendMerchantOrderAlertEmail = sendMerchantOrderAlertEmail;
+exports.sendCustomerOrderConfirmationEmail = sendCustomerOrderConfirmationEmail;
+exports.sendPasswordResetEmail = sendPasswordResetEmail;
+exports.sendAdminTestEmail = sendAdminTestEmail;
+exports.sendEmailVerificationOtp = sendEmailVerificationOtp;
+const nodemailer_1 = __importDefault(require("nodemailer"));
+const db_js_1 = require("../../db/db.js");
 /**
  * Universal Mailer & SMTP Transactional Engine
  */
-export async function sendEmail(payload) {
+async function sendEmail(payload) {
     const toEmail = (payload.toEmail || '').trim();
     const toName = (payload.toName || '').trim();
     const subject = payload.subject || 'Platform Notification';
@@ -12,7 +24,7 @@ export async function sendEmail(payload) {
     if (!toEmail || !toEmail.includes('@')) {
         return { success: false, status: 'failed', error: 'Invalid recipient email address' };
     }
-    const settings = dbFetchOne('platform_settings') || {};
+    const settings = (0, db_js_1.dbFetchOne)('platform_settings') || {};
     const smtpEnabled = process.env.SMTP_ENABLED !== undefined
         ? (process.env.SMTP_ENABLED === '1' || process.env.SMTP_ENABLED === 'true')
         : Boolean(settings.smtp_enabled);
@@ -30,7 +42,7 @@ export async function sendEmail(payload) {
     if (smtpEnabled && smtpHost && smtpPass && smtpPass !== '') {
         try {
             const isSecure = smtpPort === 465 || smtpEncryption === 'ssl';
-            const transporter = nodemailer.createTransport({
+            const transporter = nodemailer_1.default.createTransport({
                 host: smtpHost,
                 port: smtpPort,
                 secure: isSecure,
@@ -68,7 +80,7 @@ export async function sendEmail(payload) {
             : 'SMTP password not configured; email saved in sandbox logs';
     }
     try {
-        dbInsert('email_logs', {
+        (0, db_js_1.dbInsert)('email_logs', {
             recipient_email: toEmail,
             recipient_name: toName,
             subject,
@@ -130,7 +142,7 @@ function emailLayout(title, bodyContent) {
 /**
  * 1. Welcome Merchant Email
  */
-export async function sendMerchantWelcomeEmail(store) {
+async function sendMerchantWelcomeEmail(store) {
     const storeUrl = `https://${store.slug}.zlik.store`;
     const dashboardUrl = `https://zlik.store/merchant/login`;
     const html = emailLayout(`Welcome to Zlik, ${store.owner_name}!`, `
@@ -164,7 +176,7 @@ export async function sendMerchantWelcomeEmail(store) {
 /**
  * 2. Order Alert to Merchant
  */
-export async function sendMerchantOrderAlertEmail(store, order, items = []) {
+async function sendMerchantOrderAlertEmail(store, order, items = []) {
     let itemsHtml = '';
     items.forEach(it => {
         itemsHtml += `
@@ -202,7 +214,7 @@ export async function sendMerchantOrderAlertEmail(store, order, items = []) {
 /**
  * 3. Customer Order Confirmation Email
  */
-export async function sendCustomerOrderConfirmationEmail(store, order, items = []) {
+async function sendCustomerOrderConfirmationEmail(store, order, items = []) {
     if (!order.customer_email) {
         return { success: false, status: 'failed', error: 'No customer email provided' };
     }
@@ -233,7 +245,7 @@ export async function sendCustomerOrderConfirmationEmail(store, order, items = [
 /**
  * 4. Password Reset Email
  */
-export async function sendPasswordResetEmail(email, name, resetUrl, userType = 'merchant') {
+async function sendPasswordResetEmail(email, name, resetUrl, userType = 'merchant') {
     const html = emailLayout(`Reset Your Password`, `
     <h2 style="font-size: 20px; font-weight: 700; color: #08110D; margin-top: 0;">Password Reset Request</h2>
     <p style="font-size: 14px; color: #4B5563;">Hello ${name}, we received a request to reset your password for your ${userType === 'admin' ? 'admin console' : 'merchant account'}.</p>
@@ -256,7 +268,7 @@ export async function sendPasswordResetEmail(email, name, resetUrl, userType = '
 /**
  * 5. Admin Test Email
  */
-export async function sendAdminTestEmail(targetEmail) {
+async function sendAdminTestEmail(targetEmail) {
     const html = emailLayout('SMTP Configuration Test', `
     <h2 style="font-size: 20px; font-weight: 700; color: #08110D; margin-top: 0;">SMTP Test Successful! 🚀</h2>
     <p style="font-size: 14px; color: #4B5563;">This is a test email sent from your Zlik Super Admin console to verify that the transactional mail server and socket connection are configured correctly.</p>
@@ -275,7 +287,7 @@ export async function sendAdminTestEmail(targetEmail) {
 /**
  * 6. Email Verification OTP Code
  */
-export async function sendEmailVerificationOtp(email, name, otpCode, verifyUrl) {
+async function sendEmailVerificationOtp(email, name, otpCode, verifyUrl) {
     const safeName = name?.trim() || 'Merchant';
     const magicLinkBtn = verifyUrl
         ? `

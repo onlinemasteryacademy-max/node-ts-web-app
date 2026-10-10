@@ -1,13 +1,16 @@
-import { dbFetchOne, getDb } from '../../db/db.js';
-import { formatCurrency } from '../../utils/helpers.js';
-export const broadcastsRoutes = async (fastify) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.broadcastsRoutes = void 0;
+const db_js_1 = require("../../db/db.js");
+const helpers_js_1 = require("../../utils/helpers.js");
+const broadcastsRoutes = async (fastify) => {
     // 1. Daily Sales Summary via WhatsApp
     fastify.get('/api/merchant/sales-summary/today', async (req, reply) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const db = getDb();
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const db = (0, db_js_1.getDb)();
         // Query today's start and end timestamps in UTC/local
         const todayStr = new Date().toISOString().slice(0, 10);
         const startOfDay = todayStr + ' 00:00:00';
@@ -45,10 +48,10 @@ export const broadcastsRoutes = async (fastify) => {
         const dateFormatted = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
         let summaryText = `📊 *DAILY SALES SUMMARY — ${currentStore.store_name.toUpperCase()}*\n`;
         summaryText += `🗓️ Date: ${dateFormatted}\n\n`;
-        summaryText += `💰 *Gross Revenue (Paid):* ${formatCurrency(totalGrossSales)}\n`;
+        summaryText += `💰 *Gross Revenue (Paid):* ${(0, helpers_js_1.formatCurrency)(totalGrossSales)}\n`;
         summaryText += `📦 *Total Orders Today:* ${ordersToday.length} (${paidOrders.length} paid, ${pendingOrders.length} pending)\n`;
         if (totalPendingAmount > 0) {
-            summaryText += `⏳ *Pending Payments:* ${formatCurrency(totalPendingAmount)}\n`;
+            summaryText += `⏳ *Pending Payments:* ${(0, helpers_js_1.formatCurrency)(totalPendingAmount)}\n`;
         }
         summaryText += `\n🛍️ *Top Selling Products Today:*\n`;
         if (topItems.length === 0) {
@@ -56,7 +59,7 @@ export const broadcastsRoutes = async (fastify) => {
         }
         else {
             topItems.forEach((it, idx) => {
-                summaryText += `${idx + 1}. *${it.title}* — ${it.count} sold (${formatCurrency(it.revenue)})\n`;
+                summaryText += `${idx + 1}. *${it.title}* — ${it.count} sold (${(0, helpers_js_1.formatCurrency)(it.revenue)})\n`;
             });
         }
         summaryText += `\n✨ Powered by Zlik • Keep growing!`;
@@ -69,9 +72,9 @@ export const broadcastsRoutes = async (fastify) => {
                 paid_orders_count: paidOrders.length,
                 pending_orders_count: pendingOrders.length,
                 gross_revenue: totalGrossSales,
-                gross_revenue_formatted: formatCurrency(totalGrossSales),
+                gross_revenue_formatted: (0, helpers_js_1.formatCurrency)(totalGrossSales),
                 pending_revenue: totalPendingAmount,
-                pending_revenue_formatted: formatCurrency(totalPendingAmount),
+                pending_revenue_formatted: (0, helpers_js_1.formatCurrency)(totalPendingAmount),
                 top_items: topItems,
                 whatsapp_text: summaryText,
                 whatsapp_url: whatsappUrl
@@ -83,8 +86,8 @@ export const broadcastsRoutes = async (fastify) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const db = getDb();
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const db = (0, db_js_1.getDb)();
         const query = (req.query || {});
         const segment = query.segment || 'all';
         // Aggregate unique customer metrics from all store orders
@@ -123,7 +126,7 @@ export const broadcastsRoutes = async (fastify) => {
                 customer_name: c.customer_name || 'Valued Customer',
                 orders_count: c.orders_count,
                 total_spent: Number(c.total_spent) || 0,
-                total_spent_formatted: formatCurrency(Number(c.total_spent) || 0),
+                total_spent_formatted: (0, helpers_js_1.formatCurrency)(Number(c.total_spent) || 0),
                 last_order_date: c.last_order_date,
                 is_repeat: c.orders_count > 1,
                 is_vip: (Number(c.total_spent) || 0) >= 20000
@@ -141,7 +144,7 @@ export const broadcastsRoutes = async (fastify) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
         const body = (req.body || {});
         const templateType = body.template_type || 'promo_discount';
         const discountCode = body.discount_code ? body.discount_code.trim().toUpperCase() : 'SAVE10';
@@ -184,8 +187,8 @@ export const broadcastsRoutes = async (fastify) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const db = getDb();
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const db = (0, db_js_1.getDb)();
         // Select up to 4 top in-stock products
         const stmt = db.prepare(`
       SELECT * FROM items 
@@ -206,3 +209,4 @@ export const broadcastsRoutes = async (fastify) => {
         });
     });
 };
+exports.broadcastsRoutes = broadcastsRoutes;

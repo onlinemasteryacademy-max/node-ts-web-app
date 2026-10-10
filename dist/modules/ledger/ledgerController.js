@@ -1,15 +1,18 @@
-import { dbFetchOne, getDb } from '../../db/db.js';
-import { getStorePlanDetails, formatCurrency } from '../../utils/helpers.js';
-export const ledgerRoutes = async (fastify) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ledgerRoutes = void 0;
+const db_js_1 = require("../../db/db.js");
+const helpers_js_1 = require("../../utils/helpers.js");
+const ledgerRoutes = async (fastify) => {
     // 1. Sales Ledger API (7 days for Free, Lifetime for Pro/Business)
     fastify.get('/api/merchant/ledger', async (req, reply) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const { config, isPro } = getStorePlanDetails(currentStore);
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const { config, isPro } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
         const query = (req.query || {});
-        const db = getDb();
+        const db = (0, db_js_1.getDb)();
         let orders = [];
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -96,9 +99,9 @@ export const ledgerRoutes = async (fastify) => {
                 paid_orders_count: paidOrders.length,
                 pending_orders_count: pendingOrdersCount,
                 total_revenue: totalSalesRevenue,
-                total_revenue_formatted: formatCurrency(totalSalesRevenue),
+                total_revenue_formatted: (0, helpers_js_1.formatCurrency)(totalSalesRevenue),
                 average_order_value: averageOrderValue,
-                average_order_value_formatted: formatCurrency(averageOrderValue),
+                average_order_value_formatted: (0, helpers_js_1.formatCurrency)(averageOrderValue),
                 is_restricted: isRestricted,
                 timeframe: timeframe || 'all_free',
                 allowed_free_timeframes: ['today', 'yesterday', 'this_week', 'this_month', 'last_month']
@@ -111,8 +114,8 @@ export const ledgerRoutes = async (fastify) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const { isPro, config } = getStorePlanDetails(currentStore);
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const { isPro, config } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
         if (!isPro && !config.features.full_sales_ledger_export) {
             return reply.code(403).send({
                 success: false,
@@ -120,7 +123,7 @@ export const ledgerRoutes = async (fastify) => {
             });
         }
         const query = (req.query || {});
-        const db = getDb();
+        const db = (0, db_js_1.getDb)();
         let sql = 'SELECT * FROM orders WHERE store_id = ?';
         const params = [currentStore.id];
         if (query.start_date) {
@@ -187,3 +190,4 @@ export const ledgerRoutes = async (fastify) => {
             .send(csvContent);
     });
 };
+exports.ledgerRoutes = ledgerRoutes;

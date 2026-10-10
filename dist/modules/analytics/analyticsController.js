@@ -1,13 +1,18 @@
-import { dbFetchOne, dbInsert, getDb } from '../../db/db.js';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.analyticsRoutes = void 0;
+exports.recordStoreVisit = recordStoreVisit;
+exports.getStoreVisitorMetrics = getStoreVisitorMetrics;
+const db_js_1 = require("../../db/db.js");
 /**
  * Record a store visit event in SQLite
  */
-export function recordStoreVisit(storeId, ipAddress, userAgent, properties) {
+function recordStoreVisit(storeId, ipAddress, userAgent, properties) {
     if (!storeId)
         return;
     try {
         const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-        dbInsert('analytics_events', {
+        (0, db_js_1.dbInsert)('analytics_events', {
             store_id: storeId,
             event_name: 'store_visit',
             properties_json: properties ? JSON.stringify(properties) : null,
@@ -24,8 +29,8 @@ export function recordStoreVisit(storeId, ipAddress, userAgent, properties) {
  * Calculate comprehensive store visitor metrics for all timeframes
  * (Today, Yesterday, 7 Days, 1 Month, Quarterly, Yearly, Lifetime)
  */
-export function getStoreVisitorMetrics(storeId) {
-    const db = getDb();
+function getStoreVisitorMetrics(storeId) {
+    const db = (0, db_js_1.getDb)();
     const now = new Date();
     // Start of today: 00:00:00.000
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -133,13 +138,13 @@ export function getStoreVisitorMetrics(storeId) {
         }
     };
 }
-export const analyticsRoutes = async (fastify) => {
+const analyticsRoutes = async (fastify) => {
     // 1. Get Store Visitor Analytics (Merchant Console)
     fastify.get('/api/merchant/analytics/visitors', async (req, reply) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
         const metrics = getStoreVisitorMetrics(currentStore.id);
         return reply.send({
             success: true,
@@ -159,3 +164,4 @@ export const analyticsRoutes = async (fastify) => {
         return reply.send({ success: true });
     });
 };
+exports.analyticsRoutes = analyticsRoutes;

@@ -1,14 +1,17 @@
-import { dbFetchOne, dbFetchAll, dbInsert, dbUpdate, dbDelete } from '../../db/db.js';
-import { getStorePlanDetails, normalizePhoneNumber, formatCurrency } from '../../utils/helpers.js';
-export const debtsRoutes = async (fastify) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.debtsRoutes = void 0;
+const db_js_1 = require("../../db/db.js");
+const helpers_js_1 = require("../../utils/helpers.js");
+const debtsRoutes = async (fastify) => {
     // 1. List Debts & Summary Stats
     fastify.get('/api/merchant/debts', async (req, reply) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const { config, isPro } = getStorePlanDetails(currentStore);
-        const debts = dbFetchAll('debts', { store_id: currentStore.id }, 'id DESC');
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const { config, isPro } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
+        const debts = (0, db_js_1.dbFetchAll)('debts', { store_id: currentStore.id }, 'id DESC');
         const activeDebts = debts.filter(d => d.status === 'pending');
         const paidDebts = debts.filter(d => d.status === 'paid');
         const totalOutstanding = activeDebts.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
@@ -32,8 +35,8 @@ export const debtsRoutes = async (fastify) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const { config } = getStorePlanDetails(currentStore);
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const { config } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
         const body = (req.body || {});
         const customerName = String(body.customer_name || '').trim();
         const customerPhone = String(body.customer_phone || '').trim();
@@ -51,7 +54,7 @@ export const debtsRoutes = async (fastify) => {
             return reply.send({ success: false, error: 'Valid debt amount is required' });
         }
         // Check Plan Limit for Active Debts (3 for Free, Unlimited for Pro/Business)
-        const activeDebts = dbFetchAll('debts', { store_id: currentStore.id, status: 'pending' });
+        const activeDebts = (0, db_js_1.dbFetchAll)('debts', { store_id: currentStore.id, status: 'pending' });
         if (config.limits.active_debts_limit !== -1 && activeDebts.length >= config.limits.active_debts_limit) {
             return reply.send({
                 success: false,
@@ -59,8 +62,8 @@ export const debtsRoutes = async (fastify) => {
                 error: `Your Free plan is limited to ${config.limits.active_debts_limit} active debts. Upgrade to Pro for unlimited debt tracking & automated WhatsApp reminders.`
             });
         }
-        const normalizedPhone = normalizePhoneNumber(customerPhone);
-        const debtId = dbInsert('debts', {
+        const normalizedPhone = (0, helpers_js_1.normalizePhoneNumber)(customerPhone);
+        const debtId = (0, db_js_1.dbInsert)('debts', {
             store_id: currentStore.id,
             customer_name: customerName,
             customer_phone: normalizedPhone || customerPhone,
@@ -70,7 +73,7 @@ export const debtsRoutes = async (fastify) => {
             status: 'pending',
             notes
         });
-        const newDebt = dbFetchOne('debts', { id: debtId });
+        const newDebt = (0, db_js_1.dbFetchOne)('debts', { id: debtId });
         return reply.send({ success: true, debt: newDebt });
     });
     // 3. Mark Debt as Paid
@@ -81,10 +84,10 @@ export const debtsRoutes = async (fastify) => {
         const debtId = parseInt(req.body?.debt_id);
         if (!debtId)
             return reply.send({ success: false, error: 'Valid debt ID required' });
-        const debt = dbFetchOne('debts', { id: debtId, store_id: store.id });
+        const debt = (0, db_js_1.dbFetchOne)('debts', { id: debtId, store_id: store.id });
         if (!debt)
             return reply.send({ success: false, error: 'Debt record not found' });
-        dbUpdate('debts', { status: 'paid', updated_at: new Date().toISOString() }, { id: debtId });
+        (0, db_js_1.dbUpdate)('debts', { status: 'paid', updated_at: new Date().toISOString() }, { id: debtId });
         return reply.send({ success: true, message: 'Debt marked as paid' });
     });
     // 4. Delete Debt Record
@@ -95,10 +98,10 @@ export const debtsRoutes = async (fastify) => {
         const debtId = parseInt(req.body?.debt_id);
         if (!debtId)
             return reply.send({ success: false, error: 'Valid debt ID required' });
-        const debt = dbFetchOne('debts', { id: debtId, store_id: store.id });
+        const debt = (0, db_js_1.dbFetchOne)('debts', { id: debtId, store_id: store.id });
         if (!debt)
             return reply.send({ success: false, error: 'Debt record not found' });
-        dbDelete('debts', { id: debtId, store_id: store.id });
+        (0, db_js_1.dbDelete)('debts', { id: debtId, store_id: store.id });
         return reply.send({ success: true, message: 'Debt record deleted' });
     });
     // 5. Generate WhatsApp Debt Reminder Link
@@ -107,12 +110,12 @@ export const debtsRoutes = async (fastify) => {
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
         const debtId = parseInt(req.params.id);
-        const debt = dbFetchOne('debts', { id: debtId, store_id: store.id });
+        const debt = (0, db_js_1.dbFetchOne)('debts', { id: debtId, store_id: store.id });
         if (!debt)
             return reply.send({ success: false, error: 'Debt record not found' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const cleanPhone = normalizePhoneNumber(debt.customer_phone).replace('+', '');
-        const formattedAmount = formatCurrency(debt.amount);
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const cleanPhone = (0, helpers_js_1.normalizePhoneNumber)(debt.customer_phone).replace('+', '');
+        const formattedAmount = (0, helpers_js_1.formatCurrency)(debt.amount);
         const dueDateStr = debt.due_date ? ` due on ${debt.due_date}` : '';
         const descStr = debt.description ? ` for "${debt.description}"` : '';
         let bankInfo = '';
@@ -124,3 +127,4 @@ export const debtsRoutes = async (fastify) => {
         return reply.send({ success: true, url: waUrl, message });
     });
 };
+exports.debtsRoutes = debtsRoutes;

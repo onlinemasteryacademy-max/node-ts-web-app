@@ -1,7 +1,14 @@
-import { dbFetchOne, dbInsert, dbUpdate } from '../../db/db.js';
-import { hashPassword } from '../../utils/helpers.js';
-import { logAdminAction } from './adminHelpers.js';
-import { ENV } from '../../config/env.js';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.initSuperAdminAccount = initSuperAdminAccount;
+exports.checkAdminRateLimit = checkAdminRateLimit;
+exports.recordFailedAdminLogin = recordFailedAdminLogin;
+exports.resetAdminRateLimit = resetAdminRateLimit;
+exports.applyAdminSecurityHeaders = applyAdminSecurityHeaders;
+const db_js_1 = require("../../db/db.js");
+const helpers_js_1 = require("../../utils/helpers.js");
+const adminHelpers_js_1 = require("./adminHelpers.js");
+const env_js_1 = require("../../config/env.js");
 // In-Memory Rate Limiter Map (keyed by IP and Email)
 const failedAttemptsMap = new Map();
 const MAX_ATTEMPTS = 5;
@@ -10,32 +17,32 @@ const LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes lockout
 /**
  * Super Admin Provisioning & Credential Sync Engine
  */
-export function initSuperAdminAccount() {
+function initSuperAdminAccount() {
     try {
-        const adminEmail = ENV.SUPER_ADMIN_EMAIL;
-        const adminPass = ENV.SUPER_ADMIN_PASSWORD;
-        const adminName = ENV.SUPER_ADMIN_NAME;
-        const shouldReset = ENV.RESET_SUPER_ADMIN_PASSWORD;
-        const existing = dbFetchOne('super_admins', { email: adminEmail });
+        const adminEmail = env_js_1.ENV.SUPER_ADMIN_EMAIL;
+        const adminPass = env_js_1.ENV.SUPER_ADMIN_PASSWORD;
+        const adminName = env_js_1.ENV.SUPER_ADMIN_NAME;
+        const shouldReset = env_js_1.ENV.RESET_SUPER_ADMIN_PASSWORD;
+        const existing = (0, db_js_1.dbFetchOne)('super_admins', { email: adminEmail });
         if (!existing) {
             // Create master super admin
-            const passHash = hashPassword(adminPass);
+            const passHash = (0, helpers_js_1.hashPassword)(adminPass);
             const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-            const newId = dbInsert('super_admins', {
+            const newId = (0, db_js_1.dbInsert)('super_admins', {
                 email: adminEmail,
                 password_hash: passHash,
                 name: adminName,
                 role: 'super_admin',
                 created_at: now
             });
-            logAdminAction(newId, 'Provision Master Super Admin', 'super_admins', newId, `Master Super Admin account provisioned for ${adminEmail}`, '127.0.0.1');
+            (0, adminHelpers_js_1.logAdminAction)(newId, 'Provision Master Super Admin', 'super_admins', newId, `Master Super Admin account provisioned for ${adminEmail}`, '127.0.0.1');
             console.log(`🔒 [Security] Master Super Admin provisioned: ${adminEmail}`);
         }
         else if (shouldReset) {
             // Force password reset from environment
-            const passHash = hashPassword(adminPass);
-            dbUpdate('super_admins', { password_hash: passHash }, { id: existing.id });
-            logAdminAction(existing.id, 'Super Admin Password Rotated', 'super_admins', existing.id, 'Password updated via environment configuration', '127.0.0.1');
+            const passHash = (0, helpers_js_1.hashPassword)(adminPass);
+            (0, db_js_1.dbUpdate)('super_admins', { password_hash: passHash }, { id: existing.id });
+            (0, adminHelpers_js_1.logAdminAction)(existing.id, 'Super Admin Password Rotated', 'super_admins', existing.id, 'Password updated via environment configuration', '127.0.0.1');
             console.log(`🔒 [Security] Master Super Admin password rotated: ${adminEmail}`);
         }
     }
@@ -46,7 +53,7 @@ export function initSuperAdminAccount() {
 /**
  * Check if an IP or Email is currently rate-limited
  */
-export function checkAdminRateLimit(ip, email) {
+function checkAdminRateLimit(ip, email) {
     const now = Date.now();
     const keys = [ip, `email:${email.toLowerCase().trim()}`];
     for (const key of keys) {
@@ -70,7 +77,7 @@ export function checkAdminRateLimit(ip, email) {
 /**
  * Record a failed admin login attempt
  */
-export function recordFailedAdminLogin(ip, email) {
+function recordFailedAdminLogin(ip, email) {
     const now = Date.now();
     const keys = [ip, `email:${email.toLowerCase().trim()}`];
     let locked = false;
@@ -94,7 +101,7 @@ export function recordFailedAdminLogin(ip, email) {
     // Log security alert on lockout
     if (locked) {
         try {
-            dbInsert('admin_audit_logs', {
+            (0, db_js_1.dbInsert)('admin_audit_logs', {
                 admin_id: 0,
                 admin_name: 'Security System',
                 action: 'SECURITY ALERT: Admin Rate Limit Exceeded',
@@ -112,14 +119,14 @@ export function recordFailedAdminLogin(ip, email) {
 /**
  * Reset rate limit counters upon successful login
  */
-export function resetAdminRateLimit(ip, email) {
+function resetAdminRateLimit(ip, email) {
     failedAttemptsMap.delete(ip);
     failedAttemptsMap.delete(`email:${email.toLowerCase().trim()}`);
 }
 /**
  * Apply Strict Security Headers to Super Admin responses
  */
-export function applyAdminSecurityHeaders(reply) {
+function applyAdminSecurityHeaders(reply) {
     reply.header('X-Frame-Options', 'DENY');
     reply.header('X-Content-Type-Options', 'nosniff');
     reply.header('X-XSS-Protection', '1; mode=block');

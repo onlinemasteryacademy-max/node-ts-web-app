@@ -1,6 +1,9 @@
-import { dbFetchOne, dbFetchAll, dbInsert, dbUpdate, dbDelete } from '../../db/db.js';
-import { formatCurrency } from '../../utils/helpers.js';
-export const marketingRoutes = async (fastify) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.marketingRoutes = void 0;
+const db_js_1 = require("../../db/db.js");
+const helpers_js_1 = require("../../utils/helpers.js");
+const marketingRoutes = async (fastify) => {
     // 1. Create Coupon (Merchant)
     fastify.post('/api/merchant/coupons', async (req, reply) => {
         const store = req.session?.merchantStore;
@@ -23,11 +26,11 @@ export const marketingRoutes = async (fastify) => {
             return reply.code(400).send({ success: false, error: 'Percentage discount cannot exceed 100%' });
         }
         // Check duplicate code for this store
-        const existing = dbFetchOne('coupons', { store_id: store.id, code });
+        const existing = (0, db_js_1.dbFetchOne)('coupons', { store_id: store.id, code });
         if (existing) {
             return reply.code(400).send({ success: false, error: `Coupon code "${code}" already exists for your store` });
         }
-        const couponId = dbInsert('coupons', {
+        const couponId = (0, db_js_1.dbInsert)('coupons', {
             store_id: store.id,
             code,
             discount_type: discountType,
@@ -38,7 +41,7 @@ export const marketingRoutes = async (fastify) => {
             expires_at: expiresAt,
             status: 'active'
         });
-        const coupon = dbFetchOne('coupons', { id: couponId });
+        const coupon = (0, db_js_1.dbFetchOne)('coupons', { id: couponId });
         return reply.send({ success: true, coupon });
     });
     // 2. List Coupons (Merchant)
@@ -46,7 +49,7 @@ export const marketingRoutes = async (fastify) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const coupons = dbFetchAll('coupons', { store_id: store.id }, 'id DESC');
+        const coupons = (0, db_js_1.dbFetchAll)('coupons', { store_id: store.id }, 'id DESC');
         return reply.send({ success: true, coupons });
     });
     // 3. Toggle Coupon Status (Merchant)
@@ -56,11 +59,11 @@ export const marketingRoutes = async (fastify) => {
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
         const body = (req.body || {});
         const couponId = parseInt(body.id, 10);
-        const coupon = dbFetchOne('coupons', { id: couponId, store_id: store.id });
+        const coupon = (0, db_js_1.dbFetchOne)('coupons', { id: couponId, store_id: store.id });
         if (!coupon)
             return reply.code(404).send({ success: false, error: 'Coupon not found' });
         const newStatus = coupon.status === 'active' ? 'inactive' : 'active';
-        dbUpdate('coupons', { status: newStatus }, { id: couponId });
+        (0, db_js_1.dbUpdate)('coupons', { status: newStatus }, { id: couponId });
         return reply.send({ success: true, status: newStatus });
     });
     // 4. Delete Coupon (Merchant)
@@ -70,10 +73,10 @@ export const marketingRoutes = async (fastify) => {
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
         const body = (req.body || {});
         const couponId = parseInt(body.id, 10);
-        const coupon = dbFetchOne('coupons', { id: couponId, store_id: store.id });
+        const coupon = (0, db_js_1.dbFetchOne)('coupons', { id: couponId, store_id: store.id });
         if (!coupon)
             return reply.code(404).send({ success: false, error: 'Coupon not found' });
-        dbDelete('coupons', { id: couponId, store_id: store.id });
+        (0, db_js_1.dbDelete)('coupons', { id: couponId, store_id: store.id });
         return reply.send({ success: true });
     });
     // 5. Validate Promo Code on Checkout (Public Storefront)
@@ -85,7 +88,7 @@ export const marketingRoutes = async (fastify) => {
         if (!storeId || !code) {
             return reply.code(400).send({ success: false, error: 'Store ID and coupon code are required' });
         }
-        const coupon = dbFetchOne('coupons', { store_id: storeId, code, status: 'active' });
+        const coupon = (0, db_js_1.dbFetchOne)('coupons', { store_id: storeId, code, status: 'active' });
         if (!coupon) {
             return reply.code(404).send({ success: false, error: 'Invalid or inactive promo code' });
         }
@@ -104,7 +107,7 @@ export const marketingRoutes = async (fastify) => {
         if (coupon.min_order_amount > 0 && subtotal < coupon.min_order_amount) {
             return reply.code(400).send({
                 success: false,
-                error: `Minimum order amount for this code is ${formatCurrency(coupon.min_order_amount)}`
+                error: `Minimum order amount for this code is ${(0, helpers_js_1.formatCurrency)(coupon.min_order_amount)}`
             });
         }
         // Calculate discount
@@ -123,9 +126,9 @@ export const marketingRoutes = async (fastify) => {
             discount_type: coupon.discount_type,
             discount_value: coupon.discount_value,
             discount_amount: discountAmount,
-            discount_amount_formatted: formatCurrency(discountAmount),
+            discount_amount_formatted: (0, helpers_js_1.formatCurrency)(discountAmount),
             final_subtotal: finalSubtotal,
-            final_subtotal_formatted: formatCurrency(finalSubtotal)
+            final_subtotal_formatted: (0, helpers_js_1.formatCurrency)(finalSubtotal)
         });
     });
     // 6. Request Store Verification (Merchant)
@@ -133,15 +136,15 @@ export const marketingRoutes = async (fastify) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
         if (currentStore.is_verified) {
             return reply.send({ success: true, message: 'Store is already verified', is_verified: true });
         }
         // Check eligibility: minimum 3 completed/paid orders or active store
-        const orders = dbFetchAll('orders', { store_id: store.id, payment_status: 'paid' });
-        const items = dbFetchAll('items', { store_id: store.id, is_available: 1 });
+        const orders = (0, db_js_1.dbFetchAll)('orders', { store_id: store.id, payment_status: 'paid' });
+        const items = (0, db_js_1.dbFetchAll)('items', { store_id: store.id, is_available: 1 });
         const isEligible = orders.length >= 1 || items.length >= 2;
-        dbUpdate('stores', { verification_requested: 1 }, { id: store.id });
+        (0, db_js_1.dbUpdate)('stores', { verification_requested: 1 }, { id: store.id });
         return reply.send({
             success: true,
             eligible: isEligible,
@@ -156,10 +159,10 @@ export const marketingRoutes = async (fastify) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const paidOrders = dbFetchAll('orders', { store_id: store.id, payment_status: 'paid' });
-        const reviews = dbFetchAll('reviews', { store_id: store.id, status: 'published' });
-        const items = dbFetchAll('items', { store_id: store.id, is_available: 1 });
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const paidOrders = (0, db_js_1.dbFetchAll)('orders', { store_id: store.id, payment_status: 'paid' });
+        const reviews = (0, db_js_1.dbFetchAll)('reviews', { store_id: store.id, status: 'published' });
+        const items = (0, db_js_1.dbFetchAll)('items', { store_id: store.id, is_available: 1 });
         const avgRating = reviews.length > 0
             ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
             : '5.0';
@@ -178,3 +181,4 @@ export const marketingRoutes = async (fastify) => {
         });
     });
 };
+exports.marketingRoutes = marketingRoutes;

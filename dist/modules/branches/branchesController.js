@@ -1,13 +1,16 @@
-import { dbFetchOne, dbFetchAll, dbInsert, dbDelete, getDb } from '../../db/db.js';
-import { getStorePlanDetails, formatCurrency } from '../../utils/helpers.js';
-export const branchesRoutes = async (fastify) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.branchesRoutes = void 0;
+const db_js_1 = require("../../db/db.js");
+const helpers_js_1 = require("../../utils/helpers.js");
+const branchesRoutes = async (fastify) => {
     // 1. List Store Branches
     fastify.get('/api/merchant/branches', async (req, reply) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const branches = dbFetchAll('branches', { store_id: currentStore.id });
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const branches = (0, db_js_1.dbFetchAll)('branches', { store_id: currentStore.id });
         return reply.send({
             success: true,
             branches
@@ -18,8 +21,8 @@ export const branchesRoutes = async (fastify) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const { isBusiness } = getStorePlanDetails(currentStore);
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const { isBusiness } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
         if (!isBusiness) {
             return reply.code(403).send({
                 success: false,
@@ -36,7 +39,7 @@ export const branchesRoutes = async (fastify) => {
         if (!name) {
             return reply.code(400).send({ success: false, error: 'Branch name is required.' });
         }
-        const branchId = dbInsert('branches', {
+        const branchId = (0, db_js_1.dbInsert)('branches', {
             store_id: currentStore.id,
             name,
             address,
@@ -47,7 +50,7 @@ export const branchesRoutes = async (fastify) => {
             status: 'active',
             created_at: new Date().toISOString()
         });
-        const branch = dbFetchOne('branches', { id: branchId });
+        const branch = (0, db_js_1.dbFetchOne)('branches', { id: branchId });
         return reply.send({ success: true, branch });
     });
     // 3. Delete Branch
@@ -57,7 +60,7 @@ export const branchesRoutes = async (fastify) => {
             return reply.code(401).send({ success: false, error: 'Unauthorized' });
         const body = (req.body || {});
         const branchId = parseInt(body.id || '0');
-        dbDelete('branches', { id: branchId, store_id: store.id });
+        (0, db_js_1.dbDelete)('branches', { id: branchId, store_id: store.id });
         return reply.send({ success: true });
     });
     // 4. Multi-Branch Sales Breakdown Report
@@ -65,9 +68,9 @@ export const branchesRoutes = async (fastify) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const db = getDb();
-        const branches = dbFetchAll('branches', { store_id: currentStore.id });
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const db = (0, db_js_1.getDb)();
+        const branches = (0, db_js_1.dbFetchAll)('branches', { store_id: currentStore.id });
         const stmt = db.prepare(`
       SELECT 
         branch_id,
@@ -88,7 +91,7 @@ export const branchesRoutes = async (fastify) => {
                 city: b.city,
                 total_orders: data.total_orders,
                 total_revenue: Number(data.total_revenue) || 0,
-                total_revenue_formatted: formatCurrency(Number(data.total_revenue) || 0)
+                total_revenue_formatted: (0, helpers_js_1.formatCurrency)(Number(data.total_revenue) || 0)
             };
         });
         return reply.send({
@@ -101,9 +104,9 @@ export const branchesRoutes = async (fastify) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const db = getDb();
-        const staffList = dbFetchAll('staff_accounts', { store_id: currentStore.id });
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const db = (0, db_js_1.getDb)();
+        const staffList = (0, db_js_1.dbFetchAll)('staff_accounts', { store_id: currentStore.id });
         const stmt = db.prepare(`
       SELECT 
         staff_id,
@@ -124,7 +127,7 @@ export const branchesRoutes = async (fastify) => {
                 role: s.role,
                 total_orders: data.total_orders,
                 total_revenue: Number(data.total_revenue) || 0,
-                total_revenue_formatted: formatCurrency(Number(data.total_revenue) || 0)
+                total_revenue_formatted: (0, helpers_js_1.formatCurrency)(Number(data.total_revenue) || 0)
             };
         });
         return reply.send({
@@ -133,3 +136,4 @@ export const branchesRoutes = async (fastify) => {
         });
     });
 };
+exports.branchesRoutes = branchesRoutes;

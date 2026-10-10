@@ -1,6 +1,9 @@
-import { dbFetchOne, dbFetchAll, dbInsert } from '../../db/db.js';
-import { getStorePlanDetails } from '../../utils/helpers.js';
-export const bulkRoutes = async (fastify) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.bulkRoutes = void 0;
+const db_js_1 = require("../../db/db.js");
+const helpers_js_1 = require("../../utils/helpers.js");
+const bulkRoutes = async (fastify) => {
     // 1. Download Sample Products CSV Template
     fastify.get('/api/merchant/items/sample-csv', async (req, reply) => {
         const store = req.session?.merchantStore;
@@ -22,15 +25,15 @@ export const bulkRoutes = async (fastify) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
-        const currentStore = dbFetchOne('stores', { id: store.id }) || store;
-        const { config, isPro } = getStorePlanDetails(currentStore);
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+        const { config, isPro } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
         const body = (req.body || {});
         const csvData = typeof body.csv === 'string' ? body.csv.trim() : '';
         if (!csvData) {
             return reply.code(400).send({ success: false, error: 'No CSV content provided for import' });
         }
         // Check existing item count vs plan allowance
-        const existingItems = dbFetchAll('items', { store_id: currentStore.id });
+        const existingItems = (0, db_js_1.dbFetchAll)('items', { store_id: currentStore.id });
         const productLimit = config.limits.max_products;
         // Parse CSV rows handling quotes and comma delimiters
         const lines = parseCSVRows(csvData);
@@ -92,7 +95,7 @@ export const bulkRoutes = async (fastify) => {
             const isPreorder = preOrderIdx !== -1 && (row[preOrderIdx] === '1' || row[preOrderIdx]?.toLowerCase() === 'yes' || row[preOrderIdx]?.toLowerCase() === 'true') ? 1 : 0;
             const preorderDate = preOrderDateIdx !== -1 && row[preOrderDateIdx] ? row[preOrderDateIdx].trim() : null;
             try {
-                dbInsert('items', {
+                (0, db_js_1.dbInsert)('items', {
                     store_id: currentStore.id,
                     title,
                     category,
@@ -123,6 +126,7 @@ export const bulkRoutes = async (fastify) => {
         });
     });
 };
+exports.bulkRoutes = bulkRoutes;
 /**
  * Robust CSV parser that correctly handles quoted values containing commas and newlines
  */

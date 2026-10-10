@@ -1,12 +1,23 @@
-import crypto from 'node:crypto';
-import { getDb, dbFetchOne, dbInsert, dbUpdate } from '../../db/db.js';
-import { resolveOrCreateCustomer, checkCustomerOpenOrdersLimit } from '../../utils/helpers.js';
-import { realtimeHub } from '../chat/chatService.js';
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createOrder = createOrder;
+exports.submitPaymentClaim = submitPaymentClaim;
+exports.confirmOrderPayment = confirmOrderPayment;
+exports.rejectOrderPayment = rejectOrderPayment;
+exports.updateOrderStatus = updateOrderStatus;
+exports.pollOrdersAndEvents = pollOrdersAndEvents;
+const node_crypto_1 = __importDefault(require("node:crypto"));
+const db_js_1 = require("../../db/db.js");
+const helpers_js_1 = require("../../utils/helpers.js");
+const chatService_js_1 = require("../chat/chatService.js");
 /**
  * Create Order with Identity Resolution & Anti-Spam Check
  */
-export function createOrder(input) {
-    const store = dbFetchOne('stores', { id: input.store_id });
+function createOrder(input) {
+    const store = (0, db_js_1.dbFetchOne)('stores', { id: input.store_id });
     if (!store)
         return { success: false, error: 'Store not found' };
     if (!input.customer_name?.trim())
@@ -18,7 +29,7 @@ export function createOrder(input) {
     }
     // 1. Anti-Spam Open-Order Check (bypassable if customer explicitly chooses to continue)
     if (!input.force_create) {
-        const openCheck = checkCustomerOpenOrdersLimit(input.store_id, input.customer_phone);
+        const openCheck = (0, helpers_js_1.checkCustomerOpenOrdersLimit)(input.store_id, input.customer_phone);
         if (!openCheck.allowed) {
             return {
                 success: false,
@@ -29,7 +40,7 @@ export function createOrder(input) {
         }
     }
     // 2. Resolve Customer Profile
-    const customer = resolveOrCreateCustomer(input.store_id, input.customer_phone, input.customer_name, input.customer_email, input.delivery_address);
+    const customer = (0, helpers_js_1.resolveOrCreateCustomer)(input.store_id, input.customer_phone, input.customer_name, input.customer_email, input.delivery_address);
     // 3. Authoritative Price & Item Snapshot Calculation
     let subtotal = 0;
     const processedItems = [];
@@ -44,7 +55,7 @@ export function createOrder(input) {
         let selectedOptionsSnapshot = [];
         // If item ID is supplied, authoritatively look up product from database
         if (rawItem.id) {
-            const dbItem = dbFetchOne('items', { id: rawItem.id, store_id: input.store_id });
+            const dbItem = (0, db_js_1.dbFetchOne)('items', { id: rawItem.id, store_id: input.store_id });
             if (dbItem) {
                 itemTitle = dbItem.title;
                 imageUrl = dbItem.image_url || imageUrl;
@@ -150,7 +161,7 @@ export function createOrder(input) {
     let discountAmount = Math.max(0, parseFloat(String(input.discount_amount || 0)));
     let discountCode = input.discount_code ? input.discount_code.trim().toUpperCase() : null;
     if (discountCode) {
-        const coupon = dbFetchOne('coupons', { store_id: input.store_id, code: discountCode, status: 'active' });
+        const coupon = (0, db_js_1.dbFetchOne)('coupons', { store_id: input.store_id, code: discountCode, status: 'active' });
         if (coupon) {
             if (coupon.discount_type === 'percentage') {
                 discountAmount = Math.round(((subtotal * coupon.discount_value) / 100) * 100) / 100;
@@ -158,7 +169,7 @@ export function createOrder(input) {
             else {
                 discountAmount = Math.min(coupon.discount_value, subtotal);
             }
-            dbUpdate('coupons', { uses_count: (coupon.uses_count || 0) + 1 }, { id: coupon.id });
+            (0, db_js_1.dbUpdate)('coupons', { uses_count: (coupon.uses_count || 0) + 1 }, { id: coupon.id });
         }
         else {
             discountCode = null;
@@ -169,9 +180,9 @@ export function createOrder(input) {
     const totalAmount = Math.max(0, subtotal - discountAmount) + deliveryFee;
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
     const orderRef = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
-    const orderToken = crypto.randomBytes(16).toString('hex');
-    const verificationHash = crypto.createHash('sha256').update(orderRef + orderToken + String(totalAmount)).digest('hex').substring(0, 12);
-    const orderId = dbInsert('orders', {
+    const orderToken = node_crypto_1.default.randomBytes(16).toString('hex');
+    const verificationHash = node_crypto_1.default.createHash('sha256').update(orderRef + orderToken + String(totalAmount)).digest('hex').substring(0, 12);
+    const orderId = (0, db_js_1.dbInsert)('orders', {
         store_id: input.store_id,
         order_ref: orderRef,
         order_token: orderToken,
@@ -196,10 +207,10 @@ export function createOrder(input) {
         created_at: now,
         updated_at: now
     });
-    const newOrder = dbFetchOne('orders', { id: orderId });
+    const newOrder = (0, db_js_1.dbFetchOne)('orders', { id: orderId });
     // 4. Emit Notification Event for Merchant Audio Chime Alert
     try {
-        dbInsert('notification_events', {
+        (0, db_js_1.dbInsert)('notification_events', {
             store_id: input.store_id,
             event_type: 'new_order',
             event_reference: `order_${orderId}`,
@@ -212,7 +223,7 @@ export function createOrder(input) {
     }
     catch (e) { }
     // 5. Broadcast to Merchant in Real-Time
-    realtimeHub.broadcastToMerchant(input.store_id, 'notification', {
+    chatService_js_1.realtimeHub.broadcastToMerchant(input.store_id, 'notification', {
         store_id: input.store_id,
         event_type: 'new_order',
         event_reference: `order_${orderId}`,
@@ -224,17 +235,17 @@ export function createOrder(input) {
 /**
  * Submit Payment Claim with Duplicate Click Deduplication
  */
-export function submitPaymentClaim(orderId, reference, receiptUrl) {
-    const order = dbFetchOne('orders', { id: orderId });
+function submitPaymentClaim(orderId, reference, receiptUrl) {
+    const order = (0, db_js_1.dbFetchOne)('orders', { id: orderId });
     if (!order)
         return { success: false, error: 'Order not found' };
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
     // Idempotency: Check if claim already submitted for this order
-    const existingClaim = dbFetchOne('payment_claims', { order_id: orderId });
+    const existingClaim = (0, db_js_1.dbFetchOne)('payment_claims', { order_id: orderId });
     if (existingClaim) {
         return { success: true, claim: existingClaim, duplicate: true };
     }
-    const claimId = dbInsert('payment_claims', {
+    const claimId = (0, db_js_1.dbInsert)('payment_claims', {
         order_id: orderId,
         store_id: order.store_id,
         customer_id: order.customer_id || null,
@@ -245,14 +256,14 @@ export function submitPaymentClaim(orderId, reference, receiptUrl) {
         claimed_at: now,
         created_at: now
     });
-    dbUpdate('orders', {
+    (0, db_js_1.dbUpdate)('orders', {
         payment_status: 'claimed',
         payment_proof_ref: reference?.trim() || 'Direct Transfer',
         updated_at: now
     }, { id: orderId });
     // Emit Notification Event
     try {
-        dbInsert('notification_events', {
+        (0, db_js_1.dbInsert)('notification_events', {
             store_id: order.store_id,
             event_type: 'payment_claim',
             event_reference: `claim_${claimId}`,
@@ -264,35 +275,35 @@ export function submitPaymentClaim(orderId, reference, receiptUrl) {
         });
     }
     catch (e) { }
-    realtimeHub.broadcastToMerchant(order.store_id, 'notification', {
+    chatService_js_1.realtimeHub.broadcastToMerchant(order.store_id, 'notification', {
         store_id: order.store_id,
         event_type: 'payment_claim',
         event_reference: `claim_${claimId}`,
         title: `Payment Claimed for #${order.order_ref}`,
         message: `${order.customer_name} claimed bank transfer: ${reference}`
     });
-    const newClaim = dbFetchOne('payment_claims', { id: claimId });
+    const newClaim = (0, db_js_1.dbFetchOne)('payment_claims', { id: claimId });
     return { success: true, claim: newClaim };
 }
 /**
  * Confirm Order Payment (Merchant Action)
  */
-export function confirmOrderPayment(orderId, storeId) {
-    const order = dbFetchOne('orders', { id: orderId, store_id: storeId });
+function confirmOrderPayment(orderId, storeId) {
+    const order = (0, db_js_1.dbFetchOne)('orders', { id: orderId, store_id: storeId });
     if (!order)
         return { success: false, error: 'Order not found' };
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    dbUpdate('orders', {
+    (0, db_js_1.dbUpdate)('orders', {
         payment_status: 'paid',
         order_status: 'confirmed',
         updated_at: now
     }, { id: orderId });
-    dbUpdate('payment_claims', { status: 'confirmed' }, { order_id: orderId });
+    (0, db_js_1.dbUpdate)('payment_claims', { status: 'confirmed' }, { order_id: orderId });
     // Increment customer lifetime metrics
     if (order.customer_id) {
-        const cust = dbFetchOne('customers', { id: order.customer_id });
+        const cust = (0, db_js_1.dbFetchOne)('customers', { id: order.customer_id });
         if (cust) {
-            dbUpdate('customers', {
+            (0, db_js_1.dbUpdate)('customers', {
                 total_orders: (cust.total_orders || 0) + 1,
                 total_spent: (cust.total_spent || 0) + parseFloat(order.total_amount || 0),
                 last_order_at: now,
@@ -305,34 +316,34 @@ export function confirmOrderPayment(orderId, storeId) {
 /**
  * Reject Order Payment Claim (Merchant Action)
  */
-export function rejectOrderPayment(orderId, storeId) {
-    const order = dbFetchOne('orders', { id: orderId, store_id: storeId });
+function rejectOrderPayment(orderId, storeId) {
+    const order = (0, db_js_1.dbFetchOne)('orders', { id: orderId, store_id: storeId });
     if (!order)
         return { success: false, error: 'Order not found' };
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    dbUpdate('orders', { payment_status: 'unpaid', updated_at: now }, { id: orderId });
-    dbUpdate('payment_claims', { status: 'rejected' }, { order_id: orderId });
+    (0, db_js_1.dbUpdate)('orders', { payment_status: 'unpaid', updated_at: now }, { id: orderId });
+    (0, db_js_1.dbUpdate)('payment_claims', { status: 'rejected' }, { order_id: orderId });
     return { success: true };
 }
 /**
  * Update Order Status
  */
-export function updateOrderStatus(orderId, storeId, newStatus) {
+function updateOrderStatus(orderId, storeId, newStatus) {
     const valid = ['pending', 'confirmed', 'dispatched', 'completed', 'cancelled'];
     if (!valid.includes(newStatus))
         return { success: false, error: 'Invalid order status' };
-    const order = dbFetchOne('orders', { id: orderId, store_id: storeId });
+    const order = (0, db_js_1.dbFetchOne)('orders', { id: orderId, store_id: storeId });
     if (!order)
         return { success: false, error: 'Order not found' };
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    dbUpdate('orders', { order_status: newStatus, updated_at: now }, { id: orderId });
+    (0, db_js_1.dbUpdate)('orders', { order_status: newStatus, updated_at: now }, { id: orderId });
     return { success: true };
 }
 /**
  * Delta Polling for Orders and Events
  */
-export function pollOrdersAndEvents(storeId, sinceOrderId = 0, sinceEventId = 0) {
-    const db = getDb();
+function pollOrdersAndEvents(storeId, sinceOrderId = 0, sinceEventId = 0) {
+    const db = (0, db_js_1.getDb)();
     // New orders
     const newOrders = db.prepare('SELECT id FROM orders WHERE store_id = ? AND id > ? ORDER BY id DESC').all(storeId, sinceOrderId);
     const latestOrderId = newOrders.length > 0 ? Number(newOrders[0].id) : sinceOrderId;

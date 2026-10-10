@@ -1,8 +1,14 @@
-import crypto from 'node:crypto';
-import https from 'node:https';
-import { dbFetchOne, dbInsert, dbUpdate } from '../../db/db.js';
-import { getPlatformSettings } from '../../utils/helpers.js';
-import { sendEmail } from '../email/mailer.js';
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.billingRoutes = billingRoutes;
+const node_crypto_1 = __importDefault(require("node:crypto"));
+const node_https_1 = __importDefault(require("node:https"));
+const db_js_1 = require("../../db/db.js");
+const helpers_js_1 = require("../../utils/helpers.js");
+const mailer_js_1 = require("../email/mailer.js");
 /**
  * Helper to call Paystack Verify Transaction API over HTTPS
  */
@@ -39,7 +45,7 @@ async function verifyPaystackTransactionApi(reference, secretKey) {
                 'Content-Type': 'application/json'
             }
         };
-        const req = https.request(options, (res) => {
+        const req = node_https_1.default.request(options, (res) => {
             let data = '';
             res.on('data', (chunk) => { data += chunk; });
             res.on('end', () => {
@@ -71,7 +77,7 @@ async function verifyPaystackTransactionApi(reference, secretKey) {
         req.end();
     });
 }
-export async function billingRoutes(fastify) {
+async function billingRoutes(fastify) {
     /**
      * 1. Verify Paystack Subscription Transaction (Client Post-Checkout Callback)
      */
@@ -83,12 +89,12 @@ export async function billingRoutes(fastify) {
             return reply.send({ success: false, error: 'Transaction reference is required' });
         }
         // Lookup payment record
-        const payment = dbFetchOne('subscription_payments', { reference });
+        const payment = (0, db_js_1.dbFetchOne)('subscription_payments', { reference });
         if (!payment) {
             return reply.send({ success: false, error: 'No subscription payment found with this reference' });
         }
         const storeId = payment.store_id || (sessionStore && sessionStore.id);
-        const store = dbFetchOne('stores', { id: storeId });
+        const store = (0, db_js_1.dbFetchOne)('stores', { id: storeId });
         if (!store) {
             return reply.send({ success: false, error: 'Associated store account not found' });
         }
@@ -97,7 +103,7 @@ export async function billingRoutes(fastify) {
             req.session.merchantStore = store;
             return reply.send({ success: true, message: 'Subscription is already active', store, redirect: '/merchant' });
         }
-        const settings = getPlatformSettings();
+        const settings = (0, helpers_js_1.getPlatformSettings)();
         const paystackMode = (settings.paystack_mode || 'test').toLowerCase();
         const isLive = paystackMode === 'live';
         const secretKey = isLive
@@ -117,7 +123,7 @@ export async function billingRoutes(fastify) {
         }
         const verifyResult = await verifyPaystackTransactionApi(reference, secretKey || 'sk_test_placeholder');
         if (!verifyResult.success) {
-            dbUpdate('subscription_payments', {
+            (0, db_js_1.dbUpdate)('subscription_payments', {
                 status: 'failed',
                 gateway_reference: reference
             }, { id: payment.id });
@@ -130,7 +136,7 @@ export async function billingRoutes(fastify) {
         const expectedKobo = Math.round(Number(payment.amount || 0) * 100);
         const paidKobo = Number(verifyResult.data?.amount || 0);
         if (paidKobo > 0 && expectedKobo > 0 && paidKobo < expectedKobo) {
-            dbUpdate('subscription_payments', {
+            (0, db_js_1.dbUpdate)('subscription_payments', {
                 status: 'partial_payment',
                 gateway_reference: reference
             }, { id: payment.id });
@@ -145,7 +151,7 @@ export async function billingRoutes(fastify) {
         const durationDays = isYearly ? 365 : 30;
         const expiresAt = new Date(now.getTime() + durationDays * 86400000).toISOString().slice(0, 19).replace('T', ' ');
         // Update Store
-        dbUpdate('stores', {
+        (0, db_js_1.dbUpdate)('stores', {
             plan_tier: payment.plan_tier,
             subscription_status: 'active',
             billing_cycle: payment.billing_cycle,
@@ -154,18 +160,18 @@ export async function billingRoutes(fastify) {
             updated_at: now.toISOString().slice(0, 19).replace('T', ' ')
         }, { id: store.id });
         // Update Subscription Payment Record
-        dbUpdate('subscription_payments', {
+        (0, db_js_1.dbUpdate)('subscription_payments', {
             status: 'success',
             channel: verifyResult.data?.channel || 'card',
             gateway_reference: verifyResult.data?.id ? String(verifyResult.data.id) : reference,
             paid_at: now.toISOString().slice(0, 19).replace('T', ' ')
         }, { id: payment.id });
         // Refresh Merchant Session
-        const updatedStore = dbFetchOne('stores', { id: store.id });
+        const updatedStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id });
         req.session.merchantStore = updatedStore;
         // Send confirmation email
         if (store.email) {
-            sendEmail({
+            (0, mailer_js_1.sendEmail)({
                 toEmail: store.email,
                 toName: store.owner_name,
                 subject: `🎉 Your Zlik ${payment.plan_tier.toUpperCase()} Subscription is Active!`,
@@ -194,7 +200,7 @@ export async function billingRoutes(fastify) {
      * 2. Paystack Webhook Listener (Server-to-Server HMAC Verified)
      */
     fastify.post('/api/webhooks/paystack', async (req, reply) => {
-        const settings = getPlatformSettings();
+        const settings = (0, helpers_js_1.getPlatformSettings)();
         const paystackMode = settings.paystack_mode || 'test';
         const secretKey = paystackMode === 'live'
             ? (settings.paystack_live_secret_key || settings.paystack_webhook_secret || '')
@@ -203,7 +209,7 @@ export async function billingRoutes(fastify) {
         const rawBody = JSON.stringify(req.body || {});
         // Verify HMAC if secret is configured and not placeholder
         if (signature && secretKey && !secretKey.startsWith('sk_test_placeholder')) {
-            const hash = crypto.createHmac('sha512', secretKey).update(rawBody).digest('hex');
+            const hash = node_crypto_1.default.createHmac('sha512', secretKey).update(rawBody).digest('hex');
             if (hash !== signature) {
                 return reply.code(400).send({ status: false, message: 'Invalid webhook signature' });
             }
@@ -213,15 +219,15 @@ export async function billingRoutes(fastify) {
         const data = payload.data || {};
         if (event === 'charge.success' && data.reference) {
             const reference = data.reference;
-            const payment = dbFetchOne('subscription_payments', { reference });
+            const payment = (0, db_js_1.dbFetchOne)('subscription_payments', { reference });
             if (payment && payment.status !== 'success') {
-                const store = dbFetchOne('stores', { id: payment.store_id });
+                const store = (0, db_js_1.dbFetchOne)('stores', { id: payment.store_id });
                 if (store) {
                     const now = new Date();
                     const isYearly = payment.billing_cycle === 'yearly';
                     const durationDays = isYearly ? 365 : 30;
                     const expiresAt = new Date(now.getTime() + durationDays * 86400000).toISOString().slice(0, 19).replace('T', ' ');
-                    dbUpdate('stores', {
+                    (0, db_js_1.dbUpdate)('stores', {
                         plan_tier: payment.plan_tier,
                         subscription_status: 'active',
                         billing_cycle: payment.billing_cycle,
@@ -229,7 +235,7 @@ export async function billingRoutes(fastify) {
                         is_trial_active: 0,
                         updated_at: now.toISOString().slice(0, 19).replace('T', ' ')
                     }, { id: store.id });
-                    dbUpdate('subscription_payments', {
+                    (0, db_js_1.dbUpdate)('subscription_payments', {
                         status: 'success',
                         channel: data.channel || 'card',
                         gateway_reference: data.id ? String(data.id) : reference,
@@ -248,7 +254,7 @@ export async function billingRoutes(fastify) {
         if (!sessionStore) {
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
         }
-        const store = dbFetchOne('stores', { id: sessionStore.id });
+        const store = (0, db_js_1.dbFetchOne)('stores', { id: sessionStore.id });
         if (!store) {
             return reply.send({ success: false, error: 'Store not found' });
         }
@@ -258,7 +264,7 @@ export async function billingRoutes(fastify) {
         if (targetPlan !== 'pro' && targetPlan !== 'business') {
             return reply.send({ success: false, error: 'Invalid target plan' });
         }
-        const settings = getPlatformSettings();
+        const settings = (0, helpers_js_1.getPlatformSettings)();
         let amount = 5000;
         if (targetPlan === 'pro') {
             amount = billingCycle === 'yearly'
@@ -271,7 +277,7 @@ export async function billingRoutes(fastify) {
                 : Number(settings.business_monthly_price || 9000);
         }
         const reference = `sub_${store.id}_${Date.now()}`;
-        dbInsert('subscription_payments', {
+        (0, db_js_1.dbInsert)('subscription_payments', {
             store_id: store.id,
             email: store.email || 'merchant@zlik.store',
             reference,

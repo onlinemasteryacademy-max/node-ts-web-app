@@ -1,25 +1,28 @@
-import { DatabaseSync } from 'node:sqlite';
-import path from 'node:path';
-import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { getDb, initSchema } from './db.js';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const phpJsonPath = path.resolve(__dirname, '../../../php-web-app/data/db_store.json');
-const phpDbPath = path.resolve(__dirname, '../../../php-web-app/data/odivo.sqlite');
-export function runSeed() {
-    const targetDbPath = path.resolve(__dirname, '../../data/odivo.sqlite');
-    if (fs.existsSync(targetDbPath)) {
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.runSeed = runSeed;
+const node_sqlite_1 = require("node:sqlite");
+const node_path_1 = __importDefault(require("node:path"));
+const node_fs_1 = __importDefault(require("node:fs"));
+const db_js_1 = require("./db.js");
+const phpJsonPath = node_path_1.default.resolve(__dirname, '../../../php-web-app/data/db_store.json');
+const phpDbPath = node_path_1.default.resolve(__dirname, '../../../php-web-app/data/odivo.sqlite');
+function runSeed() {
+    const targetDbPath = node_path_1.default.resolve(__dirname, '../../data/odivo.sqlite');
+    if (node_fs_1.default.existsSync(targetDbPath)) {
         try {
-            fs.unlinkSync(targetDbPath);
+            node_fs_1.default.unlinkSync(targetDbPath);
         }
         catch (e) { }
     }
-    const db = getDb();
-    initSchema(db);
-    if (fs.existsSync(phpJsonPath)) {
+    const db = (0, db_js_1.getDb)();
+    (0, db_js_1.initSchema)(db);
+    if (node_fs_1.default.existsSync(phpJsonPath)) {
         console.log('⚡ Seeding database from db_store.json...');
-        const jsonData = JSON.parse(fs.readFileSync(phpJsonPath, 'utf8'));
+        const jsonData = JSON.parse(node_fs_1.default.readFileSync(phpJsonPath, 'utf8'));
         for (const [table, rows] of Object.entries(jsonData)) {
             if (!Array.isArray(rows) || rows.length === 0)
                 continue;
@@ -49,9 +52,9 @@ export function runSeed() {
         }
     }
     // Also sync any newer chat messages from SQLite WAL if present
-    if (fs.existsSync(phpDbPath)) {
+    if (node_fs_1.default.existsSync(phpDbPath)) {
         try {
-            const phpDb = new DatabaseSync(phpDbPath);
+            const phpDb = new node_sqlite_1.DatabaseSync(phpDbPath);
             const chatMsgs = phpDb.prepare('SELECT * FROM chat_messages').all();
             if (chatMsgs.length > 0) {
                 db.exec('DELETE FROM chat_messages');

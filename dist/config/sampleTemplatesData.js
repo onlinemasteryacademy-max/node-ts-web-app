@@ -1,8 +1,12 @@
+"use strict";
 /**
  * Zlik Industry Store Templates Sample Data Engine
  * High-Aesthetic Realistic Demo Stores & Products (Exactly 1 Showcase Product Per Template)
  */
-export const SAMPLE_STORES_DATA = {
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SAMPLE_STORES_DATA = void 0;
+exports.getSampleDataForTemplate = getSampleDataForTemplate;
+exports.SAMPLE_STORES_DATA = {
     // -------------------------------------------------------------
     // 1. GENERAL STORE CATEGORY (1 Free, 2 Pro)
     // -------------------------------------------------------------
@@ -692,22 +696,22 @@ export const SAMPLE_STORES_DATA = {
 /**
  * Get Sample Data for any template slug with fallback to general_clean
  */
-export function getSampleDataForTemplate(templateSlug) {
+function getSampleDataForTemplate(templateSlug) {
     const normalized = String(templateSlug || '').toLowerCase().trim();
-    if (SAMPLE_STORES_DATA[normalized]) {
-        return SAMPLE_STORES_DATA[normalized];
+    if (exports.SAMPLE_STORES_DATA[normalized]) {
+        return exports.SAMPLE_STORES_DATA[normalized];
     }
     if (normalized.includes('food') || normalized.includes('restaurant') || normalized.includes('bistro') || normalized.includes('menu')) {
-        return SAMPLE_STORES_DATA.food_menu;
+        return exports.SAMPLE_STORES_DATA.food_menu;
     }
     if (normalized.includes('fashion') || normalized.includes('boutique') || normalized.includes('lookbook') || normalized.includes('apparel')) {
-        return SAMPLE_STORES_DATA.fashion_lookbook;
+        return exports.SAMPLE_STORES_DATA.fashion_lookbook;
     }
     if (normalized.includes('beauty') || normalized.includes('cosmetic') || normalized.includes('glow') || normalized.includes('skincare')) {
-        return SAMPLE_STORES_DATA.beauty_cosmetic;
+        return exports.SAMPLE_STORES_DATA.beauty_cosmetic;
     }
     if (normalized.includes('electronic') || normalized.includes('tech') || normalized.includes('gadget') || normalized.includes('device')) {
-        return SAMPLE_STORES_DATA.electronics_tech;
+        return exports.SAMPLE_STORES_DATA.electronics_tech;
     }
-    return SAMPLE_STORES_DATA.general_clean;
+    return exports.SAMPLE_STORES_DATA.general_clean;
 }
