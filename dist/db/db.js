@@ -15,11 +15,15 @@ exports.dbRun = dbRun;
 const node_sqlite_1 = require("node:sqlite");
 const node_path_1 = __importDefault(require("node:path"));
 const node_fs_1 = __importDefault(require("node:fs"));
-const dataDir = node_path_1.default.resolve(__dirname, '../../data');
+const dataDir = process.env.DATA_DIR
+    ? node_path_1.default.resolve(process.env.DATA_DIR)
+    : node_path_1.default.resolve(__dirname, '../../data');
 if (!node_fs_1.default.existsSync(dataDir)) {
     node_fs_1.default.mkdirSync(dataDir, { recursive: true });
 }
-const dbPath = node_path_1.default.join(dataDir, 'odivo.sqlite');
+const dbPath = process.env.DB_PATH
+    ? node_path_1.default.resolve(process.env.DB_PATH)
+    : node_path_1.default.join(dataDir, 'odivo.sqlite');
 let dbInstance = null;
 function getDb(customPath) {
     if (!dbInstance || customPath) {
