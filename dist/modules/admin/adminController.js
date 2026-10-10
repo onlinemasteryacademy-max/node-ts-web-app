@@ -411,6 +411,63 @@ async function adminRoutes(fastify) {
                 (0, adminHelpers_js_1.logAdminAction)(adminId, 'Update Store Status', 'stores', store_id, `Status set to ${status}`, request.ip);
                 return reply.send({ success: true, message: `Store status updated to ${status}` });
             }
+            case 'bulk_store_action': {
+                if (!(0, adminHelpers_js_1.hasAdminPermission)('manage_merchants', adminId)) {
+                    return reply.code(403).send({ success: false, error: 'Forbidden: Insufficient permissions to manage merchants' });
+                }
+                const { store_ids, operation, tier } = body;
+                if (!Array.isArray(store_ids) || store_ids.length === 0) {
+                    return reply.code(400).send({ success: false, error: 'No stores selected for bulk action' });
+                }
+                const validIds = store_ids.map((id) => Number(id)).filter((id) => !isNaN(id) && id > 0);
+                if (validIds.length === 0) {
+                    return reply.code(400).send({ success: false, error: 'Invalid store selection' });
+                }
+                let updatedCount = 0;
+                for (const sId of validIds) {
+                    const targetStore = (0, db_js_1.dbFetchOne)('stores', { id: sId });
+                    if (!targetStore)
+                        continue;
+                    if (operation === 'deactivate' || operation === 'suspend') {
+                        (0, db_js_1.dbUpdate)('stores', { status: 'suspended' }, { id: sId });
+                        updatedCount++;
+                    }
+                    else if (operation === 'activate') {
+                        (0, db_js_1.dbUpdate)('stores', { status: 'active' }, { id: sId });
+                        updatedCount++;
+                    }
+                    else if (operation === 'verify') {
+                        (0, db_js_1.dbUpdate)('stores', { is_verified: 1 }, { id: sId });
+                        updatedCount++;
+                    }
+                    else if (operation === 'unverify') {
+                        (0, db_js_1.dbUpdate)('stores', { is_verified: 0 }, { id: sId });
+                        updatedCount++;
+                    }
+                    else if (operation === 'change_tier') {
+                        const allowedTiers = ['free', 'pro', 'business', 'enterprise'];
+                        const targetTier = (tier || 'free').toLowerCase();
+                        if (allowedTiers.includes(targetTier)) {
+                            (0, db_js_1.dbUpdate)('stores', { plan_tier: targetTier }, { id: sId });
+                            updatedCount++;
+                        }
+                    }
+                    else if (operation === 'delete') {
+                        const updates = { status: 'deleted' };
+                        if (!targetStore.slug.includes('_deleted_')) {
+                            updates.slug = `${targetStore.slug}_deleted_${targetStore.id}`;
+                        }
+                        (0, db_js_1.dbUpdate)('stores', updates, { id: sId });
+                        updatedCount++;
+                    }
+                }
+                (0, adminHelpers_js_1.logAdminAction)(adminId, 'Bulk Store Action', 'stores', validIds.join(','), `Executed bulk '${operation}' on ${updatedCount} stores`, request.ip);
+                return reply.send({
+                    success: true,
+                    count: updatedCount,
+                    message: `Bulk action '${operation}' completed successfully for ${updatedCount} store(s).`
+                });
+            }
             case 'toggle_verification': {
                 if (!(0, adminHelpers_js_1.hasAdminPermission)('manage_verification', adminId)) {
                     return reply.code(403).send({ success: false, error: 'Forbidden' });

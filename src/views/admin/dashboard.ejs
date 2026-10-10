@@ -193,9 +193,70 @@
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 class="text-lg font-bold font-display text-white">Merchant Directory</h2>
-          <p class="text-xs text-white/60">Manage store subscriptions, verification badges, and access support tools</p>
+          <p class="text-xs text-white/60">Manage store subscriptions, verification badges, and execute bulk operational actions</p>
         </div>
-        <input type="text" id="merchantSearch" onkeyup="filterMerchants()" placeholder="Search stores, owners, slugs..." class="px-4 py-2 rounded-lg bg-white/10 border border-white/15 text-xs text-white placeholder-white/40 outline-none focus:border-[#19D98B] w-full sm:w-72">
+        <div class="flex items-center gap-3">
+          <input type="text" id="merchantSearch" onkeyup="filterMerchants()" placeholder="Search stores, owners, slugs..." class="px-4 py-2 rounded-lg bg-white/10 border border-white/15 text-xs text-white placeholder-white/40 outline-none focus:border-[#19D98B] w-full sm:w-72">
+        </div>
+      </div>
+
+      <!-- Bulk Actions Toolbar (Visible when stores are selected) -->
+      <div id="merchantBulkBar" class="hidden bg-gradient-to-r from-purple-950/80 via-black/80 to-[#08110D]/90 border border-purple-500/30 rounded-2xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-4 transition-all duration-300">
+        <div class="flex items-center gap-3">
+          <span class="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center font-bold text-sm">
+            ⚡
+          </span>
+          <div>
+            <div class="text-xs font-bold text-white"><span id="selectedStoresCount">0</span> Store(s) Selected</div>
+            <div class="text-[11px] text-white/60">Choose an administrative action to apply in bulk</div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Bulk Deactivate / Suspend -->
+          <button type="button" onclick="confirmBulkStoreAction('deactivate')" class="px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/30 text-rose-300 hover:text-rose-200 font-semibold text-xs transition flex items-center gap-1.5">
+            <span>⏸️</span>
+            <span>Suspend / Deactivate</span>
+          </button>
+
+          <!-- Bulk Activate -->
+          <button type="button" onclick="confirmBulkStoreAction('activate')" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-300 hover:text-emerald-200 font-semibold text-xs transition flex items-center gap-1.5">
+            <span>▶️</span>
+            <span>Activate</span>
+          </button>
+
+          <!-- Bulk Verification -->
+          <button type="button" onclick="confirmBulkStoreAction('verify')" class="px-3 py-1.5 rounded-lg bg-[#19D98B]/20 hover:bg-[#19D98B]/30 border border-[#19D98B]/30 text-[#19D98B] font-semibold text-xs transition flex items-center gap-1.5">
+            <span>✓</span>
+            <span>Add Badge</span>
+          </button>
+          <button type="button" onclick="confirmBulkStoreAction('unverify')" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 text-white/70 hover:text-white font-semibold text-xs transition flex items-center gap-1.5">
+            <span>✕</span>
+            <span>Remove Badge</span>
+          </button>
+
+          <!-- Bulk Tier Change Dropdown -->
+          <div class="relative inline-block">
+            <select id="bulkTierSelect" onchange="handleBulkTierChange(this.value)" class="px-3 py-1.5 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-semibold outline-none hover:bg-white/20 transition cursor-pointer">
+              <option value="" disabled selected>💎 Set Tier...</option>
+              <option value="free" class="bg-[#08110D] text-white">Free Starter</option>
+              <option value="pro" class="bg-[#08110D] text-white">Pro Plan</option>
+              <option value="business" class="bg-[#08110D] text-white">Business Plan</option>
+              <option value="enterprise" class="bg-[#08110D] text-white">Enterprise Plan</option>
+            </select>
+          </div>
+
+          <!-- Bulk Delete -->
+          <button type="button" onclick="confirmBulkStoreAction('delete')" class="px-3 py-1.5 rounded-lg bg-red-600/20 hover:bg-red-600/40 border border-red-500/40 text-red-300 hover:text-red-100 font-semibold text-xs transition flex items-center gap-1.5">
+            <span>🗑️</span>
+            <span>Delete</span>
+          </button>
+
+          <!-- Clear Selection -->
+          <button type="button" onclick="clearMerchantSelection()" class="px-2.5 py-1.5 text-xs text-white/50 hover:text-white transition">
+            Deselect
+          </button>
+        </div>
       </div>
 
       <div class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
@@ -203,6 +264,9 @@
           <table class="w-full text-left text-xs" id="merchantsTable">
             <thead class="bg-white/5 border-b border-white/10 text-white/60 font-semibold">
               <tr>
+                <th class="p-4 w-10 text-center">
+                  <input type="checkbox" id="selectAllMerchants" onchange="toggleSelectAllMerchants(this.checked)" class="w-4 h-4 rounded bg-white/10 border-white/20 text-[#19D98B] focus:ring-0 cursor-pointer accent-[#19D98B]">
+                </th>
                 <th class="p-4">Store / Slug</th>
                 <th class="p-4">Owner & Contact</th>
                 <th class="p-4">Tier / Status</th>
@@ -212,7 +276,10 @@
             </thead>
             <tbody class="divide-y divide-white/5">
               <% stores.forEach(s => { %>
-                <tr class="merchant-row hover:bg-white/5 transition" data-search="<%= (s.store_name + ' ' + s.owner_name + ' ' + s.slug + ' ' + s.whatsapp_number).toLowerCase() %>">
+                <tr class="merchant-row hover:bg-white/5 transition" id="merchant-row-<%= s.id %>" data-search="<%= (s.store_name + ' ' + s.owner_name + ' ' + s.slug + ' ' + s.whatsapp_number).toLowerCase() %>">
+                  <td class="p-4 text-center">
+                    <input type="checkbox" class="merchant-select-cb w-4 h-4 rounded bg-white/10 border-white/20 text-[#19D98B] focus:ring-0 cursor-pointer accent-[#19D98B]" value="<%= s.id %>" onchange="handleMerchantSelectChange()">
+                  </td>
                   <td class="p-4">
                     <div class="font-bold text-white text-sm"><%= s.store_name %></div>
                     <a href="/<%= s.slug %>" target="_blank" class="text-xs text-[#19D98B] hover:underline font-mono">/<%= s.slug %></a>
@@ -223,10 +290,10 @@
                   </td>
                   <td class="p-4">
                     <div class="flex items-center gap-2">
-                      <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= s.plan_tier === 'pro' ? 'bg-[#19D98B]/20 text-[#19D98B]' : (s.plan_tier === 'business' ? 'bg-blue-500/20 text-blue-400' : 'bg-white/10 text-white/70') %>">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= s.plan_tier === 'pro' ? 'bg-[#19D98B]/20 text-[#19D98B]' : (s.plan_tier === 'business' ? 'bg-blue-500/20 text-blue-400' : (s.plan_tier === 'enterprise' ? 'bg-purple-500/20 text-purple-300' : 'bg-white/10 text-white/70')) %>">
                         <%= s.plan_tier || 'free' %>
                       </span>
-                      <span class="text-[11px] <%= s.status === 'active' ? 'text-emerald-400' : 'text-rose-400' %>">
+                      <span class="text-[11px] font-semibold <%= s.status === 'active' ? 'text-emerald-400' : 'text-rose-400' %>">
                         ● <%= s.status || 'active' %>
                       </span>
                     </div>
@@ -1538,6 +1605,119 @@
         }
       } catch (err) {
         alert('Network error deleting lead');
+      }
+    }
+
+    // ==========================================
+    // SUPER ADMIN BULK STORE ACTIONS
+    // ==========================================
+    function getSelectedStoreIds() {
+      const cbs = document.querySelectorAll('.merchant-select-cb:checked');
+      return Array.from(cbs).map(cb => Number(cb.value)).filter(id => id > 0);
+    }
+
+    function handleMerchantSelectChange() {
+      const selected = getSelectedStoreIds();
+      const bulkBar = document.getElementById('merchantBulkBar');
+      const countLabel = document.getElementById('selectedStoresCount');
+      const selectAllCb = document.getElementById('selectAllMerchants');
+      const allCbs = document.querySelectorAll('.merchant-select-cb');
+
+      if (countLabel) countLabel.textContent = selected.length;
+
+      if (selected.length > 0) {
+        if (bulkBar) bulkBar.classList.remove('hidden');
+      } else {
+        if (bulkBar) bulkBar.classList.add('hidden');
+      }
+
+      if (selectAllCb) {
+        selectAllCb.checked = (allCbs.length > 0 && selected.length === allCbs.length);
+      }
+
+      // Visual highlight for selected rows
+      allCbs.forEach(cb => {
+        const row = document.getElementById(`merchant-row-${cb.value}`);
+        if (row) {
+          if (cb.checked) {
+            row.classList.add('bg-purple-950/20');
+          } else {
+            row.classList.remove('bg-purple-950/20');
+          }
+        }
+      });
+    }
+
+    function toggleSelectAllMerchants(checked) {
+      const rows = document.querySelectorAll('.merchant-row');
+      rows.forEach(row => {
+        if (row.style.display !== 'none') {
+          const cb = row.querySelector('.merchant-select-cb');
+          if (cb) cb.checked = checked;
+        }
+      });
+      handleMerchantSelectChange();
+    }
+
+    function clearMerchantSelection() {
+      const allCbs = document.querySelectorAll('.merchant-select-cb');
+      allCbs.forEach(cb => { cb.checked = false; });
+      const selectAllCb = document.getElementById('selectAllMerchants');
+      if (selectAllCb) selectAllCb.checked = false;
+      handleMerchantSelectChange();
+    }
+
+    function handleBulkTierChange(tier) {
+      if (!tier) return;
+      confirmBulkStoreAction('change_tier', tier);
+      const tierSelect = document.getElementById('bulkTierSelect');
+      if (tierSelect) tierSelect.value = '';
+    }
+
+    async function confirmBulkStoreAction(operation, tier = null) {
+      const selectedIds = getSelectedStoreIds();
+      if (selectedIds.length === 0) {
+        alert('Please select at least one store.');
+        return;
+      }
+
+      let confirmMsg = '';
+      if (operation === 'deactivate' || operation === 'suspend') {
+        confirmMsg = `Are you sure you want to SUSPEND / DEACTIVATE ${selectedIds.length} selected store(s)? Their storefronts will be disabled immediately.`;
+      } else if (operation === 'activate') {
+        confirmMsg = `Activate ${selectedIds.length} selected store(s)?`;
+      } else if (operation === 'verify') {
+        confirmMsg = `Grant Verified Badges to ${selectedIds.length} selected store(s)?`;
+      } else if (operation === 'unverify') {
+        confirmMsg = `Revoke Verified Badges from ${selectedIds.length} selected store(s)?`;
+      } else if (operation === 'change_tier') {
+        confirmMsg = `Change plan tier of ${selectedIds.length} selected store(s) to '${(tier || '').toUpperCase()}'?`;
+      } else if (operation === 'delete') {
+        confirmMsg = `⚠️ CRITICAL: Are you sure you want to DELETE ${selectedIds.length} selected store(s)? This action will release their slugs and archive store data.`;
+      }
+
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        const res = await fetch('/api/admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'bulk_store_action',
+            store_ids: selectedIds,
+            operation,
+            tier
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(`✅ ${data.message || 'Bulk operation completed successfully.'}`);
+          window.location.reload();
+        } else {
+          alert(`❌ Error: ${data.error || 'Failed to complete bulk action'}`);
+        }
+      } catch (err) {
+        alert('Network error executing bulk action.');
       }
     }
   </script>
