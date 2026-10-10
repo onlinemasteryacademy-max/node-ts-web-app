@@ -107,6 +107,7 @@
             <!-- Col 2: Active Message Thread (5 cols) -->
             <div class="md:col-span-5 flex flex-col h-full bg-[#F8FAF8] border-r border-[#E3E9E5]">
                 <!-- Chat Top Header -->
+                <!-- Chat Top Header with Lead Contact Actions -->
                 <div id="activeChatHeader" class="p-3.5 bg-white border-b border-[#E3E9E5] flex items-center justify-between shrink-0">
                     <div class="flex items-center gap-3 min-w-0">
                         <div id="activeChatAvatar" class="w-9 h-9 rounded-xl bg-[#08110D] text-[#19D98B] font-bold text-xs flex items-center justify-center font-display shrink-0 shadow-2xs">
@@ -116,6 +117,15 @@
                             <h3 id="activeChatName" class="text-xs font-bold text-[#08110D] truncate font-display">Select Conversation</h3>
                             <p id="activeChatPhone" class="text-[11px] text-[#6B756F] truncate">Direct Storefront Channel</p>
                         </div>
+                    </div>
+
+                    <div id="activeChatActions" class="flex items-center gap-1.5 shrink-0 hidden">
+                        <a id="activeChatWhatsAppBtn" href="#" target="_blank" class="bg-[#25D366]/15 hover:bg-[#25D366]/25 text-[#075E54] border border-[#25D366]/30 px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1">
+                            <span>💬 WhatsApp</span>
+                        </a>
+                        <a id="activeChatCallBtn" href="#" class="bg-gray-100 hover:bg-gray-200 text-[#08110D] border border-[#E3E9E5] px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1">
+                            <span>📞 Call</span>
+                        </a>
                     </div>
                 </div>
 
@@ -143,11 +153,20 @@
             <!-- Col 3: Customer Context & Orders Sidebar (3 cols) -->
             <div class="hidden md:flex md:col-span-3 flex-col h-full bg-white p-4 overflow-y-auto space-y-4">
                 <div>
-                    <h4 class="text-xs font-extrabold text-[#08110D] uppercase tracking-wider font-display mb-3">Customer Profile</h4>
+                    <h4 class="text-xs font-extrabold text-[#08110D] uppercase tracking-wider font-display mb-3">Customer Lead Profile</h4>
                     <div class="p-3.5 bg-[#F8FAF8] rounded-xl border border-[#E3E9E5] space-y-2 text-xs">
                         <div class="font-bold text-[#08110D]" id="contextCustName">Customer</div>
-                        <div class="text-[11px] text-[#6B756F]" id="contextCustPhone">No phone specified</div>
+                        <div class="text-[11px] text-[#6B756F] font-mono" id="contextCustPhone">No phone specified</div>
                         <div class="text-[11px] text-[#6B756F]" id="contextCustEmail"></div>
+
+                        <div id="contextActionButtons" class="pt-2 flex flex-col gap-1.5 hidden">
+                            <a id="contextWhatsAppLink" href="#" target="_blank" class="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white text-center py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-2xs">
+                                <span>💬 Reach out on WhatsApp</span>
+                            </a>
+                            <a id="contextCallLink" href="#" class="w-full bg-white hover:bg-gray-50 border border-[#E3E9E5] text-[#08110D] text-center py-1.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
+                                <span>📞 Direct Phone Call</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
 
@@ -244,15 +263,26 @@
                                 ${escapeHtml(c.last_message_preview || 'New message')}
                             </p>
                             <div class="flex items-center justify-between mt-1.5">
-                                <span class="text-[9px] font-bold text-[#087A50] bg-[#19D98B]/15 px-1.5 py-0.2 rounded">
-                                    ${c.total_orders_count > 0 ? c.total_orders_count + ' Orders' : 'Storefront Inquiry'}
-                                </span>
-                                ${unread > 0 ? `<span class="bg-[#19D98B] text-[#08110D] text-[9px] font-bold px-2 py-0.2 rounded-full">${unread} new</span>` : ''}
+                                <div class="flex items-center gap-1.5 truncate">
+                                    <span class="text-[9px] font-bold text-[#087A50] bg-[#19D98B]/15 px-1.5 py-0.2 rounded">
+                                        ${c.total_orders_count > 0 ? c.total_orders_count + ' Orders' : 'Storefront Inquiry'}
+                                    </span>
+                                    ${c.customer_phone ? `<span class="text-[9px] font-mono text-[#6B756F] bg-gray-100 px-1.5 py-0.2 rounded">📞 ${escapeHtml(c.customer_phone)}</span>` : ''}
+                                </div>
+                                ${unread > 0 ? `<span class="bg-[#19D98B] text-[#08110D] text-[9px] font-bold px-2 py-0.2 rounded-full shrink-0">${unread} new</span>` : ''}
                             </div>
                         </div>
                     </div>
                 `;
             }).join('');
+        }
+
+        function formatPhoneForWhatsApp(phone) {
+            if (!phone) return '';
+            let clean = String(phone).replace(/[^0-9]/g, '');
+            if (clean.startsWith('0')) clean = '234' + clean.slice(1);
+            if (!clean.startsWith('234') && clean.length === 10) clean = '234' + clean;
+            return clean;
         }
 
         async function selectConversation(convId) {
@@ -264,6 +294,16 @@
                 document.getElementById('activeChatAvatar').textContent = (conv.customer_name || 'S').charAt(0).toUpperCase();
                 document.getElementById('activeChatName').textContent = conv.customer_name;
                 document.getElementById('activeChatPhone').textContent = conv.customer_phone ? '📞 ' + conv.customer_phone : (conv.customer_email || 'Direct Storefront Channel');
+
+                const actionsBar = document.getElementById('activeChatActions');
+                if (conv.customer_phone) {
+                    const waNum = formatPhoneForWhatsApp(conv.customer_phone);
+                    document.getElementById('activeChatWhatsAppBtn').href = `https://wa.me/${waNum}?text=${encodeURIComponent('Hello ' + (conv.customer_name || '') + ', thanks for reaching out to ' + storeData.store_name + '!')}`;
+                    document.getElementById('activeChatCallBtn').href = `tel:${conv.customer_phone}`;
+                    actionsBar.classList.remove('hidden');
+                } else {
+                    actionsBar.classList.add('hidden');
+                }
             }
 
             renderConversationsList(activeConversations);
@@ -332,6 +372,16 @@
                     document.getElementById('contextCustEmail').textContent = cust.email ? '✉️ ' + cust.email : '';
                     document.getElementById('contextTotalOrders').textContent = cust.total_orders || 0;
                     document.getElementById('contextTotalSpent').textContent = '₦' + (cust.total_spent || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+                    const actionBtns = document.getElementById('contextActionButtons');
+                    if (cust.phone) {
+                        const waNum = formatPhoneForWhatsApp(cust.phone);
+                        document.getElementById('contextWhatsAppLink').href = `https://wa.me/${waNum}?text=${encodeURIComponent('Hello ' + (cust.name || '') + ', thanks for reaching out to ' + storeData.store_name + '!')}`;
+                        document.getElementById('contextCallLink').href = `tel:${cust.phone}`;
+                        actionBtns.classList.remove('hidden');
+                    } else {
+                        actionBtns.classList.add('hidden');
+                    }
 
                     const ordersContainer = document.getElementById('contextOrdersList');
                     const orders = data.orders || [];

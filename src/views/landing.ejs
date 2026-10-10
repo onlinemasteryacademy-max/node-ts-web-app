@@ -932,8 +932,8 @@
               <input type="email" name="email" id="regEmail" required placeholder="you@example.com" class="w-full border border-[#E3E9E5] rounded-xl px-3.5 py-2.5 bg-white text-sm outline-none focus:border-[#08110D] transition">
             </div>
             <div>
-              <label class="block text-xs font-semibold text-[#08110D] mb-1">Password</label>
-              <input type="password" name="password" id="regPassword" required placeholder="••••••••" class="w-full border border-[#E3E9E5] rounded-xl px-3.5 py-2.5 bg-white text-sm outline-none focus:border-[#08110D] transition">
+              <label class="block text-xs font-semibold text-[#08110D] mb-1">5-Digit Security PIN</label>
+              <input type="password" name="pin" id="regPin" required maxlength="5" pattern="[0-9]{5}" inputmode="numeric" placeholder="•••••" class="w-full border border-[#E3E9E5] rounded-xl px-3.5 py-2.5 bg-white text-sm outline-none focus:border-[#08110D] font-mono tracking-widest transition">
             </div>
           </div>
 
@@ -1503,6 +1503,15 @@
       const data = Object.fromEntries(formData.entries());
       data.plan_tier = currentSignupPlan;
       data.billing_cycle = currentSignupCycle;
+
+      const pinVal = (data.pin || '').trim();
+      if (!/^\d{5}$/.test(pinVal)) {
+        err.textContent = 'Please enter a 5-digit numeric PIN (numbers only).';
+        err.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerHTML = '<span>Continue to Email Confirmation</span> <span>&rarr;</span>';
+        return;
+      }
 
       try {
         const res = await fetch('/api/auth/signup/initiate', {

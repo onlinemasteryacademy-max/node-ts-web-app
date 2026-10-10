@@ -713,6 +713,7 @@
     </div>
 
     <div id="zlikLiveChatWidget" class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 w-[94vw] sm:w-[380px] max-w-full h-[540px] max-h-[85vh] bg-white rounded-2xl shadow-2xl border border-[#E3E9E5] flex flex-col z-[90] overflow-hidden transition-all duration-200 transform scale-95 opacity-0 pointer-events-none origin-bottom-right">
+        <!-- Live Chat Header -->
         <div class="bg-[#08110D] text-white p-4 flex items-center justify-between border-b border-white/10 shrink-0">
             <div class="flex items-center gap-3 min-w-0">
                 <div class="w-9 h-9 rounded-xl bg-[#19D98B] text-[#08110D] font-bold text-sm flex items-center justify-center shrink-0 font-display">
@@ -729,16 +730,55 @@
             <button onclick="toggleLiveChat(false)" class="text-[#E3E9E5]/70 hover:text-white p-1 rounded-lg transition">✕</button>
         </div>
 
-        <div id="zlikChatMessageStream" class="flex-1 p-4 overflow-y-auto space-y-3 bg-[#F8FAF8] text-xs">
-            <div class="text-center py-6 text-[#6B756F] text-[11px]" id="zlikChatLoadingState">Connecting to <%= store.store_name %>...</div>
+        <!-- 1. Mandatory Pre-Chat Lead Capture Gate (Name & WhatsApp Phone) -->
+        <div id="zlikChatLeadGate" class="flex-1 p-5 flex flex-col justify-between bg-[#F8FAF8] text-xs overflow-y-auto">
+            <div class="space-y-4 my-auto">
+                <div class="text-center space-y-1.5">
+                    <div class="w-12 h-12 rounded-2xl bg-[#19D98B]/20 text-[#087A50] font-extrabold text-xl flex items-center justify-center mx-auto shadow-xs">
+                        💬
+                    </div>
+                    <h4 class="text-sm font-bold font-display text-[#08110D]">Message <%= store.store_name %></h4>
+                    <p class="text-[11px] text-[#6B756F] leading-relaxed max-w-xs mx-auto">
+                        Please provide your name and WhatsApp number so the store owner can reach back out to you if offline.
+                    </p>
+                </div>
+
+                <form id="zlikLeadForm" onsubmit="handleStartCustomerChat(event)" class="space-y-3 pt-1">
+                    <div>
+                        <label class="block font-semibold text-[#08110D] mb-1 text-[11px]">Your Full Name *</label>
+                        <input type="text" id="zlikLeadName" required placeholder="e.g. Joy Okafor" class="w-full bg-white border border-[#E3E9E5] text-xs text-[#08110D] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#08110D] transition">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-[#08110D] mb-1 text-[11px]">WhatsApp Phone Number *</label>
+                        <input type="tel" id="zlikLeadPhone" required placeholder="08012345678" class="w-full bg-white border border-[#E3E9E5] text-xs text-[#08110D] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#08110D] transition">
+                    </div>
+
+                    <div id="zlikLeadError" class="hidden text-[11px] text-[#D94A4A] bg-red-50 border border-red-200 rounded-lg p-2 font-medium"></div>
+
+                    <button type="submit" id="zlikLeadSubmitBtn" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs py-3 rounded-xl transition shadow-xs flex items-center justify-center gap-2 font-display mt-2">
+                        <span>Start Conversation</span> <span>💬</span>
+                    </button>
+                </form>
+            </div>
+
+            <div class="text-[10px] text-[#6B756F] text-center pt-3 border-t border-[#E3E9E5]/60 flex items-center justify-center gap-1">
+                <span>🔒 Your contact details are securely shared with <%= store.store_name %>.</span>
+            </div>
         </div>
 
-        <form id="zlikChatInputForm" onsubmit="handleSendCustomerMessage(event)" class="p-3 bg-white border-t border-[#E3E9E5] flex items-center gap-2 shrink-0">
-            <input type="text" id="zlikChatInput" placeholder="Type a message..." maxlength="1000" autocomplete="off" class="flex-1 bg-[#F8FAF8] border border-[#E3E9E5] text-xs text-[#08110D] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#08110D] transition">
-            <button type="submit" id="zlikChatSendBtn" class="bg-[#08110D] hover:bg-black text-[#19D98B] p-2.5 rounded-xl transition flex items-center justify-center shrink-0">
-                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-            </button>
-        </form>
+        <!-- 2. Active Chat Conversation Stream & Messaging Input -->
+        <div id="zlikChatActiveView" class="hidden flex-1 flex flex-col min-h-0">
+            <div id="zlikChatMessageStream" class="flex-1 p-4 overflow-y-auto space-y-3 bg-[#F8FAF8] text-xs">
+                <div class="text-center py-6 text-[#6B756F] text-[11px]" id="zlikChatLoadingState">Connecting to <%= store.store_name %>...</div>
+            </div>
+
+            <form id="zlikChatInputForm" onsubmit="handleSendCustomerMessage(event)" class="p-3 bg-white border-t border-[#E3E9E5] flex items-center gap-2 shrink-0">
+                <input type="text" id="zlikChatInput" placeholder="Type a message..." maxlength="1000" autocomplete="off" class="flex-1 bg-[#F8FAF8] border border-[#E3E9E5] text-xs text-[#08110D] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#08110D] transition">
+                <button type="submit" id="zlikChatSendBtn" class="bg-[#08110D] hover:bg-black text-[#19D98B] p-2.5 rounded-xl transition flex items-center justify-center shrink-0">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -1830,24 +1870,92 @@
             }
         }
 
-        // Live Chat Widget
+        // Live Chat Widget & Pre-Chat Lead Gate
+        function getSavedCustomerChatInfo() {
+            try {
+                const name = localStorage.getItem('zlik_chat_cust_name_' + storeData.id) || '';
+                const phone = localStorage.getItem('zlik_chat_cust_phone_' + storeData.id) || '';
+                if (name && phone) return { name, phone };
+            } catch(e) {}
+            return null;
+        }
+
         function toggleLiveChat(forceState) {
             chatOpen = typeof forceState === 'boolean' ? forceState : !chatOpen;
             const widget = document.getElementById('zlikLiveChatWidget');
             if (chatOpen) {
                 widget.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
                 widget.classList.add('opacity-100', 'scale-100');
-                if (!conversationId) initCustomerChat();
+
+                const saved = getSavedCustomerChatInfo();
+                const leadGate = document.getElementById('zlikChatLeadGate');
+                const activeView = document.getElementById('zlikChatActiveView');
+
+                if (saved) {
+                    leadGate.classList.add('hidden');
+                    activeView.classList.remove('hidden');
+                    if (!conversationId) initCustomerChat(saved.name, saved.phone);
+                } else {
+                    leadGate.classList.remove('hidden');
+                    activeView.classList.add('hidden');
+                    setTimeout(() => document.getElementById('zlikLeadName')?.focus(), 150);
+                }
             } else {
                 widget.classList.remove('opacity-100', 'scale-100');
                 widget.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
             }
         }
 
-        async function initCustomerChat() {
+        async function handleStartCustomerChat(e) {
+            e.preventDefault();
+            const btn = document.getElementById('zlikLeadSubmitBtn');
+            const err = document.getElementById('zlikLeadError');
+            const name = document.getElementById('zlikLeadName').value.trim();
+            const phone = document.getElementById('zlikLeadPhone').value.trim();
+
+            if (!name || name.length < 2) {
+                err.textContent = 'Please enter your full name.';
+                err.classList.remove('hidden');
+                return;
+            }
+            if (!phone || phone.length < 8) {
+                err.textContent = 'Please enter a valid WhatsApp phone number.';
+                err.classList.remove('hidden');
+                return;
+            }
+
+            err.classList.add('hidden');
+            btn.disabled = true;
+            btn.innerHTML = '<span>Connecting...</span>';
+
+            try {
+                localStorage.setItem('zlik_chat_cust_name_' + storeData.id, name);
+                localStorage.setItem('zlik_chat_cust_phone_' + storeData.id, phone);
+
+                document.getElementById('zlikChatLeadGate').classList.add('hidden');
+                document.getElementById('zlikChatActiveView').classList.remove('hidden');
+
+                await initCustomerChat(name, phone);
+                setTimeout(() => document.getElementById('zlikChatInput')?.focus(), 200);
+            } catch (error) {
+                err.textContent = 'Could not initialize chat. Please try again.';
+                err.classList.remove('hidden');
+                document.getElementById('zlikChatLeadGate').classList.remove('hidden');
+                document.getElementById('zlikChatActiveView').classList.add('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>Start Conversation</span> <span>💬</span>';
+            }
+        }
+
+        async function initCustomerChat(custName, custPhone) {
             try {
                 const loadingEl = document.getElementById('zlikChatLoadingState');
                 if (loadingEl) loadingEl.textContent = 'Connecting to ' + (storeData.store_name || 'Store') + '...';
+
+                const saved = getSavedCustomerChatInfo() || {};
+                const name = custName || saved.name || 'Store Customer';
+                const phone = custPhone || saved.phone || '';
 
                 const res = await fetch('/api/chat/session', {
                     method: 'POST',
@@ -1855,7 +1963,8 @@
                     body: JSON.stringify({ 
                         store_id: storeData.id, 
                         session_token: sessionToken,
-                        customer_name: 'Store Customer'
+                        customer_name: name,
+                        customer_phone: phone
                     })
                 });
                 const d = await res.json();
@@ -1918,8 +2027,14 @@
             const text = input.value.trim();
             if (!text) return;
 
+            const saved = getSavedCustomerChatInfo();
+            if (!saved) {
+                toggleLiveChat(true);
+                return;
+            }
+
             if (!conversationId) {
-                await initCustomerChat();
+                await initCustomerChat(saved.name, saved.phone);
                 if (!conversationId) return;
             }
 

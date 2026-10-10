@@ -67,9 +67,9 @@
 
                 <div>
                     <div class="flex items-center justify-between mb-1.5">
-                        <label class="block font-semibold text-[#08110D]">Password</label>
+                        <label class="block font-semibold text-[#08110D]">5-Digit Security PIN</label>
                     </div>
-                    <input type="password" id="merchantPassword" required placeholder="••••••••" class="w-full px-3.5 py-3 rounded-lg bg-white border border-[#E3E9E5] text-sm text-[#08110D] outline-none focus:border-[#08110D] transition">
+                    <input type="password" id="merchantPin" required maxlength="5" pattern="[0-9]{5}" inputmode="numeric" placeholder="•••••" class="w-full px-3.5 py-3 rounded-lg bg-white border border-[#E3E9E5] text-sm text-[#08110D] outline-none focus:border-[#08110D] font-mono tracking-widest transition">
                 </div>
 
                 <div id="loginError" class="text-xs text-[#D94A4A] font-medium hidden"></div>
@@ -98,13 +98,22 @@
             e.preventDefault();
             const btn = document.getElementById('loginBtn');
             const err = document.getElementById('loginError');
+            const pinVal = document.getElementById('merchantPin').value.trim();
+
+            if (!/^\d{5}$/.test(pinVal)) {
+                err.textContent = 'Please enter your 5-digit PIN (numbers only)';
+                err.classList.remove('hidden');
+                return;
+            }
+
             btn.disabled = true;
             btn.textContent = 'Signing in...';
             err.classList.add('hidden');
 
             const payload = {
                 identifier: document.getElementById('merchantIdentifier').value.trim(),
-                password: document.getElementById('merchantPassword').value
+                pin: pinVal,
+                password: pinVal
             };
 
             try {

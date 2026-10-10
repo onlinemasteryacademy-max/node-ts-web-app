@@ -26,13 +26,17 @@ export async function authRoutes(fastify: FastifyInstance) {
     const ownerName = body.owner_name?.trim() || storeName;
     const email = body.email?.toLowerCase().trim();
     const phone = body.whatsapp_number?.trim() || body.phone?.trim();
-    const password = body.password;
+    const pin = (body.pin || body.password || '').trim();
     const rawSlug = body.slug || storeName;
     const planTier = (body.plan_tier || 'free').toLowerCase();
     const billingCycle = (body.billing_cycle || 'monthly').toLowerCase();
 
-    if (!storeName || !phone || !password || !email) {
-      return reply.send({ success: false, error: 'Store name, full name, email, WhatsApp number, and password are required' });
+    if (!storeName || !phone || !pin || !email) {
+      return reply.send({ success: false, error: 'Store name, full name, email, WhatsApp number, and 5-digit PIN are required' });
+    }
+
+    if (!/^\d{5}$/.test(pin)) {
+      return reply.send({ success: false, error: 'Security PIN must be exactly 5 digits (e.g. 12345)' });
     }
 
     if (!email.includes('@') || !email.includes('.')) {
@@ -67,7 +71,7 @@ export async function authRoutes(fastify: FastifyInstance) {
     const otpCode = String(crypto.randomInt(100000, 999999));
     const otpHash = crypto.createHash('sha256').update(otpCode).digest('hex');
     const token = crypto.randomUUID();
-    const passHash = await hashPassword(password);
+    const passHash = await hashPassword(pin);
     const nowMs = Date.now();
     const expiresAt = new Date(nowMs + OTP_LIFETIME_SECONDS * 1000).toISOString();
 
@@ -412,11 +416,15 @@ export async function authRoutes(fastify: FastifyInstance) {
     const ownerName = body.owner_name?.trim() || storeName;
     const email = body.email?.toLowerCase().trim() || null;
     const phone = body.whatsapp_number?.trim() || body.phone?.trim();
-    const password = body.password;
+    const pin = (body.pin || body.password || '').trim();
     const rawSlug = body.slug || storeName;
 
-    if (!storeName || !phone || !password) {
-      return reply.send({ success: false, error: 'Store name, WhatsApp phone number, and password are required' });
+    if (!storeName || !phone || !pin) {
+      return reply.send({ success: false, error: 'Store name, WhatsApp phone number, and 5-digit PIN are required' });
+    }
+
+    if (!/^\d{5}$/.test(pin)) {
+      return reply.send({ success: false, error: 'Security PIN must be exactly 5 digits' });
     }
 
     // Validate username / slug uniqueness & reservation
@@ -431,7 +439,7 @@ export async function authRoutes(fastify: FastifyInstance) {
       dbUpdate('stores', { slug: `${slug}_archived_${deletedStore.id}` }, { id: deletedStore.id });
     }
 
-    const passHash = await hashPassword(password);
+    const passHash = await hashPassword(pin);
     const now = new Date();
 
     const storeId = dbInsert('stores', {
@@ -465,15 +473,15 @@ export async function authRoutes(fastify: FastifyInstance) {
   });
 
   /**
-   * 6. Merchant Dual Login (Email OR WhatsApp Phone)
+   * 6. Merchant Dual Login (Email OR WhatsApp Phone with 5-Digit PIN)
    */
   fastify.post('/api/auth/login', async (req: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
     const body = (req.body || {}) as any;
     const identifier = body.identifier?.trim() || body.email?.trim();
-    const password = body.password;
+    const pin = (body.pin || body.password || '').trim();
 
-    if (!identifier || !password) {
-      return reply.send({ success: false, error: 'Please enter your email or WhatsApp number and password' });
+    if (!identifier || !pin) {
+      return reply.send({ success: false, error: 'Please enter your email or WhatsApp number and 5-digit PIN' });
     }
 
     let store: any = null;
@@ -497,9 +505,9 @@ export async function authRoutes(fastify: FastifyInstance) {
       return reply.send({ success: false, error: 'No store account found with this email or phone number' });
     }
 
-    const matches = await comparePassword(password, store.password_hash);
+    const matches = await comparePassword(pin, store.password_hash);
     if (!matches) {
-      return reply.send({ success: false, error: 'Incorrect password' });
+      return reply.send({ success: false, error: 'Incorrect 5-digit PIN' });
     }
 
     (req as any).session.merchantStore = store;
