@@ -13,24 +13,30 @@ export async function sendEmail(payload) {
         return { success: false, status: 'failed', error: 'Invalid recipient email address' };
     }
     const settings = dbFetchOne('platform_settings') || {};
-    const smtpEnabled = Boolean(settings.smtp_enabled);
-    const fromEmail = settings.smtp_from_email || settings.smtp_username || 'notifications@zlik.store';
-    const fromName = settings.smtp_from_name || 'Zlik';
-    const replyTo = settings.smtp_reply_to || fromEmail;
+    const smtpEnabled = process.env.SMTP_ENABLED !== undefined
+        ? (process.env.SMTP_ENABLED === '1' || process.env.SMTP_ENABLED === 'true')
+        : Boolean(settings.smtp_enabled);
+    const smtpHost = (process.env.SMTP_HOST || settings.smtp_host || '').trim();
+    const smtpPort = process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : Number(settings.smtp_port || 465);
+    const smtpEncryption = (process.env.SMTP_ENCRYPTION || settings.smtp_encryption || '').toLowerCase();
+    const smtpUser = (process.env.SMTP_USERNAME || settings.smtp_username || '').trim();
+    const smtpPass = (process.env.SMTP_PASSWORD || settings.smtp_password || '').trim();
+    const fromEmail = (process.env.SMTP_FROM_EMAIL || settings.smtp_from_email || smtpUser || 'notifications@zlik.store').trim();
+    const fromName = (process.env.SMTP_FROM_NAME || settings.smtp_from_name || 'Zlik').trim();
+    const replyTo = (process.env.SMTP_REPLY_TO || settings.smtp_reply_to || fromEmail).trim();
     let status = 'logged_sandbox';
     let errorMessage = null;
     let messageId = undefined;
-    if (smtpEnabled && settings.smtp_host && settings.smtp_password && settings.smtp_password.trim() !== '') {
+    if (smtpEnabled && smtpHost && smtpPass && smtpPass !== '') {
         try {
-            const port = Number(settings.smtp_port || 465);
-            const isSecure = port === 465 || String(settings.smtp_encryption || '').toLowerCase() === 'ssl';
+            const isSecure = smtpPort === 465 || smtpEncryption === 'ssl';
             const transporter = nodemailer.createTransport({
-                host: settings.smtp_host.trim(),
-                port,
+                host: smtpHost,
+                port: smtpPort,
                 secure: isSecure,
                 auth: {
-                    user: (settings.smtp_username || '').trim(),
-                    pass: settings.smtp_password.trim()
+                    user: smtpUser,
+                    pass: smtpPass
                 },
                 tls: {
                     rejectUnauthorized: false

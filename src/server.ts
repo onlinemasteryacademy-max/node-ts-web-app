@@ -49,16 +49,16 @@ const fastify = Fastify({
 });
 
 // Middleware & Plugins
-await fastify.register(fastifyCors, { origin: true, credentials: true });
-await fastify.register(fastifyMultipart, {
+fastify.register(fastifyCors, { origin: true, credentials: true });
+fastify.register(fastifyMultipart, {
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB per file
     files: 10 // Up to 10 images simultaneously
   }
 });
-await fastify.register(fastifyFormbody);
-await fastify.register(fastifyCookie);
-await fastify.register(fastifySession, {
+fastify.register(fastifyFormbody);
+fastify.register(fastifyCookie);
+fastify.register(fastifySession, {
   secret: ENV.SESSION_SECRET,
   cookie: {
     secure: process.env.COOKIE_SECURE === 'true',
@@ -71,7 +71,7 @@ await fastify.register(fastifySession, {
 // Initialize Super Admin Credentials & Security Baseline
 initSuperAdminAccount();
 
-await fastify.register(fastifyWebsocket);
+fastify.register(fastifyWebsocket);
 
 // Static Assets & Views Path Resolution (supports both tsx dev and compiled dist)
 const publicDir = fs.existsSync(path.join(__dirname, 'public'))
@@ -82,35 +82,35 @@ const viewsDir = fs.existsSync(path.join(__dirname, 'views'))
   ? path.join(__dirname, 'views')
   : path.resolve(process.cwd(), 'src', 'views');
 
-await fastify.register(fastifyStatic, {
+fastify.register(fastifyStatic, {
   root: publicDir,
   prefix: '/'
 });
 
 // View Engine (EJS)
-await fastify.register(fastifyView, {
+fastify.register(fastifyView, {
   engine: { ejs },
   root: viewsDir
 });
 
 // Register API Routes
-await fastify.register(chatRoutes);
-await fastify.register(chatWebSocketRoutes);
-await fastify.register(ordersRoutes);
-await fastify.register(authRoutes);
-await fastify.register(adminRoutes);
-await fastify.register(debtsRoutes);
-await fastify.register(ledgerRoutes);
-await fastify.register(marketingRoutes);
-await fastify.register(reviewsRoutes);
-await fastify.register(bulkRoutes);
-await fastify.register(broadcastsRoutes);
-await fastify.register(teamsRoutes);
-await fastify.register(branchesRoutes);
-await fastify.register(domainsRoutes);
-await fastify.register(multiStoreRoutes);
-await fastify.register(analyticsRoutes);
-await fastify.register(billingRoutes);
+fastify.register(chatRoutes);
+fastify.register(chatWebSocketRoutes);
+fastify.register(ordersRoutes);
+fastify.register(authRoutes);
+fastify.register(adminRoutes);
+fastify.register(debtsRoutes);
+fastify.register(ledgerRoutes);
+fastify.register(marketingRoutes);
+fastify.register(reviewsRoutes);
+fastify.register(bulkRoutes);
+fastify.register(broadcastsRoutes);
+fastify.register(teamsRoutes);
+fastify.register(branchesRoutes);
+fastify.register(domainsRoutes);
+fastify.register(multiStoreRoutes);
+fastify.register(analyticsRoutes);
+fastify.register(billingRoutes);
 
 // Direct High-Speed Image Upload API (Up to 10MB per image, single or multiple)
 fastify.post('/api/upload', async (req: FastifyRequest, reply: FastifyReply) => {
@@ -559,10 +559,14 @@ fastify.get('/:slug', renderStorefront);
 const PORT = ENV.PORT;
 const HOST = ENV.HOST;
 
-try {
-  await fastify.listen({ port: PORT, host: HOST });
-  console.log(`⚡ Zlik High-Speed Server running in [${ENV.NODE_ENV}] mode on http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
-} catch (err) {
-  console.error('⚡ Server listen error:', err);
-  process.exit(1);
-}
+fastify.listen({ port: PORT, host: HOST }, (err, address) => {
+  if (err) {
+    console.error('⚡ Server listen error:', err);
+    process.exit(1);
+  }
+  console.log(`⚡ Zlik High-Speed Server running in [${ENV.NODE_ENV}] mode on ${address}`);
+});
+
+export default fastify;
+export { fastify };
+
