@@ -241,43 +241,6 @@
             </div>
         </div>
 
-        <!-- Storefront Design Spotlight Banner -->
-        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 sm:p-6 shadow-xs flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden">
-            <div class="space-y-3 max-w-xl">
-                <div class="flex items-center gap-2">
-                    <span class="text-[10px] font-semibold px-2.5 py-0.5 rounded-full uppercase tracking-wider font-mono <%= templateConfig && templateConfig.is_pro ? 'bg-[#08110D] text-[#19D98B] border border-[#19D98B]/30' : 'bg-[#19D98B]/15 text-[#087A50]' %>">
-                        Active Template: <%= templateConfig ? templateConfig.name : 'Classic Grid' %> (<%= templateConfig ? templateConfig.tier_badge : 'FREE' %>)
-                    </span>
-                    <% if (!isPro) { %>
-                        <span class="text-[10px] font-medium text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">Pro Templates Available</span>
-                    <% } %>
-                </div>
-                <h3 class="text-base sm:text-lg font-semibold text-[#08110D]">
-                    <%= templateConfig ? templateConfig.hero_headline : 'Curated Essentials & Everyday Favorites' %>
-                </h3>
-                <p class="text-xs text-[#6B756F] leading-relaxed">
-                    <%= templateConfig ? templateConfig.tagline : 'Clean and practical layout suited for multi-category sellers.' %>
-                </p>
-                <div class="flex items-center gap-3 pt-1">
-                    <a href="/<%= store.slug %>" target="_blank" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-2xs">
-                        <span>Live Storefront ↗</span>
-                    </a>
-                    <a href="/merchant/settings" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-medium text-xs px-4 py-2.5 rounded-xl border border-[#E3E9E5] transition flex items-center gap-1.5">
-                        <span>Change Template</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- Front View Cover Preview Thumbnail -->
-            <div class="w-full md:w-72 aspect-[16/10] h-40 md:h-44 rounded-2xl overflow-hidden border-2 border-[#E3E9E5] shadow-sm bg-[#08110D] shrink-0 group relative">
-                <img src="<%= templateConfig ? (templateConfig.preview_image || ('/assets/images/templates/' + templateConfig.id + '.svg')) : '/assets/images/templates/general_clean.svg' %>" onerror="this.onerror=null; this.src='/assets/images/templates/general_clean.svg';" alt="Active Theme Front View" class="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-2.5">
-                    <span class="text-[9.5px] font-semibold text-white/90 bg-black/60 px-2 py-0.5 rounded-md backdrop-blur-xs">Live Preview</span>
-                    <a href="/merchant/settings" class="text-[10px] font-semibold text-[#19D98B] bg-[#08110D] px-2 py-0.5 rounded-md shadow-xs">Explore All Templates &rarr;</a>
-                </div>
-            </div>
-        </div>
-
         <!-- Orders Section -->
         <div class="space-y-4">
             <div class="flex items-center justify-between">

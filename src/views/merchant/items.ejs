@@ -329,17 +329,14 @@
 
                         <!-- Product Video Showcase (Business Plan) -->
                         <div class="sm:col-span-2">
-                            <div class="flex items-center justify-between mb-1">
-                                <label class="block font-bold text-[#08110D]">Product Showcase Video URL (Optional)</label>
-                                <span class="text-[9.5px] font-semibold bg-[#087A50] text-white px-2 py-0.5 rounded-md font-mono">BUSINESS</span>
-                            </div>
+                            <label class="block font-bold text-[#08110D] mb-1">Product Showcase Video URL (Optional)</label>
                             <div class="relative rounded-xl overflow-hidden">
                                 <input type="url" id="prodVideoUrl" placeholder="https://cdn.example.com/video.mp4 or YouTube / Vimeo URL" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none focus:border-[#08110D] font-mono text-xs <%= store.plan_tier === 'business' ? '' : 'blur-[1px] opacity-60 pointer-events-none select-none' %>" <%= store.plan_tier === 'business' ? '' : 'disabled' %>>
                                 <% if (store.plan_tier !== 'business') { %>
                                     <div class="absolute inset-0 bg-white/40 backdrop-blur-[2px] rounded-xl flex items-center justify-center p-2 z-10">
-                                        <button type="button" onclick="openBusinessUpgradeModal('Product Showcase Video')" class="inline-flex items-center gap-1.5 bg-[#08110D] hover:bg-black text-[#19D98B] px-3.5 py-1.5 rounded-lg text-xs font-bold font-display shadow-xs hover:scale-105 transition-all">
+                                        <button type="button" onclick="openBusinessUpgradeModal('Product Showcase Video')" class="inline-flex items-center gap-1.5 bg-[#2E1065] hover:bg-[#1E0847] text-[#C084FC] border border-[#C084FC]/30 px-3 py-1.5 rounded-lg text-[10.5px] font-semibold font-display shadow-xs hover:scale-105 transition-all">
                                             <span>🔒</span>
-                                            <span>Upgrade</span>
+                                            <span>Upgrade to Business</span>
                                         </button>
                                     </div>
                                 <% } %>
