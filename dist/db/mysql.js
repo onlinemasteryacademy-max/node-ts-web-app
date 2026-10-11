@@ -9,6 +9,7 @@ exports.initMySQLSchema = initMySQLSchema;
 exports.mysqlFetchOne = mysqlFetchOne;
 exports.mysqlFetchAll = mysqlFetchAll;
 exports.mysqlInsert = mysqlInsert;
+exports.mysqlUpsert = mysqlUpsert;
 exports.mysqlUpdate = mysqlUpdate;
 exports.mysqlDelete = mysqlDelete;
 exports.mysqlQuery = mysqlQuery;
@@ -38,6 +39,8 @@ function getMySQLPool() {
     return mysqlPool;
 }
 function isMySQLConfigured() {
+    if ((env_js_1.ENV.DB_TYPE || '').toLowerCase() === 'sqlite')
+        return false;
     return Boolean(env_js_1.ENV.DB_NAME && env_js_1.ENV.DB_USER);
 }
 /**
@@ -521,6 +524,31 @@ async function mysqlInsert(table, data) {
     });
     const [result] = await p.query(sql, params);
     return result.insertId;
+}
+async function mysqlUpsert(table, data) {
+    const p = getMySQLPool();
+    const keys = Object.keys(data).filter(k => data[k] !== undefined);
+    if (keys.length === 0)
+        return 0;
+    const placeholders = keys.map(() => '?').join(', ');
+    const updateAssignments = keys
+        .filter(k => k !== 'id')
+        .map(k => `\`${k}\` = VALUES(\`${k}\`)`)
+        .join(', ');
+    const sql = `INSERT INTO \`${table}\` (${keys.map(k => `\`${k}\``).join(', ')}) VALUES (${placeholders})`
+        + (updateAssignments ? ` ON DUPLICATE KEY UPDATE ${updateAssignments}` : '');
+    const params = keys.map(k => {
+        const val = data[k];
+        if (val === undefined)
+            return null;
+        if (typeof val === 'boolean')
+            return val ? 1 : 0;
+        if (val !== null && typeof val === 'object')
+            return JSON.stringify(val);
+        return val;
+    });
+    const [result] = await p.query(sql, params);
+    return result.insertId || result.affectedRows;
 }
 async function mysqlUpdate(table, data, conditions) {
     const p = getMySQLPool();

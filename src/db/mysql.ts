@@ -28,6 +28,7 @@ export function getMySQLPool(): Pool {
 }
 
 export function isMySQLConfigured(): boolean {
+  if ((ENV.DB_TYPE || '').toLowerCase() === 'sqlite') return false;
   return Boolean(ENV.DB_NAME && ENV.DB_USER);
 }
 
@@ -550,6 +551,32 @@ export async function mysqlInsert(table: string, data: Record<string, any>): Pro
 
   const [result] = await p.query<ResultSetHeader>(sql, params);
   return result.insertId;
+}
+
+export async function mysqlUpsert(table: string, data: Record<string, any>): Promise<number> {
+  const p = getMySQLPool();
+  const keys = Object.keys(data).filter(k => data[k] !== undefined);
+  if (keys.length === 0) return 0;
+
+  const placeholders = keys.map(() => '?').join(', ');
+  const updateAssignments = keys
+    .filter(k => k !== 'id')
+    .map(k => `\`${k}\` = VALUES(\`${k}\`)`)
+    .join(', ');
+
+  const sql = `INSERT INTO \`${table}\` (${keys.map(k => `\`${k}\``).join(', ')}) VALUES (${placeholders})`
+    + (updateAssignments ? ` ON DUPLICATE KEY UPDATE ${updateAssignments}` : '');
+
+  const params = keys.map(k => {
+    const val = data[k];
+    if (val === undefined) return null;
+    if (typeof val === 'boolean') return val ? 1 : 0;
+    if (val !== null && typeof val === 'object') return JSON.stringify(val);
+    return val;
+  });
+
+  const [result] = await p.query<ResultSetHeader>(sql, params);
+  return result.insertId || result.affectedRows;
 }
 
 export async function mysqlUpdate(table: string, data: Record<string, any>, conditions: Record<string, any>): Promise<number> {

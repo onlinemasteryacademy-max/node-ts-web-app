@@ -40,6 +40,7 @@ import { pipeline } from 'node:stream/promises';
 
 import { ENV } from './config/env.js';
 import { initSuperAdminAccount } from './modules/admin/adminSecurity.js';
+import { initMySQLPersistence } from './db/persistence.js';
 
 interface BankOtpRecord {
   otp_hash: string;
@@ -812,6 +813,9 @@ async function startServer() {
   const HOST = ENV.HOST;
 
   try {
+    // 1. Initialize Hostinger MySQL Persistence Bridge (Auto-creates tables & restores store owners)
+    await initMySQLPersistence();
+
     await fastify.listen({ port: PORT, host: HOST });
     console.log(`⚡ Zlik High-Speed Server running in [${ENV.NODE_ENV}] mode on http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
   } catch (err) {

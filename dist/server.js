@@ -44,6 +44,7 @@ const node_crypto_1 = __importDefault(require("node:crypto"));
 const promises_1 = require("node:stream/promises");
 const env_js_1 = require("./config/env.js");
 const adminSecurity_js_1 = require("./modules/admin/adminSecurity.js");
+const persistence_js_1 = require("./db/persistence.js");
 const bankChangeOtpStore = new Map();
 const fastify = (0, fastify_1.default)({
     logger: false,
@@ -754,6 +755,8 @@ async function startServer() {
     const PORT = env_js_1.ENV.PORT;
     const HOST = env_js_1.ENV.HOST;
     try {
+        // 1. Initialize Hostinger MySQL Persistence Bridge (Auto-creates tables & restores store owners)
+        await (0, persistence_js_1.initMySQLPersistence)();
         await fastify.listen({ port: PORT, host: HOST });
         console.log(`⚡ Zlik High-Speed Server running in [${env_js_1.ENV.NODE_ENV}] mode on http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
     }

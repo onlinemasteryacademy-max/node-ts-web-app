@@ -1,10 +1,11 @@
 import { DatabaseSync } from 'node:sqlite';
 import path from 'node:path';
 import fs from 'node:fs';
+import { replicateInsertToMySQL, replicateUpdateToMySQL, replicateDeleteToMySQL } from './persistence.js';
 
 const dataDir = process.env.DATA_DIR
   ? path.resolve(process.env.DATA_DIR)
-  : path.resolve(__dirname, '../../data');
+  : path.resolve(process.cwd(), 'data');
 
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
@@ -645,7 +646,12 @@ export function dbInsert(table: string, data: Record<string, any>): number {
 
   const stmt = db.prepare(sql);
   const result = stmt.run(...params);
-  return Number(result.lastInsertRowid);
+  const insertId = Number(result.lastInsertRowid);
+
+  // Real-time asynchronous replication to Hostinger MySQL
+  replicateInsertToMySQL(table, { id: insertId, ...data });
+
+  return insertId;
 }
 
 /**
@@ -669,7 +675,12 @@ export function dbUpdate(table: string, data: Record<string, any>, conditions: R
 
   const stmt = db.prepare(sql);
   const result = stmt.run(...params);
-  return Number(result.changes);
+  const changes = Number(result.changes);
+
+  // Real-time asynchronous replication to Hostinger MySQL
+  replicateUpdateToMySQL(table, data, conditions);
+
+  return changes;
 }
 
 /**
@@ -685,7 +696,12 @@ export function dbDelete(table: string, conditions: Record<string, any>): number
 
   const stmt = db.prepare(sql);
   const result = stmt.run(...params);
-  return Number(result.changes);
+  const changes = Number(result.changes);
+
+  // Real-time asynchronous replication to Hostinger MySQL
+  replicateDeleteToMySQL(table, conditions);
+
+  return changes;
 }
 
 /**

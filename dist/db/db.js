@@ -15,9 +15,10 @@ exports.dbRun = dbRun;
 const node_sqlite_1 = require("node:sqlite");
 const node_path_1 = __importDefault(require("node:path"));
 const node_fs_1 = __importDefault(require("node:fs"));
+const persistence_js_1 = require("./persistence.js");
 const dataDir = process.env.DATA_DIR
     ? node_path_1.default.resolve(process.env.DATA_DIR)
-    : node_path_1.default.resolve(__dirname, '../../data');
+    : node_path_1.default.resolve(process.cwd(), 'data');
 if (!node_fs_1.default.existsSync(dataDir)) {
     node_fs_1.default.mkdirSync(dataDir, { recursive: true });
 }
@@ -637,7 +638,10 @@ function dbInsert(table, data) {
     });
     const stmt = db.prepare(sql);
     const result = stmt.run(...params);
-    return Number(result.lastInsertRowid);
+    const insertId = Number(result.lastInsertRowid);
+    // Real-time asynchronous replication to Hostinger MySQL
+    (0, persistence_js_1.replicateInsertToMySQL)(table, { id: insertId, ...data });
+    return insertId;
 }
 /**
  * DB Update
@@ -657,7 +661,10 @@ function dbUpdate(table, data, conditions) {
     condKeys.forEach(k => params.push(conditions[k]));
     const stmt = db.prepare(sql);
     const result = stmt.run(...params);
-    return Number(result.changes);
+    const changes = Number(result.changes);
+    // Real-time asynchronous replication to Hostinger MySQL
+    (0, persistence_js_1.replicateUpdateToMySQL)(table, data, conditions);
+    return changes;
 }
 /**
  * DB Delete
@@ -671,7 +678,10 @@ function dbDelete(table, conditions) {
     const params = condKeys.map(k => conditions[k]);
     const stmt = db.prepare(sql);
     const result = stmt.run(...params);
-    return Number(result.changes);
+    const changes = Number(result.changes);
+    // Real-time asynchronous replication to Hostinger MySQL
+    (0, persistence_js_1.replicateDeleteToMySQL)(table, conditions);
+    return changes;
 }
 /**
  * DB Raw Query
