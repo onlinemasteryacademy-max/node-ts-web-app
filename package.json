@@ -9,6 +9,7 @@
     "build": "tsc && node scripts/copy_assets.js",
     "start": "node dist/server.js",
     "seed": "tsx src/db/seed.ts",
+    "migrate:mysql": "tsx scripts/migrate_sqlite_to_mysql.ts",
     "reset-admin": "tsx scripts/reset_admin_password.ts",
     "test": "tsx tests/run_all_tests.ts"
   },
@@ -39,12 +40,12 @@
     "bcryptjs": "^3.0.2",
     "ejs": "^3.1.10",
     "fastify": "^5.2.1",
+    "mysql2": "^3.24.5",
     "nodemailer": "^6.10.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
     "zod": "^3.24.2"
   },
-  "devDependencies": {},
   "engines": {
     "node": ">=22.5.0"
   }

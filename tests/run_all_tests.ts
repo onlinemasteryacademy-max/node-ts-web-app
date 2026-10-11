@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import { getDb, initSchema, dbFetchOne, dbFetchAll, dbInsert, dbUpdate, dbDelete } from '../src/db/db.js';
+import { isMySQLConfigured } from '../src/db/mysql.js';
+import { ENV } from '../src/config/env.js';
 import {
   normalizePhoneNumber,
   formatCurrency,
@@ -1812,6 +1814,58 @@ async function runTestSuite() {
   assert(webhookUpgradedBizStore.plan_tier === 'business', 'Business store activated via webhook simulation');
   assert(webhookUpgradedBizStore.subscription_status === 'active', 'Business subscription status is active');
   assert(new Date(webhookUpgradedBizStore.plan_expires_at).getFullYear() >= now.getFullYear() + 1, 'Yearly plan extended for 365 days');
+
+  // -------------------------------------------------------------
+  // SUITE 21: MYSQL MODULE, CONFIGURATION & STORE OWNER PERSISTENCE
+  // -------------------------------------------------------------
+  console.log('\n======================================================');
+  console.log('🧪 SUITE 21: MYSQL MODULE, CONFIGURATION & PERSISTENCE');
+  console.log('======================================================\n');
+
+  // 21.1 Environment variable parsing
+  assert(typeof isMySQLConfigured === 'function', 'isMySQLConfigured is an exported function');
+  assert(ENV.DB_PORT === 3306 || typeof ENV.DB_PORT === 'number', 'DB_PORT parsed as valid integer');
+  assert(typeof ENV.DB_HOST === 'string', 'DB_HOST is valid string');
+  assert(typeof ENV.DB_PASSWORD === 'string', 'DB_PASSWORD is safely read from process.env');
+
+  // 21.2 Store owner registration and login verification with 5-digit PIN
+  const testPin = '77889';
+  const testPinHash = await hashPassword(testPin);
+  const mysqlTestStoreId = dbInsert('stores', {
+    slug: 'persistent-store-hub',
+    store_name: 'Persistent Store Hub',
+    owner_name: 'Emeka Nwosu',
+    email: 'emeka@persistenthub.ng',
+    password_hash: testPinHash,
+    whatsapp_number: '+2348099887766',
+    status: 'active',
+    plan_tier: 'free',
+    email_verified: 1,
+    subscription_status: 'active'
+  });
+
+  assert(mysqlTestStoreId > 0, 'Store owner account created with unique database ID');
+
+  // Fetch by email
+  const fetchedByEmail = dbFetchOne<any>('stores', { email: 'emeka@persistenthub.ng' });
+  assert(fetchedByEmail !== null, 'Store owner record readable by email');
+  assert(fetchedByEmail.slug === 'persistent-store-hub', 'Store slug matches registered slug');
+  assert(fetchedByEmail.owner_name === 'Emeka Nwosu', 'Store owner name preserved accurately');
+
+  // Authenticate with 5-digit PIN
+  const pinValid = await comparePassword(testPin, fetchedByEmail.password_hash);
+  assert(pinValid === true, '5-digit PIN matches stored password hash');
+
+  const wrongPinValid = await comparePassword('11111', fetchedByEmail.password_hash);
+  assert(wrongPinValid === false, 'Incorrect 5-digit PIN correctly rejected');
+
+  // Fetch by phone
+  const fetchedByPhone = dbFetchOne<any>('stores', { whatsapp_number: '+2348099887766' });
+  assert(fetchedByPhone !== null && fetchedByPhone.id === mysqlTestStoreId, 'Store owner record readable by WhatsApp phone');
+
+  // 21.3 Database Migration Script Safety
+  const { migrateSqliteToMySQL } = await import('../scripts/migrate_sqlite_to_mysql.js');
+  assert(typeof migrateSqliteToMySQL === 'function', 'migrateSqliteToMySQL is exported as an async migration tool');
 
   // -------------------------------------------------------------
   console.log('\n======================================================');

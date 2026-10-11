@@ -60,5 +60,12 @@ exports.ENV = {
     SUPER_ADMIN_PASSWORD: process.env.SUPER_ADMIN_PASSWORD || 'Zlik#Admin!2026@Security',
     SUPER_ADMIN_NAME: process.env.SUPER_ADMIN_NAME || 'Platform Super Administrator',
     ADMIN_SECRET_PATH: (process.env.ADMIN_SECRET_PATH || 'zlik-ops-9x7q2m8b').replace(/^\/+|\/+$/g, ''),
-    RESET_SUPER_ADMIN_PASSWORD: process.env.RESET_SUPER_ADMIN_PASSWORD === 'true'
+    RESET_SUPER_ADMIN_PASSWORD: process.env.RESET_SUPER_ADMIN_PASSWORD === 'true',
+    // Database Configuration (Hostinger MySQL / SQLite)
+    DB_TYPE: (process.env.DB_TYPE || (process.env.DB_NAME && process.env.DB_USER ? 'mysql' : 'sqlite')).toLowerCase(),
+    DB_HOST: process.env.DB_HOST || 'localhost',
+    DB_PORT: parseInt(process.env.DB_PORT || '3306', 10),
+    DB_NAME: process.env.DB_NAME || '',
+    DB_USER: process.env.DB_USER || '',
+    DB_PASSWORD: process.env.DB_PASSWORD || ''
 };
