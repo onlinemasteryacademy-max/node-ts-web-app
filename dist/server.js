@@ -634,6 +634,29 @@ fastify.get('/receipt/:ref', async (req, reply) => {
     catch (e) { }
     return reply.view('receipt.ejs', { order, store, items });
 });
+// Helper to check if store has active, valid promo codes with timeframe/discount
+const checkHasActiveCoupons = (storeId) => {
+    try {
+        const coupons = (0, db_js_1.dbFetchAll)('coupons', { store_id: storeId, status: 'active' });
+        const now = new Date();
+        return coupons.some(c => {
+            const discountVal = parseFloat(c.discount_value || 0);
+            if (isNaN(discountVal) || discountVal <= 0)
+                return false;
+            if (c.expires_at) {
+                const exp = new Date(c.expires_at);
+                if (isNaN(exp.getTime()) || exp < now)
+                    return false;
+            }
+            if (c.max_uses > 0 && c.uses_count >= c.max_uses)
+                return false;
+            return true;
+        });
+    }
+    catch (e) {
+        return false;
+    }
+};
 // 10. Checkout Page View (/store/:slug/checkout or /:slug/checkout)
 const renderCheckout = async (req, reply) => {
     const slug = req.params.slug;
@@ -641,7 +664,8 @@ const renderCheckout = async (req, reply) => {
     if (!store || store.status === 'deleted')
         return reply.code(404).send('Store not found');
     const templateConfig = (0, templates_js_1.getStoreTemplateConfig)(store.template_slug);
-    return reply.view('checkout.ejs', { store, templateConfig });
+    const hasActiveCoupons = checkHasActiveCoupons(store.id);
+    return reply.view('checkout.ejs', { store, templateConfig, hasActiveCoupons });
 };
 fastify.get('/store/:slug/checkout', renderCheckout);
 fastify.get('/:slug/checkout', renderCheckout);
@@ -657,7 +681,8 @@ const renderTemplateDemo = async (req, reply) => {
         categories,
         templateConfig,
         allTemplates: templates_js_1.STORE_TEMPLATES,
-        isDemo: true
+        isDemo: true,
+        hasActiveCoupons: false
     });
 };
 fastify.get('/demo/:slug', renderTemplateDemo);
@@ -676,6 +701,7 @@ const renderStorefront = async (req, reply) => {
     const categories = Array.from(new Set(items.map(i => i.category || 'General')));
     const planDetails = (0, helpers_js_1.getStorePlanDetails)(store);
     const templateConfig = (0, templates_js_1.getStoreTemplateConfig)(store.template_slug);
+    const hasActiveCoupons = checkHasActiveCoupons(store.id);
     return reply.view('store.ejs', {
         store,
         items,
@@ -684,7 +710,8 @@ const renderStorefront = async (req, reply) => {
         allTemplates: templates_js_1.STORE_TEMPLATES,
         isDemo: false,
         isPro: planDetails.isPro,
-        showPoweredBy: Boolean(planDetails.config.features.powered_by_zlik)
+        showPoweredBy: Boolean(planDetails.config.features.powered_by_zlik),
+        hasActiveCoupons
     });
 };
 fastify.get('/store/:slug', renderStorefront);

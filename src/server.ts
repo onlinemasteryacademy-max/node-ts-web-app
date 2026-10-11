@@ -684,13 +684,34 @@ fastify.get('/receipt/:ref', async (req: FastifyRequest<{ Params: { ref: string 
   return reply.view('receipt.ejs', { order, store, items });
 });
 
+// Helper to check if store has active, valid promo codes with timeframe/discount
+const checkHasActiveCoupons = (storeId: number): boolean => {
+  try {
+    const coupons = dbFetchAll<any>('coupons', { store_id: storeId, status: 'active' });
+    const now = new Date();
+    return coupons.some(c => {
+      const discountVal = parseFloat(c.discount_value || 0);
+      if (isNaN(discountVal) || discountVal <= 0) return false;
+      if (c.expires_at) {
+        const exp = new Date(c.expires_at);
+        if (isNaN(exp.getTime()) || exp < now) return false;
+      }
+      if (c.max_uses > 0 && c.uses_count >= c.max_uses) return false;
+      return true;
+    });
+  } catch (e) {
+    return false;
+  }
+};
+
 // 10. Checkout Page View (/store/:slug/checkout or /:slug/checkout)
 const renderCheckout = async (req: FastifyRequest<{ Params: { slug: string } }>, reply: FastifyReply) => {
   const slug = req.params.slug;
   const store = dbFetchOne<any>('stores', { slug });
   if (!store || store.status === 'deleted') return reply.code(404).send('Store not found');
   const templateConfig = getStoreTemplateConfig(store.template_slug);
-  return reply.view('checkout.ejs', { store, templateConfig });
+  const hasActiveCoupons = checkHasActiveCoupons(store.id);
+  return reply.view('checkout.ejs', { store, templateConfig, hasActiveCoupons });
 };
 
 fastify.get('/store/:slug/checkout', renderCheckout);
@@ -709,7 +730,8 @@ const renderTemplateDemo = async (req: FastifyRequest<{ Params: { slug: string }
     categories,
     templateConfig,
     allTemplates: STORE_TEMPLATES,
-    isDemo: true
+    isDemo: true,
+    hasActiveCoupons: false
   });
 };
 
@@ -730,6 +752,7 @@ const renderStorefront = async (req: FastifyRequest<{ Params: { slug: string } }
   const categories = Array.from(new Set(items.map(i => i.category || 'General')));
   const planDetails = getStorePlanDetails(store);
   const templateConfig = getStoreTemplateConfig(store.template_slug);
+  const hasActiveCoupons = checkHasActiveCoupons(store.id);
 
   return reply.view('store.ejs', {
     store,
@@ -739,7 +762,8 @@ const renderStorefront = async (req: FastifyRequest<{ Params: { slug: string } }
     allTemplates: STORE_TEMPLATES,
     isDemo: false,
     isPro: planDetails.isPro,
-    showPoweredBy: Boolean(planDetails.config.features.powered_by_zlik)
+    showPoweredBy: Boolean(planDetails.config.features.powered_by_zlik),
+    hasActiveCoupons
   });
 };
 

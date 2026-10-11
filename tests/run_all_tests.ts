@@ -912,8 +912,15 @@ async function runTestSuite() {
   assert(reminderText.includes('₦15,000') && reminderText.includes('Amaka Obi'), 'Debt reminder message contains correct customer name & formatted amount');
 
   // 12.3 Low Stock & Receipt Customization Persistence
-  dbUpdate('items', { low_stock_threshold: 4 }, { id: 101 });
-  const updatedStockItem = dbFetchOne<any>('items', { id: 101 });
+  const testStockItemId = dbInsert('items', {
+    store_id: debtStoreId,
+    title: 'Test Stock Item',
+    price: 5000,
+    stock_quantity: 10,
+    low_stock_threshold: 2
+  });
+  dbUpdate('items', { low_stock_threshold: 4 }, { id: testStockItemId });
+  const updatedStockItem = dbFetchOne<any>('items', { id: testStockItemId });
   assert(updatedStockItem?.low_stock_threshold === 4, 'Product low stock threshold saved to database');
 
   dbUpdate('stores', {

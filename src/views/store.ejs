@@ -382,6 +382,7 @@
             </div>
 
             <div class="p-4 border-t border-[#E3E9E5] bg-[#F8FAF8] space-y-3">
+                <% if (typeof hasActiveCoupons !== 'undefined' && hasActiveCoupons) { %>
                 <!-- Promo Code Box in Drawer -->
                 <div class="p-2.5 bg-white border border-[#E3E9E5] rounded-xl space-y-1.5">
                     <div class="flex items-center justify-between text-[11px]">
@@ -393,6 +394,7 @@
                         <button type="button" onclick="applyPromoCodeFromDrawer()" class="bg-[#08110D] hover:bg-black text-[#19D98B] px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-2xs font-display">Apply</button>
                     </div>
                 </div>
+                <% } %>
 
                 <div class="flex justify-between text-xs text-[#6B756F]">
                     <span>Subtotal:</span>
@@ -479,6 +481,7 @@
                     </select>
                 </div>
 
+                <% if (typeof hasActiveCoupons !== 'undefined' && hasActiveCoupons) { %>
                 <!-- Promo Code / Discount Voucher Input -->
                 <div class="p-3 bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl space-y-2">
                     <div class="flex items-center justify-between">
@@ -496,6 +499,7 @@
                         <span id="discountAmountText">-₦0.00</span>
                     </div>
                 </div>
+                <% } %>
 
                 <% if (store.bank_name && store.bank_account_number) { %>
                 <div id="modalBankCard" class="p-3 bg-[#08110D] text-white rounded-xl space-y-2 border border-white/10 text-xs">
