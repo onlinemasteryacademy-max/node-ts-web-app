@@ -59,6 +59,16 @@ import { getSampleDataForTemplate, SAMPLE_STORES_DATA } from '../src/config/samp
 import { STORE_TEMPLATES, STORE_CATEGORIES } from '../src/config/templates.js';
 import { PLANS } from '../src/config/plans.js';
 import { recordStoreVisit, getStoreVisitorMetrics } from '../src/modules/analytics/analyticsController.js';
+import {
+  verifyPurchaseEligibility,
+  submitVerifiedReview,
+  moderateReview,
+  getPublicStoreReviews,
+  getMerchantReviewsList,
+  verifyVerificationToken,
+  hashCustomerPhone,
+  resetVerificationRateLimits
+} from '../src/modules/reviews/reviewsService.js';
 
 let passed = 0;
 let failed = 0;
@@ -1831,6 +1841,8 @@ async function runTestSuite() {
   // 21.2 Store owner registration and login verification with 5-digit PIN
   const testPin = '77889';
   const testPinHash = await hashPassword(testPin);
+  dbDelete('stores', { email: 'emeka@persistenthub.ng' });
+  dbDelete('stores', { slug: 'persistent-store-hub' });
   const mysqlTestStoreId = dbInsert('stores', {
     slug: 'persistent-store-hub',
     store_name: 'Persistent Store Hub',
@@ -1866,6 +1878,218 @@ async function runTestSuite() {
   // 21.3 Database Migration Script Safety
   const { migrateSqliteToMySQL } = await import('../scripts/migrate_sqlite_to_mysql.js');
   assert(typeof migrateSqliteToMySQL === 'function', 'migrateSqliteToMySQL is exported as an async migration tool');
+
+  // -------------------------------------------------------------
+  console.log('\n======================================================');
+  console.log('🧪 SUITE 22: SECURE PURCHASE-VERIFIED PRODUCT REVIEW SYSTEM');
+  console.log('======================================================\n');
+
+  // Setup test stores & products
+  resetVerificationRateLimits();
+  dbDelete('stores', { slug: 'review-store-a' });
+  dbDelete('stores', { slug: 'review-store-b' });
+  dbDelete('orders', { order_ref: 'ORD-REV-001' });
+  dbDelete('orders', { order_ref: 'ORD-REV-002' });
+  dbDelete('orders', { order_ref: 'ORD-REV-003' });
+
+  const storeAId = dbInsert('stores', {
+    slug: 'review-store-a',
+    store_name: 'Store A Electronics',
+    owner_name: 'Merchant A',
+    email: 'merchantA@reviewtest.ng',
+    password_hash: await hashPassword('12345'),
+    whatsapp_number: '+2348011112222',
+    status: 'active',
+    plan_tier: 'pro',
+    email_verified: 1,
+    subscription_status: 'active'
+  });
+
+  const storeBId = dbInsert('stores', {
+    slug: 'review-store-b',
+    store_name: 'Store B Fashion',
+    owner_name: 'Merchant B',
+    email: 'merchantB@reviewtest.ng',
+    password_hash: await hashPassword('12345'),
+    whatsapp_number: '+2348022223333',
+    status: 'active',
+    plan_tier: 'free',
+    email_verified: 1,
+    subscription_status: 'active'
+  });
+
+  const itemA1 = dbInsert('items', {
+    store_id: storeAId,
+    title: 'Wireless ANC Headphones',
+    price: 35000,
+    is_available: 1
+  });
+
+  const itemA2 = dbInsert('items', {
+    store_id: storeAId,
+    title: 'USB-C Fast Charging Hub',
+    price: 12000,
+    is_available: 1
+  });
+
+  const itemB1 = dbInsert('items', {
+    store_id: storeBId,
+    title: 'Ankara Luxury Blazer',
+    price: 25000,
+    is_available: 1
+  });
+
+  // Customer phone numbers for testing (Nigerian formats)
+  const phoneCustomer1Local = '08033445566'; // +2348033445566
+  const phoneCustomer1Intl = '+2348033445566';
+  const phoneCustomer2 = '08122334455';
+  const phoneNeverPurchased = '07099887766';
+
+  // Order 1: Store A, Customer 1 bought itemA1, completed
+  const orderCompletedId = dbInsert('orders', {
+    store_id: storeAId,
+    order_ref: 'ORD-REV-001',
+    customer_name: 'Amaka Eze',
+    customer_phone: phoneCustomer1Local,
+    items_json: JSON.stringify([{ id: itemA1, title: 'Wireless ANC Headphones', price: 35000, quantity: 1 }]),
+    total_amount: 35000,
+    payment_status: 'paid',
+    order_status: 'completed'
+  });
+
+  // Order 2: Store A, Customer 2 bought itemA2, but status is pending (unprocessed)
+  const orderPendingId = dbInsert('orders', {
+    store_id: storeAId,
+    order_ref: 'ORD-REV-002',
+    customer_name: 'Tunde Bakare',
+    customer_phone: phoneCustomer2,
+    items_json: JSON.stringify([{ id: itemA2, title: 'USB-C Fast Charging Hub', price: 12000, quantity: 1 }]),
+    total_amount: 12000,
+    payment_status: 'unpaid',
+    order_status: 'pending'
+  });
+
+  // Order 3: Store A, Customer 2 bought itemA1, but order was cancelled by merchant
+  const orderCancelledId = dbInsert('orders', {
+    store_id: storeAId,
+    order_ref: 'ORD-REV-003',
+    customer_name: 'Tunde Bakare',
+    customer_phone: phoneCustomer2,
+    items_json: JSON.stringify([{ id: itemA1, title: 'Wireless ANC Headphones', price: 35000, quantity: 1 }]),
+    total_amount: 35000,
+    payment_status: 'unpaid',
+    order_status: 'cancelled'
+  });
+
+  // Clean existing test reviews for clean test isolation
+  dbDelete('reviews', { store_id: storeAId });
+  dbDelete('reviews', { store_id: storeBId });
+
+  // 22.1 Non-Purchaser Rejected
+  const verifyNonPurchaser = verifyPurchaseEligibility(storeAId, itemA1, phoneNeverPurchased);
+  assert(verifyNonPurchaser.eligible === false, 'Phone that never purchased is rejected');
+  assert(verifyNonPurchaser.error === "We couldn't verify a qualifying purchase for this product using that phone number.", 'Generic safe error message does not expose DB contents');
+
+  // 22.2 Customer of Different Merchant Rejected
+  const verifyCrossMerchant = verifyPurchaseEligibility(storeBId, itemB1, phoneCustomer1Local);
+  assert(verifyCrossMerchant.eligible === false, 'Customer who bought from Store A cannot review Store B');
+
+  // 22.3 Different Product from Same Merchant Rejected
+  const verifyDifferentProduct = verifyPurchaseEligibility(storeAId, itemA2, phoneCustomer1Local);
+  assert(verifyDifferentProduct.eligible === false, 'Customer who bought Product 1 cannot review Product 2');
+
+  // 22.4 Pending Order Rejected
+  const verifyPendingOrder = verifyPurchaseEligibility(storeAId, itemA2, phoneCustomer2);
+  assert(verifyPendingOrder.eligible === false, 'Pending order is ineligible for review');
+
+  // 22.5 Completed Order Successfully Verified with Nigerian phone normalization
+  const verifyCompleted = verifyPurchaseEligibility(storeAId, itemA1, phoneCustomer1Intl);
+  assert(verifyCompleted.eligible === true, 'Completed order is successfully verified');
+  assert(typeof verifyCompleted.token === 'string', 'Cryptographic verification token issued');
+  assert(verifyCompleted.is_verified_purchase === 1, 'Completed purchase marked as verified purchase badge 1');
+
+  // Verify token signature validation
+  const tokenPayload = verifyVerificationToken(verifyCompleted.token!);
+  assert(tokenPayload.valid === true, 'Verification token successfully decodes and validates signature');
+  assert(tokenPayload.payload?.store_id === storeAId, 'Token encodes correct store ID');
+  assert(tokenPayload.payload?.item_id === itemA1, 'Token encodes correct item ID');
+
+  // 22.6 Cancelled Order Acknowledged Feedback (Recommendation 1)
+  const verifyCancelled = verifyPurchaseEligibility(storeAId, itemA1, phoneCustomer2);
+  assert(verifyCancelled.eligible === true, 'Processed cancelled order is eligible for ordering experience feedback');
+  assert(verifyCancelled.is_verified_purchase === 0, 'Cancelled order is distinguished without Verified Purchase badge');
+
+  // 22.7 Token Tampering Defense
+  const tamperedToken = verifyCompleted.token! + 'tampered';
+  const submitTampered = submitVerifiedReview({
+    token: tamperedToken,
+    rating: 5,
+    comment: 'Hacked review submission'
+  });
+  assert(submitTampered.success === false, 'Tampered token is strictly rejected');
+
+  // 22.8 Valid Review Submission
+  const submitReview1 = submitVerifiedReview({
+    token: verifyCompleted.token!,
+    rating: 5,
+    comment: 'Super fast delivery and crystal clear audio quality! Loved it.'
+  });
+  assert(submitReview1.success === true, 'Verified review submitted successfully');
+  assert(submitReview1.review.status === 'pending_review', 'Newly submitted review starts in pending_review moderation state');
+  assert(submitReview1.review.is_verified_purchase === 1, 'Review records is_verified_purchase flag');
+
+  // 22.9 Review Hidden from Public Storefront while Pending
+  const publicReviewsBefore = getPublicStoreReviews(storeAId, itemA1);
+  assert(publicReviewsBefore.total === 0, 'Pending review does NOT count toward public total');
+  assert(publicReviewsBefore.reviews.length === 0, 'Pending review is NOT shown in public reviews list');
+  assert(publicReviewsBefore.average_rating === 0, 'Pending review does NOT alter public average rating');
+
+  // 22.10 Duplicate Review Update Prevention (Same Customer, Same Product)
+  const verifyReReview = verifyPurchaseEligibility(storeAId, itemA1, phoneCustomer1Local);
+  assert(verifyReReview.eligible === true, 'Re-verification allowed for existing purchaser');
+  assert(verifyReReview.existing_review !== null, 'Existing review recognized during re-verification');
+
+  // Submitting again updates the existing review rather than creating a duplicate
+  const submitUpdate = submitVerifiedReview({
+    token: verifyReReview.token!,
+    rating: 4,
+    comment: 'Updated review: Still great after 2 weeks of use.'
+  });
+  assert(submitUpdate.success === true, 'Customer can update their existing review');
+  assert(submitUpdate.is_update === true, 'System confirms review was updated');
+  assert(submitUpdate.review.id === submitReview1.review.id, 'Same review ID maintained, zero duplicate records created');
+
+  // 22.11 Merchant Moderation Authorization Checks
+  const unauthorizedMod = moderateReview(storeBId, submitReview1.review.id, 'approve', 'Merchant B');
+  assert(unauthorizedMod.success === false, 'Other merchant cannot moderate reviews for this store');
+
+  // Merchant A moderates: Rejects review
+  const rejectMod = moderateReview(storeAId, submitReview1.review.id, 'reject', 'Merchant A', 'Contains policy violation');
+  assert(rejectMod.success === true, 'Merchant can reject review');
+  assert(rejectMod.review.status === 'rejected', 'Review status updated to rejected');
+  assert(rejectMod.review.rejection_reason === 'Contains policy violation', 'Rejection reason recorded');
+
+  // Verify still hidden from public storefront
+  const publicAfterReject = getPublicStoreReviews(storeAId, itemA1);
+  assert(publicAfterReject.total === 0, 'Rejected review remains hidden from public storefront');
+
+  // Merchant A approves review
+  const approveMod = moderateReview(storeAId, submitReview1.review.id, 'approve', 'Merchant A');
+  assert(approveMod.success === true, 'Merchant can approve review');
+  assert(approveMod.review.status === 'approved', 'Review status updated to approved');
+
+  // 22.12 Public Storefront Rating Calculation & Safe Display
+  const publicAfterApprove = getPublicStoreReviews(storeAId, itemA1);
+  assert(publicAfterApprove.total === 1, 'Approved review is now included in public total');
+  assert(publicAfterApprove.average_rating === 4, 'Approved review reflects authoritative average rating (4.0)');
+  assert(publicAfterApprove.distribution[4] === 1, 'Rating distribution correctly tracks 4-star review');
+  assert(publicAfterApprove.reviews[0].customer_name === 'Amaka E.', 'Customer name safely masked in public display');
+  assert(publicAfterApprove.reviews[0].is_verified_purchase === true, 'Verified Purchase badge confirmed in public review object');
+
+  // 22.13 Merchant Reviews List Query & Pending Counter
+  const merchantList = getMerchantReviewsList(storeAId, { status: 'all' });
+  assert(merchantList.total >= 1, 'Merchant reviews list returns all store reviews');
+  assert(merchantList.reviews[0].product_title === 'Wireless ANC Headphones', 'Product title joined cleanly for merchant console');
 
   // -------------------------------------------------------------
   console.log('\n======================================================');

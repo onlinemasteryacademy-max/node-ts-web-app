@@ -411,12 +411,20 @@ function initSchema(db) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       store_id INTEGER NOT NULL,
       item_id INTEGER DEFAULT NULL,
+      order_id INTEGER DEFAULT NULL,
+      customer_id INTEGER DEFAULT NULL,
       customer_name TEXT NOT NULL,
       customer_phone TEXT DEFAULT NULL,
+      customer_phone_hash TEXT DEFAULT NULL,
       rating INTEGER NOT NULL DEFAULT 5,
       comment TEXT NOT NULL,
-      status TEXT DEFAULT 'published',
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+      is_verified_purchase INTEGER DEFAULT 1,
+      status TEXT DEFAULT 'pending_review',
+      moderated_at TEXT DEFAULT NULL,
+      moderated_by TEXT DEFAULT NULL,
+      rejection_reason TEXT DEFAULT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS staff_accounts (
@@ -538,7 +546,16 @@ function initSchema(db) {
         `ALTER TABLE platform_settings ADD COLUMN plans_config_json TEXT DEFAULT NULL`,
         `ALTER TABLE platform_settings ADD COLUMN smtp_password TEXT DEFAULT NULL`,
         `ALTER TABLE platform_settings ADD COLUMN smtp_from_name TEXT DEFAULT 'Zlik Platform'`,
-        `ALTER TABLE platform_settings ADD COLUMN smtp_reply_to TEXT DEFAULT NULL`
+        `ALTER TABLE platform_settings ADD COLUMN smtp_reply_to TEXT DEFAULT NULL`,
+        `ALTER TABLE reviews ADD COLUMN order_id INTEGER DEFAULT NULL`,
+        `ALTER TABLE reviews ADD COLUMN customer_id INTEGER DEFAULT NULL`,
+        `ALTER TABLE reviews ADD COLUMN customer_phone_hash TEXT DEFAULT NULL`,
+        `ALTER TABLE reviews ADD COLUMN is_verified_purchase INTEGER DEFAULT 1`,
+        `ALTER TABLE reviews ADD COLUMN moderated_at TEXT DEFAULT NULL`,
+        `ALTER TABLE reviews ADD COLUMN moderated_by TEXT DEFAULT NULL`,
+        `ALTER TABLE reviews ADD COLUMN rejection_reason TEXT DEFAULT NULL`,
+        `ALTER TABLE reviews ADD COLUMN updated_at TEXT DEFAULT NULL`,
+        `CREATE UNIQUE INDEX IF NOT EXISTS idx_reviews_unique_buyer ON reviews (store_id, item_id, customer_phone_hash)`
     ];
     for (const sql of safeAlters) {
         try {

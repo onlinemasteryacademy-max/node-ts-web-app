@@ -9,6 +9,7 @@
     "build": "tsc && node scripts/copy_assets.js",
     "start": "node dist/server.js",
     "seed": "tsx src/db/seed.ts",
+    "db:migrate": "tsx scripts/apply_mysql_migration.ts",
     "migrate:mysql": "tsx scripts/migrate_sqlite_to_mysql.ts",
     "reset-admin": "tsx scripts/reset_admin_password.ts",
     "test": "tsx tests/run_all_tests.ts"

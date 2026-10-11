@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Reviews & Moderation — <%= store.store_name %> | zlik</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        zlikDark: '#08110D',
+                        zlikGreen: '#19D98B',
+                        zlikDeep: '#087A50',
+                        zlikBg: '#F8FAF8',
+                        zlikWhite: '#FFFFFF',
+                        zlikMuted: '#6B756F',
+                        zlikBorder: '#E3E9E5'
+                    },
+                    fontFamily: {
+                        display: ['Montserrat', 'sans-serif'],
+                        body: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAF8; color: #08110D; }
+        .font-display { font-family: 'Montserrat', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0.5rem); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+    <!-- Merchant Header -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E3E9E5] shadow-2xs">
+        <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-4">
+            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                <% if (store.logo_url) { %>
+                    <img src="<%= store.logo_url %>" alt="Logo" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-contain border border-[#E3E9E5] bg-white p-0.5 shrink-0">
+                <% } else { %>
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#08110D] text-[#19D98B] font-semibold text-sm sm:text-base flex items-center justify-center font-display shrink-0 shadow-2xs">
+                        <%= (store.store_name || 'S').charAt(0).toUpperCase() %>
+                    </div>
+                <% } %>
+                <div class="min-w-0">
+                    <h1 class="text-xs sm:text-sm font-semibold text-[#08110D] truncate flex items-center gap-1.5 sm:gap-2">
+                        <span class="truncate max-w-[120px] sm:max-w-[200px]"><%= store.store_name %></span>
+                        <span class="text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full uppercase shrink-0 <%= isPro ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700' %>">
+                            <%= isPro ? 'PRO' : 'FREE' %>
+                        </span>
+                    </h1>
+                    <p class="text-[11px] sm:text-xs text-[#6B756F] truncate"><%= store.email || store.whatsapp_number %></p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 sm:gap-2">
+                <!-- Storefront Link -->
+                <a href="/<%= store.slug %>" target="_blank" title="View Public Storefront" class="bg-[#08110D] text-[#19D98B] font-medium text-xs p-2 sm:px-3.5 sm:py-2 rounded-xl transition flex items-center gap-1 shadow-2xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                    <span class="hidden sm:inline">Storefront ↗</span>
+                </a>
+                <!-- Logout -->
+                <a href="/merchant/logout" title="Sign Out" class="text-[#6B756F] hover:text-red-600 p-1.5 sm:p-2 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+
+        <!-- Desktop Navigation Tabs -->
+        <div class="hidden sm:flex max-w-7xl mx-auto px-4 items-center gap-2 overflow-x-auto text-xs font-medium border-t border-[#E3E9E5]/60 pt-2 pb-2">
+            <a href="/merchant" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Orders</a>
+            <a href="/merchant/items" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Products</a>
+            <a href="/merchant/ledger" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Sales Ledger</a>
+            <a href="/merchant/reviews" class="px-3.5 py-1.5 rounded-xl bg-[#08110D] text-white font-semibold flex items-center gap-1.5">
+                <span>Reviews</span>
+                <% if (pending_count > 0) { %>
+                    <span class="bg-[#19D98B] text-[#08110D] text-[10px] font-bold px-1.5 py-0.2 rounded-full"><%= pending_count %></span>
+                <% } %>
+            </a>
+            <a href="/merchant/debts" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Debts</a>
+            <a href="/merchant/messages" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Live Chat</a>
+            <a href="/merchant/settings" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Settings</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24 sm:pb-8 flex-1 w-full space-y-5 sm:space-y-6">
+
+        <!-- Top Overview Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <!-- Pending Moderation Card -->
+            <div class="p-4 sm:p-5 rounded-3xl bg-amber-50/70 border border-amber-200">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] sm:text-xs uppercase font-semibold text-amber-800">Pending Review</span>
+                    <span class="text-sm">⏳</span>
+                </div>
+                <div class="text-2xl sm:text-3xl font-bold text-amber-950 font-mono mt-1"><%= pending_count %></div>
+                <span class="text-[11px] text-amber-700">Awaiting your approval</span>
+            </div>
+
+            <!-- Approved Reviews Card -->
+            <% 
+                const approvedCount = reviews.filter(r => r.status === 'approved').length;
+                const rejectedCount = reviews.filter(r => r.status === 'rejected').length;
+                const approvedWithRating = reviews.filter(r => r.status === 'approved' && r.rating);
+                const avgApproved = approvedWithRating.length > 0 
+                    ? (approvedWithRating.reduce((acc, r) => acc + Number(r.rating), 0) / approvedWithRating.length).toFixed(1) 
+                    : '5.0';
+            %>
+            <div class="p-4 sm:p-5 rounded-3xl bg-emerald-50/70 border border-emerald-200">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] sm:text-xs uppercase font-semibold text-emerald-800">Public Reviews</span>
+                    <span class="text-sm">⭐</span>
+                </div>
+                <div class="text-2xl sm:text-3xl font-bold text-emerald-950 font-mono mt-1"><%= approvedCount %></div>
+                <span class="text-[11px] text-emerald-700">Live on your storefront</span>
+            </div>
+
+            <!-- Rejected Reviews Card -->
+            <div class="p-4 sm:p-5 rounded-3xl bg-white border border-[#E3E9E5]">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] sm:text-xs uppercase font-semibold text-[#6B756F]">Hidden / Rejected</span>
+                    <span class="text-sm">🚫</span>
+                </div>
+                <div class="text-2xl sm:text-3xl font-bold text-[#08110D] font-mono mt-1"><%= rejectedCount %></div>
+                <span class="text-[11px] text-[#6B756F]">Kept for audit history</span>
+            </div>
+
+            <!-- Store Average Card -->
+            <div class="p-4 sm:p-5 rounded-3xl bg-white border border-[#E3E9E5]">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] sm:text-xs uppercase font-semibold text-[#6B756F]">Avg Rating</span>
+                    <span class="text-sm">🏆</span>
+                </div>
+                <div class="text-2xl sm:text-3xl font-bold text-[#087A50] font-mono mt-1"><%= avgApproved %> ★</div>
+                <span class="text-[11px] text-[#6B756F]">From verified buyers</span>
+            </div>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-4 sm:p-5 space-y-3">
+            <form method="GET" action="/merchant/reviews" class="flex flex-wrap items-center justify-between gap-3 text-xs">
+                <!-- Status Filter Pills -->
+                <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                    <a href="/merchant/reviews?status=all" class="px-3 py-1.5 rounded-xl font-medium transition <%= (currentFilter.status === 'all' || !currentFilter.status) ? 'bg-[#08110D] text-white font-semibold' : 'bg-[#F8FAF8] border border-[#E3E9E5] text-[#6B756F] hover:text-[#08110D]' %>">
+                        All (<%= reviews.length %>)
+                    </a>
+                    <a href="/merchant/reviews?status=pending_review" class="px-3 py-1.5 rounded-xl font-medium transition flex items-center gap-1 <%= currentFilter.status === 'pending_review' ? 'bg-amber-600 text-white font-semibold' : 'bg-[#F8FAF8] border border-[#E3E9E5] text-amber-700 hover:text-amber-900' %>">
+                        <span>Pending</span>
+                        <% if (pending_count > 0) { %>
+                            <span class="px-1.5 py-0.2 rounded-full text-[10px] <%= currentFilter.status === 'pending_review' ? 'bg-white text-amber-800' : 'bg-amber-200 text-amber-900' %> font-bold"><%= pending_count %></span>
+                        <% } %>
+                    </a>
+                    <a href="/merchant/reviews?status=approved" class="px-3 py-1.5 rounded-xl font-medium transition <%= currentFilter.status === 'approved' ? 'bg-[#087A50] text-white font-semibold' : 'bg-[#F8FAF8] border border-[#E3E9E5] text-emerald-700 hover:text-emerald-900' %>">
+                        Approved
+                    </a>
+                    <a href="/merchant/reviews?status=rejected" class="px-3 py-1.5 rounded-xl font-medium transition <%= currentFilter.status === 'rejected' ? 'bg-rose-600 text-white font-semibold' : 'bg-[#F8FAF8] border border-[#E3E9E5] text-rose-700 hover:text-rose-900' %>">
+                        Rejected
+                    </a>
+                </div>
+
+                <!-- Dropdown Selectors -->
+                <div class="flex items-center gap-2">
+                    <select name="item_id" onchange="this.form.submit()" class="bg-[#F8FAF8] border border-[#E3E9E5] text-[#08110D] rounded-xl px-2.5 py-1.5 text-xs font-medium outline-none">
+                        <option value="">All Products</option>
+                        <% (items || []).forEach(it => { %>
+                            <option value="<%= it.id %>" <%= String(currentFilter.item_id) === String(it.id) ? 'selected' : '' %>><%= it.title %></option>
+                        <% }) %>
+                    </select>
+
+                    <select name="rating" onchange="this.form.submit()" class="bg-[#F8FAF8] border border-[#E3E9E5] text-[#08110D] rounded-xl px-2.5 py-1.5 text-xs font-medium outline-none">
+                        <option value="">All Ratings</option>
+                        <option value="5" <%= String(currentFilter.rating) === '5' ? 'selected' : '' %>>5 Stars ★★★★★</option>
+                        <option value="4" <%= String(currentFilter.rating) === '4' ? 'selected' : '' %>>4 Stars ★★★★☆</option>
+                        <option value="3" <%= String(currentFilter.rating) === '3' ? 'selected' : '' %>>3 Stars ★★★☆☆</option>
+                        <option value="2" <%= String(currentFilter.rating) === '2' ? 'selected' : '' %>>2 Stars ★★☆☆☆</option>
+                        <option value="1" <%= String(currentFilter.rating) === '1' ? 'selected' : '' %>>1 Star ★☆☆☆☆</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <!-- Reviews List -->
+        <div class="space-y-3">
+            <% if (reviews.length === 0) { %>
+                <div class="bg-white rounded-3xl border border-[#E3E9E5] p-8 text-center space-y-2">
+                    <span class="text-3xl">💬</span>
+                    <h3 class="text-sm font-semibold text-[#08110D]">No Reviews Found</h3>
+                    <p class="text-xs text-[#6B756F] max-w-sm mx-auto">
+                        <% if (currentFilter.status === 'pending_review') { %>
+                            You're all caught up! No reviews are currently awaiting moderation.
+                        <% } else { %>
+                            Customer reviews will appear here once buyers verify their purchases on your product pages.
+                        <% } %>
+                    </p>
+                </div>
+            <% } else { %>
+                <% reviews.forEach(r => { %>
+                    <div class="bg-white rounded-3xl border border-[#E3E9E5] p-4 sm:p-5 shadow-2xs space-y-3 transition hover:border-[#08110D]/30" id="review-card-<%= r.id %>">
+                        <!-- Top Row: Product info, Rating & Status -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-[#E3E9E5]/60">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <% if (r.product_image) { %>
+                                    <img src="<%= r.product_image %>" alt="Product" class="w-10 h-10 rounded-xl object-cover border border-[#E3E9E5] shrink-0">
+                                <% } else { %>
+                                    <div class="w-10 h-10 rounded-xl bg-[#F8FAF8] border border-[#E3E9E5] flex items-center justify-center text-sm shrink-0">📦</div>
+                                <% } %>
+                                <div class="min-w-0">
+                                    <h4 class="text-xs sm:text-sm font-bold text-[#08110D] truncate"><%= r.product_title || 'General Product' %></h4>
+                                    <div class="flex items-center gap-1.5 text-[11px] text-[#6B756F]">
+                                        <span>Order <%= r.order_ref ? '#' + r.order_ref : 'Verified' %></span>
+                                        <span>&bull;</span>
+                                        <span><%= r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recently' %></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2 shrink-0">
+                                <!-- Star Rating -->
+                                <div class="text-amber-500 font-mono text-sm tracking-tight">
+                                    <%= '★'.repeat(Math.max(1, Math.min(5, Number(r.rating || 5)))) %><%= '☆'.repeat(5 - Math.max(1, Math.min(5, Number(r.rating || 5)))) %>
+                                </div>
+
+                                <!-- Verified Purchase Badge -->
+                                <% if (r.is_verified_purchase === 1) { %>
+                                    <span class="text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                        <span>✓</span> <span>Verified Purchase</span>
+                                    </span>
+                                <% } else { %>
+                                    <span class="text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                        <span>Order Feedback</span>
+                                    </span>
+                                <% } %>
+
+                                <!-- Moderation Status Pill -->
+                                <% if (r.status === 'approved') { %>
+                                    <span class="text-[10px] font-bold bg-[#087A50] text-white px-2 py-0.5 rounded-full">Approved</span>
+                                <% } else if (r.status === 'rejected') { %>
+                                    <span class="text-[10px] font-bold bg-rose-600 text-white px-2 py-0.5 rounded-full">Rejected</span>
+                                <% } else { %>
+                                    <span class="text-[10px] font-bold bg-amber-500 text-white px-2 py-0.5 rounded-full animate-pulse">Pending Moderation</span>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <!-- Review Content -->
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-semibold text-[#08110D]"><%= r.customer_name %></span>
+                            </div>
+                            <p class="text-xs text-[#08110D]/90 leading-relaxed bg-[#F8FAF8] p-3 rounded-2xl border border-[#E3E9E5]/60">
+                                "<%= r.comment %>"
+                            </p>
+                            <% if (r.rejection_reason) { %>
+                                <p class="text-[11px] text-rose-700 italic">
+                                    Rejection note: <%= r.rejection_reason %>
+                                </p>
+                            <% } %>
+                        </div>
+
+                        <!-- Moderation Controls -->
+                        <div class="flex items-center justify-between gap-2 pt-1">
+                            <span class="text-[10px] text-[#6B756F]">
+                                <% if (r.moderated_at) { %>
+                                    Moderated on <%= new Date(r.moderated_at).toLocaleDateString('en-GB') %> by <%= r.moderated_by || 'You' %>
+                                <% } else { %>
+                                    Awaiting your moderation decision
+                                <% } %>
+                            </span>
+
+                            <div class="flex items-center gap-2">
+                                <% if (r.status !== 'approved') { %>
+                                    <button type="button" onclick="moderateReviewAction(<%= r.id %>, 'approve')" class="bg-[#087A50] hover:bg-[#06613F] text-white font-semibold text-xs px-3 py-1.5 rounded-xl transition flex items-center gap-1 shadow-2xs">
+                                        <span>✓</span>
+                                        <span>Approve & Publish</span>
+                                    </button>
+                                <% } %>
+
+                                <% if (r.status !== 'rejected') { %>
+                                    <button type="button" onclick="moderateReviewAction(<%= r.id %>, 'reject')" class="bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 font-semibold text-xs px-3 py-1.5 rounded-xl transition flex items-center gap-1">
+                                        <span>✕</span>
+                                        <span>Reject & Hide</span>
+                                    </button>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                <% }) %>
+            <% } %>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation Bar for Mobile -->
+    <%- include('components/bottom_nav.ejs', { activeTab: 'reviews' }) %>
+
+    <script>
+        async function moderateReviewAction(reviewId, action) {
+            let reason = null;
+            if (action === 'reject') {
+                reason = prompt('Optional: Reason for rejecting this review (internal note):', 'Feedback contains inappropriate content or dispute');
+                if (reason === null) return; // user cancelled prompt
+            }
+
+            try {
+                const res = await fetch(`/api/merchant/reviews/${reviewId}/moderate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action, reason })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Failed to update review moderation status.');
+                }
+            } catch (err) {
+                alert('Network error while moderating review.');
+            }
+        }
+    </script>
+</body>
+</html>

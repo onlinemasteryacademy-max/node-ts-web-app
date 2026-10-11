@@ -378,12 +378,20 @@ async function initMySQLSchema(pool) {
       id INT AUTO_INCREMENT PRIMARY KEY,
       store_id INT NOT NULL,
       item_id INT DEFAULT NULL,
+      order_id INT DEFAULT NULL,
+      customer_id INT DEFAULT NULL,
       customer_name VARCHAR(255) NOT NULL,
       customer_phone VARCHAR(100) DEFAULT NULL,
+      customer_phone_hash VARCHAR(100) DEFAULT NULL,
       rating INT NOT NULL DEFAULT 5,
       comment TEXT NOT NULL,
-      status VARCHAR(50) DEFAULT 'published',
-      created_at VARCHAR(100) DEFAULT NULL
+      is_verified_purchase TINYINT DEFAULT 1,
+      status VARCHAR(50) DEFAULT 'pending_review',
+      moderated_at VARCHAR(100) DEFAULT NULL,
+      moderated_by VARCHAR(255) DEFAULT NULL,
+      rejection_reason TEXT DEFAULT NULL,
+      created_at VARCHAR(100) DEFAULT NULL,
+      updated_at VARCHAR(100) DEFAULT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
         `CREATE TABLE IF NOT EXISTS staff_accounts (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -434,8 +442,28 @@ async function initMySQLSchema(pool) {
         `CREATE INDEX idx_email_verif_token ON email_verifications (token);`,
         `CREATE INDEX idx_email_verif_email ON email_verifications (email);`,
         `CREATE INDEX idx_sub_payments_ref ON subscription_payments (reference);`,
-        `CREATE INDEX idx_sub_payments_store ON subscription_payments (store_id);`
+        `CREATE INDEX idx_sub_payments_store ON subscription_payments (store_id);`,
+        `CREATE UNIQUE INDEX idx_reviews_unique_buyer ON reviews (store_id, item_id, customer_phone_hash);`
     ];
+    // Safe column alters for existing MySQL database
+    const safeAlters = [
+        `ALTER TABLE reviews ADD COLUMN order_id INT DEFAULT NULL;`,
+        `ALTER TABLE reviews ADD COLUMN customer_id INT DEFAULT NULL;`,
+        `ALTER TABLE reviews ADD COLUMN customer_phone_hash VARCHAR(100) DEFAULT NULL;`,
+        `ALTER TABLE reviews ADD COLUMN is_verified_purchase TINYINT DEFAULT 1;`,
+        `ALTER TABLE reviews ADD COLUMN moderated_at VARCHAR(100) DEFAULT NULL;`,
+        `ALTER TABLE reviews ADD COLUMN moderated_by VARCHAR(255) DEFAULT NULL;`,
+        `ALTER TABLE reviews ADD COLUMN rejection_reason TEXT DEFAULT NULL;`,
+        `ALTER TABLE reviews ADD COLUMN updated_at VARCHAR(100) DEFAULT NULL;`
+    ];
+    for (const alterSql of safeAlters) {
+        try {
+            await p.query(alterSql);
+        }
+        catch (e) {
+            // Column already exists, safe to ignore
+        }
+    }
     for (const idxSql of indexes) {
         try {
             await p.query(idxSql);

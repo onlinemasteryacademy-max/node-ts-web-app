@@ -618,37 +618,76 @@
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <span class="font-bold text-[#08110D] font-display">Customer Reviews</span>
-                            <span id="pModalReviewCountBadge" class="bg-[#F8FAF8] border border-[#E3E9E5] text-[#087A50] font-bold text-[10px] px-2 py-0.5 rounded-full">⭐ 5.0 (0 reviews)</span>
+                            <span id="pModalReviewCountBadge" class="bg-[#F8FAF8] border border-[#E3E9E5] text-[#087A50] font-bold text-[10px] px-2 py-0.5 rounded-full">⭐ 0 reviews</span>
                         </div>
-                        <button type="button" onclick="toggleReviewForm()" id="leaveReviewToggleBtn" class="text-[#087A50] hover:underline font-bold text-[11px]">
-                            + Write Review
+                        <button type="button" onclick="toggleReviewForm()" id="leaveReviewToggleBtn" class="text-[#087A50] hover:underline font-bold text-[11px] flex items-center gap-1">
+                            <span>✍️</span> <span>Write Review</span>
                         </button>
                     </div>
 
-                    <!-- Add Review Form (Collapsible) -->
-                    <form id="pModalReviewForm" onsubmit="submitProductReview(event)" class="hidden p-3.5 bg-[#F8FAF8] rounded-2xl border border-[#E3E9E5] space-y-2.5">
-                        <div class="font-bold text-[11px] text-[#08110D]">Write a Verified Buyer Review</div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <input type="text" id="reviewAuthorName" placeholder="Your Name" required class="bg-white border border-[#E3E9E5] rounded-xl p-2 text-xs outline-none">
-                            <select id="reviewRatingSelect" class="bg-white border border-[#E3E9E5] rounded-xl p-2 text-xs font-bold text-amber-500">
-                                <option value="5">⭐⭐⭐⭐⭐ (5 Stars)</option>
-                                <option value="4">⭐⭐⭐⭐ (4 Stars)</option>
-                                <option value="3">⭐⭐⭐ (3 Stars)</option>
-                                <option value="2">⭐⭐ (2 Stars)</option>
-                                <option value="1">⭐ (1 Star)</option>
-                            </select>
-                        </div>
-                        <textarea id="reviewCommentText" rows="2" placeholder="Share your experience with this item..." required class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2 text-xs outline-none"></textarea>
+                    <!-- Verified Buyer Review Modal/Form (Collapsible) -->
+                    <div id="pModalReviewForm" class="hidden p-3.5 bg-[#F8FAF8] rounded-2xl border border-[#E3E9E5] space-y-3">
                         <div class="flex items-center justify-between">
-                            <span id="reviewSubmitStatus" class="text-[10px] text-[#6B756F]"></span>
-                            <button type="submit" id="submitReviewBtn" class="bg-[#08110D] hover:bg-black text-[#19D98B] px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-2xs font-display">
-                                Post Review
-                            </button>
+                            <span class="font-bold text-[11px] text-[#08110D] flex items-center gap-1.5">
+                                <span class="text-xs">🛡️</span> <span>Purchase-Verified Review</span>
+                            </span>
+                            <button type="button" onclick="toggleReviewForm()" class="text-[#6B756F] hover:text-[#08110D] text-xs">✕</button>
                         </div>
-                    </form>
+
+                        <!-- Step 1: Purchase Phone Verification -->
+                        <div id="reviewStepVerification" class="space-y-2">
+                            <p class="text-[11px] text-[#6B756F]">Only customers with a verified purchase can leave reviews. Enter the phone number used when placing your order:</p>
+                            <div class="flex items-center gap-2">
+                                <input type="tel" id="reviewPhoneInput" placeholder="Order Phone (e.g. 08012345678)" class="flex-1 bg-white border border-[#E3E9E5] rounded-xl p-2 text-xs outline-none">
+                                <button type="button" id="reviewVerifyBtn" onclick="verifyReviewEligibility()" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs px-3.5 py-2 rounded-xl transition shrink-0 shadow-2xs font-display">
+                                    Verify
+                                </button>
+                            </div>
+                            <div id="reviewVerifyMsg" class="hidden text-[11px] rounded-xl p-2"></div>
+                        </div>
+
+                        <!-- Step 2: Rating & Written Review Submission (Shown upon valid verification) -->
+                        <form id="reviewStepSubmission" onsubmit="submitProductReview(event)" class="hidden space-y-2.5 pt-2 border-t border-[#E3E9E5]">
+                            <div class="flex items-center justify-between text-[11px] bg-emerald-50 text-emerald-900 border border-emerald-200 p-2 rounded-xl">
+                                <span class="font-bold flex items-center gap-1">
+                                    <span>✓</span> <span id="reviewVerifiedBuyerName">Verified Buyer</span>
+                                </span>
+                                <span id="reviewVerifiedBadgeType" class="text-[10px] bg-emerald-200 text-emerald-950 font-bold px-1.5 py-0.5 rounded-full">Verified Purchase</span>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="text-[11px] font-semibold text-[#08110D]">Your Star Rating:</label>
+                                <select id="reviewRatingSelect" class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2 text-xs font-bold text-amber-500">
+                                    <option value="5">⭐⭐⭐⭐⭐ (5 Stars — Excellent)</option>
+                                    <option value="4">⭐⭐⭐⭐ (4 Stars — Great)</option>
+                                    <option value="3">⭐⭐⭐ (3 Stars — Average)</option>
+                                    <option value="2">⭐⭐ (2 Stars — Below Average)</option>
+                                    <option value="1">⭐ (1 Star — Poor)</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="text-[11px] font-semibold text-[#08110D]">Your Feedback:</label>
+                                <textarea id="reviewCommentText" rows="2" maxlength="1000" placeholder="Share your experience with this item..." required class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2 text-xs outline-none"></textarea>
+                                <div class="flex justify-between text-[10px] text-[#6B756F]">
+                                    <span>Min 5 characters</span>
+                                    <span id="reviewCharCount">0/1000</span>
+                                </div>
+                            </div>
+
+                            <p class="text-[10px] text-[#6B756F] italic">Note: Reviews appear on the storefront after merchant moderation.</p>
+
+                            <div class="flex items-center justify-between pt-1">
+                                <span id="reviewSubmitStatus" class="text-[10px] text-[#6B756F]"></span>
+                                <button type="submit" id="submitReviewBtn" class="bg-[#08110D] hover:bg-black text-[#19D98B] px-4 py-2 rounded-xl text-xs font-bold transition shadow-2xs font-display">
+                                    Post Review
+                                </button>
+                            </div>
+                        </form>
+                    </div>
 
                     <!-- Reviews List -->
-                    <div id="pModalReviewsList" class="space-y-2 max-h-36 overflow-y-auto">
+                    <div id="pModalReviewsList" class="space-y-2 max-h-44 overflow-y-auto">
                         <!-- Injected via JS -->
                     </div>
                 </div>
@@ -1532,11 +1571,111 @@
             showToast('Product link copied to clipboard!');
         }
 
-        // Reviews System
+        // Purchase-Verified Reviews System
+        let currentReviewVerificationToken = null;
+
         function toggleReviewForm() {
             const form = document.getElementById('pModalReviewForm');
-            if (form) form.classList.toggle('hidden');
+            if (!form) return;
+            const isHidden = form.classList.toggle('hidden');
+            if (!isHidden) {
+                // Reset form to verification step
+                currentReviewVerificationToken = null;
+                const phoneInput = document.getElementById('reviewPhoneInput');
+                if (phoneInput) phoneInput.value = '';
+                const msg = document.getElementById('reviewVerifyMsg');
+                if (msg) { msg.className = 'hidden'; msg.textContent = ''; }
+                document.getElementById('reviewStepVerification').classList.remove('hidden');
+                document.getElementById('reviewStepSubmission').classList.add('hidden');
+                const commentText = document.getElementById('reviewCommentText');
+                if (commentText) commentText.value = '';
+                const charCount = document.getElementById('reviewCharCount');
+                if (charCount) charCount.textContent = '0/1000';
+            }
         }
+
+        async function verifyReviewEligibility() {
+            if (!currentModalProduct) return;
+            const phoneInput = document.getElementById('reviewPhoneInput');
+            const verifyBtn = document.getElementById('reviewVerifyBtn');
+            const msg = document.getElementById('reviewVerifyMsg');
+            const phone = phoneInput ? phoneInput.value.trim() : '';
+
+            if (!phone) {
+                if (msg) {
+                    msg.className = 'text-[11px] rounded-xl p-2 bg-rose-50 text-rose-700 border border-rose-200 block';
+                    msg.textContent = 'Please enter your phone number to verify your purchase.';
+                }
+                return;
+            }
+
+            verifyBtn.disabled = true;
+            verifyBtn.innerHTML = '<span>Verifying...</span>';
+            if (msg) msg.className = 'hidden';
+
+            try {
+                const res = await fetch(`/api/stores/${storeData.id}/reviews/verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ item_id: currentModalProduct.id, phone })
+                });
+                const d = await res.json();
+
+                if (d.success && d.token) {
+                    currentReviewVerificationToken = d.token;
+                    document.getElementById('reviewVerifiedBuyerName').textContent = d.customer_name || 'Verified Buyer';
+                    
+                    const badgeType = document.getElementById('reviewVerifiedBadgeType');
+                    if (badgeType) {
+                        if (d.is_verified_purchase) {
+                            badgeType.className = 'text-[10px] bg-emerald-200 text-emerald-950 font-bold px-1.5 py-0.5 rounded-full';
+                            badgeType.textContent = 'Verified Purchase';
+                        } else {
+                            badgeType.className = 'text-[10px] bg-amber-200 text-amber-950 font-bold px-1.5 py-0.5 rounded-full';
+                            badgeType.textContent = 'Order Feedback';
+                        }
+                    }
+
+                    if (d.existing_review) {
+                        const sel = document.getElementById('reviewRatingSelect');
+                        if (sel) sel.value = String(d.existing_review.rating || 5);
+                        const txt = document.getElementById('reviewCommentText');
+                        if (txt) {
+                            txt.value = d.existing_review.comment || '';
+                            const charCount = document.getElementById('reviewCharCount');
+                            if (charCount) charCount.textContent = `${txt.value.length}/1000`;
+                        }
+                    }
+
+                    document.getElementById('reviewStepVerification').classList.add('hidden');
+                    document.getElementById('reviewStepSubmission').classList.remove('hidden');
+                } else {
+                    if (msg) {
+                        msg.className = 'text-[11px] rounded-xl p-2 bg-rose-50 text-rose-700 border border-rose-200 block';
+                        msg.textContent = d.error || "We couldn't verify a qualifying purchase for this product using that phone number.";
+                    }
+                }
+            } catch (err) {
+                if (msg) {
+                    msg.className = 'text-[11px] rounded-xl p-2 bg-rose-50 text-rose-700 border border-rose-200 block';
+                    msg.textContent = 'Connection error verifying purchase. Please try again.';
+                }
+            } finally {
+                verifyBtn.disabled = false;
+                verifyBtn.innerHTML = '<span>Verify</span>';
+            }
+        }
+
+        // Character counter
+        document.addEventListener('DOMContentLoaded', () => {
+            const commentText = document.getElementById('reviewCommentText');
+            if (commentText) {
+                commentText.addEventListener('input', function() {
+                    const charCount = document.getElementById('reviewCharCount');
+                    if (charCount) charCount.textContent = `${this.value.length}/1000`;
+                });
+            }
+        });
 
         async function loadProductReviews(itemId) {
             const list = document.getElementById('pModalReviewsList');
@@ -1550,23 +1689,38 @@
                 const d = await res.json();
                 if (d.success && d.reviews) {
                     const count = d.total || d.reviews.length;
-                    const avg = d.average_rating || 5.0;
-                    if (badge) badge.textContent = `⭐ ${avg} (${count} ${count === 1 ? 'review' : 'reviews'})`;
+                    const avg = d.average_rating || 0;
+                    
+                    if (badge) {
+                        badge.textContent = count > 0 
+                            ? `⭐ ${avg} (${count} ${count === 1 ? 'review' : 'reviews'})`
+                            : '⭐ 0 reviews';
+                    }
 
                     if (d.reviews.length === 0) {
-                        list.innerHTML = `<div class="p-3 bg-[#F8FAF8] rounded-xl text-center text-[#6B756F] text-[11px]">No customer reviews yet. Be the first to review this product!</div>`;
+                        list.innerHTML = `<div class="p-3 bg-[#F8FAF8] rounded-xl text-center text-[#6B756F] text-[11px]">No customer reviews yet. Be the first verified buyer to leave a review!</div>`;
                         return;
                     }
 
-                    list.innerHTML = d.reviews.map(r => `
-                        <div class="p-2.5 bg-[#F8FAF8] rounded-xl border border-[#E3E9E5] space-y-1">
-                            <div class="flex items-center justify-between">
-                                <span class="font-bold text-[#08110D]">${r.customer_name} <span class="text-[10px] text-[#087A50] font-normal">• Verified Buyer</span></span>
-                                <span class="text-amber-500 font-bold">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span>
+                    list.innerHTML = d.reviews.map(r => {
+                        const verifiedLabel = r.is_verified_purchase 
+                            ? '<span class="text-[10px] text-[#087A50] font-semibold bg-emerald-50 px-1.5 py-0.2 rounded-full border border-emerald-200">✓ Verified Purchase</span>'
+                            : '<span class="text-[10px] text-amber-800 font-semibold bg-amber-50 px-1.5 py-0.2 rounded-full border border-amber-200">Order Feedback</span>';
+                        
+                        const stars = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+                        const safeComment = String(r.comment || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        const safeName = String(r.customer_name || 'Verified Buyer').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+                        return `
+                            <div class="p-2.5 bg-[#F8FAF8] rounded-xl border border-[#E3E9E5] space-y-1">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="font-bold text-[#08110D] flex items-center gap-1.5">${safeName} ${verifiedLabel}</span>
+                                    <span class="text-amber-500 font-bold text-xs tracking-tight">${stars}</span>
+                                </div>
+                                <p class="text-[11px] text-[#08110D]/90 leading-relaxed">${safeComment}</p>
                             </div>
-                            <p class="text-[11px] text-[#08110D]/90">${r.comment}</p>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
                 }
             } catch(e) {
                 list.innerHTML = `<div class="text-[11px] text-[#6B756F]">Verified reviews will appear here.</div>`;
@@ -1575,12 +1729,15 @@
 
         async function submitProductReview(e) {
             e.preventDefault();
-            if (!currentModalProduct) return;
+            if (!currentModalProduct || !currentReviewVerificationToken) {
+                alert('Please verify your purchase phone number first.');
+                return;
+            }
 
             const btn = document.getElementById('submitReviewBtn');
             btn.disabled = true;
+            btn.innerHTML = '<span>Submitting...</span>';
 
-            const name = document.getElementById('reviewAuthorName').value.trim();
             const rating = parseInt(document.getElementById('reviewRatingSelect').value, 10);
             const comment = document.getElementById('reviewCommentText').value.trim();
 
@@ -1589,24 +1746,24 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        item_id: currentModalProduct.id,
-                        customer_name: name,
+                        token: currentReviewVerificationToken,
                         rating,
                         comment
                     })
                 });
                 const d = await res.json();
                 if (d.success) {
-                    document.getElementById('reviewCommentText').value = '';
+                    alert(d.message || 'Review submitted successfully! It will appear once approved by the merchant.');
                     toggleReviewForm();
                     loadProductReviews(currentModalProduct.id);
                 } else {
                     alert(d.error || 'Failed to submit review');
                 }
             } catch (err) {
-                alert('Network error submitting review');
+                alert('Network error submitting review. Please check your connection.');
             } finally {
                 btn.disabled = false;
+                btn.innerHTML = '<span>Post Review</span>';
             }
         }
 

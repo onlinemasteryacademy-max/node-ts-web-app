@@ -28,6 +28,7 @@ const debtsController_js_1 = require("./modules/debts/debtsController.js");
 const ledgerController_js_1 = require("./modules/ledger/ledgerController.js");
 const marketingController_js_1 = require("./modules/marketing/marketingController.js");
 const reviewsController_js_1 = require("./modules/reviews/reviewsController.js");
+const reviewsService_js_1 = require("./modules/reviews/reviewsService.js");
 const bulkController_js_1 = require("./modules/bulk/bulkController.js");
 const broadcastsController_js_1 = require("./modules/broadcasts/broadcastsController.js");
 const teamsController_js_1 = require("./modules/teams/teamsController.js");
@@ -514,6 +515,38 @@ fastify.get('/merchant/items', async (req, reply) => {
         items,
         templateConfig,
         allTemplates: templates_js_1.STORE_TEMPLATES,
+        isPro,
+        planConfig: config
+    });
+});
+// 6b. Merchant Reviews Moderation View
+fastify.get('/merchant/reviews', async (req, reply) => {
+    const store = req.session?.merchantStore;
+    if (!store)
+        return reply.redirect('/merchant/login');
+    const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+    const { isPro, config } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
+    const items = (0, db_js_1.dbFetchAll)('items', { store_id: currentStore.id }, 'title ASC');
+    const query = (req.query || {});
+    const filterStatus = query.status ? String(query.status) : 'all';
+    const filterItemId = query.item_id ? parseInt(query.item_id, 10) : undefined;
+    const filterRating = query.rating ? parseInt(query.rating, 10) : undefined;
+    const data = (0, reviewsService_js_1.getMerchantReviewsList)(currentStore.id, {
+        status: filterStatus === 'all' ? undefined : filterStatus,
+        item_id: filterItemId,
+        rating: filterRating
+    });
+    return reply.view('merchant/reviews.ejs', {
+        store: currentStore,
+        reviews: data.reviews,
+        items,
+        pending_count: data.pending_count,
+        total: data.total,
+        currentFilter: {
+            status: filterStatus,
+            item_id: filterItemId || '',
+            rating: filterRating || ''
+        },
         isPro,
         planConfig: config
     });

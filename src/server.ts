@@ -22,6 +22,7 @@ import { debtsRoutes } from './modules/debts/debtsController.js';
 import { ledgerRoutes } from './modules/ledger/ledgerController.js';
 import { marketingRoutes } from './modules/marketing/marketingController.js';
 import { reviewsRoutes } from './modules/reviews/reviewsController.js';
+import { getMerchantReviewsList } from './modules/reviews/reviewsService.js';
 import { bulkRoutes } from './modules/bulk/bulkController.js';
 import { broadcastsRoutes } from './modules/broadcasts/broadcastsController.js';
 import { teamsRoutes } from './modules/teams/teamsController.js';
@@ -553,6 +554,41 @@ fastify.get('/merchant/items', async (req: FastifyRequest, reply: FastifyReply) 
     items,
     templateConfig,
     allTemplates: STORE_TEMPLATES,
+    isPro,
+    planConfig: config
+  });
+});
+
+// 6b. Merchant Reviews Moderation View
+fastify.get('/merchant/reviews', async (req: FastifyRequest, reply: FastifyReply) => {
+  const store = (req as any).session?.merchantStore;
+  if (!store) return reply.redirect('/merchant/login');
+
+  const currentStore = dbFetchOne<any>('stores', { id: store.id }) || store;
+  const { isPro, config } = getStorePlanDetails(currentStore);
+  const items = dbFetchAll<any>('items', { store_id: currentStore.id }, 'title ASC');
+  const query = (req.query || {}) as Record<string, any>;
+  const filterStatus = query.status ? String(query.status) : 'all';
+  const filterItemId = query.item_id ? parseInt(query.item_id, 10) : undefined;
+  const filterRating = query.rating ? parseInt(query.rating, 10) : undefined;
+
+  const data = getMerchantReviewsList(currentStore.id, {
+    status: filterStatus === 'all' ? undefined : filterStatus,
+    item_id: filterItemId,
+    rating: filterRating
+  });
+
+  return reply.view('merchant/reviews.ejs', {
+    store: currentStore,
+    reviews: data.reviews,
+    items,
+    pending_count: data.pending_count,
+    total: data.total,
+    currentFilter: {
+      status: filterStatus,
+      item_id: filterItemId || '',
+      rating: filterRating || ''
+    },
     isPro,
     planConfig: config
   });
