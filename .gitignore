@@ -21,6 +21,8 @@ data/
 *.db
 
 # User Uploaded Media (Preserve live uploaded images on server from being overwritten on deploy)
+data/uploads/
+uploads/
 src/public/uploads/*
 !src/public/uploads/.gitkeep
 !src/public/uploads/logos/

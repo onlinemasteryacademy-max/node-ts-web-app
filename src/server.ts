@@ -90,6 +90,57 @@ const viewsDir = fs.existsSync(path.join(__dirname, 'views'))
   ? path.join(__dirname, 'views')
   : path.resolve(process.cwd(), 'src', 'views');
 
+// Persistent Uploads Directory (safe from Git pulls, re-deployments, and builds)
+// By storing uploads in data/uploads (or UPLOADS_DIR), files will never be erased during git deployments!
+const persistentUploadsDir = process.env.UPLOADS_DIR
+  ? path.resolve(process.env.UPLOADS_DIR)
+  : path.resolve(process.cwd(), 'data', 'uploads');
+
+if (!fs.existsSync(persistentUploadsDir)) {
+  fs.mkdirSync(persistentUploadsDir, { recursive: true });
+}
+
+// Auto-seed/sync existing bundled starter assets and previous uploads into persistent directory
+function syncExistingUploads(srcDir: string, destDir: string) {
+  if (!fs.existsSync(srcDir)) return;
+  try {
+    const entries = fs.readdirSync(srcDir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.name === '.gitkeep') continue;
+      const srcPath = path.join(srcDir, entry.name);
+      const destPath = path.join(destDir, entry.name);
+      if (entry.isDirectory()) {
+        if (!fs.existsSync(destPath)) {
+          fs.mkdirSync(destPath, { recursive: true });
+        }
+        syncExistingUploads(srcPath, destPath);
+      } else if (!fs.existsSync(destPath)) {
+        fs.copyFileSync(srcPath, destPath);
+      }
+    }
+  } catch (e) {}
+}
+
+// Sync from both src/public/uploads and dist/public/uploads (if present) into persistentUploadsDir
+syncExistingUploads(path.resolve(process.cwd(), 'src', 'public', 'uploads'), persistentUploadsDir);
+if (fs.existsSync(path.join(__dirname, 'public', 'uploads'))) {
+  syncExistingUploads(path.join(__dirname, 'public', 'uploads'), persistentUploadsDir);
+}
+
+// Ensure subfolders exist
+['logos', 'products', 'sounds', 'receipts'].forEach(sub => {
+  const subPath = path.join(persistentUploadsDir, sub);
+  if (!fs.existsSync(subPath)) fs.mkdirSync(subPath, { recursive: true });
+});
+
+// 1. Persistent User Uploads (served directly at /uploads/ from data/uploads)
+fastify.register(fastifyStatic, {
+  root: persistentUploadsDir,
+  prefix: '/uploads/',
+  decorateReply: false
+});
+
+// 2. Bundled Static Assets (CSS, JS, theme preview SVGs, etc. served at /)
 fastify.register(fastifyStatic, {
   root: publicDir,
   prefix: '/'
@@ -128,7 +179,7 @@ fastify.post('/api/upload', async (req: FastifyRequest, reply: FastifyReply) => 
     return reply.code(401).send({ success: false, error: 'Unauthorized: Login required to upload files' });
   }
 
-  const uploadDir = path.join(publicDir, 'uploads');
+  const uploadDir = persistentUploadsDir;
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
@@ -169,7 +220,7 @@ fastify.post('/api/upload', async (req: FastifyRequest, reply: FastifyReply) => 
 
 // Customer Bank Transfer Receipt Upload API (Public endpoint for checkout proofs)
 fastify.post('/api/upload/receipt', async (req: FastifyRequest, reply: FastifyReply) => {
-  const uploadDir = path.join(publicDir, 'uploads', 'receipts');
+  const uploadDir = path.join(persistentUploadsDir, 'receipts');
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }

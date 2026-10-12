@@ -723,6 +723,14 @@ async function runTestSuite() {
   const uploadsDir = path.join(process.cwd(), 'src', 'public', 'uploads');
   assert(fs.existsSync(uploadsDir), 'Local uploads directory exists for 10MB direct file storage');
 
+  // 2b. Persistent Uploads Directory Check (data/uploads - safe from Git deployments)
+  const persistentUploadsDir = process.env.UPLOADS_DIR
+    ? path.resolve(process.env.UPLOADS_DIR)
+    : path.resolve(process.cwd(), 'data', 'uploads');
+  if (!fs.existsSync(persistentUploadsDir)) fs.mkdirSync(persistentUploadsDir, { recursive: true });
+  assert(fs.existsSync(persistentUploadsDir), 'Persistent uploads directory exists in data/uploads (safe from Git pulls)');
+  assert(!persistentUploadsDir.includes(path.sep + 'dist' + path.sep), 'Persistent uploads directory is decoupled from build output dist/');
+
   // 3. Multi-Image Product Gallery Item
   const galleryItemId = dbInsert('items', {
     store_id: tplStoreId,
