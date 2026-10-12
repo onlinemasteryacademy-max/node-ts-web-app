@@ -26,7 +26,8 @@ import {
   getOrCreateCustomerSession,
   sendMessage,
   getConversationMessages,
-  listMerchantConversations
+  listMerchantConversations,
+  getStoreMonthlyChatUsage
 } from '../src/modules/chat/chatService.js';
 import {
   createOrder,
@@ -58,7 +59,13 @@ import {
 import { getSampleDataForTemplate, SAMPLE_STORES_DATA } from '../src/config/sampleTemplatesData.js';
 import { STORE_TEMPLATES, STORE_CATEGORIES } from '../src/config/templates.js';
 import { PLANS } from '../src/config/plans.js';
-import { recordStoreVisit, getStoreVisitorMetrics } from '../src/modules/analytics/analyticsController.js';
+import {
+  recordStoreVisit,
+  getStoreVisitorMetrics,
+  recordVisitorHeartbeat,
+  getLiveStoreVisitors,
+  cleanupInactiveVisitors
+} from '../src/modules/analytics/analyticsController.js';
 import {
   verifyPurchaseEligibility,
   submitVerifiedReview,
@@ -2264,6 +2271,251 @@ async function runTestSuite() {
   assert(rejectedOrder.payment_status === 'unpaid', 'Order reverted to unpaid status');
   const rejectedClaim = dbFetchOne<any>('payment_claims', { order_id: btToReject.order!.id });
   assert(rejectedClaim.status === 'rejected', 'Payment claim status marked as rejected');
+
+  // =============================================================
+  // SUITE 24: LANDING PRICING TIERS, LIVE CUSTOMER TRACKING & MONTHLY LIVE CHAT LIMITS
+  // =============================================================
+  console.log('\n--- SUITE 24: PRICING CONFIG, LIVE VISITOR TRACKING & MONTHLY CHAT LIMITS ---');
+
+  // 24.1 Plan Configurations, Feature Entitlements & Yearly Pricing Calculations
+  assert(PLANS.free.price_monthly === 0 && PLANS.free.price_yearly === 0, 'Free plan is ₦0 monthly and ₦0 yearly forever');
+  assert(PLANS.pro.price_monthly === 5000 && PLANS.pro.price_yearly === 50000, 'Pro plan is ₦5,000 monthly and ₦50,000 yearly (Save ₦10,000/yr)');
+  assert(PLANS.business.price_monthly === 9000 && PLANS.business.price_yearly === 90000, 'Business plan is ₦9,000 monthly and ₦90,000 yearly (Save ₦18,000/yr)');
+
+  // Yearly savings calculations
+  const proAnnualMonthlyCost = PLANS.pro.price_monthly * 12; // 60,000
+  const proAnnualSavings = proAnnualMonthlyCost - PLANS.pro.price_yearly;
+  assert(proAnnualSavings === 10000, 'Pro annual savings equals exactly ₦10,000 (Save 2 months)');
+
+  const bizAnnualMonthlyCost = PLANS.business.price_monthly * 12; // 108,000
+  const bizAnnualSavings = bizAnnualMonthlyCost - PLANS.business.price_yearly;
+  assert(bizAnnualSavings === 18000, 'Business annual savings equals exactly ₦18,000 (Save 2 months)');
+
+  // Plan feature entitlements verification
+  assert(PLANS.free.features.live_customer_tracking === false, 'Free tier has live_customer_tracking disabled');
+  assert(PLANS.pro.features.live_customer_tracking === true, 'Pro tier has live_customer_tracking enabled');
+  assert(PLANS.business.features.live_customer_tracking === true, 'Business tier has live_customer_tracking enabled');
+  assert(PLANS.free.limits.live_chat_monthly_conversations === 20, 'Free tier has 20 monthly live chat limit');
+  assert(PLANS.pro.limits.live_chat_monthly_conversations === -1, 'Pro tier has unlimited live chat');
+  assert(PLANS.business.limits.live_chat_monthly_conversations === -1, 'Business tier has unlimited live chat');
+
+  // 24.2 Live Customer Tracking Engine (Heartbeat, Expiration & Multi-Branch Support)
+  const trackingProStoreId = 9911;
+  const trackingBizStoreId = 9912;
+  const trackingFreeStoreId = 9913;
+
+  // Setup stores
+  db.prepare('DELETE FROM stores WHERE id IN (?, ?, ?)').run(trackingProStoreId, trackingBizStoreId, trackingFreeStoreId);
+  db.prepare('DELETE FROM active_visitors WHERE store_id IN (?, ?, ?)').run(trackingProStoreId, trackingBizStoreId, trackingFreeStoreId);
+
+  dbInsert('stores', {
+    id: trackingProStoreId,
+    store_name: 'Live Tracking Pro Store',
+    owner_name: 'Pro Owner',
+    password_hash: '$2a$10$dummyhashfortesting',
+    slug: 'live-pro-' + Date.now(),
+    whatsapp_number: '08011223344',
+    plan_tier: 'pro',
+    status: 'active'
+  });
+
+  dbInsert('stores', {
+    id: trackingBizStoreId,
+    store_name: 'Live Tracking Biz Store',
+    owner_name: 'Biz Owner',
+    password_hash: '$2a$10$dummyhashfortesting',
+    slug: 'live-biz-' + Date.now(),
+    whatsapp_number: '08022334455',
+    plan_tier: 'business',
+    status: 'active'
+  });
+
+  dbInsert('stores', {
+    id: trackingFreeStoreId,
+    store_name: 'Live Tracking Free Store',
+    owner_name: 'Free Owner',
+    password_hash: '$2a$10$dummyhashfortesting',
+    slug: 'live-free-' + Date.now(),
+    whatsapp_number: '08033445566',
+    plan_tier: 'free',
+    status: 'active'
+  });
+
+  // Verify Pro tracking access allowed, Free tracking access locked
+  const proPlanCheck = getStorePlanDetails(dbFetchOne<any>('stores', { id: trackingProStoreId }));
+  assert(can(proPlanCheck, 'live_customer_tracking') === true, 'Pro store is entitled to live customer tracking');
+
+  const freePlanCheck = getStorePlanDetails(dbFetchOne<any>('stores', { id: trackingFreeStoreId }));
+  assert(can(freePlanCheck, 'live_customer_tracking') === false, 'Free store is locked from live customer tracking');
+
+  // Record heartbeats for Pro store: 2 active shoppers
+  const visitorA = 'vis_pro_tok_aaa_' + Date.now();
+  const visitorB = 'vis_pro_tok_bbb_' + Date.now();
+
+  recordVisitorHeartbeat({
+    store_id: trackingProStoreId,
+    visitor_session_id: visitorA,
+    current_page: '/live-pro',
+    page_title: 'Store Home',
+    traffic_source: 'Instagram'
+  });
+  recordVisitorHeartbeat({
+    store_id: trackingProStoreId,
+    visitor_session_id: visitorB,
+    current_page: '/live-pro?product=101',
+    page_title: 'Viewing Nike Sneakers',
+    traffic_source: 'WhatsApp'
+  });
+
+  let proLive = getLiveStoreVisitors(trackingProStoreId);
+  assert(proLive.active_count === 2, 'Pro store has exactly 2 active live shoppers');
+  assert(proLive.visitors[0].traffic_source === 'Instagram' || proLive.visitors[1].traffic_source === 'Instagram', 'Instagram traffic source detected');
+  assert(proLive.visitors[0].traffic_source === 'WhatsApp' || proLive.visitors[1].traffic_source === 'WhatsApp', 'WhatsApp traffic source detected');
+
+  // Update visitor A's pageview (e.g., navigated to checkout)
+  recordVisitorHeartbeat({
+    store_id: trackingProStoreId,
+    visitor_session_id: visitorA,
+    current_page: '/live-pro/checkout',
+    page_title: 'Checking Out',
+    traffic_source: 'Instagram'
+  });
+  proLive = getLiveStoreVisitors(trackingProStoreId);
+  assert(proLive.active_count === 2, 'Active count remains 2 after visitor navigates to checkout');
+  const visA = proLive.visitors.find((v: any) => v.session_id === visitorA);
+  assert(visA && visA.page_title === 'Checking Out', 'Visitor heartbeat updates current page and title in real time');
+
+  // Business store with multiple branches
+  const branchNorth = dbInsert('branches', {
+    store_id: trackingBizStoreId,
+    name: 'North Branch',
+    address: 'Abuja Central',
+    city: 'Abuja',
+    is_main: 1,
+    status: 'active'
+  });
+  const branchSouth = dbInsert('branches', {
+    store_id: trackingBizStoreId,
+    name: 'South Branch',
+    address: 'Lekki Phase 1',
+    city: 'Lagos',
+    is_main: 0,
+    status: 'active'
+  });
+
+  const visitorNorth = 'vis_biz_north_' + Date.now();
+  const visitorSouth = 'vis_biz_south_' + Date.now();
+  recordVisitorHeartbeat({
+    store_id: trackingBizStoreId,
+    visitor_session_id: visitorNorth,
+    branch_id: branchNorth,
+    current_page: '/live-biz',
+    page_title: 'Abuja Branch Storefront',
+    traffic_source: 'TikTok'
+  });
+  recordVisitorHeartbeat({
+    store_id: trackingBizStoreId,
+    visitor_session_id: visitorSouth,
+    branch_id: branchSouth,
+    current_page: '/live-biz',
+    page_title: 'Lekki Branch Storefront',
+    traffic_source: 'Direct'
+  });
+
+  const bizAll = getLiveStoreVisitors(trackingBizStoreId, { isBusiness: true });
+  assert(bizAll.active_count === 2, 'Business store total active shoppers across all branches is 2');
+  assert(Object.keys(bizAll.branches_breakdown).length === 2, 'Business store returns breakdown for both branches');
+
+  const bizNorthOnly = getLiveStoreVisitors(trackingBizStoreId, { branchId: branchNorth });
+  assert(bizNorthOnly.active_count === 1, 'Business branch filter correctly isolates North branch shopper (1)');
+  assert(bizNorthOnly.visitors[0].session_id === visitorNorth, 'Branch filter matched North visitor token');
+
+  // Expiration test: artificially backdate visitor B by 4 minutes (stale > 3 minutes)
+  const staleTime = new Date(Date.now() - 4 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+  db.prepare('UPDATE active_visitors SET last_seen_at = ? WHERE visitor_session_id = ?').run(staleTime, visitorB);
+
+  // Clean inactive visitors (> 180 seconds)
+  cleanupInactiveVisitors(180);
+
+  const proLiveAfterCleanup = getLiveStoreVisitors(trackingProStoreId);
+  assert(proLiveAfterCleanup.active_count === 1, 'Stale visitor automatically expired and removed after 3 minutes');
+  assert(proLiveAfterCleanup.visitors[0].session_id === visitorA, 'Active visitor remains tracked');
+
+  // 24.3 Monthly Live Chat Limits (Free: 20 per month, Pro/Biz: Unlimited, Calendar month boundary)
+  const chatLimitFreeStoreId = 9920;
+  const chatLimitProStoreId = 9921;
+  db.prepare('DELETE FROM stores WHERE id IN (?, ?)').run(chatLimitFreeStoreId, chatLimitProStoreId);
+  db.prepare('DELETE FROM chat_conversations WHERE store_id IN (?, ?)').run(chatLimitFreeStoreId, chatLimitProStoreId);
+
+  dbInsert('stores', {
+    id: chatLimitFreeStoreId,
+    store_name: 'Chat Limit Free Store',
+    owner_name: 'Chat Free Owner',
+    password_hash: '$2a$10$dummyhashfortesting',
+    slug: 'chat-free-' + Date.now(),
+    whatsapp_number: '08099001122',
+    plan_tier: 'free',
+    status: 'active'
+  });
+
+  dbInsert('stores', {
+    id: chatLimitProStoreId,
+    store_name: 'Chat Limit Pro Store',
+    owner_name: 'Chat Pro Owner',
+    password_hash: '$2a$10$dummyhashfortesting',
+    slug: 'chat-pro-' + Date.now(),
+    whatsapp_number: '08099001133',
+    plan_tier: 'pro',
+    status: 'active'
+  });
+
+  // Verify initial usage is 0/20
+  const initialUsage = getStoreMonthlyChatUsage(chatLimitFreeStoreId);
+  assert(initialUsage.used_this_month === 0, 'Initial free store monthly chats used is 0');
+  assert(initialUsage.limit === 20, 'Free store monthly limit is 20');
+  assert(initialUsage.is_exhausted === false, 'Free store has not reached limit');
+  assert(initialUsage.remaining === 20, 'Free store has 20 chats remaining');
+
+  // Create 20 unique customer conversations
+  let lastSessionToken = '';
+  for (let c = 1; c <= 20; c++) {
+    const custTok = `free_cust_sess_${c}_` + Date.now();
+    lastSessionToken = custTok;
+    const sessionRes = getOrCreateCustomerSession(chatLimitFreeStoreId, custTok, `Customer ${c}`, `080000000${c.toString().padStart(2, '0')}`);
+    assert(sessionRes.conversation !== null, `Conversation ${c} created successfully for Free store`);
+  }
+
+  const usageAt20 = getStoreMonthlyChatUsage(chatLimitFreeStoreId);
+  assert(usageAt20.used_this_month === 20, 'Usage count reflects 20 conversations used');
+  assert(usageAt20.is_exhausted === true, 'is_exhausted is true when exactly 20 conversations used');
+  assert(usageAt20.remaining === 0, '0 chats remaining for this month');
+
+  // Attempting 21st NEW customer conversation on Free store -> Blocked with limit_reached
+  const custTok21 = 'free_cust_sess_21_' + Date.now();
+  const session21Res = getOrCreateCustomerSession(chatLimitFreeStoreId, custTok21, 'Customer 21', '08099999999');
+  assert(session21Res.conversation === null, '21st new conversation is rejected for Free store');
+  assert(session21Res.limit_reached === true, 'session21 returns limit_reached: true');
+  assert(session21Res.error?.includes('free monthly live chat limit') === true, 'Friendly limit reached error returned');
+
+  // Existing conversation can continue messaging unmetered!
+  const returningRes = getOrCreateCustomerSession(chatLimitFreeStoreId, lastSessionToken);
+  assert(returningRes.conversation !== null, 'Returning customer on existing session is unmetered and succeeds');
+  assert(returningRes.isNew === false, 'Returning session is identified as isNew: false');
+  const sendFollowUpRes = sendMessage(returningRes.conversation.id, 'customer', 'Customer 20', 'Follow up inquiry on my order');
+  assert(sendFollowUpRes.success === true, 'Existing customer can send follow-up message even when monthly quota is full');
+
+  // Pro store has unlimited chat conversations
+  const proUsage = getStoreMonthlyChatUsage(chatLimitProStoreId);
+  assert(proUsage.limit === -1, 'Pro store limit is -1 (unlimited)');
+  assert(proUsage.remaining === -1, 'Pro store remaining is -1 (unlimited)');
+  assert(proUsage.is_exhausted === false, 'Pro store is_exhausted is false');
+
+  // Pro store can create 25+ conversations without any block
+  for (let c = 1; c <= 25; c++) {
+    const proCustTok = `pro_cust_sess_${c}_` + Date.now();
+    const proSess = getOrCreateCustomerSession(chatLimitProStoreId, proCustTok, `Pro Cust ${c}`, `081111111${c.toString().padStart(2, '0')}`);
+    assert(proSess.conversation !== null, `Pro store conversation ${c} created successfully without restriction`);
+  }
 
   // -------------------------------------------------------------
   console.log('\n======================================================');

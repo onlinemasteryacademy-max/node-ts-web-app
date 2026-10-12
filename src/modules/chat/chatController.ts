@@ -5,6 +5,7 @@ import {
   getConversationMessages,
   listMerchantConversations,
   getCustomerChatContext,
+  getStoreMonthlyChatUsage,
   realtimeHub
 } from './chatService.js';
 import { dbFetchOne } from '../../db/db.js';
@@ -27,10 +28,19 @@ export async function chatRoutes(fastify: FastifyInstance) {
         if (!storeId) return reply.send({ success: false, error: 'store_id is required' });
 
         const result = getOrCreateCustomerSession(storeId, sessionToken, custName, custPhone, custEmail);
+        if (result.limit_reached) {
+          return reply.send({
+            success: false,
+            limit_reached: true,
+            error: result.error,
+            usage: result.usage
+          });
+        }
         return reply.send({
           success: true,
           conversation: result.conversation,
-          customer_session_token: result.conversation.customer_session_token
+          customer_session_token: result.conversation?.customer_session_token,
+          usage: result.usage
         });
       }
 
@@ -147,15 +157,32 @@ export async function chatRoutes(fastify: FastifyInstance) {
       if (!storeId) return reply.send({ success: false, error: 'store_id is required' });
 
       const result = getOrCreateCustomerSession(storeId, sessionToken, custName, custPhone, custEmail);
+      if (result.limit_reached) {
+        return reply.send({
+          success: false,
+          limit_reached: true,
+          error: result.error,
+          usage: result.usage
+        });
+      }
       return reply.send({
         success: true,
         conversation_id: result.conversation.id,
         session_token: result.conversation.customer_session_token,
-        conversation: result.conversation
+        conversation: result.conversation,
+        usage: result.usage
       });
     } catch (e: any) {
       return reply.code(500).send({ success: false, error: e.message });
     }
+  });
+
+  // Dedicated Merchant Live Chat Monthly Usage Quota Endpoint
+  fastify.get('/api/merchant/chat/usage', async (req: FastifyRequest, reply: FastifyReply) => {
+    const store = (req as any).session?.merchantStore;
+    if (!store) return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
+    const usage = getStoreMonthlyChatUsage(store.id);
+    return reply.send({ success: true, usage });
   });
 
   fastify.get('/api/chat/messages', async (req: FastifyRequest, reply: FastifyReply) => {

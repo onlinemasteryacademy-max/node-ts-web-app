@@ -182,6 +182,84 @@
             </div>
         </div>
 
+        <!-- Live Customer Tracking (Pro & Business Feature) -->
+        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full <%= (isPro || (store.plan_tier === 'business')) ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700' %>">
+                            <%= (isPro || (store.plan_tier === 'business')) ? 'Live Telemetry' : 'Pro & Business Feature' %>
+                        </span>
+                        <span class="text-[10px] uppercase font-semibold text-[#6B756F] tracking-wider">Active Visitors</span>
+                    </div>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <h2 class="text-base font-semibold text-[#08110D]">Live Customer Tracking</h2>
+                        <% if (isPro || (store.plan_tier === 'business')) { %>
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                                <span id="liveActiveCountText">0 Active Now</span>
+                            </span>
+                        <% } %>
+                    </div>
+                </div>
+
+                <% if (store.plan_tier === 'business') { %>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-[#6B756F]">Branch:</span>
+                        <select id="liveBranchFilter" onchange="fetchLiveVisitors()" class="bg-[#F8FAF8] border border-[#E3E9E5] text-xs font-medium text-[#08110D] rounded-xl px-3 py-1.5 outline-none">
+                            <option value="">All Branches</option>
+                        </select>
+                    </div>
+                <% } %>
+            </div>
+
+            <% if (isPro || (store.plan_tier === 'business')) { %>
+                <!-- Live Visitors Active Table / Stream -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-[#E3E9E5] text-[11px] font-bold uppercase text-[#6B756F] bg-[#F8FAF8]">
+                                <th class="p-3 rounded-l-xl">Shopper</th>
+                                <th class="p-3">Currently Viewing</th>
+                                <th class="p-3">Traffic Source</th>
+                                <th class="p-3">Time on Site</th>
+                                <th class="p-3 rounded-r-xl text-right">Latest Pulse</th>
+                            </tr>
+                        </thead>
+                        <tbody id="liveVisitorsTableBody" class="divide-y divide-[#E3E9E5]/60 font-body">
+                            <tr>
+                                <td colspan="5" class="p-6 text-center text-[#6B756F] text-xs">
+                                    <div class="inline-flex items-center gap-2">
+                                        <span class="animate-spin text-base">⏳</span>
+                                        <span>Listening for live store visitors...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <!-- Free Tier Locked Banner -->
+                <div class="p-6 sm:p-7 rounded-2xl bg-[#F8FAF8] border border-dashed border-[#E3E9E5] text-center space-y-3">
+                    <div class="w-10 h-10 rounded-xl bg-gray-200 text-[#08110D] flex items-center justify-center mx-auto text-base">
+                        🔒
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-[#08110D] font-display">Live Customer Tracking is Locked</h3>
+                        <p class="text-xs text-[#6B756F] max-w-md mx-auto mt-1">
+                            Upgrade to <strong>Pro</strong> or <strong>Business</strong> to see who is actively browsing your storefront in real time, what products they are looking at, their traffic source, and live shopper counts.
+                        </p>
+                    </div>
+                    <div>
+                        <button type="button" onclick="triggerUpgradeModal('Live Customer Tracking')" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs px-5 py-2.5 rounded-xl transition shadow-2xs inline-flex items-center gap-1.5 font-display">
+                            <span>⚡ Upgrade to Pro</span>
+                            <span>&rarr;</span>
+                        </button>
+                    </div>
+                </div>
+            <% } %>
+        </div>
+
         <!-- Revenue Metrics Dashboard with Timeframe Switcher -->
         <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -671,9 +749,81 @@
             }
         }
 
+        // ==========================================
+        // LIVE CUSTOMER TRACKING TELEMETRY POLLING
+        // ==========================================
+        const isTrackingAuthorized = <%= (isPro || (store.plan_tier === 'business')) ? 'true' : 'false' %>;
+
+        async function fetchLiveVisitors() {
+            if (!isTrackingAuthorized) return;
+            try {
+                const branchFilterEl = document.getElementById('liveBranchFilter');
+                const branchParam = branchFilterEl && branchFilterEl.value ? `?branch_id=${branchFilterEl.value}` : '';
+                const res = await fetch(`/api/merchant/analytics/live-visitors${branchParam}`);
+                const data = await res.json();
+
+                if (data.success) {
+                    const countBadge = document.getElementById('liveActiveCountText');
+                    if (countBadge) countBadge.textContent = `${data.active_count} Active Now`;
+
+                    const tbody = document.getElementById('liveVisitorsTableBody');
+                    if (!tbody) return;
+
+                    if (!data.visitors || data.visitors.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="5" class="p-6 text-center text-[#6B756F] text-xs">
+                                    No customers actively browsing this store right now. Check back when customers arrive.
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+
+                    tbody.innerHTML = data.visitors.map(v => {
+                        const pulseColor = v.active_seconds_ago < 30 ? 'bg-emerald-500' : 'bg-amber-400';
+                        const pulseText = v.active_seconds_ago < 30 ? 'Active just now' : `${v.active_seconds_ago}s ago`;
+
+                        return `
+                            <tr class="hover:bg-[#F8FAF8] transition">
+                                <td class="p-3">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2 h-2 rounded-full ${pulseColor}"></span>
+                                        <span class="font-semibold text-[#08110D]">${v.display_name}</span>
+                                    </div>
+                                </td>
+                                <td class="p-3">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-lg bg-gray-100 text-[#08110D] font-mono text-[11px]">
+                                        ${v.current_page}
+                                    </span>
+                                </td>
+                                <td class="p-3">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                        ${v.traffic_source}
+                                    </span>
+                                </td>
+                                <td class="p-3 text-[#6B756F]">
+                                    ${v.minutes_on_site} min${v.minutes_on_site === 1 ? '' : 's'} on site
+                                </td>
+                                <td class="p-3 text-right font-mono text-[11px] text-[#6B756F]">
+                                    ${pulseText}
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            } catch (e) {
+                // Background telemetry polling gracefully silent on network blip
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             checkUnreadChat();
             connectSSE();
+            if (isTrackingAuthorized) {
+                fetchLiveVisitors();
+                setInterval(fetchLiveVisitors, 8000);
+            }
         });
     </script>
     <script src="https://js.paystack.co/v1/inline.js"></script>

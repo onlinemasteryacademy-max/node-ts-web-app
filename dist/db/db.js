@@ -397,6 +397,23 @@ function initSchema(db) {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS active_visitors (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      store_id INTEGER NOT NULL,
+      branch_id INTEGER DEFAULT NULL,
+      visitor_session_id TEXT NOT NULL,
+      customer_name TEXT DEFAULT NULL,
+      traffic_source TEXT DEFAULT 'Direct',
+      current_page TEXT DEFAULT 'Storefront',
+      page_title TEXT DEFAULT NULL,
+      first_seen_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      last_seen_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(store_id, visitor_session_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_active_visitors_store_seen ON active_visitors(store_id, last_seen_at);
+    CREATE INDEX IF NOT EXISTS idx_chat_conversations_store_month ON chat_conversations(store_id, created_at);
+
     CREATE TABLE IF NOT EXISTS coupons (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       store_id INTEGER NOT NULL,

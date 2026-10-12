@@ -25,7 +25,8 @@ exports.PLANS = {
             active_debts_limit: 3,
             staff_accounts: 0,
             max_delivery_zones: 3,
-            max_active_orders: 50
+            max_active_orders: 50,
+            live_chat_monthly_conversations: 20
         },
         features: {
             powered_by_zlik: true, // Includes "Powered by Zlik" attribution
@@ -34,6 +35,8 @@ exports.PLANS = {
             basic_order_management: true,
             full_order_management: false,
             core_live_chat_persistent_history: true,
+            live_customer_tracking: false,
+            branch_analytics: false,
             basic_customer_records: true,
             store_product_sharing_seo_qr: true,
             pixels_integration: true,
@@ -82,7 +85,8 @@ exports.PLANS = {
             active_debts_limit: -1, // Unlimited
             staff_accounts: 1, // 1 additional staff account
             max_delivery_zones: -1,
-            max_active_orders: -1
+            max_active_orders: -1,
+            live_chat_monthly_conversations: -1 // Unlimited
         },
         features: {
             powered_by_zlik: false, // Watermark removed
@@ -91,6 +95,8 @@ exports.PLANS = {
             basic_order_management: true,
             full_order_management: true,
             core_live_chat_persistent_history: true,
+            live_customer_tracking: true,
+            branch_analytics: false,
             basic_customer_records: true,
             store_product_sharing_seo_qr: true,
             pixels_integration: true,
@@ -139,7 +145,8 @@ exports.PLANS = {
             active_debts_limit: -1,
             staff_accounts: 5, // 5 additional staff accounts
             max_delivery_zones: -1,
-            max_active_orders: -1
+            max_active_orders: -1,
+            live_chat_monthly_conversations: -1 // Unlimited
         },
         features: {
             powered_by_zlik: false,
@@ -148,6 +155,8 @@ exports.PLANS = {
             basic_order_management: true,
             full_order_management: true,
             core_live_chat_persistent_history: true,
+            live_customer_tracking: true,
+            branch_analytics: true,
             basic_customer_records: true,
             store_product_sharing_seo_qr: true,
             pixels_integration: true,
@@ -196,7 +205,8 @@ exports.PLANS = {
             active_debts_limit: -1,
             staff_accounts: -1,
             max_delivery_zones: -1,
-            max_active_orders: -1
+            max_active_orders: -1,
+            live_chat_monthly_conversations: -1
         },
         features: {
             powered_by_zlik: false,
@@ -205,6 +215,8 @@ exports.PLANS = {
             basic_order_management: true,
             full_order_management: true,
             core_live_chat_persistent_history: true,
+            live_customer_tracking: true,
+            branch_analytics: true,
             basic_customer_records: true,
             store_product_sharing_seo_qr: true,
             pixels_integration: true,

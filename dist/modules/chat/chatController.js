@@ -19,10 +19,19 @@ async function chatRoutes(fastify) {
                 if (!storeId)
                     return reply.send({ success: false, error: 'store_id is required' });
                 const result = (0, chatService_js_1.getOrCreateCustomerSession)(storeId, sessionToken, custName, custPhone, custEmail);
+                if (result.limit_reached) {
+                    return reply.send({
+                        success: false,
+                        limit_reached: true,
+                        error: result.error,
+                        usage: result.usage
+                    });
+                }
                 return reply.send({
                     success: true,
                     conversation: result.conversation,
-                    customer_session_token: result.conversation.customer_session_token
+                    customer_session_token: result.conversation?.customer_session_token,
+                    usage: result.usage
                 });
             }
             // Action: send_message (Both Customer and Merchant)
@@ -129,16 +138,33 @@ async function chatRoutes(fastify) {
             if (!storeId)
                 return reply.send({ success: false, error: 'store_id is required' });
             const result = (0, chatService_js_1.getOrCreateCustomerSession)(storeId, sessionToken, custName, custPhone, custEmail);
+            if (result.limit_reached) {
+                return reply.send({
+                    success: false,
+                    limit_reached: true,
+                    error: result.error,
+                    usage: result.usage
+                });
+            }
             return reply.send({
                 success: true,
                 conversation_id: result.conversation.id,
                 session_token: result.conversation.customer_session_token,
-                conversation: result.conversation
+                conversation: result.conversation,
+                usage: result.usage
             });
         }
         catch (e) {
             return reply.code(500).send({ success: false, error: e.message });
         }
+    });
+    // Dedicated Merchant Live Chat Monthly Usage Quota Endpoint
+    fastify.get('/api/merchant/chat/usage', async (req, reply) => {
+        const store = req.session?.merchantStore;
+        if (!store)
+            return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
+        const usage = (0, chatService_js_1.getStoreMonthlyChatUsage)(store.id);
+        return reply.send({ success: true, usage });
     });
     fastify.get('/api/chat/messages', async (req, reply) => {
         try {

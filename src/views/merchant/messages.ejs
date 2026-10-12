@@ -91,7 +91,23 @@
                 <div class="p-3.5 border-b border-[#E3E9E5] space-y-2.5">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-extrabold font-display text-[#08110D]">Customer Threads</span>
-                        <span id="convCountBadge" class="text-[10px] font-bold bg-[#F8FAF8] text-[#6B756F] border border-[#E3E9E5] px-2 py-0.5 rounded-full">0 chats</span>
+                        <div class="flex items-center gap-1.5">
+                            <span id="monthlyChatUsageBadge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-full border"></span>
+                            <span id="convCountBadge" class="text-[10px] font-bold bg-[#F8FAF8] text-[#6B756F] border border-[#E3E9E5] px-2 py-0.5 rounded-full">0 chats</span>
+                        </div>
+                    </div>
+                    <!-- Monthly Chat Limit Alert Banner if reached -->
+                    <div id="monthlyChatLimitAlert" class="hidden p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] leading-tight space-y-1.5">
+                        <div class="flex items-center gap-1.5 font-bold">
+                            <span>⚠️</span>
+                            <span>Monthly Chat Quota Reached</span>
+                        </div>
+                        <p class="text-amber-800 text-[10px]">
+                            You've used all 20 storefront live chats for this month. New storefront visitors are given a 1-click button to contact you directly on WhatsApp.
+                        </p>
+                        <a href="/merchant/settings" class="inline-flex items-center gap-1 text-[10px] font-bold text-[#087A50] hover:underline">
+                            Upgrade to Pro for Unlimited Live Chat &rarr;
+                        </a>
                     </div>
                     <div class="relative">
                         <input type="text" id="convSearchInput" oninput="handleSearchConversations(this.value)" placeholder="Search customer name, phone, message..." class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl px-3.5 py-2 text-xs text-[#08110D] outline-none focus:border-[#08110D] transition">
@@ -230,6 +246,7 @@
                     if (currentConvId === 0 && activeConversations.length > 0) {
                         selectConversation(activeConversations[0].id);
                     }
+                    loadMonthlyChatUsage();
                 }
             } catch (e) {}
         }
@@ -518,6 +535,34 @@
             });
         }
 
+        async function loadMonthlyChatUsage() {
+            try {
+                const res = await fetch('/api/merchant/chat/usage');
+                const data = await res.json();
+                if (data.success) {
+                    const badge = document.getElementById('monthlyChatUsageBadge');
+                    const alert = document.getElementById('monthlyChatLimitAlert');
+                    if (data.is_unlimited) {
+                        badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full border bg-emerald-50 text-[#087A50] border-emerald-200';
+                        badge.textContent = 'Unlimited (' + (data.plan || 'PRO').toUpperCase() + ')';
+                        badge.classList.remove('hidden');
+                        if (alert) alert.classList.add('hidden');
+                    } else {
+                        const used = data.used || 0;
+                        const limit = data.limit || 20;
+                        const reached = data.limit_reached;
+                        badge.className = `text-[10px] font-bold px-2 py-0.5 rounded-full border ${reached ? 'bg-red-50 text-red-700 border-red-200' : 'bg-[#F8FAF8] text-[#08110D] border-[#E3E9E5]'}`;
+                        badge.textContent = `${used}/${limit} chats this month`;
+                        badge.classList.remove('hidden');
+                        if (alert) {
+                            if (reached) alert.classList.remove('hidden');
+                            else alert.classList.add('hidden');
+                        }
+                    }
+                }
+            } catch (e) {}
+        }
+
         function escapeHtml(str) {
             if (!str) return '';
             const div = document.createElement('div');
@@ -527,6 +572,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             loadConversationsList();
+            loadMonthlyChatUsage();
             connectRealtimeStream();
         });
     </script>

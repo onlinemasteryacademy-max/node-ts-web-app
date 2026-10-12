@@ -32,6 +32,7 @@ exports.PERSISTENCE_TABLES = [
     'email_verifications',
     'subscription_payments',
     'analytics_events',
+    'active_visitors',
     'reviews'
 ];
 /**

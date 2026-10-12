@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.realtimeHub = void 0;
+exports.getStoreMonthlyChatUsage = getStoreMonthlyChatUsage;
 exports.getOrCreateCustomerSession = getOrCreateCustomerSession;
 exports.sendMessage = sendMessage;
 exports.getConversationMessages = getConversationMessages;
@@ -128,7 +129,55 @@ class RealtimeHub {
 }
 exports.realtimeHub = new RealtimeHub();
 /**
+ * Calculate store's monthly live chat usage and enforce tier quotas
+ * (Free: 20 new conversations/month; Pro & Business: Unlimited)
+ */
+function getStoreMonthlyChatUsage(storeId) {
+    const db = (0, db_js_1.getDb)();
+    const store = (0, db_js_1.dbFetchOne)('stores', { id: storeId });
+    const planDetails = (0, helpers_js_1.getStorePlanDetails)(store);
+    const tier = planDetails.tier;
+    const isUnlimited = planDetails.isPro || planDetails.isBusiness || tier === 'enterprise';
+    const limit = isUnlimited ? -1 : 20;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    // Calendar month boundary: 'YYYY-MM-01 00:00:00'
+    const monthStartIso = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01 00:00:00`;
+    const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+    const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
+    const resetDateIso = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01 00:00:00`;
+    let used = 0;
+    try {
+        const row = db.prepare(`
+      SELECT COUNT(*) as count 
+      FROM chat_conversations 
+      WHERE store_id = ? AND created_at >= ?
+    `).get(storeId, monthStartIso);
+        used = row ? Number(row.count) : 0;
+    }
+    catch (e) {
+        used = 0;
+    }
+    const isExhausted = !isUnlimited && used >= limit;
+    const remaining = isUnlimited ? -1 : Math.max(0, limit - used);
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthLabel = `${monthNames[now.getMonth()]} ${currentYear}`;
+    return {
+        store_id: storeId,
+        tier,
+        limit,
+        used_this_month: used,
+        remaining,
+        is_exhausted: isExhausted,
+        month_label: monthLabel,
+        reset_date_iso: resetDateIso
+    };
+}
+/**
  * Initialize or get Customer Chat Session
+ * If store is on Free tier and has reached 20 new conversations for current calendar month,
+ * creation of new conversations is blocked with clear upgrade notification.
  */
 function getOrCreateCustomerSession(storeId, sessionToken, customerName, customerPhone, customerEmail) {
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
@@ -139,7 +188,7 @@ function getOrCreateCustomerSession(storeId, sessionToken, customerName, custome
             customer_session_token: token
         });
         if (existing) {
-            // Update customer info if provided
+            // Update customer info if provided - existing conversations NEVER consume new quota
             const updates = {};
             if (customerName && customerName !== existing.customer_name)
                 updates.customer_name = customerName;
@@ -150,10 +199,21 @@ function getOrCreateCustomerSession(storeId, sessionToken, customerName, custome
             if (Object.keys(updates).length > 0) {
                 updates.updated_at = now;
                 (0, db_js_1.dbUpdate)('chat_conversations', updates, { id: existing.id });
-                return { conversation: { ...existing, ...updates }, isNew: false };
+                return { conversation: { ...existing, ...updates }, isNew: false, usage: getStoreMonthlyChatUsage(storeId) };
             }
-            return { conversation: existing, isNew: false };
+            return { conversation: existing, isNew: false, usage: getStoreMonthlyChatUsage(storeId) };
         }
+    }
+    // Before creating a NEW conversation, check if store has exhausted monthly chat allowance
+    const usage = getStoreMonthlyChatUsage(storeId);
+    if (usage.is_exhausted) {
+        return {
+            conversation: null,
+            isNew: false,
+            limit_reached: true,
+            error: 'This store has reached its free monthly live chat limit (20 new chats). Please contact the store via WhatsApp.',
+            usage
+        };
     }
     // Generate new token
     if (!token) {
@@ -186,7 +246,8 @@ function getOrCreateCustomerSession(storeId, sessionToken, customerName, custome
         created_at: now
     });
     const newConv = (0, db_js_1.dbFetchOne)('chat_conversations', { id: convId });
-    return { conversation: newConv, isNew: true };
+    const updatedUsage = getStoreMonthlyChatUsage(storeId);
+    return { conversation: newConv, isNew: true, usage: updatedUsage };
 }
 /**
  * Send Chat Message with Idempotency and Real-Time Push

@@ -935,6 +935,76 @@
         let appliedCouponCode = null;
         let appliedDiscountAmount = 0;
 
+        // ==========================================
+        // GENUINE LIVE CUSTOMER TELEMETRY ENGINE
+        // ==========================================
+        let shopperSessionId = sessionStorage.getItem('zlik_shopper_id_' + storeData.id);
+        if (!shopperSessionId) {
+            shopperSessionId = 'shp_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
+            sessionStorage.setItem('zlik_shopper_id_' + storeData.id, shopperSessionId);
+        }
+
+        let currentBrowsingPage = 'Storefront';
+        let currentBrowsingTitle = storeData.store_name || 'Store Home';
+
+        function detectTrafficSource() {
+            const ref = document.referrer ? document.referrer.toLowerCase() : '';
+            const urlParams = new URLSearchParams(window.location.search);
+            const utm = urlParams.get('utm_source');
+            if (utm) return utm;
+            if (!ref) return 'Direct';
+            if (ref.includes('instagram.com')) return 'Instagram';
+            if (ref.includes('whatsapp') || ref.includes('wa.me')) return 'WhatsApp';
+            if (ref.includes('tiktok.com')) return 'TikTok';
+            if (ref.includes('facebook.com') || ref.includes('fb.com')) return 'Facebook';
+            if (ref.includes('twitter.com') || ref.includes('x.com')) return 'X (Twitter)';
+            if (ref.includes('google.')) return 'Google';
+            if (ref.includes('youtube.com')) return 'YouTube';
+            try {
+                return new URL(document.referrer).hostname.replace('www.', '');
+            } catch(e) {
+                return 'Web Referral';
+            }
+        }
+
+        const detectedTrafficSource = detectTrafficSource();
+
+        async function sendShopperHeartbeat(customPage, customTitle) {
+            if (customPage) currentBrowsingPage = customPage;
+            if (customTitle) currentBrowsingTitle = customTitle;
+
+            const savedName = localStorage.getItem('zlik_chat_cust_name_' + storeData.id) || null;
+            const urlParams = new URLSearchParams(window.location.search);
+            const branchId = urlParams.get('branch_id') || null;
+
+            try {
+                fetch('/api/analytics/heartbeat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    keepalive: true,
+                    body: JSON.stringify({
+                        store_id: storeData.id,
+                        visitor_session_id: shopperSessionId,
+                        branch_id: branchId,
+                        current_page: currentBrowsingPage,
+                        page_title: currentBrowsingTitle,
+                        traffic_source: detectedTrafficSource,
+                        customer_name: savedName
+                    })
+                }).catch(() => {});
+            } catch (e) {}
+        }
+
+        // Send initial beacon on storefront load
+        setTimeout(() => sendShopperHeartbeat('Storefront', storeData.store_name), 300);
+
+        // Periodic heartbeat every 25s while tab is visible
+        setInterval(() => {
+            if (document.visibilityState !== 'hidden') {
+                sendShopperHeartbeat();
+            }
+        }, 25000);
+
         function trackEvent(eventName, params = {}) {
             try {
                 if (window.fbq) {
@@ -983,6 +1053,7 @@
         function openProductModal(productId) {
             const product = productsData.find(p => p.id === productId || p.id === parseInt(productId));
             if (!product) return;
+            sendShopperHeartbeat('Product: ' + product.title, product.title);
             currentModalProduct = product;
             currentModalQty = 1;
             currentSelectedVariant = null;
@@ -1416,6 +1487,7 @@
         }
 
         function closeProductModal() {
+            sendShopperHeartbeat('Storefront', storeData.store_name);
             const modal = document.getElementById('productDetailModal');
             const card = document.getElementById('productModalCard');
             card.classList.remove('scale-100');
@@ -2066,6 +2138,7 @@
 
         function openCheckoutModal() {
             if (cart.length === 0) return;
+            sendShopperHeartbeat('Checkout', 'Order Checkout');
             const subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
             trackEvent('InitiateCheckout', {
                 num_items: cart.length,
@@ -2088,6 +2161,7 @@
         }
 
         function closeCheckoutModal() {
+            sendShopperHeartbeat('Storefront', storeData.store_name);
             document.getElementById('checkoutModal').classList.add('hidden');
         }
 
@@ -2461,8 +2535,39 @@
                     localStorage.setItem('zlik_chat_token_' + storeData.id, sessionToken);
                     await loadMessages();
                     connectChatStreams();
+                } else if (d.limit_reached) {
+                    const activeView = document.getElementById('zlikChatActiveView');
+                    const leadGate = document.getElementById('zlikChatLeadGate');
+                    if (leadGate) leadGate.classList.add('hidden');
+                    if (activeView) activeView.classList.remove('hidden');
+                    const stream = document.getElementById('zlikChatMessageStream');
+                    const inputForm = document.getElementById('zlikChatInputForm');
+                    if (inputForm) inputForm.classList.add('hidden');
+                    if (stream) {
+                        const rawWa = storeData.whatsapp_number ? String(storeData.whatsapp_number).replace(/\D/g, '') : '';
+                        const waUrl = rawWa ? `https://wa.me/${rawWa}?text=Hello%20${encodeURIComponent(storeData.store_name)},%20I%20am%20browsing%20your%20store!` : '#';
+                        stream.innerHTML = `
+                            <div class="p-5 text-center space-y-3 bg-white rounded-2xl border border-amber-200 mt-4 shadow-sm">
+                                <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center text-xl font-bold mx-auto">
+                                    💬
+                                </div>
+                                <h4 class="font-bold text-[#08110D] text-xs font-display">Monthly Live Chat Limit Reached</h4>
+                                <p class="text-[11px] text-[#6B756F] leading-relaxed">
+                                    This store has reached its free monthly live chat allowance (20 new chats). Please message the seller directly on WhatsApp for instant assistance.
+                                </p>
+                                ${rawWa ? `
+                                    <div class="pt-2">
+                                        <a href="${waUrl}" target="_blank" class="inline-flex items-center gap-1.5 bg-[#25D366] hover:bg-[#1EBE5D] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-xs">
+                                            <span>Chat on WhatsApp</span>
+                                            <span>&rarr;</span>
+                                        </a>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `;
+                    }
                 } else {
-                    if (loadingEl) loadingEl.textContent = 'Unable to connect to live chat. Please try again.';
+                    if (loadingEl) loadingEl.textContent = d.error || 'Unable to connect to live chat. Please try again.';
                 }
             } catch(e){
                 console.error('Chat init error:', e);

@@ -388,6 +388,21 @@ export async function initMySQLSchema(pool?: Pool): Promise<void> {
       created_at VARCHAR(100) DEFAULT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
 
+    `CREATE TABLE IF NOT EXISTS active_visitors (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      store_id INT NOT NULL,
+      branch_id INT DEFAULT NULL,
+      visitor_session_id VARCHAR(100) NOT NULL,
+      customer_name VARCHAR(150) DEFAULT NULL,
+      traffic_source VARCHAR(100) DEFAULT 'Direct',
+      current_page VARCHAR(255) DEFAULT 'Storefront',
+      page_title VARCHAR(255) DEFAULT NULL,
+      first_seen_at VARCHAR(100) DEFAULT NULL,
+      last_seen_at VARCHAR(100) DEFAULT NULL,
+      UNIQUE KEY uq_store_visitor (store_id, visitor_session_id),
+      KEY idx_store_seen (store_id, last_seen_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+
     `CREATE TABLE IF NOT EXISTS reviews (
       id INT AUTO_INCREMENT PRIMARY KEY,
       store_id INT NOT NULL,

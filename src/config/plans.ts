@@ -23,6 +23,7 @@ export interface PlanFeatureConfig {
     staff_accounts: number; // 0 for free, 1 for pro, 5 for business
     max_delivery_zones: number;
     max_active_orders: number;
+    live_chat_monthly_conversations: number; // 20 for free, -1 = unlimited
   };
   features: {
     powered_by_zlik: boolean; // true = watermark included, false = removed
@@ -31,6 +32,8 @@ export interface PlanFeatureConfig {
     basic_order_management: boolean;
     full_order_management: boolean;
     core_live_chat_persistent_history: boolean;
+    live_customer_tracking: boolean;
+    branch_analytics: boolean;
     basic_customer_records: boolean;
     store_product_sharing_seo_qr: boolean;
     pixels_integration: boolean; // Meta Pixel, Google Ads, TikTok Pixel
@@ -81,7 +84,8 @@ export const PLANS: Record<string, PlanFeatureConfig> = {
       active_debts_limit: 3,
       staff_accounts: 0,
       max_delivery_zones: 3,
-      max_active_orders: 50
+      max_active_orders: 50,
+      live_chat_monthly_conversations: 20
     },
     features: {
       powered_by_zlik: true, // Includes "Powered by Zlik" attribution
@@ -90,6 +94,8 @@ export const PLANS: Record<string, PlanFeatureConfig> = {
       basic_order_management: true,
       full_order_management: false,
       core_live_chat_persistent_history: true,
+      live_customer_tracking: false,
+      branch_analytics: false,
       basic_customer_records: true,
       store_product_sharing_seo_qr: true,
       pixels_integration: true,
@@ -139,7 +145,8 @@ export const PLANS: Record<string, PlanFeatureConfig> = {
       active_debts_limit: -1, // Unlimited
       staff_accounts: 1, // 1 additional staff account
       max_delivery_zones: -1,
-      max_active_orders: -1
+      max_active_orders: -1,
+      live_chat_monthly_conversations: -1 // Unlimited
     },
     features: {
       powered_by_zlik: false, // Watermark removed
@@ -148,6 +155,8 @@ export const PLANS: Record<string, PlanFeatureConfig> = {
       basic_order_management: true,
       full_order_management: true,
       core_live_chat_persistent_history: true,
+      live_customer_tracking: true,
+      branch_analytics: false,
       basic_customer_records: true,
       store_product_sharing_seo_qr: true,
       pixels_integration: true,
@@ -197,7 +206,8 @@ export const PLANS: Record<string, PlanFeatureConfig> = {
       active_debts_limit: -1,
       staff_accounts: 5, // 5 additional staff accounts
       max_delivery_zones: -1,
-      max_active_orders: -1
+      max_active_orders: -1,
+      live_chat_monthly_conversations: -1 // Unlimited
     },
     features: {
       powered_by_zlik: false,
@@ -206,6 +216,8 @@ export const PLANS: Record<string, PlanFeatureConfig> = {
       basic_order_management: true,
       full_order_management: true,
       core_live_chat_persistent_history: true,
+      live_customer_tracking: true,
+      branch_analytics: true,
       basic_customer_records: true,
       store_product_sharing_seo_qr: true,
       pixels_integration: true,
@@ -255,7 +267,8 @@ export const PLANS: Record<string, PlanFeatureConfig> = {
       active_debts_limit: -1,
       staff_accounts: -1,
       max_delivery_zones: -1,
-      max_active_orders: -1
+      max_active_orders: -1,
+      live_chat_monthly_conversations: -1
     },
     features: {
       powered_by_zlik: false,
@@ -264,6 +277,8 @@ export const PLANS: Record<string, PlanFeatureConfig> = {
       basic_order_management: true,
       full_order_management: true,
       core_live_chat_persistent_history: true,
+      live_customer_tracking: true,
+      branch_analytics: true,
       basic_customer_records: true,
       store_product_sharing_seo_qr: true,
       pixels_integration: true,
