@@ -46,6 +46,33 @@
   <style>
     body { font-family: 'Inter', sans-serif; background-color: #F8FAF8; color: #08110D; }
     .font-display { font-family: 'Montserrat', sans-serif; }
+    @keyframes logoMarquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .logo-marquee-wrapper {
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+      max-width: 360px;
+      mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+      -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    }
+    .logo-marquee-track {
+      display: flex;
+      width: max-content;
+      align-items: center;
+      gap: 10px;
+      animation: logoMarquee 16s linear infinite;
+    }
+    .logo-marquee-track:hover {
+      animation-play-state: paused;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .logo-marquee-track {
+        animation: none;
+      }
+    }
   </style>
 </head>
 <body class="bg-[#F8FAF8] text-[#08110D] antialiased selection:bg-[#08110D] selection:text-[#19D98B]">
@@ -62,7 +89,7 @@
       <!-- Desktop Navigation Links -->
       <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-[#6B756F]">
         <a href="#features" class="transition-colors hover:text-[#08110D]">Features</a>
-        <a href="#how-it-works" class="transition-colors hover:text-[#08110D]">How it works</a>
+        <a href="#how-it-works" class="transition-colors hover:text-[#08110D]">How It Works</a>
         <a href="#pricing" class="transition-colors hover:text-[#08110D]">Pricing</a>
         <a href="/marketplace" class="transition-colors hover:text-[#08110D] flex items-center gap-2">
           <span>Stores</span>
@@ -72,10 +99,10 @@
       <!-- Action CTAs -->
       <div class="flex items-center gap-3 sm:gap-4">
         <a href="/merchant/login" class="text-sm font-semibold text-[#08110D] hover:opacity-75 transition-opacity px-3 py-2">
-          Sign in
+          Sign In
         </a>
         <button type="button" onclick="openRegisterModal()" class="bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] text-sm font-semibold font-display px-5 py-2.5 rounded-lg transition-all shadow-xs">
-          Create store
+          Create Store
         </button>
       </div>
     </div>
@@ -89,69 +116,99 @@
       <div class="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
         <!-- Left: Headline & Primary CTA -->
         <div class="lg:col-span-7 space-y-6 text-left">
-          <div class="inline-flex items-center gap-2 bg-white px-3.5 py-1.5 rounded-full border border-[#E3E9E5] text-xs font-medium text-[#6B756F]">
-            <span class="w-2 h-2 rounded-full bg-[#19D98B]"></span>
-            <span>The easiest way to sell online</span>
-          </div>
-
           <h1 class="text-4xl sm:text-6xl font-bold font-display tracking-tight text-[#08110D] leading-[1.08]">
-            The easiest way to sell products & services online.
+            Sell online with one simple link.
           </h1>
 
           <p class="text-base sm:text-lg text-[#6B756F] max-w-xl leading-relaxed font-normal">
-            Create a fast, clean online store in seconds. Share across Instagram, TikTok, WhatsApp, Facebook, X, YouTube, and collect orders with zero hassle.
+            Create your online store. Add your products. Share your link. Let customers order online.
           </p>
 
           <div class="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <button onclick="openRegisterModal()" class="bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] text-sm font-semibold font-display px-8 py-3.5 rounded-lg transition shadow-xs flex items-center justify-center gap-2">
-              <span>Create store</span>
+            <button onclick="openRegisterModal('free')" class="bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] text-sm font-semibold font-display px-8 py-3.5 rounded-lg transition shadow-xs flex items-center justify-center gap-2">
+              <span>Create Free Store</span>
               <span>&rarr;</span>
             </button>
             <a href="/marketplace" class="bg-white hover:bg-gray-50 border border-[#E3E9E5] text-[#08110D] text-sm font-medium px-6 py-3.5 rounded-lg transition text-center">
-              Explore stores
+              Explore Stores
             </a>
           </div>
 
-          <!-- Supported Channels Indicator -->
-          <div class="pt-3 space-y-2">
-            <div class="text-[11px] uppercase tracking-wider font-semibold text-[#6B756F]">Sell everywhere with one link:</div>
-            <div class="flex flex-wrap items-center gap-2.5">
-              <span class="w-9 h-9 bg-white rounded-xl border border-[#E3E9E5] flex items-center justify-center shadow-2xs hover:border-gray-300 hover:bg-gray-50 transition" title="Instagram" aria-label="Instagram">
-                <svg class="w-4.5 h-4.5 text-[#E1306C] shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                </svg>
-              </span>
-              <span class="w-9 h-9 bg-white rounded-xl border border-[#E3E9E5] flex items-center justify-center shadow-2xs hover:border-gray-300 hover:bg-gray-50 transition" title="TikTok" aria-label="TikTok">
-                <svg class="w-4.5 h-4.5 text-[#08110D] shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.89 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3 15.67 6.34 6.34 0 0 0 9.34 22a6.34 6.34 0 0 0 6.34-6.33V9.05a8.28 8.28 0 0 0 4.91 1.59V7.19a4.86 4.86 0 0 1-1-.5z"/>
-                </svg>
-              </span>
-              <span class="w-9 h-9 bg-white rounded-xl border border-[#E3E9E5] flex items-center justify-center shadow-2xs hover:border-gray-300 hover:bg-gray-50 transition" title="WhatsApp" aria-label="WhatsApp">
-                <svg class="w-4.5 h-4.5 text-[#25D366] shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12.031 0C5.395 0 .01 5.385.01 12.022a11.96 11.96 0 0 0 1.608 6.002L.012 24l6.148-1.611a11.97 11.97 0 0 0 5.871 1.533h.005c6.635 0 12.02-5.385 12.02-12.022A12.02 12.02 0 0 0 12.031 0zm0 22.008h-.004a10.02 10.02 0 0 1-5.107-1.393l-.366-.217-3.794.995 1.013-3.699-.239-.38a9.98 9.98 0 0 1-1.533-5.292c0-5.526 4.498-10.024 10.03-10.024a9.97 9.97 0 0 1 7.087 2.935 9.97 9.97 0 0 1 2.938 7.087c0 5.526-4.498 10.024-10.024 10.024zm5.495-7.511c-.301-.151-1.782-.88-2.058-.98-.276-.101-.477-.151-.678.151-.201.301-.778.98-.954 1.181-.176.201-.351.226-.653.075-.301-.151-1.272-.469-2.423-1.496-.895-.798-1.5-1.784-1.676-2.086-.176-.301-.019-.464.132-.614.136-.135.301-.352.452-.527.151-.176.201-.301.301-.502.101-.201.05-.377-.025-.527-.075-.151-.678-1.633-.929-2.236-.245-.588-.493-.508-.678-.518l-.578-.01c-.201 0-.527.075-.803.377s-1.054 1.03-1.054 2.511c0 1.482 1.079 2.913 1.23 3.114.151.201 2.124 3.243 5.145 4.549.719.311 1.28.497 1.718.636.722.229 1.378.197 1.897.119.578-.087 1.782-.728 2.033-1.431.251-.703.251-1.306.176-1.431-.075-.125-.276-.201-.577-.352z"/>
-                </svg>
-              </span>
-              <span class="w-9 h-9 bg-white rounded-xl border border-[#E3E9E5] flex items-center justify-center shadow-2xs hover:border-gray-300 hover:bg-gray-50 transition" title="Facebook" aria-label="Facebook">
-                <svg class="w-4.5 h-4.5 text-[#1877F2] shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-              </span>
-              <span class="w-9 h-9 bg-white rounded-xl border border-[#E3E9E5] flex items-center justify-center shadow-2xs hover:border-gray-300 hover:bg-gray-50 transition" title="X" aria-label="X">
-                <svg class="w-4.5 h-4.5 text-[#08110D] shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                </svg>
-              </span>
-              <span class="w-9 h-9 bg-white rounded-xl border border-[#E3E9E5] flex items-center justify-center shadow-2xs hover:border-gray-300 hover:bg-gray-50 transition" title="YouTube" aria-label="YouTube">
-                <svg class="w-4.5 h-4.5 text-[#FF0000] shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                </svg>
-              </span>
-            </div>
+          <div class="pt-1 text-xs text-[#087A50] font-semibold flex items-center gap-2">
+            <span>✓</span>
+            <span>0% sales commission. No app downloads.</span>
           </div>
 
-          <div class="flex items-center gap-2 pt-1 text-xs text-[#6B756F]">
-            <span class="text-[#19D98B] font-semibold shrink-0">✓</span>
-            <span>Receive direct bank payments with zero platform fees</span>
+          <!-- Cinematic Social Media Logos Continuous Sliding Reel -->
+          <div class="pt-2 space-y-2">
+            <div class="text-[11px] uppercase tracking-wider font-semibold text-[#6B756F]">Sell everywhere with one link:</div>
+            <div class="logo-marquee-wrapper py-1">
+              <div class="logo-marquee-track">
+                <!-- Group 1 -->
+                <span class="w-7 h-7 rounded-lg border border-[#E3E9E5] bg-white flex items-center justify-center shadow-2xs hover:border-gray-400 hover:scale-105 transition-transform duration-200 shrink-0" title="Instagram" aria-label="Instagram">
+                  <svg class="w-3.5 h-3.5 text-[#E1306C] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  </svg>
+                </span>
+                <span class="w-7 h-7 rounded-lg border border-[#E3E9E5] bg-white flex items-center justify-center shadow-2xs hover:border-gray-400 hover:scale-105 transition-transform duration-200 shrink-0" title="TikTok" aria-label="TikTok">
+                  <svg class="w-3.5 h-3.5 text-[#08110D] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.89 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3 15.67 6.34 6.34 0 0 0 9.34 22a6.34 6.34 0 0 0 6.34-6.33V9.05a8.28 8.28 0 0 0 4.91 1.59V7.19a4.86 4.86 0 0 1-1-.5z"/>
+                  </svg>
+                </span>
+                <span class="w-7 h-7 rounded-lg border border-[#E3E9E5] bg-white flex items-center justify-center shadow-2xs hover:border-gray-400 hover:scale-105 transition-transform duration-200 shrink-0" title="WhatsApp" aria-label="WhatsApp">
+                  <svg class="w-3.5 h-3.5 text-[#25D366] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.031 0C5.395 0 .01 5.385.01 12.022a11.96 11.96 0 0 0 1.608 6.002L.012 24l6.148-1.611a11.97 11.97 0 0 0 5.871 1.533h.005c6.635 0 12.02-5.385 12.02-12.022A12.02 12.02 0 0 0 12.031 0zm0 22.008h-.004a10.02 10.02 0 0 1-5.107-1.393l-.366-.217-3.794.995 1.013-3.699-.239-.38a9.98 9.98 0 0 1-1.533-5.292c0-5.526 4.498-10.024 10.03-10.024a9.97 9.97 0 0 1 7.087 2.935 9.97 9.97 0 0 1 2.938 7.087c0 5.526-4.498 10.024-10.024 10.024zm5.495-7.511c-.301-.151-1.782-.88-2.058-.98-.276-.101-.477-.151-.678.151-.201.301-.778.98-.954 1.181-.176.201-.351.226-.653.075-.301-.151-1.272-.469-2.423-1.496-.895-.798-1.5-1.784-1.676-2.086-.176-.301-.019-.464.132-.614.136-.135.301-.352.452-.527.151-.176.201-.301.301-.502.101-.201.05-.377-.025-.527-.075-.151-.678-1.633-.929-2.236-.245-.588-.493-.508-.678-.518l-.578-.01c-.201 0-.527.075-.803.377s-1.054 1.03-1.054 2.511c0 1.482 1.079 2.913 1.23 3.114.151.201 2.124 3.243 5.145 4.549.719.311 1.28.497 1.718.636.722.229 1.378.197 1.897.119.578-.087 1.782-.728 2.033-1.431.251-.703.251-1.306.176-1.431-.075-.125-.276-.201-.577-.352z"/>
+                  </svg>
+                </span>
+                <span class="w-7 h-7 rounded-lg border border-[#E3E9E5] bg-white flex items-center justify-center shadow-2xs hover:border-gray-400 hover:scale-105 transition-transform duration-200 shrink-0" title="Facebook" aria-label="Facebook">
+                  <svg class="w-3.5 h-3.5 text-[#1877F2] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  </svg>
+                </span>
+                <span class="w-7 h-7 rounded-lg border border-[#E3E9E5] bg-white flex items-center justify-center shadow-2xs hover:border-gray-400 hover:scale-105 transition-transform duration-200 shrink-0" title="X" aria-label="X">
+                  <svg class="w-3.5 h-3.5 text-[#08110D] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                </span>
+                <span class="w-7 h-7 rounded-lg border border-[#E3E9E5] bg-white flex items-center justify-center shadow-2xs hover:border-gray-400 hover:scale-105 transition-transform duration-200 shrink-0" title="YouTube" aria-label="YouTube">
+                  <svg class="w-3.5 h-3.5 text-[#FF0000] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                </span>
+
+                <!-- Duplicate Group 2 for seamless infinite marquee loop -->
+                <span class="w-7 h-7 rounded-lg border border-[#E3E9E5] bg-white flex items-center justify-center shadow-2xs hover:border-gray-400 hover:scale-105 transition-transform duration-200 shrink-0" title="Instagram" aria-label="Instagram">
+                  <svg class="w-3.5 h-3.5 text-[#E1306C] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  </svg>
+                </span>
+                <span class="w-7 h-7 rounded-lg border border-[#E3E9E5] bg-white flex items-center justify-center shadow-2xs hover:border-gray-400 hover:scale-105 transition-transform duration-200 shrink-0" title="TikTok" aria-label="TikTok">
+                  <svg class="w-3.5 h-3.5 text-[#08110D] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.89 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3 15.67 6.34 6.34 0 0 0 9.34 22a6.34 6.34 0 0 0 6.34-6.33V9.05a8.28 8.28 0 0 0 4.91 1.59V7.19a4.86 4.86 0 0 1-1-.5z"/>
+                  </svg>
+                </span>
+                <span class="w-7 h-7 rounded-lg border border-[#E3E9E5] bg-white flex items-center justify-center shadow-2xs hover:border-gray-400 hover:scale-105 transition-transform duration-200 shrink-0" title="WhatsApp" aria-label="WhatsApp">
+                  <svg class="w-3.5 h-3.5 text-[#25D366] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.031 0C5.395 0 .01 5.385.01 12.022a11.96 11.96 0 0 0 1.608 6.002L.012 24l6.148-1.611a11.97 11.97 0 0 0 5.871 1.533h.005c6.635 0 12.02-5.385 12.02-12.022A12.02 12.02 0 0 0 12.031 0zm0 22.008h-.004a10.02 10.02 0 0 1-5.107-1.393l-.366-.217-3.794.995 1.013-3.699-.239-.38a9.98 9.98 0 0 1-1.533-5.292c0-5.526 4.498-10.024 10.03-10.024a9.97 9.97 0 0 1 7.087 2.935 9.97 9.97 0 0 1 2.938 7.087c0 5.526-4.498 10.024-10.024 10.024zm5.495-7.511c-.301-.151-1.782-.88-2.058-.98-.276-.101-.477-.151-.678.151-.201.301-.778.98-.954 1.181-.176.201-.351.226-.653.075-.301-.151-1.272-.469-2.423-1.496-.895-.798-1.5-1.784-1.676-2.086-.176-.301-.019-.464.132-.614.136-.135.301-.352.452-.527.151-.176.201-.301.301-.502.101-.201.05-.377-.025-.527-.075-.151-.678-1.633-.929-2.236-.245-.588-.493-.508-.678-.518l-.578-.01c-.201 0-.527.075-.803.377s-1.054 1.03-1.054 2.511c0 1.482 1.079 2.913 1.23 3.114.151.201 2.124 3.243 5.145 4.549.719.311 1.28.497 1.718.636.722.229 1.378.197 1.897.119.578-.087 1.782-.728 2.033-1.431.251-.703.251-1.306.176-1.431-.075-.125-.276-.201-.577-.352z"/>
+                  </svg>
+                </span>
+                <span class="w-7 h-7 rounded-lg border border-[#E3E9E5] bg-white flex items-center justify-center shadow-2xs hover:border-gray-400 hover:scale-105 transition-transform duration-200 shrink-0" title="Facebook" aria-label="Facebook">
+                  <svg class="w-3.5 h-3.5 text-[#1877F2] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  </svg>
+                </span>
+                <span class="w-7 h-7 rounded-lg border border-[#E3E9E5] bg-white flex items-center justify-center shadow-2xs hover:border-gray-400 hover:scale-105 transition-transform duration-200 shrink-0" title="X" aria-label="X">
+                  <svg class="w-3.5 h-3.5 text-[#08110D] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                </span>
+                <span class="w-7 h-7 rounded-lg border border-[#E3E9E5] bg-white flex items-center justify-center shadow-2xs hover:border-gray-400 hover:scale-105 transition-transform duration-200 shrink-0" title="YouTube" aria-label="YouTube">
+                  <svg class="w-3.5 h-3.5 text-[#FF0000] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -226,53 +283,63 @@
   </section>
 
   <!-- ==========================================
-       SECTION 2 — THE CORE IDEA
+       SECTION 2A — THE PROBLEM
        ========================================== -->
-  <section class="py-20 bg-white border-b border-[#E3E9E5]" id="features">
-    <div class="max-w-[1240px] mx-auto px-6">
-      <div class="max-w-2xl mx-auto text-center space-y-3 mb-16">
-        <span class="text-xs font-semibold uppercase tracking-wider text-[#6B756F]">
-          Why zlik
-        </span>
+  <section class="py-16 sm:py-20 bg-white border-b border-[#E3E9E5]" id="problem">
+    <div class="max-w-[800px] mx-auto px-6 text-center space-y-4">
+      <h2 class="text-3xl sm:text-4xl font-bold font-display tracking-tight text-[#08110D]">
+        Tired of taking orders in DMs?
+      </h2>
+      <p class="text-base sm:text-lg text-[#6B756F] leading-relaxed">
+        Too many messages. Repeated questions. Orders that are hard to track.
+      </p>
+      <p class="text-base font-semibold text-[#087A50]">
+        Give your customers a better way to shop.
+      </p>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       SECTION 2B — THE SOLUTION
+       ========================================== -->
+  <section class="py-16 sm:py-20 bg-[#F8FAF8] border-b border-[#E3E9E5]" id="features">
+    <div class="max-w-[1000px] mx-auto px-6 space-y-12">
+      <div class="text-center space-y-2">
         <h2 class="text-3xl sm:text-4xl font-bold font-display tracking-tight text-[#08110D]">
-          Turn social traffic into paying customers.
+          Your products. One link. Easy ordering.
         </h2>
-        <p class="text-base text-[#6B756F] leading-relaxed">
-          Stop losing sales in messy DMs. Give buyers one clean link to explore products, choose options, and checkout online instantly.
-        </p>
       </div>
 
-      <!-- 3 Core Cards -->
-      <div class="grid md:grid-cols-3 gap-6">
-        <div class="bg-white p-7 rounded-xl border border-[#E3E9E5] space-y-3 shadow-xs">
-          <div class="text-xs font-mono font-bold text-[#6B756F]">01</div>
-          <h3 class="text-lg font-semibold font-display text-[#08110D]">
-            One link for all channels
-          </h3>
-          <p class="text-sm text-[#6B756F] leading-relaxed">
-            Add your store link to your Instagram bio, TikTok profile, WhatsApp status, or Facebook page. One link sells everywhere.
-          </p>
+      <div class="grid sm:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-2xl border border-[#E3E9E5] space-y-2 shadow-2xs">
+          <div class="w-8 h-8 rounded-lg bg-[#19D98B]/15 text-[#087A50] font-bold flex items-center justify-center font-display text-xs">01</div>
+          <h3 class="text-base font-bold text-[#08110D] font-display">Show your products.</h3>
+          <p class="text-sm text-[#6B756F]">Add photos, prices, and options.</p>
         </div>
 
-        <div class="bg-white p-7 rounded-xl border border-[#E3E9E5] space-y-3 shadow-xs">
-          <div class="text-xs font-mono font-bold text-[#6B756F]">02</div>
-          <h3 class="text-lg font-semibold font-display text-[#08110D]">
-            Seamless online orders
-          </h3>
-          <p class="text-sm text-[#6B756F] leading-relaxed">
-            Customers select variants, enter delivery details, and submit orders with automated totals and clear itemization.
-          </p>
+        <div class="bg-white p-6 rounded-2xl border border-[#E3E9E5] space-y-2 shadow-2xs">
+          <div class="w-8 h-8 rounded-lg bg-[#19D98B]/15 text-[#087A50] font-bold flex items-center justify-center font-display text-xs">02</div>
+          <h3 class="text-base font-bold text-[#08110D] font-display">Take orders online.</h3>
+          <p class="text-sm text-[#6B756F]">Customers choose what they want and place orders.</p>
         </div>
 
-        <div class="bg-white p-7 rounded-xl border border-[#E3E9E5] space-y-3 shadow-xs">
-          <div class="text-xs font-mono font-bold text-[#6B756F]">03</div>
-          <h3 class="text-lg font-semibold font-display text-[#08110D]">
-            Direct payments & proof
-          </h3>
-          <p class="text-sm text-[#6B756F] leading-relaxed">
-            Receive bank transfer claims or card payments directly with zero middlemen deductions and automated digital receipts.
-          </p>
+        <div class="bg-white p-6 rounded-2xl border border-[#E3E9E5] space-y-2 shadow-2xs">
+          <div class="w-8 h-8 rounded-lg bg-[#19D98B]/15 text-[#087A50] font-bold flex items-center justify-center font-display text-xs">03</div>
+          <h3 class="text-base font-bold text-[#08110D] font-display">Receive payments.</h3>
+          <p class="text-sm text-[#6B756F]">Show your bank details or available payment options.</p>
         </div>
+
+        <div class="bg-white p-6 rounded-2xl border border-[#E3E9E5] space-y-2 shadow-2xs">
+          <div class="w-8 h-8 rounded-lg bg-[#19D98B]/15 text-[#087A50] font-bold flex items-center justify-center font-display text-xs">04</div>
+          <h3 class="text-base font-bold text-[#08110D] font-display">Manage your sales.</h3>
+          <p class="text-sm text-[#6B756F]">Track orders, stock, and customer debts.</p>
+        </div>
+      </div>
+
+      <div class="text-center pt-2">
+        <p class="text-sm font-medium text-[#6B756F]">
+          Share your store on WhatsApp, Instagram, TikTok, Facebook, and more.
+        </p>
       </div>
     </div>
   </section>
@@ -280,50 +347,54 @@
   <!-- ==========================================
        SECTION 3 — HOW IT WORKS
        ========================================== -->
-  <section id="how-it-works" class="py-20 bg-[#F8FAF8] border-b border-[#E3E9E5]">
+  <section id="how-it-works" class="py-16 sm:py-20 bg-white border-b border-[#E3E9E5]">
     <div class="max-w-[1240px] mx-auto px-6">
       <div class="max-w-2xl mx-auto text-center space-y-3 mb-14">
-        <span class="text-xs font-semibold uppercase tracking-wider text-[#6B756F]">
-          How it works
-        </span>
         <h2 class="text-3xl sm:text-4xl font-bold font-display tracking-tight text-[#08110D]">
-          Four simple steps to sell online.
+          Start selling in four steps.
         </h2>
       </div>
 
       <!-- Steps Grid -->
-      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div class="bg-white p-6 rounded-xl border border-[#E3E9E5] space-y-2.5 shadow-xs">
-          <span class="text-xs font-mono font-bold text-[#6B756F]">Step 1</span>
-          <h3 class="text-base font-semibold font-display text-[#08110D]">Create your store</h3>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div class="bg-[#F8FAF8] p-6 rounded-2xl border border-[#E3E9E5] space-y-2.5 shadow-2xs">
+          <span class="text-xs font-mono font-bold text-[#087A50]">01.</span>
+          <h3 class="text-base font-bold font-display text-[#08110D]">Create your store</h3>
           <p class="text-xs text-[#6B756F] leading-relaxed">
-            Enter your store name and launch your custom online storefront in seconds.
+            Add your business name.
           </p>
         </div>
 
-        <div class="bg-white p-6 rounded-xl border border-[#E3E9E5] space-y-2.5 shadow-xs">
-          <span class="text-xs font-mono font-bold text-[#6B756F]">Step 2</span>
-          <h3 class="text-base font-semibold font-display text-[#08110D]">Add products</h3>
+        <div class="bg-[#F8FAF8] p-6 rounded-2xl border border-[#E3E9E5] space-y-2.5 shadow-2xs">
+          <span class="text-xs font-mono font-bold text-[#087A50]">02.</span>
+          <h3 class="text-base font-bold font-display text-[#08110D]">Add products</h3>
           <p class="text-xs text-[#6B756F] leading-relaxed">
-            Upload photos, set prices, inventory, and payment instructions.
+            Upload photos and set prices.
           </p>
         </div>
 
-        <div class="bg-white p-6 rounded-xl border border-[#E3E9E5] space-y-2.5 shadow-xs">
-          <span class="text-xs font-mono font-bold text-[#6B756F]">Step 3</span>
-          <h3 class="text-base font-semibold font-display text-[#08110D]">Share everywhere</h3>
+        <div class="bg-[#F8FAF8] p-6 rounded-2xl border border-[#E3E9E5] space-y-2.5 shadow-2xs">
+          <span class="text-xs font-mono font-bold text-[#087A50]">03.</span>
+          <h3 class="text-base font-bold font-display text-[#08110D]">Share your link</h3>
           <p class="text-xs text-[#6B756F] leading-relaxed">
-            Put your zlik link in your Instagram bio, TikTok, WhatsApp, Facebook, or send directly.
+            Post it anywhere online.
           </p>
         </div>
 
-        <div class="bg-white p-6 rounded-xl border border-[#E3E9E5] space-y-2.5 shadow-xs">
-          <span class="text-xs font-mono font-bold text-[#6B756F]">Step 4</span>
-          <h3 class="text-base font-semibold font-display text-[#08110D]">Receive orders</h3>
+        <div class="bg-[#F8FAF8] p-6 rounded-2xl border border-[#E3E9E5] space-y-2.5 shadow-2xs">
+          <span class="text-xs font-mono font-bold text-[#087A50]">04.</span>
+          <h3 class="text-base font-bold font-display text-[#08110D]">Receive orders</h3>
           <p class="text-xs text-[#6B756F] leading-relaxed">
-            Get structured online orders with payment verification and digital receipts.
+            Let customers order from your store.
           </p>
         </div>
+      </div>
+
+      <div class="text-center">
+        <button onclick="openRegisterModal('free')" class="bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] text-sm font-bold font-display px-8 py-3.5 rounded-xl transition shadow-xs inline-flex items-center gap-2">
+          <span>Create Your Free Store</span>
+          <span>&rarr;</span>
+        </button>
       </div>
     </div>
   </section>
@@ -331,241 +402,106 @@
   <!-- ==========================================
        SECTION 4 — PRICING
        ========================================== -->
-  <section id="pricing" class="py-20 bg-white border-b border-[#E3E9E5]">
+  <section id="pricing" class="py-16 sm:py-20 bg-[#F8FAF8] border-b border-[#E3E9E5]">
     <div class="max-w-6xl mx-auto px-6">
-      <div class="text-center max-w-xl mx-auto mb-10 space-y-3">
-        <span class="text-xs font-semibold uppercase tracking-wider text-[#6B756F]">
-          Pricing
-        </span>
+      <div class="text-center max-w-xl mx-auto mb-12 space-y-3">
         <h2 class="text-3xl sm:text-4xl font-bold font-display tracking-tight text-[#08110D]">
-          Simple, transparent plans.
+          Start free. Grow your business.
         </h2>
         <p class="text-sm text-[#6B756F]">
-          Zero commissions on sales. You keep 100% of customer payments.
+          No Zlik sales commission. Upgrade whenever you need more.
         </p>
-
-        <!-- Billing Cycle Selector -->
-        <div class="pt-4 inline-flex items-center bg-[#F8FAF8] p-1 rounded-xl border border-[#E3E9E5]">
-          <button onclick="toggleLandingBilling('monthly')" id="landingCycleBtn-monthly" class="px-5 py-2 rounded-lg text-xs font-bold font-display transition bg-[#08110D] text-white shadow-2xs">
-            Monthly Billing
-          </button>
-          <button onclick="toggleLandingBilling('yearly')" id="landingCycleBtn-yearly" class="px-5 py-2 rounded-lg text-xs font-bold font-display transition text-[#6B756F] hover:text-[#08110D] flex items-center gap-1.5">
-            <span>Annual Billing</span>
-            <span class="bg-[#19D98B] text-[#08110D] text-[9px] font-bold px-1.5 py-0.5 rounded">Up to 2 Mo Free</span>
-          </button>
-        </div>
       </div>
 
       <!-- 3 Plan Cards Grid -->
       <div class="grid md:grid-cols-3 gap-6 items-stretch mb-10">
         
-        <!-- 1. Free Starter -->
+        <!-- Free -->
         <div class="border border-[#E3E9E5] p-6 sm:p-7 rounded-2xl flex flex-col justify-between bg-white shadow-xs hover:border-gray-300 transition text-left">
           <div>
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-xs font-mono uppercase font-bold text-[#6B756F]">Free</span>
-              <span class="text-[9px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-[#F8FAF8] text-[#6B756F] border border-[#E3E9E5]">forever</span>
-            </div>
-            <div class="text-3xl font-bold font-display text-[#08110D] mb-1">₦0</div>
-            <p class="text-xs text-[#6B756F] mb-6">For merchants getting started and building their customer base.</p>
+            <h3 class="text-base font-bold font-display text-[#08110D] mb-1">Free</h3>
+            <div class="text-3xl font-bold font-display text-[#08110D] mb-1">₦0 forever</div>
+            <p class="text-xs text-[#6B756F] mb-6">For new sellers.</p>
             
             <div class="border-t border-[#E3E9E5] pt-5 mb-8">
-              <ul class="space-y-3.5 text-xs text-[#4A5550] font-normal text-left">
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>1 online store & 10 products</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>1 photo per product</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>5 storefront designs (1 per category)</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>WhatsApp orders & direct checkout</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>Live chat & order notifications</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>Sales ledger (7 days) & debt tracker (3 debts)</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>Meta Pixel, Google Ads & TikTok Pixel</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>Marketplace directory listing</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>Social status poster generator</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>Store QR Code</span>
-                </li>
+              <ul class="space-y-3 text-xs text-[#4A5550]">
+                <li class="flex items-center gap-2"><span class="text-[#19D98B] font-bold">✓</span> <span>1 store</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#19D98B] font-bold">✓</span> <span>10 products</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#19D98B] font-bold">✓</span> <span>1 photo per product</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#19D98B] font-bold">✓</span> <span>WhatsApp orders</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#19D98B] font-bold">✓</span> <span>Basic sales and debt tracking</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#19D98B] font-bold">✓</span> <span>Store QR code</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#19D98B] font-bold">✓</span> <span>Marketplace listing</span></li>
               </ul>
             </div>
           </div>
-          <button onclick="openRegisterModal('free')" class="w-full bg-white hover:bg-gray-50 border border-[#E3E9E5] text-[#08110D] text-xs font-semibold font-display py-3 rounded-lg transition">
-            Start Free
+          <button onclick="openRegisterModal('free')" class="w-full bg-white hover:bg-gray-50 border border-[#E3E9E5] text-[#08110D] text-xs font-semibold font-display py-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow-2xs">
+            <span>Start Free</span> <span>&rarr;</span>
           </button>
         </div>
 
-        <!-- 2. Pro Seller (Recommended) -->
+        <!-- Pro -->
         <div class="bg-[#08110D] text-white p-6 sm:p-7 rounded-2xl flex flex-col justify-between relative shadow-zlik border border-[#08110D] text-left">
-          <div class="absolute -top-3 right-5 bg-[#19D98B] text-[#08110D] text-[9px] font-bold font-display uppercase px-2.5 py-0.5 rounded-full">
-            Recommended
-          </div>
           <div>
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-xs font-mono uppercase font-bold text-[#E3E9E5]/70">Pro</span>
-              <span class="text-[9px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-white/10 text-[#19D98B]">Growing Sellers</span>
-            </div>
-            <div class="landing-monthly-view">
-              <div class="text-3xl font-bold font-display text-white mb-1">₦<%= Number((typeof plans !== 'undefined' && plans.pro ? plans.pro.price_monthly : (typeof settings !== 'undefined' ? settings.pro_monthly_price : 5000))).toLocaleString() %> <span class="text-xs font-normal text-[#E3E9E5]/70">/ month</span></div>
-              <p class="text-[11px] text-[#19D98B] mb-6">Billed monthly</p>
-            </div>
-            <div class="landing-yearly-view hidden">
-              <div class="text-3xl font-bold font-display text-[#19D98B] mb-1">₦<%= Number((typeof plans !== 'undefined' && plans.pro ? plans.pro.price_yearly : (typeof settings !== 'undefined' ? settings.pro_yearly_price : 50000))).toLocaleString() %> <span class="text-xs font-normal text-[#E3E9E5]/70">/ year</span></div>
-              <p class="text-[11px] text-[#19D98B] mb-6">Save ₦10,000</p>
-            </div>
-            <p class="text-xs text-[#E3E9E5]/80 mb-4">For established sellers who need better control and more capacity.</p>
+            <h3 class="text-base font-bold font-display text-white mb-1">Pro</h3>
+            <div class="text-3xl font-bold font-display text-white mb-1">₦5,000/month</div>
+            <p class="text-xs text-[#E3E9E5]/80 mb-6">For growing businesses.</p>
             
-            <div class="border-t border-white/10 pt-4 mb-8">
-              <div class="text-[11px] uppercase tracking-wider font-medium text-[#19D98B] mb-3">Everything in Free, plus:</div>
-              <ul class="space-y-3.5 text-xs text-[#D1DCD6] font-normal text-left">
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>Up to 3 stores & 500 products</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>5 photos per product</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>All 15 storefront designs</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>Lifetime sales ledger & CSV export</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>Unlimited debt tracker & WhatsApp reminders</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>1 additional staff account</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>Remove "Powered by Zlik" badge</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>Custom brand colors and logo controls</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>Seller-branded receipts & custom order sound alerts</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>Stock tracking & low-stock alerts</span>
-                </li>
+            <div class="border-t border-white/10 pt-5 mb-8">
+              <div class="text-[11px] font-semibold text-[#19D98B] mb-3">Everything in Free, plus:</div>
+              <ul class="space-y-3 text-xs text-[#D1DCD6]">
+                <li class="flex items-center gap-2"><span class="text-[#19D98B] font-bold">✓</span> <span>3 stores</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#19D98B] font-bold">✓</span> <span>500 products</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#19D98B] font-bold">✓</span> <span>5 photos per product</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#19D98B] font-bold">✓</span> <span>Full sales history</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#19D98B] font-bold">✓</span> <span>Unlimited debt tracking</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#19D98B] font-bold">✓</span> <span>Stock alerts</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#19D98B] font-bold">✓</span> <span>1 extra staff account</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#19D98B] font-bold">✓</span> <span>Custom branding</span></li>
               </ul>
             </div>
           </div>
-          <button onclick="openRegisterModal('pro')" class="w-full bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] text-xs font-semibold font-display py-3 rounded-lg transition shadow-xs">
-            Get started with Pro &rarr;
+          <button onclick="openRegisterModal('pro')" class="w-full bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] text-xs font-semibold font-display py-3 rounded-lg transition shadow-xs flex items-center justify-center gap-1.5">
+            <span>Get Pro</span> <span>&rarr;</span>
           </button>
         </div>
 
-        <!-- 3. Business -->
+        <!-- Business -->
         <div class="bg-white p-6 sm:p-7 rounded-2xl flex flex-col justify-between border border-[#E3E9E5] hover:border-gray-300 shadow-xs transition text-left">
           <div>
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-xs font-mono uppercase font-bold text-[#087A50]">Business</span>
-              <span class="text-[9px] uppercase font-bold px-2.5 py-0.5 rounded-full bg-[#19D98B]/20 text-[#087A50]">Scale & Teams</span>
-            </div>
-            <div class="landing-monthly-view">
-              <div class="text-3xl font-bold font-display text-[#08110D] mb-1">₦<%= Number((typeof plans !== 'undefined' && plans.business ? plans.business.price_monthly : (typeof settings !== 'undefined' ? settings.business_monthly_price : 9000))).toLocaleString() %> <span class="text-xs font-normal text-[#6B756F]">/ month</span></div>
-              <p class="text-[11px] text-[#087A50] mb-6">Billed monthly</p>
-            </div>
-            <div class="landing-yearly-view hidden">
-              <div class="text-3xl font-bold font-display text-[#087A50] mb-1">₦<%= Number((typeof plans !== 'undefined' && plans.business ? plans.business.price_yearly : (typeof settings !== 'undefined' ? settings.business_yearly_price : 90000))).toLocaleString() %> <span class="text-xs font-normal text-[#6B756F]">/ year</span></div>
-              <p class="text-[11px] text-[#087A50] mb-6">Save ₦18,000</p>
-            </div>
-            <p class="text-xs text-[#6B756F] mb-4">For growing businesses managing employees, branches and more complex operations.</p>
+            <h3 class="text-base font-bold font-display text-[#08110D] mb-1">Business</h3>
+            <div class="text-3xl font-bold font-display text-[#08110D] mb-1">₦9,000/month</div>
+            <p class="text-xs text-[#6B756F] mb-6">For larger businesses.</p>
             
-            <div class="border-t border-[#E3E9E5] pt-4 mb-8">
-              <div class="text-[11px] uppercase tracking-wider font-medium text-[#087A50] mb-3">Everything in Pro, plus:</div>
-              <ul class="space-y-3.5 text-xs text-[#4A5550] font-normal text-left">
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>Up to 10 stores & unlimited products</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>10 photos per product plus video</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>5 staff accounts with roles & permissions</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>Custom domain support</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>Multi-branch inventory & sales reports</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>Custom receipt templates & seller branding</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>Daily sales summaries by branch and staff</span>
-                </li>
-                <li class="flex items-start gap-2.5">
-                  <svg class="w-4 h-4 text-[#19D98B] shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                  <span>Priority support & onboarding assistance</span>
-                </li>
+            <div class="border-t border-[#E3E9E5] pt-5 mb-8">
+              <div class="text-[11px] font-semibold text-[#087A50] mb-3">Everything in Pro, plus:</div>
+              <ul class="space-y-3 text-xs text-[#4A5550]">
+                <li class="flex items-center gap-2"><span class="text-[#087A50] font-bold">✓</span> <span>10 stores</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#087A50] font-bold">✓</span> <span>Unlimited products</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#087A50] font-bold">✓</span> <span>Product videos</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#087A50] font-bold">✓</span> <span>5 staff accounts</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#087A50] font-bold">✓</span> <span>Custom domain</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#087A50] font-bold">✓</span> <span>Multi-branch management</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#087A50] font-bold">✓</span> <span>Sales reports</span></li>
+                <li class="flex items-center gap-2"><span class="text-[#087A50] font-bold">✓</span> <span>Priority support</span></li>
               </ul>
             </div>
           </div>
-          <button onclick="openRegisterModal('business')" class="w-full bg-[#08110D] hover:bg-black text-white text-xs font-semibold font-display py-3 rounded-lg transition shadow-xs">
-            Get started with Business &rarr;
+          <button onclick="openRegisterModal('business')" class="w-full bg-[#08110D] hover:bg-black text-white text-xs font-semibold font-display py-3 rounded-lg transition shadow-xs flex items-center justify-center gap-1.5">
+            <span>Get Business</span> <span>&rarr;</span>
           </button>
         </div>
 
       </div>
 
-      <!-- Feature Breakdown Toggle & Enterprise CTA -->
-      <div class="bg-[#F8FAF8] border border-[#E3E9E5] rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xs">
-        <div class="text-left space-y-1">
-          <h3 class="text-base font-bold font-display text-[#08110D]">Need deeper comparison or enterprise scale?</h3>
-          <p class="text-xs text-[#6B756F]">Explore the complete limits matrix or get started directly with our Enterprise tier.</p>
-        </div>
-        <div class="flex flex-wrap items-center gap-3 shrink-0 w-full sm:w-auto">
-          <button onclick="toggleFeatureBreakdown()" id="breakdownToggleBtn" class="w-full sm:w-auto bg-white hover:bg-gray-50 border border-[#E3E9E5] text-[#08110D] text-xs font-semibold font-display px-5 py-3 rounded-lg transition shadow-2xs flex items-center justify-center gap-1.5">
-            <span id="breakdownBtnText">Full feature breakdown</span>
-            <span id="breakdownBtnIcon">↓</span>
-          </button>
-          <button onclick="openEnterpriseModal()" class="w-full sm:w-auto bg-[#08110D] hover:bg-black text-white text-xs font-semibold font-display px-5 py-3 rounded-lg transition shadow-2xs flex items-center justify-center gap-1.5">
-            <span>Get Enterprise Plan</span>
-            <span>&rarr;</span>
+      <!-- Enterprise Callout & View All Features -->
+      <div class="text-center pt-2 pb-4">
+        <p class="text-xs text-[#6B756F]">
+          Need more? <button type="button" onclick="openEnterpriseModal()" class="font-semibold text-[#08110D] underline hover:text-[#087A50]">Explore Enterprise.</button>
+        </p>
+        <div class="pt-3">
+          <button onclick="toggleFeatureBreakdown()" class="inline-flex items-center gap-1 text-xs font-semibold text-[#087A50] hover:underline">
+            <span>View All Features</span> <span>&rarr;</span>
           </button>
         </div>
       </div>
@@ -616,101 +552,24 @@
                 <td class="p-4 text-center text-[#6B756F]">20 photos + video</td>
               </tr>
               <tr>
-                <td class="p-4 font-semibold text-[#08110D]">Storefront Designs</td>
-                <td class="p-4 text-center text-[#6B756F]">5 designs (1 per cat)</td>
-                <td class="p-4 text-center text-[#08110D] bg-[#08110D]/5 font-semibold">All 15 designs</td>
-                <td class="p-4 text-center text-[#087A50] font-semibold">All 15 + custom design</td>
-                <td class="p-4 text-center text-[#6B756F]">Bespoke theme</td>
-              </tr>
-              <tr>
-                <td class="p-4 font-semibold text-[#08110D]">Live Chat & Order Notifications</td>
-                <td class="p-4 text-center text-[#087A50]">✓ Included</td>
-                <td class="p-4 text-center text-[#087A50] bg-[#08110D]/5 font-semibold">✓ Included</td>
-                <td class="p-4 text-center text-[#087A50] font-semibold">✓ Staff Assigned</td>
-                <td class="p-4 text-center text-[#087A50]">✓ Enterprise</td>
-              </tr>
-              <tr>
-                <td class="p-4 font-semibold text-[#08110D]">Tracking Pixels (Meta, Google, TikTok)</td>
-                <td class="p-4 text-center text-[#087A50]">✓ Included</td>
-                <td class="p-4 text-center text-[#087A50] bg-[#08110D]/5 font-semibold">✓ Included</td>
-                <td class="p-4 text-center text-[#087A50] font-semibold">✓ Included</td>
-                <td class="p-4 text-center text-[#087A50]">✓ Included</td>
-              </tr>
-              <tr>
-                <td class="p-4 font-semibold text-[#08110D]">Marketplace Discovery Listing</td>
-                <td class="p-4 text-center text-[#087A50]">✓ Included</td>
-                <td class="p-4 text-center text-[#087A50] bg-[#08110D]/5 font-semibold">✓ Included</td>
-                <td class="p-4 text-center text-[#087A50] font-semibold">✓ Featured Boost</td>
-                <td class="p-4 text-center text-[#087A50]">✓ Featured Boost</td>
-              </tr>
-              <tr>
-                <td class="p-4 font-semibold text-[#08110D]">Store Visitor Analytics</td>
-                <td class="p-4 text-center text-[#087A50]">All Timeframes</td>
-                <td class="p-4 text-center text-[#087A50] bg-[#08110D]/5 font-semibold">All Timeframes</td>
-                <td class="p-4 text-center text-[#087A50] font-semibold">All + Branch Reports</td>
-                <td class="p-4 text-center text-[#087A50]">Advanced BI & Logs</td>
-              </tr>
-              <tr>
                 <td class="p-4 font-semibold text-[#08110D]">Staff Accounts</td>
                 <td class="p-4 text-center text-[#6B756F]">0</td>
-                <td class="p-4 text-center text-[#08110D] bg-[#08110D]/5 font-semibold">1 staff</td>
-                <td class="p-4 text-center text-[#087A50] font-semibold">5 staff</td>
+                <td class="p-4 text-center text-[#08110D] bg-[#08110D]/5 font-semibold">1 extra staff</td>
+                <td class="p-4 text-center text-[#087A50] font-semibold">5 staff accounts</td>
                 <td class="p-4 text-center text-[#6B756F]">Custom</td>
               </tr>
               <tr>
-                <td class="p-4 font-semibold text-[#08110D]">“Powered by Zlik” Attribution</td>
-                <td class="p-4 text-center text-amber-700">Included</td>
-                <td class="p-4 text-center text-[#087A50] bg-[#08110D]/5 font-semibold">Removed</td>
-                <td class="p-4 text-center text-[#087A50] font-semibold">Removed</td>
-                <td class="p-4 text-center text-[#087A50]">Removed</td>
-              </tr>
-              <tr>
-                <td class="p-4 font-semibold text-[#08110D]">Sales Ledger History</td>
-                <td class="p-4 text-center text-[#6B756F]">Last 7 days</td>
-                <td class="p-4 text-center text-[#08110D] bg-[#08110D]/5 font-semibold">Full history + export</td>
-                <td class="p-4 text-center text-[#087A50] font-semibold">Staff & branch reports</td>
-                <td class="p-4 text-center text-[#6B756F]">Full audit logs</td>
-              </tr>
-              <tr>
-                <td class="p-4 font-semibold text-[#08110D]">Debt Tracker</td>
-                <td class="p-4 text-center text-[#6B756F]">3 active debts</td>
-                <td class="p-4 text-center text-[#08110D] bg-[#08110D]/5 font-semibold">Unlimited + WhatsApp</td>
-                <td class="p-4 text-center text-[#087A50] font-semibold">Unlimited + staff access</td>
-                <td class="p-4 text-center text-[#6B756F]">Unlimited</td>
-              </tr>
-              <tr>
-                <td class="p-4 font-semibold text-[#08110D]">Custom Domain Support</td>
+                <td class="p-4 font-semibold text-[#08110D]">Custom Domain</td>
                 <td class="p-4 text-center text-[#6B756F]">zlik.store/name</td>
                 <td class="p-4 text-center text-[#6B756F] bg-[#08110D]/5">zlik.store/name</td>
                 <td class="p-4 text-center text-[#087A50] font-semibold">✓ Custom domain (SSL)</td>
                 <td class="p-4 text-center text-[#087A50]">✓ Multiple domains</td>
               </tr>
               <tr>
-                <td class="p-4 font-semibold text-[#08110D]">Bulk Import (CSV / Excel)</td>
-                <td class="p-4 text-center text-[#6B756F]">Basic CSV</td>
-                <td class="p-4 text-center text-[#08110D] bg-[#08110D]/5 font-semibold">Full Bulk Import</td>
-                <td class="p-4 text-center text-[#087A50] font-semibold">Advanced Image Match</td>
-                <td class="p-4 text-center text-[#6B756F]">Automated API Sync</td>
-              </tr>
-              <tr>
-                <td class="p-4 font-semibold text-[#08110D]">Store QR Code</td>
-                <td class="p-4 text-center text-[#087A50]">✓ Included</td>
-                <td class="p-4 text-center text-[#087A50] bg-[#08110D]/5 font-semibold">✓ Included</td>
-                <td class="p-4 text-center text-[#087A50] font-semibold">✓ Included</td>
-                <td class="p-4 text-center text-[#087A50]">✓ Included</td>
-              </tr>
-              <tr>
-                <td class="p-4 font-semibold text-[#08110D]">Custom Alert Sound</td>
-                <td class="p-4 text-center text-[#6B756F]">Standard Chime</td>
-                <td class="p-4 text-center text-[#087A50] bg-[#08110D]/5 font-semibold">✓ Custom Alert Sounds</td>
-                <td class="p-4 text-center text-[#087A50] font-semibold">✓ Custom Alert Sounds</td>
-                <td class="p-4 text-center text-[#087A50]">✓ Custom Alert Sounds</td>
-              </tr>
-              <tr>
                 <td class="p-4 font-semibold text-[#08110D]">Support</td>
                 <td class="p-4 text-center text-[#6B756F]">Help Center</td>
                 <td class="p-4 text-center text-[#08110D] bg-[#08110D]/5 font-semibold">WhatsApp Support</td>
-                <td class="p-4 text-center text-[#087A50] font-semibold">Priority + Onboarding</td>
+                <td class="p-4 text-center text-[#087A50] font-semibold">Priority Support</td>
                 <td class="p-4 text-center text-[#6B756F]">Dedicated Account Mgr</td>
               </tr>
             </tbody>
@@ -721,120 +580,110 @@
   </section>
 
   <!-- ==========================================
-       SECTION 5 — FAQ
+       SECTION 5 — FAQS
        ========================================== -->
-  <section id="faq" class="py-20 bg-[#F8FAF8] border-b border-[#E3E9E5]">
+  <section id="faq" class="py-16 sm:py-20 bg-white border-b border-[#E3E9E5]">
     <div class="max-w-[800px] mx-auto px-6">
-      <div class="text-center mb-12 space-y-2">
-        <span class="text-xs font-semibold uppercase tracking-wider text-[#6B756F]">FAQ</span>
+      <div class="text-center mb-10 space-y-2">
         <h2 class="text-2xl sm:text-3xl font-bold font-display tracking-tight text-[#08110D]">
-          Frequently asked questions
+          FAQs
         </h2>
       </div>
 
       <div class="space-y-4">
-        <div class="bg-white p-5 rounded-xl border border-[#E3E9E5] shadow-xs">
-          <h3 class="text-sm font-semibold text-[#08110D] mb-1.5">Where can I share my zlik store?</h3>
+        <div class="bg-[#F8FAF8] p-5 rounded-2xl border border-[#E3E9E5]">
+          <h3 class="text-sm font-bold text-[#08110D] mb-1.5">Where can I share my store?</h3>
           <p class="text-xs text-[#6B756F] leading-relaxed">
-            Everywhere online! Add your store link to your Instagram bio, TikTok profile, WhatsApp chats & status, Facebook page, Twitter/X, YouTube bio, or directly to customers via DM or SMS.
+            WhatsApp, Instagram, TikTok, Facebook, YouTube, and anywhere else online.
           </p>
         </div>
 
-        <div class="bg-white p-5 rounded-xl border border-[#E3E9E5] shadow-xs">
-          <h3 class="text-sm font-semibold text-[#08110D] mb-1.5">How do customer payments work?</h3>
+        <div class="bg-[#F8FAF8] p-5 rounded-2xl border border-[#E3E9E5]">
+          <h3 class="text-sm font-bold text-[#08110D] mb-1.5">Do customers need an app?</h3>
           <p class="text-xs text-[#6B756F] leading-relaxed">
-            When customers checkout, zlik displays your verified bank account details or online payment options. Customers complete payment and upload proof, giving you instant verification before order fulfillment.
+            No. Your store opens in their web browser.
           </p>
         </div>
 
-        <div class="bg-white p-5 rounded-xl border border-[#E3E9E5] shadow-xs">
-          <h3 class="text-sm font-semibold text-[#08110D] mb-1.5">Does zlik charge commission on sales?</h3>
+        <div class="bg-[#F8FAF8] p-5 rounded-2xl border border-[#E3E9E5]">
+          <h3 class="text-sm font-bold text-[#08110D] mb-1.5">How do I receive payments?</h3>
           <p class="text-xs text-[#6B756F] leading-relaxed">
-            No. zlik charges 0% transaction fees on your sales. You keep 100% of everything your customers pay.
+            Customers follow your payment instructions or use the available online payment options.
           </p>
         </div>
 
-        <div class="bg-white p-5 rounded-xl border border-[#E3E9E5] shadow-xs">
-          <h3 class="text-sm font-semibold text-[#08110D] mb-1.5">Do my customers need to download an app?</h3>
+        <div class="bg-[#F8FAF8] p-5 rounded-2xl border border-[#E3E9E5]">
+          <h3 class="text-sm font-bold text-[#08110D] mb-1.5">Does Zlik charge commission?</h3>
           <p class="text-xs text-[#6B756F] leading-relaxed">
-            No. Your store works instantly in any web browser on smartphones, tablets, and computers with zero app downloads required.
+            No. Zlik charges 0% sales commission. Other payment fees may apply.
+          </p>
+        </div>
+
+        <div class="bg-[#F8FAF8] p-5 rounded-2xl border border-[#E3E9E5]">
+          <h3 class="text-sm font-bold text-[#08110D] mb-1.5">Can I track my stock and sales?</h3>
+          <p class="text-xs text-[#6B756F] leading-relaxed">
+            Yes. Available tools depend on your plan.
           </p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Uniform Public Site Footer -->
-  <footer class="bg-[#08110D] text-white border-t border-[#08110D] relative overflow-hidden font-body">
-    <div class="max-w-[1240px] mx-auto px-6 pt-16 pb-12 relative z-10">
-      <!-- Pre-Footer CTA Banner -->
-      <div class="bg-white/5 border border-white/10 rounded-2xl p-8 sm:p-10 mb-16 flex flex-col md:flex-row items-center justify-between gap-6">
-        <div class="space-y-2 text-center md:text-left max-w-xl">
-          <h3 class="text-2xl sm:text-3xl font-semibold font-display text-white tracking-tight">The easiest way to sell products & services online.</h3>
-          <p class="text-sm text-[#E3E9E5]/80 font-normal">Create your store, share across Instagram, TikTok, WhatsApp, Facebook, and collect orders effortlessly.</p>
+  <!-- ==========================================
+       SECTION 6 — FINAL CTA
+       ========================================== -->
+  <section class="py-16 sm:py-20 bg-[#08110D] text-white border-b border-[#08110D]">
+    <div class="max-w-[800px] mx-auto px-6 text-center space-y-4">
+      <h2 class="text-3xl sm:text-4xl font-bold font-display tracking-tight text-white">
+        Ready to sell online?
+      </h2>
+      <p class="text-sm sm:text-base text-[#E3E9E5]/80">
+        Create your store and share your link.
+      </p>
+      <div class="pt-2">
+        <button onclick="openRegisterModal('free')" class="bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] text-sm font-bold font-display px-8 py-3.5 rounded-xl transition shadow-xs inline-flex items-center gap-2">
+          <span>Create Your Free Store</span>
+          <span>&rarr;</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       SECTION 7 — FOOTER
+       ========================================== -->
+  <footer class="bg-white text-[#08110D] border-t border-[#E3E9E5] py-12 font-body">
+    <div class="max-w-[1240px] mx-auto px-6 space-y-8">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-8 border-b border-[#E3E9E5]">
+        <div class="space-y-1">
+          <a href="/" class="font-display font-semibold text-2xl text-[#08110D] inline-block">zlik</a>
+          <p class="text-xs text-[#6B756F]">Your online store, made simple.</p>
         </div>
-        <div class="flex flex-wrap items-center justify-center gap-3 shrink-0">
-          <button onclick="openRegisterModal()" class="bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] text-sm font-semibold font-display px-6 py-3 rounded-lg transition-all shadow-xs">
-            Create store
-          </button>
-        </div>
+        <nav class="flex flex-wrap items-center gap-6 text-xs font-medium text-[#6B756F]">
+          <a href="#features" class="hover:text-[#08110D] transition-colors">Features</a>
+          <a href="#how-it-works" class="hover:text-[#08110D] transition-colors">How It Works</a>
+          <a href="#pricing" class="hover:text-[#08110D] transition-colors">Pricing</a>
+          <a href="/marketplace" class="hover:text-[#08110D] transition-colors">Stores</a>
+          <a href="/merchant/login" class="hover:text-[#08110D] transition-colors font-semibold">Sign In</a>
+          <button type="button" onclick="openRegisterModal()" class="hover:text-[#08110D] transition-colors font-semibold">Create Store</button>
+        </nav>
       </div>
 
-      <!-- Main Footer Navigation Columns -->
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-10 sm:gap-12 pb-16 border-b border-white/10">
-        <!-- Col 1: Brand & Identity (5 cols) -->
-        <div class="md:col-span-5 space-y-4">
-          <a href="/" class="hover:opacity-90 transition inline-block">
-            <span class="font-display font-semibold text-2xl text-white">zlik</span>
-          </a>
-          <p class="text-sm text-[#E3E9E5]/70 leading-relaxed font-normal max-w-sm">
-            zlik is the easiest way to sell products and services online. One clean link for Instagram, TikTok, WhatsApp, Facebook, and the web.
-          </p>
-          <div class="pt-2 text-xs text-[#E3E9E5]/60 flex items-center gap-4">
-            <span>zlik.store</span>
-            <span>&bull;</span>
-            <span>Zero platform fees</span>
-          </div>
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#6B756F]">
+        <div class="flex flex-wrap items-center gap-4">
+          <a href="#faq" class="hover:text-[#08110D] transition-colors">FAQs</a>
+          <span>&bull;</span>
+          <button type="button" onclick="openContactModal()" class="hover:text-[#08110D] transition-colors">Contact</button>
+          <span>&bull;</span>
+          <a href="/terms" class="hover:text-[#08110D] transition-colors">Terms</a>
+          <span>&bull;</span>
+          <a href="/privacy" class="hover:text-[#08110D] transition-colors">Privacy</a>
         </div>
 
-        <!-- Col 2: Platform (3 cols) -->
-        <div class="md:col-span-3 space-y-3">
-          <div class="text-xs uppercase tracking-wider font-semibold text-white/50 font-display">Product</div>
-          <ul class="space-y-2.5 text-sm text-[#E3E9E5]/80">
-            <li><a href="#features" class="hover:text-white transition-colors">Features</a></li>
-            <li><a href="#how-it-works" class="hover:text-white transition-colors">How it works</a></li>
-            <li><a href="#pricing" class="hover:text-white transition-colors">Pricing</a></li>
-            <li><a href="/marketplace" class="hover:text-white transition-colors">Stores</a></li>
-          </ul>
-        </div>
-
-        <!-- Col 3: Sellers & Legal (4 cols) -->
-        <div class="md:col-span-4 space-y-3">
-          <div class="text-xs uppercase tracking-wider font-semibold text-white/50 font-display">Sellers & Legal</div>
-          <ul class="space-y-2.5 text-sm text-[#E3E9E5]/80">
-            <li><a href="/merchant/login" class="hover:text-white transition-colors">Sign in</a></li>
-            <li><a href="/merchant/login" class="hover:text-white transition-colors">Create store</a></li>
-            <li><a href="#faq" class="hover:text-white transition-colors">Frequently asked questions</a></li>
-            <li><a href="/terms" class="hover:text-white transition-colors">Terms of Service</a></li>
-            <li><a href="/privacy" class="hover:text-white transition-colors">Privacy Policy</a></li>
-            <li><a href="javascript:void(0)" onclick="openContactModal()" class="hover:text-white transition-colors">Contact</a></li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Bottom Copyright & Legal Bar -->
-      <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#E3E9E5]/60">
-        <div class="flex items-center gap-2">
-          <span>&copy; <%= new Date().getFullYear() %> zlik. All rights reserved.</span>
+        <div class="flex items-center gap-3">
+          <span>&copy; 2026 Zlik. All rights reserved.</span>
           <span>&bull;</span>
-          <span>Selling, Made Slick</span>
-        </div>
-        <div class="flex items-center gap-6">
-          <a href="/terms" class="hover:text-white transition-colors underline-offset-4 hover:underline">Terms of Service</a>
-          <span>&bull;</span>
-          <a href="/privacy" class="hover:text-white transition-colors underline-offset-4 hover:underline">Privacy Policy</a>
-          <span>&bull;</span>
-          <span>zlik.store</span>
+          <span class="italic font-display font-medium text-[#08110D]">Selling, Made Slick.</span>
         </div>
       </div>
     </div>

@@ -131,19 +131,39 @@
         <div class="space-y-2 pt-2 border-t border-[#E3E9E5]">
             <span class="text-[10px] uppercase font-bold text-[#6B756F]">Items Ordered</span>
             <div class="space-y-2 text-xs">
-                <% (items || []).forEach(item => { %>
-                    <div class="flex justify-between items-center text-[#08110D]">
-                        <span><%= item.quantity %>x <%= item.title %></span>
-                        <span class="font-bold">₦<%= (Number(item.price) * Number(item.quantity)).toLocaleString('en-US', {minimumFractionDigits: 2}) %></span>
+                <% (items || []).forEach(item => { 
+                    const qty = Math.max(1, parseInt(item.quantity) || 1);
+                    const unitPrice = parseFloat(item.unit_price !== undefined ? item.unit_price : (item.price || 0));
+                    const lineTotal = parseFloat(item.total !== undefined ? item.total : (unitPrice * qty));
+                %>
+                    <div class="flex justify-between items-start text-[#08110D] gap-2">
+                        <div>
+                            <div class="font-semibold"><%= qty %>x <%= item.title %></div>
+                            <div class="text-[10px] text-[#6B756F] font-mono">@ ₦<%= unitPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %> each</div>
+                            <% if (item.variant) { %>
+                                <div class="text-[10px] text-[#6B756F]">Option: <%= item.variant %></div>
+                            <% } %>
+                        </div>
+                        <span class="font-bold font-mono shrink-0">₦<%= lineTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
                     </div>
                 <% }) %>
                 <div class="flex justify-between items-center text-[#6B756F] pt-2 border-t border-[#E3E9E5]">
-                    <span>Delivery Fee:</span>
-                    <span>₦<%= Number(order.delivery_fee || 0).toLocaleString('en-US', {minimumFractionDigits: 2}) %></span>
+                    <span>Subtotal:</span>
+                    <span class="font-mono">₦<%= Number(order.subtotal || (order.total_amount - (order.delivery_fee || 0) + (order.discount_amount || 0))).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
                 </div>
-                <div class="flex justify-between items-center text-sm font-extrabold text-[#087A50] pt-1">
+                <div class="flex justify-between items-center text-[#6B756F]">
+                    <span>Delivery Fee:</span>
+                    <span class="font-mono">₦<%= Number(order.delivery_fee || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
+                </div>
+                <% if (Number(order.discount_amount || 0) > 0) { %>
+                    <div class="flex justify-between items-center text-emerald-700">
+                        <span>Discount<%= order.discount_code ? ` (${order.discount_code})` : '' %>:</span>
+                        <span class="font-mono font-semibold">-₦<%= Number(order.discount_amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
+                    </div>
+                <% } %>
+                <div class="flex justify-between items-center text-sm font-extrabold text-[#087A50] pt-1 border-t border-[#E3E9E5]">
                     <span>Total Amount:</span>
-                    <span class="font-display">₦<%= Number(order.total_amount).toLocaleString('en-US', {minimumFractionDigits: 2}) %></span>
+                    <span class="font-display font-mono">₦<%= Number(order.total_amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
                 </div>
             </div>
         </div>

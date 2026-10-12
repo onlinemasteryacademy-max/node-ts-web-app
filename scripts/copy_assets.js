@@ -18,6 +18,23 @@ function copyDirSync(src, dest) {
   }
 }
 
+// 1. Run safe asset recovery to ensure any new/historical uploads are in data/uploads
+try {
+  require('./recover_assets.js');
+} catch (e) {
+  console.warn('⚠️ Asset recovery warning:', e.message);
+}
+
 copyDirSync(path.join(rootDir, 'src', 'views'), path.join(rootDir, 'dist', 'views'));
 copyDirSync(path.join(rootDir, 'src', 'public'), path.join(rootDir, 'dist', 'public'));
-console.log('✅ Assets (views & public) successfully copied to dist/');
+
+// 2. Ensure data/uploads files are also mirrored to dist/public/uploads as secondary fallback
+const persistentUploadsDir = process.env.UPLOADS_DIR
+  ? path.resolve(process.env.UPLOADS_DIR)
+  : path.join(rootDir, 'data', 'uploads');
+if (fs.existsSync(persistentUploadsDir)) {
+  copyDirSync(persistentUploadsDir, path.join(rootDir, 'dist', 'public', 'uploads'));
+}
+
+console.log('✅ Assets (views, public, persistent uploads) successfully copied to dist/');
+

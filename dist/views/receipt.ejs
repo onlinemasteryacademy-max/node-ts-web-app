@@ -47,9 +47,10 @@
         
         <!-- Receipt Header & Store Branding -->
         <div class="text-center space-y-3 pb-5 border-b border-[#E3E9E5]">
+            <div class="text-[11px] font-mono uppercase tracking-widest font-bold text-[#087A50]">ZLIK — ORDER RECEIPT</div>
             <div class="flex items-center justify-center gap-3">
                 <% if (store.logo_url && store.receipt_show_logo !== 0) { %>
-                    <img src="<%= store.logo_url %>" alt="<%= store.store_name %> Logo" class="w-12 h-12 rounded-2xl object-cover border border-[#E3E9E5] shadow-2xs">
+                    <img src="<%= store.logo_url %>" alt="<%= store.store_name %> Logo" class="w-12 h-12 rounded-2xl object-cover border border-[#E3E9E5] shadow-2xs" onerror="this.onerror=null; this.src='/assets/images/placeholder-logo.svg';">
                 <% } else { %>
                     <div class="w-12 h-12 rounded-2xl bg-[#08110D] text-[#19D98B] font-bold text-lg flex items-center justify-center font-display shadow-2xs">
                         <%= (store.store_name || 'S').charAt(0).toUpperCase() %>
@@ -57,7 +58,7 @@
                 <% } %>
                 <div class="text-left">
                     <h2 class="text-base sm:text-lg font-bold text-[#08110D] font-display"><%= store.store_name %></h2>
-                    <p class="text-[11px] text-[#6B756F]">Official Order Receipt</p>
+                    <p class="text-[11px] text-[#6B756F]">Official Purchase Receipt</p>
                 </div>
             </div>
 
@@ -71,6 +72,14 @@
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase bg-amber-100 text-amber-900 border border-amber-300">
                         <span>⏳</span> <span>PAYMENT CLAIMED (AWAITING CONFIRMATION)</span>
                     </span>
+                <% } else if (order.payment_status === 'partially_paid') { %>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase bg-blue-100 text-blue-900 border border-blue-300">
+                        <span>●</span> <span>PARTIALLY PAID</span>
+                    </span>
+                <% } else if (order.payment_method === 'pay_on_delivery') { %>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase bg-gray-100 text-gray-800 border border-gray-300">
+                        <span>💵</span> <span>PAY ON DELIVERY (UNPAID)</span>
+                    </span>
                 <% } else { %>
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase bg-gray-100 text-gray-800 border border-gray-300">
                         <span>●</span> <span>PAYMENT PENDING</span>
@@ -82,12 +91,12 @@
         <!-- Receipt Order Meta Details -->
         <div class="grid grid-cols-2 gap-3 text-xs bg-[#F8FAF8] p-4 rounded-2xl border border-[#E3E9E5]">
             <div>
-                <span class="text-[10px] text-[#6B756F] uppercase font-semibold">Order Reference:</span>
+                <span class="text-[10px] text-[#6B756F] uppercase font-semibold">Order Number:</span>
                 <div class="font-mono font-bold text-sm text-[#08110D]">#<%= order.order_ref %></div>
             </div>
             <div class="text-right">
-                <span class="text-[10px] text-[#6B756F] uppercase font-semibold">Date & Time:</span>
-                <div class="font-bold text-[#08110D]"><%= new Date(order.created_at).toLocaleDateString() %></div>
+                <span class="text-[10px] text-[#6B756F] uppercase font-semibold">Date:</span>
+                <div class="font-bold text-[#08110D]"><%= new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) %></div>
                 <div class="text-[10px] text-[#6B756F]"><%= new Date(order.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) %></div>
             </div>
             <div class="pt-2 border-t border-[#E3E9E5]/60">
@@ -104,47 +113,77 @@
             </div>
         </div>
 
-        <!-- Itemized Products Table -->
+        <!-- Itemized Products Table with Individual Prices -->
         <div class="space-y-2 text-xs">
-            <div class="flex justify-between items-center text-[10px] font-bold uppercase text-[#6B756F] pb-1 border-b border-[#E3E9E5]">
-                <span>Item</span>
-                <span>Amount</span>
-            </div>
+            <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                    <tr class="border-b border-[#E3E9E5] text-[10px] font-bold uppercase text-[#6B756F]">
+                        <th class="pb-2 font-semibold">Item</th>
+                        <th class="pb-2 text-center font-semibold w-12">Qty</th>
+                        <th class="pb-2 text-right font-semibold w-24">Unit Price</th>
+                        <th class="pb-2 text-right font-semibold w-24">Amount</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[#E3E9E5]/60">
+                    <% (items || []).forEach(item => { 
+                        const qty = Math.max(1, parseInt(item.quantity) || 1);
+                        const unitPrice = parseFloat(item.unit_price !== undefined ? item.unit_price : (item.price || 0));
+                        const lineTotal = parseFloat(item.total !== undefined ? item.total : (unitPrice * qty));
+                    %>
+                        <tr>
+                            <td class="py-2.5 pr-2 align-top">
+                                <div class="font-semibold text-[#08110D]">
+                                    <%= item.title %>
+                                </div>
+                                <% if (item.variant) { %>
+                                    <div class="text-[10px] text-[#6B756F]">Option: <%= item.variant %></div>
+                                <% } %>
+                                <% if (item.selected_options && item.selected_options.length) { %>
+                                    <div class="text-[10px] text-[#6B756F]">
+                                        <%= item.selected_options.map(o => typeof o === 'string' ? o : (o.name || o.title)).join(', ') %>
+                                    </div>
+                                <% } else if (item.attributes) { %>
+                                    <div class="text-[10px] text-[#6B756F]"><%= item.attributes %></div>
+                                <% } %>
+                            </td>
+                            <td class="py-2.5 text-center font-mono align-top text-[#08110D]">
+                                <%= qty %>
+                            </td>
+                            <td class="py-2.5 text-right font-mono align-top text-[#6B756F]">
+                                ₦<%= unitPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                            </td>
+                            <td class="py-2.5 text-right font-mono font-bold align-top text-[#08110D]">
+                                ₦<%= lineTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
 
-            <div class="divide-y divide-[#E3E9E5]/60">
-                <% (items || []).forEach(item => { %>
-                    <div class="py-2.5 flex justify-between items-start gap-3">
-                        <div class="space-y-0.5">
-                            <div class="font-semibold text-[#08110D]">
-                                <%= item.quantity %>x <%= item.title %>
-                            </div>
-                            <% if (item.variant) { %>
-                                <div class="text-[10px] text-[#6B756F] font-mono">Option: <%= item.variant %></div>
-                            <% } %>
-                            <% if (item.attributes) { %>
-                                <div class="text-[10px] text-[#6B756F]"><%= item.attributes %></div>
-                            <% } %>
-                        </div>
-                        <span class="font-mono font-bold text-[#08110D] shrink-0">
-                            ₦<%= (Number(item.price) * Number(item.quantity)).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
-                        </span>
-                    </div>
-                <% }) %>
-            </div>
-
-            <!-- Financial Totals -->
+            <!-- Financial Breakdown & Complete Order Totals -->
             <div class="space-y-1.5 pt-3 border-t border-[#E3E9E5] text-xs">
                 <div class="flex justify-between items-center text-[#6B756F]">
                     <span>Subtotal:</span>
-                    <span class="font-mono">₦<%= Number(order.subtotal || (order.total_amount - (order.delivery_fee || 0))).toLocaleString('en-US', {minimumFractionDigits: 2}) %></span>
+                    <span class="font-mono">₦<%= Number(order.subtotal || (order.total_amount - (order.delivery_fee || 0) + (order.discount_amount || 0))).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
                 </div>
                 <div class="flex justify-between items-center text-[#6B756F]">
-                    <span>Delivery Logistics:</span>
-                    <span class="font-mono">₦<%= Number(order.delivery_fee || 0).toLocaleString('en-US', {minimumFractionDigits: 2}) %></span>
+                    <span>Delivery:</span>
+                    <span class="font-mono">₦<%= Number(order.delivery_fee || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
                 </div>
+                <% if (Number(order.discount_amount || 0) > 0) { %>
+                    <div class="flex justify-between items-center text-emerald-700">
+                        <span>Discount<%= order.discount_code ? ` (${order.discount_code})` : '' %>:</span>
+                        <span class="font-mono font-semibold">-₦<%= Number(order.discount_amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
+                    </div>
+                <% } else { %>
+                    <div class="flex justify-between items-center text-[#6B756F]">
+                        <span>Discount:</span>
+                        <span class="font-mono">₦0.00</span>
+                    </div>
+                <% } %>
                 <div class="flex justify-between items-center text-base font-bold text-[#087A50] pt-2 border-t border-[#E3E9E5]">
-                    <span class="font-display">Total Paid:</span>
-                    <span class="font-mono font-extrabold text-lg">₦<%= Number(order.total_amount).toLocaleString('en-US', {minimumFractionDigits: 2}) %></span>
+                    <span class="font-display">Total:</span>
+                    <span class="font-mono font-extrabold text-lg">₦<%= Number(order.total_amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) %></span>
                 </div>
             </div>
         </div>

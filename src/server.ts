@@ -121,8 +121,10 @@ function syncExistingUploads(srcDir: string, destDir: string) {
   } catch (e) {}
 }
 
-// Sync from both src/public/uploads and dist/public/uploads (if present) into persistentUploadsDir
+// Sync from all potential locations (src, dist, php-web-app) into persistentUploadsDir
 syncExistingUploads(path.resolve(process.cwd(), 'src', 'public', 'uploads'), persistentUploadsDir);
+syncExistingUploads(path.resolve(process.cwd(), 'dist', 'public', 'uploads'), persistentUploadsDir);
+syncExistingUploads(path.resolve(process.cwd(), '..', 'php-web-app', 'uploads'), persistentUploadsDir);
 if (fs.existsSync(path.join(__dirname, 'public', 'uploads'))) {
   syncExistingUploads(path.join(__dirname, 'public', 'uploads'), persistentUploadsDir);
 }
@@ -137,6 +139,13 @@ if (fs.existsSync(path.join(__dirname, 'public', 'uploads'))) {
 fastify.register(fastifyStatic, {
   root: persistentUploadsDir,
   prefix: '/uploads/',
+  decorateReply: false
+});
+
+// 1b. Public Uploads Alias (handles legacy paths starting with /public/uploads/)
+fastify.register(fastifyStatic, {
+  root: persistentUploadsDir,
+  prefix: '/public/uploads/',
   decorateReply: false
 });
 
