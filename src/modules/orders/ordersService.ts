@@ -26,6 +26,9 @@ export interface CreateOrderInput {
   items: OrderItem[];
   payment_method?: 'bank_transfer' | 'pay_on_delivery';
   notes?: string | null;
+  receipt_url?: string | null;
+  payment_proof_ref?: string | null;
+  payment_confirmed?: boolean;
   force_create?: boolean;
 }
 
@@ -42,6 +45,14 @@ export function createOrder(input: CreateOrderInput): {
 } {
   const store = dbFetchOne<any>('stores', { id: input.store_id });
   if (!store) return { success: false, error: 'Store not found' };
+
+  const paymentMethod = input.payment_method || 'bank_transfer';
+  if (paymentMethod === 'bank_transfer' && store.allow_bank_transfer === 0) {
+    return { success: false, error: 'Direct Bank Transfer is not accepted by this store.' };
+  }
+  if (paymentMethod === 'pay_on_delivery' && store.allow_pay_on_delivery === 0) {
+    return { success: false, error: 'Pay on delivery is not accepted by this store.' };
+  }
 
   if (!input.customer_name?.trim()) return { success: false, error: 'Customer name is required' };
   if (!input.customer_phone?.trim()) return { success: false, error: 'Customer phone number is required' };
@@ -238,15 +249,38 @@ export function createOrder(input: CreateOrderInput): {
     discount_code: discountCode,
     discount_amount: discountAmount,
     total_amount: totalAmount,
-    payment_method: input.payment_method || 'bank_transfer',
-    payment_proof_ref: null,
-    payment_status: 'unpaid',
+    payment_method: paymentMethod,
+    payment_proof_ref: paymentMethod === 'bank_transfer' && (input.payment_confirmed || input.receipt_url || input.payment_proof_ref)
+      ? (input.payment_proof_ref?.trim() || 'Direct Transfer Confirmed')
+      : (paymentMethod === 'pay_on_delivery' ? 'Pay on Delivery' : null),
+    receipt_url: input.receipt_url || null,
+    payment_status: paymentMethod === 'bank_transfer' && (input.payment_confirmed || input.receipt_url || input.payment_proof_ref)
+      ? 'claimed'
+      : 'unpaid',
     order_status: 'pending',
     notes: input.notes?.trim() || null,
     verification_hash: verificationHash,
     created_at: now,
     updated_at: now
   });
+
+  // If customer confirmed transfer payment upfront, automatically create a payment claim
+  if (paymentMethod === 'bank_transfer' && (input.payment_confirmed || input.receipt_url || input.payment_proof_ref)) {
+    try {
+      const claimProof = input.payment_proof_ref?.trim() || 'Direct Transfer Confirmed';
+      dbInsert('payment_claims', {
+        order_id: orderId,
+        store_id: input.store_id,
+        customer_id: customer ? customer.id : null,
+        amount: totalAmount,
+        payment_reference: claimProof,
+        receipt_url: input.receipt_url || null,
+        status: 'claimed',
+        claimed_at: now,
+        created_at: now
+      });
+    } catch (e) {}
+  }
 
   const newOrder = dbFetchOne<any>('orders', { id: orderId });
 

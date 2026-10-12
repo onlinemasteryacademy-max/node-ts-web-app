@@ -264,6 +264,37 @@
                 </div>
             </div>
 
+            <!-- Accepted Payment Methods -->
+            <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs">
+                <div>
+                    <h3 class="font-semibold text-sm text-[#08110D]">Accepted Payment Methods</h3>
+                    <p class="text-[11px] text-[#6B756F] mt-0.5">Control which payment methods your customers can select at checkout.</p>
+                </div>
+                <div class="space-y-3 pt-1">
+                    <!-- Direct Bank Transfer Toggle -->
+                    <label class="flex items-start justify-between p-3.5 rounded-2xl border border-[#E3E9E5] hover:border-[#08110D] transition cursor-pointer bg-[#F8FAF8]">
+                        <div class="space-y-0.5 pr-4">
+                            <div class="font-bold text-[#08110D] text-xs flex items-center gap-1.5">
+                                <span>🏦</span> <span>Direct Bank Transfer</span>
+                            </div>
+                            <p class="text-[11px] text-[#6B756F]">Customers view your bank account and submit payment proof with receipt.</p>
+                        </div>
+                        <input type="checkbox" id="allowBankTransfer" <%= store.allow_bank_transfer !== 0 ? 'checked' : '' %> class="w-4 h-4 mt-1 accent-[#08110D]">
+                    </label>
+
+                    <!-- Pay on Delivery Toggle -->
+                    <label class="flex items-start justify-between p-3.5 rounded-2xl border border-[#E3E9E5] hover:border-[#08110D] transition cursor-pointer bg-[#F8FAF8]">
+                        <div class="space-y-0.5 pr-4">
+                            <div class="font-bold text-[#08110D] text-xs flex items-center gap-1.5">
+                                <span>💵</span> <span>Pay on Delivery (POD)</span>
+                            </div>
+                            <p class="text-[11px] text-[#6B756F]">Customers pay upon physical arrival. Bank account details are hidden at checkout.</p>
+                        </div>
+                        <input type="checkbox" id="allowPayOnDelivery" <%= store.allow_pay_on_delivery === 1 ? 'checked' : '' %> class="w-4 h-4 mt-1 accent-[#08110D]">
+                    </label>
+                </div>
+            </div>
+
             <!-- Bank Transfer Details -->
             <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs">
                 <h3 class="font-semibold text-sm text-[#08110D]">Bank Transfer Details</h3>
@@ -1170,7 +1201,9 @@
                 bank_account_number: newAccountNum || null,
                 bank_account_name: document.getElementById('accountName')?.value?.trim() || null,
                 alert_sound: document.getElementById('alertSound')?.value || 'bell',
-                delivery_fee: parseFloat(document.getElementById('deliveryFee')?.value || 0)
+                delivery_fee: parseFloat(document.getElementById('deliveryFee')?.value || 0),
+                allow_bank_transfer: document.getElementById('allowBankTransfer')?.checked ? 1 : 0,
+                allow_pay_on_delivery: document.getElementById('allowPayOnDelivery')?.checked ? 1 : 0
             };
 
             if (isAccountChanged) {

@@ -101,6 +101,8 @@ export async function initMySQLSchema(pool?: Pool): Promise<void> {
       owner_id INT DEFAULT NULL,
       custom_domain VARCHAR(191) DEFAULT NULL,
       custom_domain_status VARCHAR(50) DEFAULT 'unverified',
+      allow_bank_transfer TINYINT DEFAULT 1,
+      allow_pay_on_delivery TINYINT DEFAULT 0,
       email_verified TINYINT DEFAULT 0,
       billing_cycle VARCHAR(50) DEFAULT 'monthly',
       paystack_customer_code VARCHAR(255) DEFAULT NULL,
@@ -160,6 +162,7 @@ export async function initMySQLSchema(pool?: Pool): Promise<void> {
       total_amount DECIMAL(12,2) NOT NULL,
       payment_method VARCHAR(100) DEFAULT 'bank_transfer',
       payment_proof_ref VARCHAR(255) DEFAULT NULL,
+      receipt_url TEXT DEFAULT NULL,
       payment_status VARCHAR(50) DEFAULT 'unpaid',
       order_status VARCHAR(50) DEFAULT 'pending',
       notes TEXT DEFAULT NULL,
@@ -462,6 +465,9 @@ export async function initMySQLSchema(pool?: Pool): Promise<void> {
 
   // Safe column alters for existing MySQL database
   const safeAlters = [
+    `ALTER TABLE stores ADD COLUMN allow_bank_transfer TINYINT DEFAULT 1;`,
+    `ALTER TABLE stores ADD COLUMN allow_pay_on_delivery TINYINT DEFAULT 0;`,
+    `ALTER TABLE orders ADD COLUMN receipt_url TEXT DEFAULT NULL;`,
     `ALTER TABLE reviews ADD COLUMN order_id INT DEFAULT NULL;`,
     `ALTER TABLE reviews ADD COLUMN customer_id INT DEFAULT NULL;`,
     `ALTER TABLE reviews ADD COLUMN customer_phone_hash VARCHAR(100) DEFAULT NULL;`,

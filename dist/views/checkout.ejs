@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bank Transfer Checkout — <%= store.store_name %> | zlik</title>
+    <title>Checkout — <%= store.store_name %> | zlik</title>
     <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
@@ -35,7 +35,7 @@
         .font-display { font-family: 'Montserrat', sans-serif; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased py-8">
+<body class="min-h-screen flex flex-col antialiased py-6 sm:py-8">
 
     <div class="max-w-2xl mx-auto px-4 w-full space-y-6">
         
@@ -52,11 +52,19 @@
             </div>
         </div>
 
-        <h1 class="text-2xl font-extrabold font-display text-[#08110D]">Complete Bank Transfer Order</h1>
+        <div class="flex items-center justify-between">
+            <h1 class="text-2xl font-extrabold font-display text-[#08110D]">Complete Your Order</h1>
+            <span id="stepIndicator" class="text-xs font-bold font-display px-3 py-1 rounded-full bg-[#19D98B]/20 text-[#087A50]">
+                Step 1 of 2
+            </span>
+        </div>
 
         <!-- Cart Summary Card -->
         <div class="bg-white p-6 rounded-3xl border border-[#E3E9E5] shadow-xs space-y-4">
-            <h2 class="text-[10px] font-extrabold uppercase tracking-wider text-[#6B756F]">Order Items Summary</h2>
+            <div class="flex items-center justify-between">
+                <h2 class="text-[10px] font-extrabold uppercase tracking-wider text-[#6B756F]">Order Items Summary</h2>
+                <span id="cartCountBadge" class="text-[11px] font-bold text-[#6B756F]"></span>
+            </div>
             <div id="checkoutCartItems" class="space-y-3 border-b border-[#E3E9E5] pb-4">
                 <!-- Cart items injected via JS -->
             </div>
@@ -71,101 +79,234 @@
                     <span id="checkoutDelivery" class="font-bold text-[#08110D]">₦<%= Number(store.delivery_fee || 0).toLocaleString('en-US', {minimumFractionDigits: 2}) %></span>
                 </div>
                 <div class="flex justify-between text-base font-extrabold text-[#087A50] pt-2 border-t border-[#E3E9E5]">
-                    <span class="font-display">Total Amount:</span>
+                    <span class="font-display">Total Due:</span>
                     <span id="checkoutTotal" class="font-display">₦0.00</span>
                 </div>
             </div>
         </div>
 
-        <!-- Fulfillment Mode Selection -->
-        <div class="bg-white p-6 rounded-3xl border border-[#E3E9E5] shadow-xs space-y-3">
-            <label class="block text-[10px] font-extrabold uppercase tracking-wider text-[#6B756F]">Choose Delivery or Pickup</label>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <label id="optDelivery" class="flex items-start gap-3 p-4 rounded-2xl border-2 border-[#08110D] bg-[#F8FAF8] cursor-pointer transition">
-                    <input type="radio" name="fulfillment_type" value="delivery" checked onchange="setFulfillment('delivery')" class="mt-0.5 accent-black">
-                    <div>
-                        <div class="font-bold text-[#08110D] font-display">🚚 Direct Delivery</div>
-                        <div class="text-[11px] text-[#6B756F] mt-0.5">Fee: ₦<%= Number(store.delivery_fee || 0).toLocaleString('en-US') %></div>
+        <!-- STEP 1: Fulfillment, Payment Method & Contact Details -->
+        <div id="checkoutStep1" class="space-y-6">
+
+            <!-- Payment Method Selection -->
+            <% 
+                const allowBT = store.allow_bank_transfer !== 0;
+                const allowPOD = store.allow_pay_on_delivery === 1;
+                const defaultMethod = allowBT ? 'bank_transfer' : 'pay_on_delivery';
+            %>
+            <div class="bg-white p-6 rounded-3xl border border-[#E3E9E5] shadow-xs space-y-3">
+                <label class="block text-[10px] font-extrabold uppercase tracking-wider text-[#6B756F]">Payment Method</label>
+                
+                <% if (allowBT && allowPOD) { %>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <label id="optMethodBT" class="flex items-start gap-3 p-4 rounded-2xl border-2 border-[#08110D] bg-[#F8FAF8] cursor-pointer transition">
+                            <input type="radio" name="payment_method_choice" value="bank_transfer" checked onchange="setPaymentMethod('bank_transfer')" class="mt-0.5 accent-black">
+                            <div>
+                                <div class="font-bold text-[#08110D] font-display flex items-center gap-1.5">
+                                    <span>🏦</span> <span>Direct Bank Transfer</span>
+                                </div>
+                                <div class="text-[11px] text-[#6B756F] mt-0.5">Pay to store account & submit proof</div>
+                            </div>
+                        </label>
+                        <label id="optMethodPOD" class="flex items-start gap-3 p-4 rounded-2xl border border-[#E3E9E5] bg-white cursor-pointer transition hover:border-[#08110D]">
+                            <input type="radio" name="payment_method_choice" value="pay_on_delivery" onchange="setPaymentMethod('pay_on_delivery')" class="mt-0.5 accent-black">
+                            <div>
+                                <div class="font-bold text-[#08110D] font-display flex items-center gap-1.5">
+                                    <span>💵</span> <span>Pay on Delivery</span>
+                                </div>
+                                <div class="text-[11px] text-[#6B756F] mt-0.5">Pay cash or transfer upon arrival</div>
+                            </div>
+                        </label>
                     </div>
-                </label>
-                <label id="optPickup" class="flex items-start gap-3 p-4 rounded-2xl border border-[#E3E9E5] bg-white cursor-pointer transition hover:border-[#08110D]">
-                    <input type="radio" name="fulfillment_type" value="pickup" onchange="setFulfillment('pickup')" class="mt-0.5 accent-black">
-                    <div>
-                        <div class="font-bold text-[#08110D] font-display">🏬 In-Store Pickup</div>
-                        <div class="text-[11px] text-[#087A50] font-bold mt-0.5">Free (No delivery fee)</div>
+                <% } else if (allowBT) { %>
+                    <div class="p-3.5 bg-[#F8FAF8] rounded-2xl border border-[#E3E9E5] flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-2">
+                            <span>🏦</span>
+                            <span class="font-bold text-[#08110D] font-display">Direct Bank Transfer Only</span>
+                        </div>
+                        <span class="text-[10px] px-2.5 py-0.5 rounded-full uppercase bg-[#08110D] text-[#19D98B] font-bold font-display">Required</span>
                     </div>
-                </label>
+                <% } else if (allowPOD) { %>
+                    <div class="p-3.5 bg-[#F8FAF8] rounded-2xl border border-[#E3E9E5] flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-2">
+                            <span>💵</span>
+                            <span class="font-bold text-[#08110D] font-display">Pay on Delivery Only</span>
+                        </div>
+                        <span class="text-[10px] px-2.5 py-0.5 rounded-full uppercase bg-[#08110D] text-[#19D98B] font-bold font-display">Active</span>
+                    </div>
+                <% } %>
             </div>
+
+            <!-- Fulfillment Mode Selection -->
+            <div class="bg-white p-6 rounded-3xl border border-[#E3E9E5] shadow-xs space-y-3">
+                <label class="block text-[10px] font-extrabold uppercase tracking-wider text-[#6B756F]">Fulfillment Option</label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <label id="optDelivery" class="flex items-start gap-3 p-4 rounded-2xl border-2 border-[#08110D] bg-[#F8FAF8] cursor-pointer transition">
+                        <input type="radio" name="fulfillment_type" value="delivery" checked onchange="setFulfillment('delivery')" class="mt-0.5 accent-black">
+                        <div>
+                            <div class="font-bold text-[#08110D] font-display">🚚 Direct Delivery</div>
+                            <div class="text-[11px] text-[#6B756F] mt-0.5">Fee: ₦<%= Number(store.delivery_fee || 0).toLocaleString('en-US') %></div>
+                        </div>
+                    </label>
+                    <label id="optPickup" class="flex items-start gap-3 p-4 rounded-2xl border border-[#E3E9E5] bg-white cursor-pointer transition hover:border-[#08110D]">
+                        <input type="radio" name="fulfillment_type" value="pickup" onchange="setFulfillment('pickup')" class="mt-0.5 accent-black">
+                        <div>
+                            <div class="font-bold text-[#08110D] font-display">🏬 In-Store Pickup</div>
+                            <div class="text-[11px] text-[#087A50] font-bold mt-0.5">Free (No delivery fee)</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Customer Form -->
+            <div class="bg-white p-6 rounded-3xl border border-[#E3E9E5] shadow-xs space-y-4">
+                <h2 class="text-[10px] font-extrabold uppercase tracking-wider text-[#6B756F]">Your Contact & Delivery Details</h2>
+
+                <form id="step1Form" onsubmit="handleStep1Continue(event)" class="space-y-3.5 text-xs">
+                    <div>
+                        <label class="block font-bold text-[#08110D] mb-1">Full Name *</label>
+                        <input type="text" id="custName" required placeholder="e.g. Blessing Eke" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-[#08110D] mb-1">WhatsApp Phone Number *</label>
+                        <input type="tel" id="custPhone" required placeholder="08149876543" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                    </div>
+                    <div id="addressFieldContainer">
+                        <label class="block font-bold text-[#08110D] mb-1">Delivery Address *</label>
+                        <textarea id="custAddress" rows="2" placeholder="Full street address, area, or landmark" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]"></textarea>
+                    </div>
+                    <div id="pickupNoticeContainer" class="hidden bg-[#F8FAF8] p-3.5 rounded-2xl border border-[#E3E9E5] text-xs text-[#08110D]">
+                        🏬 <strong>In-Store Pickup Selected:</strong> You will collect your order directly at the store.
+                    </div>
+
+                    <!-- Error & Open Orders Banner -->
+                    <div id="checkoutError" class="hidden p-4 rounded-2xl bg-red-50 text-red-700 text-xs border border-red-200 space-y-2"></div>
+
+                    <div class="pt-2">
+                        <button type="submit" id="step1Btn" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-extrabold text-xs py-4 rounded-2xl transition shadow-md flex items-center justify-center gap-2 uppercase tracking-wider font-display">
+                            <span id="step1BtnText">Proceed to Bank Transfer (₦0.00) →</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
         </div>
 
-        <!-- Verified Bank Details Card -->
-        <div class="bg-[#08110D] text-white p-6 rounded-3xl border border-white/10 shadow-lg space-y-4">
-            <div class="flex items-center justify-between">
-                <span class="font-bold text-[10px] px-2.5 py-0.5 rounded-full uppercase bg-[#19D98B] text-[#08110D] font-display">Verified Bank Account</span>
-                <span class="text-xs text-white/70">Direct Transfer</span>
-            </div>
+        <!-- STEP 2: Secondary Direct Bank Transfer Confirmation Screen -->
+        <div id="checkoutStep2" class="hidden space-y-6">
 
-            <div class="space-y-3">
-                <div>
-                    <div class="text-[10px] text-white/60 uppercase font-bold">Bank Name</div>
-                    <div class="text-base font-bold font-display text-white"><%= store.bank_name || 'GTBank' %></div>
+            <!-- Verified Bank Details Card (Highlighted with 1-Tap Copy) -->
+            <div class="bg-[#08110D] text-white p-6 rounded-3xl border border-white/10 shadow-lg space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-[10px] px-2.5 py-0.5 rounded-full uppercase bg-[#19D98B] text-[#08110D] font-display">Step 2: Bank Transfer</span>
+                    <span class="text-xs text-white/70">Store Account Details</span>
                 </div>
 
-                <div class="flex items-center justify-between bg-white/10 p-3.5 rounded-2xl border border-white/10">
+                <div class="space-y-3">
                     <div>
-                        <div class="text-[10px] text-white/60 uppercase font-bold">Account Number</div>
-                        <div class="text-xl font-bold font-mono text-[#19D98B] tracking-wider" id="accNumber"><%= store.bank_account_number || '0123456789' %></div>
+                        <div class="text-[10px] text-white/60 uppercase font-bold">Bank Name</div>
+                        <div class="text-base font-bold font-display text-white"><%= store.bank_name || 'GTBank' %></div>
                     </div>
-                    <button id="copyBtn" onclick="copyAccountNumber()" class="bg-[#19D98B] text-[#08110D] text-xs font-bold font-display px-3.5 py-2 rounded-xl transition hover:opacity-90 shadow-2xs">
-                        📋 Copy Account
-                    </button>
+
+                    <div class="flex items-center justify-between bg-white/10 p-3.5 rounded-2xl border border-white/10">
+                        <div>
+                            <div class="text-[10px] text-white/60 uppercase font-bold">Account Number</div>
+                            <div class="text-xl font-bold font-mono text-[#19D98B] tracking-wider" id="accNumber"><%= store.bank_account_number || '0123456789' %></div>
+                        </div>
+                        <button id="copyBtn" onclick="copyAccountNumber()" class="bg-[#19D98B] text-[#08110D] text-xs font-bold font-display px-3.5 py-2 rounded-xl transition hover:opacity-90 shadow-2xs">
+                            📋 Copy Account
+                        </button>
+                    </div>
+
+                    <div>
+                        <div class="text-[10px] text-white/60 uppercase font-bold">Account Name</div>
+                        <div class="text-xs font-semibold text-white"><%= store.bank_account_name || store.store_name %></div>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/10">
+                        <div>
+                            <div class="text-[10px] text-white/60 uppercase font-bold">Exact Amount to Transfer</div>
+                            <div class="text-base font-bold font-mono text-[#19D98B]" id="transferExactAmount">₦0.00</div>
+                        </div>
+                        <button id="copyAmountBtn" onclick="copyTransferAmount()" class="bg-white/15 hover:bg-white/25 text-white text-[11px] font-bold font-display px-3 py-1.5 rounded-lg transition">
+                            📋 Copy Amount
+                        </button>
+                    </div>
                 </div>
 
-                <div>
-                    <div class="text-[10px] text-white/60 uppercase font-bold">Account Name</div>
-                    <div class="text-xs font-semibold text-white"><%= store.bank_account_name || store.store_name %></div>
+                <% if (store.payment_instructions) { %>
+                <div class="text-xs text-white/80 bg-white/5 p-3 rounded-xl border border-white/10">
+                    💡 <%= store.payment_instructions %>
                 </div>
+                <% } %>
             </div>
 
-            <div class="text-xs text-white/80 bg-white/5 p-3 rounded-xl border border-white/10">
-                💡 <%= store.payment_instructions || 'Please transfer the exact amount and submit your details below.' %>
+            <!-- Transfer Confirmation & Receipt Proof Card -->
+            <div class="bg-white p-6 rounded-3xl border border-[#E3E9E5] shadow-xs space-y-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-[10px] font-extrabold uppercase tracking-wider text-[#6B756F]">Payment Confirmation & Proof</h2>
+                    <span class="text-[10px] text-[#087A50] font-bold bg-[#19D98B]/20 px-2.5 py-0.5 rounded-full">Secure Verification</span>
+                </div>
+
+                <form id="step2Form" onsubmit="submitVerifiedBankOrder(event)" class="space-y-4 text-xs">
+                    
+                    <!-- 1. Attach Screenshot Dropzone -->
+                    <div>
+                        <label class="block font-bold text-[#08110D] mb-1">
+                            Attach Transfer Receipt / Screenshot <span class="text-[#6B756F] font-normal">(Optional, Recommended)</span>
+                        </label>
+                        <div id="dropzoneContainer" onclick="document.getElementById('receiptFileInput').click()" class="border-2 border-dashed border-[#E3E9E5] hover:border-[#08110D] rounded-2xl p-4 text-center cursor-pointer bg-[#F8FAF8] transition space-y-2">
+                            <input type="file" id="receiptFileInput" accept="image/*,.pdf" class="hidden" onchange="handleReceiptFileSelected(event)">
+                            <div id="dropzoneEmpty" class="space-y-1">
+                                <span class="text-2xl block">📷</span>
+                                <div class="font-bold text-[#08110D]">Tap to choose screenshot or receipt</div>
+                                <div class="text-[10.5px] text-[#6B756F]">PNG, JPG, or PDF up to 10MB</div>
+                            </div>
+                            <div id="dropzonePreview" class="hidden flex items-center justify-between bg-white p-2.5 rounded-xl border border-[#E3E9E5]">
+                                <div class="flex items-center gap-2.5 overflow-hidden">
+                                    <img id="receiptPreviewThumb" src="" alt="Proof" class="w-10 h-10 object-cover rounded-lg border border-[#E3E9E5]">
+                                    <div class="text-left">
+                                        <div id="receiptFileName" class="font-bold text-[#08110D] truncate max-w-[180px]">receipt.jpg</div>
+                                        <div class="text-[10px] text-[#087A50] font-bold">✓ Ready for upload</div>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="clearReceiptFile(event)" class="text-xs text-red-600 font-bold px-2 py-1 hover:bg-red-50 rounded-lg">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. Sender Name / Bank Note -->
+                    <div>
+                        <label class="block font-bold text-[#08110D] mb-1">Sender Account Name / Note *</label>
+                        <input type="text" id="custProof" required placeholder="e.g. Blessing Eke - GTBank" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                        <span class="text-[10.5px] text-[#6B756F] mt-1 block">The name that appears on your bank transfer debit alert.</span>
+                    </div>
+
+                    <!-- 3. Explicit Checkbox Confirmation -->
+                    <div class="pt-2">
+                        <label class="flex items-start gap-3 p-3.5 rounded-2xl border border-[#E3E9E5] bg-[#F8FAF8] cursor-pointer hover:border-[#08110D] transition">
+                            <input type="checkbox" id="confirmPaymentCheck" required class="mt-0.5 w-4 h-4 accent-black cursor-pointer">
+                            <div class="text-xs text-[#08110D]">
+                                <strong>I confirm that I have transferred the exact order amount</strong> to <%= store.bank_name || 'the store bank account' %> and my payment is ready for merchant verification.
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Step 2 Error Banner -->
+                    <div id="step2Error" class="hidden p-4 rounded-2xl bg-red-50 text-red-700 text-xs border border-red-200 space-y-2"></div>
+
+                    <!-- Submit & Back Buttons -->
+                    <div class="space-y-2.5 pt-2">
+                        <button type="submit" id="submitOrderBtn" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-extrabold text-xs py-4 rounded-2xl transition shadow-md flex items-center justify-center gap-2 uppercase tracking-wider font-display">
+                            <span>✓</span> <span>I Have Paid — Complete Order</span>
+                        </button>
+                        <button type="button" onclick="goToStep(1)" class="w-full text-center text-xs font-bold text-[#6B756F] hover:text-[#08110D] py-2 transition">
+                            ← Edit Contact & Delivery Details
+                        </button>
+                    </div>
+                </form>
             </div>
-        </div>
 
-        <!-- Customer Form -->
-        <div class="bg-white p-6 rounded-3xl border border-[#E3E9E5] shadow-xs space-y-4">
-            <h2 class="text-[10px] font-extrabold uppercase tracking-wider text-[#6B756F]">Your Contact & Delivery Details</h2>
-
-            <form id="checkoutForm" onsubmit="submitOrder(event)" class="space-y-3.5 text-xs">
-                <div>
-                    <label class="block font-bold text-[#08110D] mb-1">Full Name *</label>
-                    <input type="text" id="custName" required placeholder="e.g. Blessing Eke" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
-                </div>
-                <div>
-                    <label class="block font-bold text-[#08110D] mb-1">WhatsApp Phone Number *</label>
-                    <input type="tel" id="custPhone" required placeholder="08149876543" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
-                </div>
-                <div id="addressFieldContainer">
-                    <label class="block font-bold text-[#08110D] mb-1">Delivery Address *</label>
-                    <textarea id="custAddress" rows="2" placeholder="Full street address, area, or landmark" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]"></textarea>
-                </div>
-                <div id="pickupNoticeContainer" class="hidden bg-[#F8FAF8] p-3.5 rounded-2xl border border-[#E3E9E5] text-xs text-[#08110D]">
-                    🏬 <strong>In-Store Pickup Selected:</strong> You will collect your order directly at the store.
-                </div>
-                <div>
-                    <label class="block font-bold text-[#08110D] mb-1">Transfer Note / Sender Name (Optional)</label>
-                    <input type="text" id="custProof" placeholder="e.g. Blessing Eke - GTBank" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
-                </div>
-
-                <!-- Error & Open Orders Banner -->
-                <div id="checkoutError" class="hidden p-4 rounded-2xl bg-red-50 text-red-700 text-xs border border-red-200 space-y-2"></div>
-
-                <div class="space-y-2.5 pt-2">
-                    <button type="submit" id="submitOrderBtn" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-extrabold text-xs py-4 rounded-2xl transition shadow-md flex items-center justify-center gap-2 uppercase tracking-wider font-display">
-                        <span>✓</span> <span>I Have Sent Payment (Submit Order)</span>
-                    </button>
-                </div>
-            </form>
         </div>
 
     </div>
@@ -174,12 +315,28 @@
         const storeData = <%- JSON.stringify(store) %>;
         let cart = [];
         let fulfillment = 'delivery';
+        let currentMethod = '<%= defaultMethod %>';
+        let uploadedReceiptUrl = null;
 
         try {
             const raw = localStorage.getItem('zlik_cart_' + storeData.id) || sessionStorage.getItem('zlik_cart') || '[]';
             cart = JSON.parse(raw);
         } catch (e) {
             cart = [];
+        }
+
+        function setPaymentMethod(method) {
+            currentMethod = method;
+            const isBT = (method === 'bank_transfer');
+
+            const btnBT = document.getElementById('optMethodBT');
+            const btnPOD = document.getElementById('optMethodPOD');
+            if (btnBT && btnPOD) {
+                btnBT.className = isBT ? 'flex items-start gap-3 p-4 rounded-2xl border-2 border-[#08110D] bg-[#F8FAF8] cursor-pointer transition' : 'flex items-start gap-3 p-4 rounded-2xl border border-[#E3E9E5] bg-white cursor-pointer transition hover:border-[#08110D]';
+                btnPOD.className = !isBT ? 'flex items-start gap-3 p-4 rounded-2xl border-2 border-[#08110D] bg-[#F8FAF8] cursor-pointer transition' : 'flex items-start gap-3 p-4 rounded-2xl border border-[#E3E9E5] bg-white cursor-pointer transition hover:border-[#08110D]';
+            }
+
+            updateStep1Button();
         }
 
         function setFulfillment(type) {
@@ -192,10 +349,26 @@
             renderSummary();
         }
 
+        function calculateTotal() {
+            const subtotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
+            const deliveryFee = (fulfillment === 'pickup') ? 0 : parseFloat(storeData.delivery_fee || 0);
+            return { subtotal, deliveryFee, total: subtotal + deliveryFee };
+        }
+
+        function updateStep1Button() {
+            const { total } = calculateTotal();
+            const btnText = document.getElementById('step1BtnText');
+            if (currentMethod === 'pay_on_delivery') {
+                btnText.textContent = `Place Order (Pay on Delivery ₦${total.toLocaleString('en-US', {minimumFractionDigits: 2})}) ✓`;
+            } else {
+                btnText.textContent = `Proceed to Bank Transfer (₦${total.toLocaleString('en-US', {minimumFractionDigits: 2})}) →`;
+            }
+        }
+
         function renderSummary() {
             const container = document.getElementById('checkoutCartItems');
             if (!cart || cart.length === 0) {
-                container.innerHTML = '<div class="text-center py-6 text-[#6B756F]">Your cart is empty. <a href="/store/' + storeData.slug + '" class="text-[#087A50] font-bold">Return to store</a></div>';
+                container.innerHTML = '<div class="text-center py-6 text-[#6B756F]">Your cart is empty. <a href="/' + storeData.slug + '" class="text-[#087A50] font-bold">Return to store</a></div>';
                 return;
             }
 
@@ -208,50 +381,196 @@
                 </div>
             `).join('');
 
-            const subtotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
-            const deliveryFee = (fulfillment === 'pickup') ? 0 : parseFloat(storeData.delivery_fee || 0);
-            const total = subtotal + deliveryFee;
+            const { subtotal, deliveryFee, total } = calculateTotal();
 
             document.getElementById('checkoutSubtotal').textContent = '₦' + subtotal.toLocaleString('en-US', {minimumFractionDigits: 2});
             document.getElementById('checkoutDelivery').textContent = (fulfillment === 'pickup') ? 'Free (Pickup)' : ('₦' + deliveryFee.toLocaleString('en-US', {minimumFractionDigits: 2}));
             document.getElementById('checkoutTotal').textContent = '₦' + total.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('transferExactAmount').textContent = '₦' + total.toLocaleString('en-US', {minimumFractionDigits: 2});
+            
+            const totalItems = cart.reduce((sum, i) => sum + i.quantity, 0);
+            document.getElementById('cartCountBadge').textContent = `${totalItems} item${totalItems === 1 ? '' : 's'}`;
+
+            updateStep1Button();
+        }
+
+        function goToStep(step) {
+            const step1 = document.getElementById('checkoutStep1');
+            const step2 = document.getElementById('checkoutStep2');
+            const indicator = document.getElementById('stepIndicator');
+
+            if (step === 2) {
+                step1.classList.add('hidden');
+                step2.classList.remove('hidden');
+                indicator.textContent = 'Step 2 of 2: Payment Confirmation';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                step2.classList.add('hidden');
+                step1.classList.remove('hidden');
+                indicator.textContent = 'Step 1 of 2: Delivery Details';
+            }
         }
 
         function copyAccountNumber() {
             const acc = document.getElementById('accNumber').textContent.trim();
+            copyTextToClipboard(acc, document.getElementById('copyBtn'), '📋 Copy Account');
+        }
+
+        function copyTransferAmount() {
+            const { total } = calculateTotal();
+            copyTextToClipboard(String(total), document.getElementById('copyAmountBtn'), '📋 Copy Amount');
+        }
+
+        function copyTextToClipboard(text, btn, originalLabel) {
             if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(acc).then(() => {
-                    const btn = document.getElementById('copyBtn');
-                    btn.textContent = '✓ Copied!';
-                    btn.classList.add('bg-emerald-400');
-                    setTimeout(() => {
-                        btn.textContent = '📋 Copy Account';
-                        btn.classList.remove('bg-emerald-400');
-                    }, 2000);
-                }).catch(() => fallbackCopy(acc));
+                navigator.clipboard.writeText(text).then(() => {
+                    if (btn) {
+                        btn.textContent = '✓ Copied!';
+                        setTimeout(() => { btn.textContent = originalLabel; }, 2000);
+                    }
+                }).catch(() => fallbackCopy(text, btn, originalLabel));
             } else {
-                fallbackCopy(acc);
+                fallbackCopy(text, btn, originalLabel);
             }
         }
 
-        function fallbackCopy(text) {
+        function fallbackCopy(text, btn, originalLabel) {
             const input = document.createElement('input');
             input.value = text;
             document.body.appendChild(input);
             input.select();
             document.execCommand('copy');
             document.body.removeChild(input);
-            const btn = document.getElementById('copyBtn');
-            btn.textContent = '✓ Copied!';
-            setTimeout(() => btn.textContent = '📋 Copy Account', 2000);
+            if (btn) {
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => { btn.textContent = originalLabel; }, 2000);
+            }
         }
 
-        async function submitOrder(e, force = false) {
+        function handleReceiptFileSelected(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            document.getElementById('receiptFileName').textContent = file.name;
+            document.getElementById('dropzoneEmpty').classList.add('hidden');
+            document.getElementById('dropzonePreview').classList.remove('hidden');
+
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    document.getElementById('receiptPreviewThumb').src = evt.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function clearReceiptFile(e) {
+            if (e) e.stopPropagation();
+            document.getElementById('receiptFileInput').value = '';
+            document.getElementById('dropzonePreview').classList.add('hidden');
+            document.getElementById('dropzoneEmpty').classList.remove('hidden');
+            uploadedReceiptUrl = null;
+        }
+
+        async function uploadReceiptFileIfNeeded() {
+            const fileInput = document.getElementById('receiptFileInput');
+            if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                return uploadedReceiptUrl;
+            }
+
+            const formData = new FormData();
+            formData.append('receipt', fileInput.files[0]);
+
+            const res = await fetch('/api/upload/receipt', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.success && data.url) {
+                uploadedReceiptUrl = data.url;
+                return data.url;
+            }
+            throw new Error(data.error || 'Failed to upload receipt screenshot');
+        }
+
+        // Step 1 Submission
+        async function handleStep1Continue(e) {
+            if (e && e.preventDefault) e.preventDefault();
+            const errDiv = document.getElementById('checkoutError');
+            errDiv.classList.add('hidden');
+
+            const custName = document.getElementById('custName').value.trim();
+            const custPhone = document.getElementById('custPhone').value.trim();
+            const custAddress = document.getElementById('custAddress')?.value.trim();
+
+            if (!custName || !custPhone) {
+                errDiv.textContent = 'Please enter your full name and phone number.';
+                errDiv.classList.remove('hidden');
+                return;
+            }
+
+            if (fulfillment === 'delivery' && !custAddress) {
+                errDiv.textContent = 'Please provide your delivery address.';
+                errDiv.classList.remove('hidden');
+                return;
+            }
+
+            // If Pay on Delivery, submit order directly!
+            if (currentMethod === 'pay_on_delivery') {
+                await executeOrderSubmission({
+                    payment_method: 'pay_on_delivery',
+                    notes: 'Pay on Delivery'
+                });
+                return;
+            }
+
+            // Direct Bank Transfer -> proceed to Step 2 confirmation
+            goToStep(2);
+        }
+
+        // Step 2 Submission (Direct Bank Transfer with proof)
+        async function submitVerifiedBankOrder(e) {
             if (e && e.preventDefault) e.preventDefault();
             const btn = document.getElementById('submitOrderBtn');
-            const errDiv = document.getElementById('checkoutError');
+            const errDiv = document.getElementById('step2Error');
             btn.disabled = true;
+            btn.innerHTML = '<span>⏳ Processing Payment & Order...</span>';
             errDiv.classList.add('hidden');
+
+            try {
+                let receiptUrl = null;
+                try {
+                    receiptUrl = await uploadReceiptFileIfNeeded();
+                } catch (uploadErr) {
+                    errDiv.textContent = 'Receipt upload warning: ' + uploadErr.message;
+                    errDiv.classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>✓</span> <span>I Have Paid — Complete Order</span>';
+                    return;
+                }
+
+                const senderProof = document.getElementById('custProof').value.trim();
+                const isConfirmed = document.getElementById('confirmPaymentCheck').checked;
+
+                await executeOrderSubmission({
+                    payment_method: 'bank_transfer',
+                    notes: senderProof,
+                    payment_proof_ref: senderProof,
+                    receipt_url: receiptUrl,
+                    payment_confirmed: isConfirmed
+                });
+            } catch (err) {
+                errDiv.textContent = err.message || 'Error completing order';
+                errDiv.classList.remove('hidden');
+                btn.disabled = false;
+                btn.innerHTML = '<span>✓</span> <span>I Have Paid — Complete Order</span>';
+            }
+        }
+
+        async function executeOrderSubmission(paymentDetails, force = false) {
+            const errDiv = document.getElementById('step2Error').classList.contains('hidden') 
+                ? document.getElementById('checkoutError') 
+                : document.getElementById('step2Error');
 
             const payload = {
                 store_id: storeData.id,
@@ -260,67 +579,59 @@
                 fulfillment_type: fulfillment,
                 delivery_address: fulfillment === 'pickup' ? 'In-Store Pickup' : document.getElementById('custAddress').value.trim(),
                 delivery_fee: fulfillment === 'pickup' ? 0 : parseFloat(storeData.delivery_fee || 0),
-                payment_method: 'bank_transfer',
-                notes: document.getElementById('custProof').value.trim() || null,
                 items: cart,
-                force_create: force
+                force_create: force,
+                ...paymentDetails
             };
 
-            try {
-                const res = await fetch('/api/orders?action=create_order', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                if (data.success && data.order) {
-                    localStorage.removeItem('zlik_cart_' + storeData.id);
-                    sessionStorage.removeItem('zlik_cart');
-                    window.location.href = `/order/${data.order.order_ref}?token=${data.order_token}`;
-                } else if (data.open_orders_exceeded && data.existing_orders) {
-                    let html = `
-                        <div class="space-y-2">
-                            <div class="flex items-start gap-2">
-                                <span class="text-base">⚠️</span>
-                                <div>
-                                    <div class="font-extrabold text-[#08110D]">${data.error}</div>
-                                    <div class="text-[11px] text-[#6B756F] mt-0.5">You currently have unfulfilled orders in progress:</div>
-                                </div>
+            const res = await fetch('/api/orders?action=create_order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (data.success && data.order) {
+                localStorage.removeItem('zlik_cart_' + storeData.id);
+                sessionStorage.removeItem('zlik_cart');
+                window.location.href = `/order/${data.order.order_ref}?token=${data.order_token}`;
+            } else if (data.open_orders_exceeded && data.existing_orders) {
+                let html = `
+                    <div class="space-y-2">
+                        <div class="flex items-start gap-2">
+                            <span class="text-base">⚠️</span>
+                            <div>
+                                <div class="font-extrabold text-[#08110D]">${data.error}</div>
+                                <div class="text-[11px] text-[#6B756F] mt-0.5">You currently have unfulfilled orders in progress:</div>
                             </div>
-                            <div class="space-y-1.5 pt-1">`;
-                    data.existing_orders.forEach(o => {
-                        html += `
-                            <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-[#E3E9E5] text-xs">
-                                <div>
-                                    <span class="font-bold text-[#08110D]">#${o.order_ref}</span>
-                                    <span class="text-[#6B756F] text-[11px] ml-1.5">(₦${Number(o.total_amount).toLocaleString()})</span>
-                                </div>
-                                <a href="/order/${o.order_ref}?token=${o.order_token}" target="_blank" class="bg-[#08110D] text-[#19D98B] px-2.5 py-1 rounded-lg font-bold text-[11px] hover:bg-black transition">Track Order ↗</a>
-                            </div>`;
-                    });
+                        </div>
+                        <div class="space-y-1.5 pt-1">`;
+                data.existing_orders.forEach(o => {
                     html += `
+                        <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-[#E3E9E5] text-xs">
+                            <div>
+                                <span class="font-bold text-[#08110D]">#${o.order_ref}</span>
+                                <span class="text-[#6B756F] text-[11px] ml-1.5">(₦${Number(o.total_amount).toLocaleString()})</span>
                             </div>
-                            <div class="mt-3 pt-3 border-t border-amber-200/80 bg-amber-50/80 -mx-4 -mb-4 p-3.5 rounded-b-2xl space-y-2">
-                                <p class="text-[11px] font-bold text-amber-950">Would you like to continue and place this new order anyway?</p>
-                                <button type="button" onclick="submitOrder(event, true)" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-extrabold text-xs py-3 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
-                                    <span>Proceed with New Order →</span>
-                                </button>
-                            </div>
+                            <a href="/order/${o.order_ref}?token=${o.order_token}" target="_blank" class="bg-[#08110D] text-[#19D98B] px-2.5 py-1 rounded-lg font-bold text-[11px] hover:bg-black transition">Track Order ↗</a>
                         </div>`;
-                    errDiv.innerHTML = html;
-                    errDiv.className = 'p-4 rounded-2xl bg-amber-50/60 text-[#08110D] text-xs border border-amber-200 overflow-hidden';
-                    errDiv.classList.remove('hidden');
-                } else {
-                    errDiv.className = 'p-4 rounded-2xl bg-red-50 text-red-700 text-xs border border-red-200 space-y-2';
-                    errDiv.textContent = data.error || 'Failed to place order';
-                    errDiv.classList.remove('hidden');
-                }
-            } catch (err) {
-                errDiv.className = 'p-4 rounded-2xl bg-red-50 text-red-700 text-xs border border-red-200 space-y-2';
-                errDiv.textContent = 'Network error submitting order';
+                });
+                html += `
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-amber-200/80 bg-amber-50/80 -mx-4 -mb-4 p-3.5 rounded-b-2xl space-y-2">
+                            <p class="text-[11px] font-bold text-amber-950">Would you like to place this order anyway?</p>
+                            <button type="button" onclick="executeOrderSubmission(${JSON.stringify(paymentDetails).replace(/"/g, '&quot;')}, true)" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-extrabold text-xs py-3 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
+                                <span>Proceed with New Order →</span>
+                            </button>
+                        </div>
+                    </div>`;
+                errDiv.innerHTML = html;
+                errDiv.className = 'p-4 rounded-2xl bg-amber-50/60 text-[#08110D] text-xs border border-amber-200 overflow-hidden';
                 errDiv.classList.remove('hidden');
-            } finally {
-                btn.disabled = false;
+            } else {
+                errDiv.className = 'p-4 rounded-2xl bg-red-50 text-red-700 text-xs border border-red-200 space-y-2';
+                errDiv.textContent = data.error || 'Failed to place order';
+                errDiv.classList.remove('hidden');
             }
         }
 

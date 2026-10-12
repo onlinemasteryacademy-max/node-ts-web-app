@@ -449,11 +449,21 @@
     <div id="checkoutModal" class="fixed inset-0 z-[70] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl border border-[#E3E9E5] max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between pb-3 border-b border-[#E3E9E5]">
-                <h3 class="font-bold text-sm text-[#08110D] font-display">Complete Your Order</h3>
-                <button onclick="closeCheckoutModal()" class="text-[#6B756F] font-bold">✕</button>
+                <div class="flex items-center gap-2">
+                    <span id="modalStepIndicator" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#08110D] text-[#19D98B] font-display">Step 1 of 2</span>
+                    <h3 id="modalTitle" class="font-bold text-sm text-[#08110D] font-display">Complete Your Order</h3>
+                </div>
+                <button onclick="closeCheckoutModal()" class="text-[#6B756F] hover:text-[#08110D] font-bold text-sm">✕</button>
             </div>
 
-            <form id="checkoutForm" onsubmit="submitCheckout(event)" class="space-y-3 text-xs">
+            <% 
+                const modalAllowBT = store.allow_bank_transfer !== 0;
+                const modalAllowPOD = store.allow_pay_on_delivery === 1;
+                const defaultMethod = modalAllowBT ? 'bank_transfer' : 'pay_on_delivery';
+            %>
+
+            <!-- STEP 1: Contact, Delivery, & Payment Method Selection -->
+            <form id="modalStep1" onsubmit="handleModalStep1Submit(event)" class="space-y-3 text-xs">
                 <div>
                     <label class="block font-bold text-[#08110D] mb-1">Full Name *</label>
                     <input type="text" id="custName" required placeholder="e.g. Tunde Balogun" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none focus:border-[#08110D]">
@@ -473,12 +483,28 @@
                     <label class="block font-bold text-[#08110D] mb-1">Delivery Address *</label>
                     <textarea id="custAddress" rows="2" placeholder="Full street address, area, state" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none focus:border-[#08110D]"></textarea>
                 </div>
+
+                <!-- Payment Method Selection -->
                 <div>
                     <label class="block font-bold text-[#08110D] mb-1">Payment Method</label>
-                    <select id="paymentMethod" onchange="toggleModalBankDetails(this.value)" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none font-semibold">
-                        <option value="bank_transfer">🏦 Direct Bank Transfer</option>
-                        <option value="pay_on_delivery">💵 Pay on Delivery</option>
-                    </select>
+                    <% if (modalAllowBT && modalAllowPOD) { %>
+                        <select id="paymentMethod" onchange="toggleModalBankDetails(this.value)" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 outline-none font-semibold">
+                            <option value="bank_transfer" selected>🏦 Direct Bank Transfer</option>
+                            <option value="pay_on_delivery">💵 Pay on Delivery</option>
+                        </select>
+                    <% } else if (modalAllowBT) { %>
+                        <input type="hidden" id="paymentMethod" value="bank_transfer">
+                        <div class="p-2.5 bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl flex items-center justify-between text-xs">
+                            <span class="font-bold text-[#08110D] flex items-center gap-1.5"><span>🏦</span> Direct Bank Transfer</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full uppercase bg-[#08110D] text-[#19D98B] font-bold">Required</span>
+                        </div>
+                    <% } else if (modalAllowPOD) { %>
+                        <input type="hidden" id="paymentMethod" value="pay_on_delivery">
+                        <div class="p-2.5 bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl flex items-center justify-between text-xs">
+                            <span class="font-bold text-[#08110D] flex items-center gap-1.5"><span>💵</span> Pay on Delivery</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full uppercase bg-[#08110D] text-[#19D98B] font-bold">Only Option</span>
+                        </div>
+                    <% } %>
                 </div>
 
                 <% if (typeof hasActiveCoupons !== 'undefined' && hasActiveCoupons) { %>
@@ -501,34 +527,103 @@
                 </div>
                 <% } %>
 
-                <% if (store.bank_name && store.bank_account_number) { %>
-                <div id="modalBankCard" class="p-3 bg-[#08110D] text-white rounded-xl space-y-2 border border-white/10 text-xs">
+                <div id="checkoutError" class="hidden p-3 rounded-xl bg-red-50 text-red-700 text-xs border border-red-200"></div>
+
+                <button type="submit" id="modalStep1Btn" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs py-3 rounded-xl transition shadow-2xs font-display">
+                    <span id="modalStep1BtnText">Proceed to Bank Transfer (₦<span class="modalTotalSpan">0.00</span>) →</span>
+                </button>
+            </form>
+
+            <!-- STEP 2: Secondary Direct Bank Transfer Confirmation Screen -->
+            <div id="modalStep2" class="hidden space-y-4 text-xs">
+                <button type="button" onclick="goToStep1()" class="text-xs font-bold text-[#6B756F] hover:text-[#08110D] flex items-center gap-1 transition">
+                    <span>←</span> <span>Change Contact / Delivery</span>
+                </button>
+
+                <!-- Store Bank Details Card -->
+                <div class="p-3.5 bg-[#08110D] text-white rounded-2xl space-y-2.5 border border-white/10 text-xs shadow-md">
                     <div class="flex items-center justify-between text-[11px]">
-                        <span class="text-[#19D98B] font-bold">🏦 Store Bank Account</span>
-                        <span class="text-white/60">Direct Transfer</span>
+                        <span class="text-[#19D98B] font-bold font-display flex items-center gap-1"><span>🏦</span> Store Bank Account</span>
+                        <span class="text-white/60 text-[10px]">Direct Transfer</span>
                     </div>
-                    <div class="text-[11px] text-white/80">
-                        <div>Bank: <strong><%= store.bank_name %></strong></div>
-                        <div class="flex items-center justify-between bg-white/10 p-2 rounded-lg my-1">
+                    <div class="text-[11px] text-white/80 space-y-2">
+                        <div>Bank: <strong class="text-white font-bold"><%= store.bank_name || 'Bank' %></strong></div>
+                        <div class="flex items-center justify-between bg-white/10 p-2.5 rounded-xl border border-white/10">
                             <div>
-                                <span class="text-[10px] text-white/60 block">Account Number</span>
-                                <span class="font-mono text-[#19D98B] font-bold text-xs" id="storeModalAccNum"><%= store.bank_account_number %></span>
+                                <span class="text-[9px] text-white/60 block uppercase font-bold">Account Number</span>
+                                <span class="font-mono text-[#19D98B] font-bold text-sm" id="storeModalAccNum"><%= store.bank_account_number || '' %></span>
                             </div>
-                            <button type="button" id="storeModalCopyBtn" onclick="copyModalAccountNumber()" class="bg-[#19D98B] hover:bg-[#15b775] text-[#08110D] text-[10px] font-bold px-2 py-1 rounded transition">
+                            <button type="button" id="storeModalCopyBtn" onclick="copyModalAccountNumber()" class="bg-[#19D98B] hover:bg-[#15b775] text-[#08110D] text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition shadow-2xs">
                                 📋 Copy
                             </button>
                         </div>
-                        <div>Name: <strong><%= store.bank_account_name || store.store_name %></strong></div>
+                        <div>Account Name: <strong class="text-white font-bold"><%= store.bank_account_name || store.store_name %></strong></div>
+                        <div class="flex items-center justify-between bg-white/5 p-2.5 rounded-xl border border-white/10">
+                            <div>
+                                <span class="text-[9px] text-white/60 block uppercase font-bold">Exact Transfer Amount</span>
+                                <span class="font-mono text-[#19D98B] font-bold text-sm">₦<span class="modalTotalSpan">0.00</span></span>
+                            </div>
+                            <button type="button" id="storeModalCopyAmountBtn" onclick="copyModalTransferAmount()" class="bg-white/15 hover:bg-white/25 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition">
+                                📋 Copy Amount
+                            </button>
+                        </div>
+                        <% if (store.payment_instructions) { %>
+                        <div class="text-[10px] text-white/75 bg-white/5 p-2 rounded-lg border border-white/5">
+                            💡 <%= store.payment_instructions %>
+                        </div>
+                        <% } %>
                     </div>
                 </div>
-                <% } %>
 
-                <div id="checkoutError" class="hidden p-3 rounded-xl bg-red-50 text-red-700 text-xs border border-red-200"></div>
+                <!-- Proof & Confirmation Box -->
+                <div class="p-3.5 bg-[#F8FAF8] border border-[#E3E9E5] rounded-2xl space-y-3">
+                    <div class="font-bold text-[#08110D] flex items-center justify-between">
+                        <span>Payment Proof & Confirmation</span>
+                        <span class="text-[10px] text-[#087A50] font-bold bg-[#19D98B]/20 px-2 py-0.5 rounded-full">Secure</span>
+                    </div>
 
-                <button type="submit" id="submitOrderBtn" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs py-3 rounded-xl transition shadow-2xs font-display">
-                    Place Order (₦<span id="modalTotalSpan">0.00</span>)
+                    <!-- Receipt Upload Input -->
+                    <div>
+                        <label class="block font-bold text-[#08110D] mb-1">Transfer Receipt Screenshot (Optional)</label>
+                        <input type="file" id="modalReceiptFileInput" accept="image/*,application/pdf" class="hidden" onchange="handleModalReceiptSelect(event)">
+                        
+                        <div id="modalReceiptUploadBox" onclick="document.getElementById('modalReceiptFileInput').click()" class="border-2 border-dashed border-[#E3E9E5] hover:border-[#08110D] rounded-xl p-3 text-center cursor-pointer bg-white transition">
+                            <span class="text-lg block">📎</span>
+                            <span class="text-[11px] font-bold text-[#08110D] block">Attach Receipt Screenshot</span>
+                            <span class="text-[10px] text-[#6B756F]">JPG, PNG, WEBP or PDF (Max 10MB)</span>
+                        </div>
+
+                        <!-- Preview Container -->
+                        <div id="modalReceiptPreviewContainer" class="hidden mt-2 p-2 bg-white rounded-xl border border-[#E3E9E5] flex items-center justify-between">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <img id="modalReceiptThumb" src="" alt="Receipt" class="w-8 h-8 rounded object-cover border border-[#E3E9E5] hidden">
+                                <span id="modalReceiptFileName" class="text-[11px] font-bold text-[#08110D] truncate">receipt.png</span>
+                            </div>
+                            <button type="button" onclick="removeModalReceiptFile()" class="text-red-500 hover:text-red-700 font-bold text-[11px] px-2 py-1">✕ Remove</button>
+                        </div>
+                    </div>
+
+                    <!-- Transfer Reference Note -->
+                    <div>
+                        <label class="block font-bold text-[#08110D] mb-1">Sender Name / Transfer Note</label>
+                        <input type="text" id="modalSenderRef" placeholder="e.g. Joy Okafor / Kuda Ref #1234" class="w-full bg-white border border-[#E3E9E5] rounded-xl p-2.5 outline-none focus:border-[#08110D]">
+                    </div>
+
+                    <!-- Explicit Confirmation Checkbox -->
+                    <label class="flex items-start gap-2.5 p-3 rounded-xl bg-white border border-[#E3E9E5] cursor-pointer">
+                        <input type="checkbox" id="modalPaymentConfirmed" class="mt-0.5 accent-black w-4 h-4 rounded">
+                        <span class="text-[11px] text-[#08110D] leading-tight">
+                            <strong>I have completed the bank transfer</strong> of ₦<span class="modalTotalSpan font-mono">0.00</span> to the account above.
+                        </span>
+                    </label>
+                </div>
+
+                <div id="modalStep2Error" class="hidden p-3 rounded-xl bg-red-50 text-red-700 text-xs border border-red-200"></div>
+
+                <button type="button" id="modalConfirmTransferBtn" onclick="submitModalTransferOrder(event)" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs py-3 rounded-xl transition shadow-2xs font-display">
+                    ✓ I Have Paid - Confirm Order
                 </button>
-            </form>
+            </div>
         </div>
     </div>
 
@@ -1880,8 +1975,11 @@
             }
 
             document.getElementById('cartTotalText').textContent = '₦' + total.toLocaleString('en-US', {minimumFractionDigits: 2});
-            document.getElementById('modalTotalSpan').textContent = total.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.querySelectorAll('.modalTotalSpan').forEach(el => {
+                el.textContent = total.toLocaleString('en-US', {minimumFractionDigits: 2});
+            });
             document.getElementById('checkoutBtn').disabled = cart.length === 0;
+            updateModalStep1BtnText();
 
             if (cart.length === 0) {
                 list.innerHTML = `<div class="p-8 text-center text-[#6B756F]">Your cart is empty.</div>`;
@@ -1907,7 +2005,65 @@
             `).join('');
         }
 
-        // Checkout & Open Order Warning Handling
+        // Checkout & Multi-Step Flow Handling
+        let selectedReceiptFile = null;
+        let pendingCheckoutPayload = null;
+
+        function updateModalStep1BtnText() {
+            const method = document.getElementById('paymentMethod')?.value || 'bank_transfer';
+            const btnText = document.getElementById('modalStep1BtnText');
+            const subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+            const deliveryFee = document.getElementById('fulfillmentType')?.value === 'pickup' ? 0 : parseFloat(storeData.delivery_fee || 0);
+            const total = Math.max(0, subtotal - appliedDiscountAmount) + deliveryFee;
+            const totalFormatted = total.toLocaleString('en-US', {minimumFractionDigits: 2});
+
+            if (btnText) {
+                if (method === 'pay_on_delivery') {
+                    btnText.innerHTML = `Confirm & Place Order (₦${totalFormatted})`;
+                } else {
+                    btnText.innerHTML = `Proceed to Bank Transfer (₦${totalFormatted}) →`;
+                }
+            }
+        }
+
+        function toggleModalBankDetails(method) {
+            updateModalStep1BtnText();
+        }
+
+        function goToStep1() {
+            const s1 = document.getElementById('modalStep1');
+            const s2 = document.getElementById('modalStep2');
+            const title = document.getElementById('modalTitle');
+            const indicator = document.getElementById('modalStepIndicator');
+            if (s1 && s2) {
+                s2.classList.add('hidden');
+                s1.classList.remove('hidden');
+            }
+            if (title) title.textContent = 'Complete Your Order';
+            if (indicator) {
+                indicator.textContent = 'Step 1 of 2';
+                indicator.classList.remove('hidden');
+            }
+        }
+
+        function goToStep2() {
+            const s1 = document.getElementById('modalStep1');
+            const s2 = document.getElementById('modalStep2');
+            const title = document.getElementById('modalTitle');
+            const indicator = document.getElementById('modalStepIndicator');
+            if (s1 && s2) {
+                s1.classList.add('hidden');
+                s2.classList.remove('hidden');
+            }
+            if (title) title.textContent = 'Confirm Bank Transfer';
+            if (indicator) {
+                indicator.textContent = 'Step 2 of 2';
+                indicator.classList.remove('hidden');
+            }
+            const err = document.getElementById('modalStep2Error');
+            if (err) err.classList.add('hidden');
+        }
+
         function openCheckoutModal() {
             if (cart.length === 0) return;
             const subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
@@ -1917,6 +2073,17 @@
                 currency: 'NGN'
             });
             toggleCartDrawer(false);
+            goToStep1();
+            removeModalReceiptFile();
+            const confirmedBox = document.getElementById('modalPaymentConfirmed');
+            if (confirmedBox) confirmedBox.checked = false;
+            const senderRef = document.getElementById('modalSenderRef');
+            if (senderRef) senderRef.value = '';
+            const err1 = document.getElementById('checkoutError');
+            if (err1) err1.classList.add('hidden');
+            const err2 = document.getElementById('modalStep2Error');
+            if (err2) err2.classList.add('hidden');
+            updateModalStep1BtnText();
             document.getElementById('checkoutModal').classList.remove('hidden');
         }
 
@@ -1941,12 +2108,46 @@
             renderCart();
         }
 
-        function toggleModalBankDetails(method) {
-            const card = document.getElementById('modalBankCard');
-            if (card) {
-                if (method === 'bank_transfer') card.classList.remove('hidden');
-                else card.classList.add('hidden');
+        function handleModalReceiptSelect(e) {
+            const file = e.target.files?.[0];
+            if (!file) return;
+
+            if (file.size > 10 * 1024 * 1024) {
+                alert('Receipt file exceeds 10MB limit.');
+                e.target.value = '';
+                return;
             }
+
+            selectedReceiptFile = file;
+            const nameEl = document.getElementById('modalReceiptFileName');
+            const thumbEl = document.getElementById('modalReceiptThumb');
+            const container = document.getElementById('modalReceiptPreviewContainer');
+            const uploadBox = document.getElementById('modalReceiptUploadBox');
+
+            if (nameEl) nameEl.textContent = file.name;
+            if (container) container.classList.remove('hidden');
+            if (uploadBox) uploadBox.classList.add('hidden');
+
+            if (thumbEl && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    thumbEl.src = evt.target.result;
+                    thumbEl.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else if (thumbEl) {
+                thumbEl.classList.add('hidden');
+            }
+        }
+
+        function removeModalReceiptFile() {
+            selectedReceiptFile = null;
+            const input = document.getElementById('modalReceiptFileInput');
+            if (input) input.value = '';
+            const container = document.getElementById('modalReceiptPreviewContainer');
+            const uploadBox = document.getElementById('modalReceiptUploadBox');
+            if (container) container.classList.add('hidden');
+            if (uploadBox) uploadBox.classList.remove('hidden');
         }
 
         function copyModalAccountNumber() {
@@ -1954,20 +2155,135 @@
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(num).then(() => {
                     const btn = document.getElementById('storeModalCopyBtn');
-                    btn.innerHTML = '✓ Copied!';
-                    setTimeout(() => btn.innerHTML = '📋 Copy', 2000);
+                    if (btn) {
+                        btn.innerHTML = '✓ Copied!';
+                        setTimeout(() => { btn.innerHTML = '📋 Copy'; }, 2000);
+                    }
                 });
             }
         }
 
-        let pendingCheckoutPayload = null;
+        function copyModalTransferAmount() {
+            const subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+            const deliveryFee = document.getElementById('fulfillmentType')?.value === 'pickup' ? 0 : parseFloat(storeData.delivery_fee || 0);
+            const total = Math.max(0, subtotal - appliedDiscountAmount) + deliveryFee;
+            const totalStr = total.toFixed(2);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(totalStr).then(() => {
+                    const btn = document.getElementById('storeModalCopyAmountBtn');
+                    if (btn) {
+                        btn.innerHTML = '✓ Copied Amount!';
+                        setTimeout(() => { btn.innerHTML = '📋 Copy Amount'; }, 2000);
+                    }
+                });
+            }
+        }
 
-        async function submitCheckout(e, forceCreate = false) {
+        function handleModalStep1Submit(e) {
             if (e) e.preventDefault();
-            const btn = document.getElementById('submitOrderBtn');
+            const custName = document.getElementById('custName')?.value.trim();
+            const custPhone = document.getElementById('custPhone')?.value.trim();
+            const fulfillment = document.getElementById('fulfillmentType')?.value;
+            const custAddress = document.getElementById('custAddress')?.value.trim();
             const errDiv = document.getElementById('checkoutError');
-            btn.disabled = true;
-            errDiv.classList.add('hidden');
+
+            if (!custName || !custPhone) {
+                if (errDiv) {
+                    errDiv.textContent = 'Please enter your name and phone number.';
+                    errDiv.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (fulfillment !== 'pickup' && !custAddress) {
+                if (errDiv) {
+                    errDiv.textContent = 'Please enter your delivery address.';
+                    errDiv.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (errDiv) errDiv.classList.add('hidden');
+
+            const method = document.getElementById('paymentMethod')?.value || 'bank_transfer';
+            if (method === 'pay_on_delivery') {
+                // Instant 1-step checkout for Pay on Delivery
+                executeOrderCreation(false);
+            } else {
+                // Direct Bank Transfer -> proceed to Step 2 confirmation
+                goToStep2();
+            }
+        }
+
+        // Backward compatibility
+        function submitCheckout(e, forceCreate = false) {
+            return handleModalStep1Submit(e);
+        }
+
+        async function submitModalTransferOrder(e) {
+            if (e) e.preventDefault();
+            const confirmedCheckbox = document.getElementById('modalPaymentConfirmed');
+            const errDiv = document.getElementById('modalStep2Error');
+            const btn = document.getElementById('modalConfirmTransferBtn');
+
+            if (!confirmedCheckbox || !confirmedCheckbox.checked) {
+                if (errDiv) {
+                    errDiv.textContent = 'Please tick the confirmation checkbox indicating you have completed the bank transfer.';
+                    errDiv.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (errDiv) errDiv.classList.add('hidden');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span>Verifying & Placing Order...</span>';
+            }
+
+            let receiptUrl = null;
+            if (selectedReceiptFile) {
+                try {
+                    if (btn) btn.innerHTML = '<span>Uploading Receipt Proof...</span>';
+                    const formData = new FormData();
+                    formData.append('receipt', selectedReceiptFile);
+
+                    const uploadRes = await fetch('/api/upload/receipt', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const uploadJson = await uploadRes.json();
+                    if (uploadJson.success && uploadJson.url) {
+                        receiptUrl = uploadJson.url;
+                    } else {
+                        throw new Error(uploadJson.error || 'Failed to upload receipt');
+                    }
+                } catch (uploadErr) {
+                    if (errDiv) {
+                        errDiv.textContent = uploadErr.message || 'Receipt upload failed. Please try again.';
+                        errDiv.classList.remove('hidden');
+                    }
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '✓ I Have Paid - Confirm Order';
+                    }
+                    return;
+                }
+            }
+
+            await executeOrderCreation(false, receiptUrl);
+        }
+
+        async function executeOrderCreation(forceCreate = false, receiptUrl = null) {
+            const isStep1 = !document.getElementById('modalStep1').classList.contains('hidden');
+            const activeBtn = isStep1 ? document.getElementById('modalStep1Btn') : document.getElementById('modalConfirmTransferBtn');
+            const activeErr = isStep1 ? document.getElementById('checkoutError') : document.getElementById('modalStep2Error');
+
+            if (activeBtn) activeBtn.disabled = true;
+            if (activeErr) activeErr.classList.add('hidden');
+
+            const paymentMethod = document.getElementById('paymentMethod')?.value || 'bank_transfer';
+            const isBankTransfer = paymentMethod === 'bank_transfer';
+            const senderRef = document.getElementById('modalSenderRef')?.value.trim() || null;
 
             const payload = {
                 store_id: storeData.id,
@@ -1975,9 +2291,12 @@
                 customer_phone: document.getElementById('custPhone').value.trim(),
                 fulfillment_type: document.getElementById('fulfillmentType').value,
                 delivery_address: document.getElementById('custAddress')?.value.trim() || 'In-Store Pickup',
-                payment_method: document.getElementById('paymentMethod').value,
+                payment_method: paymentMethod,
+                payment_confirmed: isBankTransfer,
+                receipt_url: receiptUrl,
+                payment_proof_ref: isBankTransfer ? senderRef : 'Pay on Delivery',
                 items: cart,
-                delivery_fee: parseFloat(storeData.delivery_fee || 0),
+                delivery_fee: document.getElementById('fulfillmentType')?.value === 'pickup' ? 0 : parseFloat(storeData.delivery_fee || 0),
                 discount_code: appliedCouponCode,
                 discount_amount: appliedDiscountAmount,
                 force_create: forceCreate
@@ -2006,18 +2325,25 @@
                     closeOpenOrderWarningModal();
                     window.location.href = '/receipt/' + d.order.order_ref;
                 } else if (d.open_orders_exceeded) {
-                    // Open order warning prompt
                     pendingCheckoutPayload = payload;
                     document.getElementById('openOrderWarningModal').classList.remove('hidden');
                 } else {
-                    errDiv.textContent = d.error || 'Failed to place order';
-                    errDiv.classList.remove('hidden');
+                    if (activeErr) {
+                        activeErr.textContent = d.error || 'Failed to place order';
+                        activeErr.classList.remove('hidden');
+                    }
                 }
             } catch (err) {
-                errDiv.textContent = 'Network error placing order';
-                errDiv.classList.remove('hidden');
+                if (activeErr) {
+                    activeErr.textContent = 'Network error placing order';
+                    activeErr.classList.remove('hidden');
+                }
             } finally {
-                btn.disabled = false;
+                if (activeBtn) {
+                    activeBtn.disabled = false;
+                    if (isStep1) updateModalStep1BtnText();
+                    else activeBtn.innerHTML = '✓ I Have Paid - Confirm Order';
+                }
             }
         }
 
@@ -2027,7 +2353,7 @@
 
         function confirmForceNewOrder() {
             if (pendingCheckoutPayload) {
-                submitCheckout(null, true);
+                executeOrderCreation(true, pendingCheckoutPayload.receipt_url);
             }
         }
 

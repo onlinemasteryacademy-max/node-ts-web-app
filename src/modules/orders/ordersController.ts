@@ -24,6 +24,9 @@ export async function ordersRoutes(fastify: FastifyInstance) {
       items: typeof body.items === 'string' ? JSON.parse(body.items) : (body.items || []),
       payment_method: body.payment_method || 'bank_transfer',
       notes: body.notes,
+      receipt_url: body.receipt_url || null,
+      payment_proof_ref: body.payment_proof_ref || body.notes || null,
+      payment_confirmed: Boolean(body.payment_confirmed),
       force_create: Boolean(body.force_create || body.continue_new_order)
     });
     return reply.send(result);

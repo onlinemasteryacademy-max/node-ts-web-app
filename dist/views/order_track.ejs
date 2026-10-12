@@ -68,7 +68,14 @@
         </div>
 
         <!-- Bank Details & Payment Claim Action -->
-        <% if (order.payment_status === 'unpaid' && store.bank_name) { %>
+        <% if (order.payment_status === 'unpaid' && order.payment_method === 'pay_on_delivery') { %>
+            <div class="p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5] text-xs space-y-1">
+                <div class="font-bold text-[#08110D] flex items-center gap-1.5">
+                    <span>💵</span> <span>Pay on Delivery</span>
+                </div>
+                <p class="text-[11px] text-[#6B756F]">Payment will be collected upon arrival. Please ensure you have the exact amount of <strong class="text-[#087A50] font-mono">₦<%= Number(order.total_amount).toLocaleString('en-US', {minimumFractionDigits: 2}) %></strong> ready for fulfillment.</p>
+            </div>
+        <% } else if (order.payment_status === 'unpaid' && store.bank_name && store.bank_account_number) { %>
             <div class="p-4 rounded-2xl bg-[#08110D] text-white space-y-3">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-bold font-display text-[#19D98B]">🏦 Bank Transfer Details</span>
@@ -97,11 +104,18 @@
                 </form>
             </div>
         <% } else if (order.payment_status === 'claimed') { %>
-            <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-1">
+            <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-1.5">
                 <div class="font-bold flex items-center gap-1.5">
                     <span>⏳</span> <span>Payment Under Review</span>
                 </div>
-                <p class="text-[11px] text-amber-800">You submitted payment note: <strong class="font-mono"><%= order.payment_proof_ref %></strong>. The merchant is verifying your transfer.</p>
+                <p class="text-[11px] text-amber-800">You submitted payment note: <strong class="font-mono"><%= order.payment_proof_ref || 'Bank Transfer Confirmed' %></strong>. The merchant is verifying your transfer.</p>
+                <% if (order.receipt_url) { %>
+                    <div class="pt-1">
+                        <a href="<%= order.receipt_url %>" target="_blank" class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-950 bg-amber-200/70 hover:bg-amber-200 px-2.5 py-1 rounded-lg transition">
+                            <span>📎 View Attached Transfer Receipt Proof ↗</span>
+                        </a>
+                    </div>
+                <% } %>
             </div>
         <% } else if (order.payment_status === 'paid') { %>
             <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2">

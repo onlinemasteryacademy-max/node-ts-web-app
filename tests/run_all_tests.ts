@@ -2114,6 +2114,149 @@ async function runTestSuite() {
   assert(merchantList.total >= 1, 'Merchant reviews list returns all store reviews');
   assert(merchantList.reviews[0].product_title === 'Wireless ANC Headphones', 'Product title joined cleanly for merchant console');
 
+  // =============================================================
+  // SUITE 23: MERCHANT PAYMENT METHOD CONTROLS & DIRECT BANK TRANSFER CONFIRMATION FLOW
+  // =============================================================
+  console.log('\n--- SUITE 23: MERCHANT PAYMENT CONTROLS & TRANSFER CONFIRMATION ---');
+
+  // 23.1 Default Store Configuration (Bank Transfer enabled, POD disabled)
+  const uniquePmSlug = 'pm-test-' + Date.now();
+  const pmStoreId = dbInsert('stores', {
+    store_name: 'Payment Methods Store',
+    owner_name: 'PM Store Owner',
+    slug: uniquePmSlug,
+    email: `pm-test-${Date.now()}@zlik.store`,
+    password_hash: hashPassword('pmPassword123'),
+    whatsapp_number: '08123456789',
+    bank_name: 'Zenith Bank',
+    bank_account_number: '1012345678',
+    bank_account_name: 'Payment Methods Test Ltd',
+    allow_bank_transfer: 1,
+    allow_pay_on_delivery: 0,
+    created_at: new Date().toISOString()
+  });
+
+  const pmStore = dbFetchOne<any>('stores', { id: pmStoreId });
+  assert(pmStore !== null, 'Payment Methods test store created');
+  assert(pmStore.allow_bank_transfer === 1, 'Default allow_bank_transfer is 1 (enabled)');
+  assert(pmStore.allow_pay_on_delivery === 0, 'Default allow_pay_on_delivery is 0 (disabled)');
+
+  const pmItemId = dbInsert('items', {
+    store_id: pmStoreId,
+    title: 'Test Leather Backpack',
+    price: 15000,
+    stock_quantity: 20,
+    is_available: 1,
+    created_at: new Date().toISOString()
+  });
+
+  // 23.2 Gating: Store has only Bank Transfer enabled, attempts POD order -> Rejected
+  const podRejected = await createOrder({
+    store_id: pmStoreId,
+    customer_name: 'POD Test Buyer',
+    customer_phone: '08099887766',
+    fulfillment_type: 'delivery',
+    delivery_address: '12 Admiralty Way, Lekki',
+    payment_method: 'pay_on_delivery',
+    items: [{ id: pmItemId, quantity: 1, price: 15000, title: 'Test Leather Backpack' }]
+  });
+  assert(podRejected.success === false, 'Pay on Delivery rejected when store has disabled POD');
+  assert(podRejected.error?.includes('not accepted by this store'), 'Rejection error clearly states payment method is not accepted');
+
+  // 23.3 Bank Transfer Order with Confirmation & Receipt Screenshot
+  const btConfirmed = await createOrder({
+    store_id: pmStoreId,
+    customer_name: 'BT Buyer Confirmed',
+    customer_phone: '08099887766',
+    fulfillment_type: 'delivery',
+    delivery_address: '12 Admiralty Way, Lekki',
+    payment_method: 'bank_transfer',
+    payment_confirmed: true,
+    receipt_url: '/uploads/receipts/rcpt_test_proof_123.jpg',
+    payment_proof_ref: 'Tunde Transfer Ref #9988',
+    items: [{ id: pmItemId, quantity: 1, price: 15000, title: 'Test Leather Backpack' }]
+  });
+  assert(btConfirmed.success === true, 'Bank transfer order created successfully');
+  assert(btConfirmed.order?.payment_status === 'claimed', 'Bank transfer with payment_confirmed=true sets payment_status="claimed"');
+  assert(btConfirmed.order?.receipt_url === '/uploads/receipts/rcpt_test_proof_123.jpg', 'Receipt URL stored in order record');
+  assert(btConfirmed.order?.payment_proof_ref === 'Tunde Transfer Ref #9988', 'Payment proof note / ref stored in order record');
+
+  // Verify payment claim automatically registered
+  const autoClaim = dbFetchOne<any>('payment_claims', { order_id: btConfirmed.order?.id });
+  assert(autoClaim !== null, 'Payment claim record automatically generated for confirmed transfer');
+  assert(autoClaim.status === 'claimed', 'Auto-created payment claim has status "claimed"');
+  assert(autoClaim.payment_reference === 'Tunde Transfer Ref #9988', 'Payment claim reference matches transfer reference');
+
+  // 23.4 Merchant Updates Settings: Enables Pay on Delivery, Disables Bank Transfer
+  dbUpdate('stores', { allow_bank_transfer: 0, allow_pay_on_delivery: 1 }, { id: pmStoreId });
+  const updatedPmStore = dbFetchOne<any>('stores', { id: pmStoreId });
+  assert(updatedPmStore.allow_bank_transfer === 0, 'Store allows_bank_transfer updated to 0');
+  assert(updatedPmStore.allow_pay_on_delivery === 1, 'Store allows_pay_on_delivery updated to 1');
+
+  // 23.5 Gating: Store has only POD enabled, attempts Bank Transfer -> Rejected
+  const btRejected = await createOrder({
+    store_id: pmStoreId,
+    customer_name: 'BT Test Buyer 2',
+    customer_phone: '08099887766',
+    fulfillment_type: 'delivery',
+    delivery_address: '14 Allen Ave, Ikeja',
+    payment_method: 'bank_transfer',
+    items: [{ id: pmItemId, quantity: 1, price: 15000, title: 'Test Leather Backpack' }]
+  });
+  assert(btRejected.success === false, 'Bank Transfer rejected when store has disabled Bank Transfer');
+  assert(btRejected.error?.includes('not accepted by this store'), 'Rejection error clearly states Bank Transfer is not accepted');
+
+  // 23.6 Successful Pay on Delivery Checkout
+  const podSuccess = await createOrder({
+    store_id: pmStoreId,
+    customer_name: 'POD Happy Customer',
+    customer_phone: '08099887766',
+    fulfillment_type: 'delivery',
+    delivery_address: '14 Allen Ave, Ikeja',
+    payment_method: 'pay_on_delivery',
+    items: [{ id: pmItemId, quantity: 1, price: 15000, title: 'Test Leather Backpack' }]
+  });
+  assert(podSuccess.success === true, 'Pay on Delivery order created successfully');
+  assert(podSuccess.order?.payment_status === 'unpaid', 'POD order sets payment_status="unpaid"');
+  assert(podSuccess.order?.payment_proof_ref === 'Pay on Delivery', 'POD order sets payment_proof_ref="Pay on Delivery"');
+  assert(podSuccess.order?.receipt_url === null, 'POD order has no receipt URL');
+
+  // Verify no payment claims created for POD
+  const podClaim = dbFetchOne<any>('payment_claims', { order_id: podSuccess.order?.id });
+  assert(podClaim === null, 'No payment claim created for Pay on Delivery order');
+
+  // 23.7 Merchant Confirms Claimed Bank Transfer Order
+  const confirmedRes = await confirmOrderPayment(btConfirmed.order!.id, pmStoreId);
+  assert(confirmedRes.success === true, 'Merchant successfully confirms claimed transfer');
+  const paidOrder = dbFetchOne<any>('orders', { id: btConfirmed.order!.id });
+  assert(paidOrder.payment_status === 'paid', 'Order payment_status transitioned to "paid"');
+  const updatedClaim = dbFetchOne<any>('payment_claims', { order_id: btConfirmed.order!.id });
+  assert(updatedClaim.status === 'confirmed', 'Payment claim status transitioned to "confirmed"');
+
+  // 23.8 Merchant Rejection of Claimed Order
+  // Create another claimed order to test rejection
+  dbUpdate('stores', { allow_bank_transfer: 1, allow_pay_on_delivery: 1 }, { id: pmStoreId });
+  const btToReject = await createOrder({
+    store_id: pmStoreId,
+    customer_name: 'Fraud Claimer',
+    customer_phone: '08011223344',
+    fulfillment_type: 'delivery',
+    delivery_address: '5 Ozumba Mbadiwe, VI',
+    payment_method: 'bank_transfer',
+    payment_confirmed: true,
+    payment_proof_ref: 'Bogus note 000',
+    items: [{ id: pmItemId, quantity: 1, price: 15000, title: 'Test Leather Backpack' }]
+  });
+  assert(btToReject.success === true, 'Claimed order for rejection created');
+  assert(btToReject.order?.payment_status === 'claimed', 'Order initially in claimed status');
+
+  const rejectRes = await rejectOrderPayment(btToReject.order!.id, pmStoreId, 'Transfer not received in bank account');
+  assert(rejectRes.success === true, 'Merchant rejects payment claim');
+  const rejectedOrder = dbFetchOne<any>('orders', { id: btToReject.order!.id });
+  assert(rejectedOrder.payment_status === 'unpaid', 'Order reverted to unpaid status');
+  const rejectedClaim = dbFetchOne<any>('payment_claims', { order_id: btToReject.order!.id });
+  assert(rejectedClaim.status === 'rejected', 'Payment claim status marked as rejected');
+
   // -------------------------------------------------------------
   console.log('\n======================================================');
   console.log('⚡ NODE.JS + SQLITE WAL LATENCY BENCHMARK');

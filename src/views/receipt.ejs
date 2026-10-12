@@ -150,14 +150,22 @@
         </div>
 
         <!-- Payment Verification & Proof -->
-        <% if (order.payment_proof_ref || (store.bank_name && store.bank_account_number)) { %>
+        <% if (order.payment_proof_ref || order.receipt_url || (order.payment_method === 'bank_transfer' && store.bank_name && store.bank_account_number)) { %>
             <div class="bg-[#F8FAF8] p-3.5 rounded-2xl border border-[#E3E9E5] text-[11px] text-[#6B756F] space-y-1">
                 <div class="font-semibold text-[#08110D]">Payment Method: <%= order.payment_method === 'bank_transfer' ? 'Direct Bank Transfer' : 'Pay on Delivery' %></div>
-                <% if (order.payment_proof_ref) { %>
+                <% if (order.payment_proof_ref && order.payment_method === 'bank_transfer') { %>
                     <div>Transfer Note / Ref: <strong class="font-mono text-[#08110D]"><%= order.payment_proof_ref %></strong></div>
                 <% } %>
-                <% if (store.bank_name && store.bank_account_number) { %>
+                <% if (order.payment_method === 'bank_transfer' && store.bank_name && store.bank_account_number) { %>
                     <div class="text-[10px] text-[#6B756F] pt-0.5">Verified Account: <%= store.bank_name %> &bull; <%= store.bank_account_number %> (<%= store.bank_account_name || store.store_name %>)</div>
+                <% } %>
+                <% if (order.receipt_url) { %>
+                    <div class="pt-1">
+                        <a href="<%= order.receipt_url %>" target="_blank" class="inline-flex items-center gap-1 text-[11px] font-bold text-[#087A50] hover:underline">
+                            <span>📎 View Attached Transfer Receipt Proof</span>
+                            <span class="text-[10px]">↗</span>
+                        </a>
+                    </div>
                 <% } %>
             </div>
         <% } %>

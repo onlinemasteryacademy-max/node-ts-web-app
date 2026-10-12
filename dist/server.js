@@ -148,6 +148,42 @@ fastify.post('/api/upload', async (req, reply) => {
         urls: uploadedFiles
     });
 });
+// Customer Bank Transfer Receipt Upload API (Public endpoint for checkout proofs)
+fastify.post('/api/upload/receipt', async (req, reply) => {
+    const uploadDir = node_path_1.default.join(publicDir, 'uploads', 'receipts');
+    if (!node_fs_1.default.existsSync(uploadDir)) {
+        node_fs_1.default.mkdirSync(uploadDir, { recursive: true });
+    }
+    const uploadedFiles = [];
+    try {
+        const parts = req.files();
+        for await (const part of parts) {
+            const ext = node_path_1.default.extname(part.filename).toLowerCase() || '.jpg';
+            const allowedExts = ['.jpg', '.jpeg', '.png', '.webp', '.pdf'];
+            if (!allowedExts.includes(ext)) {
+                return reply.code(400).send({ success: false, error: 'Only image files (JPG, PNG, WEBP) or PDFs are allowed for payment receipts.' });
+            }
+            const randomName = `receipt_${Date.now()}_${node_crypto_1.default.randomBytes(6).toString('hex')}${ext}`;
+            const targetPath = node_path_1.default.join(uploadDir, randomName);
+            await (0, promises_1.pipeline)(part.file, node_fs_1.default.createWriteStream(targetPath));
+            uploadedFiles.push(`/uploads/receipts/${randomName}`);
+        }
+    }
+    catch (err) {
+        if (err.code === 'FST_REQ_FILE_TOO_LARGE') {
+            return reply.code(400).send({ success: false, error: 'Receipt file exceeds the 10MB maximum size limit.' });
+        }
+        return reply.code(500).send({ success: false, error: 'Failed to process receipt upload: ' + (err.message || 'Unknown error') });
+    }
+    if (uploadedFiles.length === 0) {
+        return reply.code(400).send({ success: false, error: 'No receipt file provided.' });
+    }
+    return reply.send({
+        success: true,
+        url: uploadedFiles[0],
+        urls: uploadedFiles
+    });
+});
 // Merchant Items & Settings API
 fastify.post('/api/merchant/items', async (req, reply) => {
     const store = req.session?.merchantStore;
@@ -296,6 +332,19 @@ fastify.post('/api/merchant/settings', async (req, reply) => {
         updates.alert_sound = body.alert_sound;
     if (body.delivery_fee !== undefined)
         updates.delivery_fee = parseFloat(body.delivery_fee || 0);
+    if (body.allow_bank_transfer !== undefined)
+        updates.allow_bank_transfer = body.allow_bank_transfer ? 1 : 0;
+    if (body.allow_pay_on_delivery !== undefined)
+        updates.allow_pay_on_delivery = body.allow_pay_on_delivery ? 1 : 0;
+    // Validation guard: merchant cannot disable both payment methods simultaneously
+    const nextBankTransfer = updates.allow_bank_transfer !== undefined ? updates.allow_bank_transfer : (store.allow_bank_transfer !== undefined ? store.allow_bank_transfer : 1);
+    const nextPOD = updates.allow_pay_on_delivery !== undefined ? updates.allow_pay_on_delivery : (store.allow_pay_on_delivery !== undefined ? store.allow_pay_on_delivery : 0);
+    if (nextBankTransfer === 0 && nextPOD === 0) {
+        return reply.send({
+            success: false,
+            error: 'You must keep at least one payment method enabled (Direct Bank Transfer or Pay on Delivery).'
+        });
+    }
     // Check if bank account number is being modified
     const currentBankAcct = (store.bank_account_number || '').trim();
     const rawNewBankAcct = body.bank_account_number !== undefined ? String(body.bank_account_number).trim() : currentBankAcct;

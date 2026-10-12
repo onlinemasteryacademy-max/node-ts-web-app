@@ -266,7 +266,16 @@
                                     <span class="font-extrabold text-sm text-[#08110D] font-display">#<%= order.order_ref %></span>
                                     <span class="text-[10px] text-[#6B756F]"><%= new Date(order.created_at).toLocaleString() %></span>
                                 </div>
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <% if (order.payment_method === 'pay_on_delivery') { %>
+                                        <span class="px-2 py-0.5 rounded-full font-bold text-[10px] bg-slate-100 text-slate-800 border border-slate-200">
+                                            💵 Pay on Delivery
+                                        </span>
+                                    <% } else { %>
+                                        <span class="px-2 py-0.5 rounded-full font-bold text-[10px] bg-blue-50 text-blue-800 border border-blue-200">
+                                            🏦 Bank Transfer
+                                        </span>
+                                    <% } %>
                                     <span class="px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px] <%= order.payment_status === 'paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' %>">
                                         ● <%= order.payment_status %>
                                     </span>
@@ -279,13 +288,21 @@
                             <!-- Payment Claim Alert Banner -->
                             <% if (order.payment_status === 'claimed') { %>
                                 <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                                    <div>
+                                    <div class="space-y-1">
                                         <div class="font-bold text-amber-900 flex items-center gap-1.5">
                                             <span>🔔</span> <span>Customer Claimed Bank Transfer</span>
                                         </div>
-                                        <div class="text-[11px] text-amber-800 mt-0.5">
-                                            Transfer Note / Ref: <strong class="font-mono bg-amber-100 px-1 py-0.5 rounded"><%= order.payment_proof_ref %></strong>. Verify in bank app before confirming.
+                                        <div class="text-[11px] text-amber-800">
+                                            Transfer Note / Ref: <strong class="font-mono bg-amber-100 px-1 py-0.5 rounded"><%= order.payment_proof_ref || 'Customer confirmed transfer' %></strong>. Verify in your bank app before confirming.
                                         </div>
+                                        <% if (order.receipt_url) { %>
+                                            <div class="pt-1">
+                                                <a href="<%= order.receipt_url %>" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-[#087A50] font-bold text-xs border border-amber-300 hover:bg-amber-100 transition shadow-2xs">
+                                                    <span>📎 View Customer Transfer Receipt Proof</span>
+                                                    <span class="text-[10px]">↗</span>
+                                                </a>
+                                            </div>
+                                        <% } %>
                                     </div>
                                     <div class="flex items-center gap-2 shrink-0">
                                         <button onclick="confirmPayment(<%= order.id %>)" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-xl shadow-2xs transition">
@@ -330,7 +347,12 @@
                                     </select>
                                 </div>
 
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <% if (order.receipt_url) { %>
+                                        <a href="<%= order.receipt_url %>" target="_blank" class="bg-white hover:bg-[#F8FAF8] text-[#087A50] font-bold px-3 py-1.5 rounded-xl border border-[#E3E9E5] transition flex items-center gap-1 shadow-2xs">
+                                            <span>📎 Receipt Proof ↗</span>
+                                        </a>
+                                    <% } %>
                                     <a href="/merchant/messages" class="bg-[#08110D] text-[#19D98B] font-bold px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-2xs">
                                         <span>💬 Chat</span>
                                     </a>
