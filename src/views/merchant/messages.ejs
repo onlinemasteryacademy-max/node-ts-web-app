@@ -41,53 +41,15 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
-    <!-- Merchant Top Navigation -->
-    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E3E9E5] shadow-2xs">
-        <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
-            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-                <a href="/merchant" class="text-xs font-medium text-[#6B756F] hover:text-[#08110D] flex items-center gap-1 transition shrink-0">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                    </svg>
-                    <span class="hidden sm:inline">Dashboard</span>
-                </a>
-                <span class="text-gray-300 hidden sm:inline">/</span>
-                <h1 class="text-xs sm:text-sm font-semibold text-[#08110D] flex items-center gap-2 truncate">
-                    <span>Live Chat</span>
-                    <span id="navUnreadBadge" class="hidden bg-[#19D98B] text-[#08110D] text-[9px] sm:text-[10px] font-semibold px-2 py-0.5 rounded-full animate-pulse shadow-2xs">0 new</span>
-                </h1>
-            </div>
-
-            <div class="flex items-center gap-1.5 sm:gap-3">
-                <button onclick="toggleAudio()" id="soundToggle" title="Audio Chimes" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] text-xs font-medium p-2 sm:px-3 sm:py-1.5 rounded-xl border border-[#E3E9E5] transition flex items-center gap-1.5">
-                    <span id="soundToggleIcon" class="text-xs">🔊</span>
-                    <span id="soundToggleText" class="hidden sm:inline">Sound: ON</span>
-                </button>
-                <a href="/<%= store.slug %>" target="_blank" title="View Public Storefront" class="bg-[#08110D] text-[#19D98B] font-medium text-xs p-2 sm:px-3.5 sm:py-1.5 rounded-xl transition flex items-center gap-1 shadow-2xs">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                    </svg>
-                    <span class="hidden sm:inline">Storefront ↗</span>
-                </a>
-            </div>
-        </div>
-
-        <div class="hidden sm:flex max-w-7xl mx-auto px-4 items-center gap-2 overflow-x-auto text-xs font-medium border-t border-[#E3E9E5]/60 pt-2 pb-2">
-            <a href="/merchant" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Orders</a>
-            <a href="/merchant/items" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Products</a>
-            <a href="/merchant/ledger" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Sales Ledger</a>
-            <a href="/merchant/debts" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Debts</a>
-            <a href="/merchant/messages" class="px-3.5 py-1.5 rounded-xl bg-[#08110D] text-white font-semibold">Live Chat</a>
-            <a href="/merchant/settings" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Settings</a>
-        </div>
-    </header>
+    <!-- Merchant Header (Universal Component) -->
+    <%- include('components/header_nav.ejs', { activeTab: 'chat', pageTitle: 'Live Chat' }) %>
 
     <!-- Main Chat Workspace (3-Column Responsive Layout) -->
     <main class="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-4 pb-20 sm:pb-4 flex-1 w-full flex flex-col h-[calc(100vh-65px)]">
         <div class="flex-1 bg-white rounded-2xl border border-[#E3E9E5] shadow-xs grid grid-cols-1 md:grid-cols-12 overflow-hidden">
 
-            <!-- Col 1: Conversations List (4 cols) -->
-            <div class="md:col-span-4 border-r border-[#E3E9E5] flex flex-col h-full bg-white">
+            <!-- Col 1: Conversations List (Inbox) -->
+            <div id="conversationsCol" class="col-span-12 md:col-span-4 border-r border-[#E3E9E5] flex flex-col h-full bg-white">
                 <div class="p-3.5 border-b border-[#E3E9E5] space-y-2.5">
                     <div class="flex items-center justify-between">
                         <span class="text-xs font-extrabold font-display text-[#08110D]">Customer Threads</span>
@@ -120,26 +82,28 @@
                 </div>
             </div>
 
-            <!-- Col 2: Active Message Thread (5 cols) -->
-            <div class="md:col-span-5 flex flex-col h-full bg-[#F8FAF8] border-r border-[#E3E9E5]">
-                <!-- Chat Top Header -->
-                <!-- Chat Top Header with Lead Contact Actions -->
-                <div id="activeChatHeader" class="p-3.5 bg-white border-b border-[#E3E9E5] flex items-center justify-between shrink-0">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div id="activeChatAvatar" class="w-9 h-9 rounded-xl bg-[#08110D] text-[#19D98B] font-bold text-xs flex items-center justify-center font-display shrink-0 shadow-2xs">
+            <!-- Col 2: Active Message Thread -->
+            <div id="chatThreadCol" class="hidden md:flex col-span-12 md:col-span-5 flex-col h-full bg-[#F8FAF8] border-r border-[#E3E9E5]">
+                <!-- Chat Top Header with Lead Contact Actions & Mobile Back Arrow -->
+                <div id="activeChatHeader" class="p-3 sm:p-3.5 bg-white border-b border-[#E3E9E5] flex items-center justify-between shrink-0">
+                    <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                        <button type="button" onclick="backToConversationsList()" class="md:hidden w-8 h-8 rounded-xl bg-[#F8FAF8] border border-[#E3E9E5] text-[#08110D] flex items-center justify-center font-bold text-sm shrink-0 hover:bg-[#E3E9E5] transition" title="Back to Inbox">
+                            &larr;
+                        </button>
+                        <div id="activeChatAvatar" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#08110D] text-[#19D98B] font-bold text-xs flex items-center justify-center font-display shrink-0 shadow-2xs">
                             C
                         </div>
                         <div class="min-w-0">
                             <h3 id="activeChatName" class="text-xs font-bold text-[#08110D] truncate font-display">Select Conversation</h3>
-                            <p id="activeChatPhone" class="text-[11px] text-[#6B756F] truncate">Direct Storefront Channel</p>
+                            <p id="activeChatPhone" class="text-[10px] sm:text-[11px] text-[#6B756F] truncate">Direct Storefront Channel</p>
                         </div>
                     </div>
 
                     <div id="activeChatActions" class="flex items-center gap-1.5 shrink-0 hidden">
-                        <a id="activeChatWhatsAppBtn" href="#" target="_blank" class="bg-[#25D366]/15 hover:bg-[#25D366]/25 text-[#075E54] border border-[#25D366]/30 px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1">
+                        <a id="activeChatWhatsAppBtn" href="#" target="_blank" class="bg-[#25D366]/15 hover:bg-[#25D366]/25 text-[#075E54] border border-[#25D366]/30 px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold transition flex items-center gap-1">
                             <span>💬 WhatsApp</span>
                         </a>
-                        <a id="activeChatCallBtn" href="#" class="bg-gray-100 hover:bg-gray-200 text-[#08110D] border border-[#E3E9E5] px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1">
+                        <a id="activeChatCallBtn" href="#" class="bg-gray-100 hover:bg-gray-200 text-[#08110D] border border-[#E3E9E5] px-2 sm:px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold transition flex items-center gap-1">
                             <span>📞 Call</span>
                         </a>
                     </div>
@@ -235,6 +199,32 @@
             document.getElementById('soundToggle').innerHTML = audioEnabled ? '<span>🔊</span><span class="hidden sm:inline">Sound: ON</span>' : '<span>🔇</span><span class="hidden sm:inline">Sound: OFF</span>';
         }
 
+        let isMobileChatView = false;
+
+        function showMobileChatView() {
+            const listCol = document.getElementById('conversationsCol');
+            const threadCol = document.getElementById('chatThreadCol');
+            if (listCol && threadCol) {
+                listCol.classList.add('hidden');
+                listCol.classList.remove('flex');
+                threadCol.classList.remove('hidden');
+                threadCol.classList.add('flex');
+                isMobileChatView = true;
+            }
+        }
+
+        function backToConversationsList() {
+            const listCol = document.getElementById('conversationsCol');
+            const threadCol = document.getElementById('chatThreadCol');
+            if (listCol && threadCol) {
+                threadCol.classList.add('hidden');
+                threadCol.classList.remove('flex');
+                listCol.classList.remove('hidden');
+                listCol.classList.add('flex');
+                isMobileChatView = false;
+            }
+        }
+
         async function loadConversationsList(search = '') {
             try {
                 const res = await fetch(`/api/chat?action=merchant_list_conversations&search=${encodeURIComponent(search)}`);
@@ -243,7 +233,7 @@
                     activeConversations = data.conversations || [];
                     renderConversationsList(activeConversations);
                     updateTopUnreadBadges(data.total_unread_count || 0);
-                    if (currentConvId === 0 && activeConversations.length > 0) {
+                    if (currentConvId === 0 && activeConversations.length > 0 && window.innerWidth >= 768) {
                         selectConversation(activeConversations[0].id);
                     }
                     loadMonthlyChatUsage();
@@ -305,6 +295,9 @@
         async function selectConversation(convId) {
             currentConvId = parseInt(convId);
             lastMessageId = 0;
+            if (window.innerWidth < 768) {
+                showMobileChatView();
+            }
             const conv = activeConversations.find(c => parseInt(c.id) === currentConvId);
 
             if (conv) {

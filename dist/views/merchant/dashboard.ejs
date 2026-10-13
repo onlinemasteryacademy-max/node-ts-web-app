@@ -42,84 +42,8 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
-    <!-- Merchant Header -->
-    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E3E9E5] shadow-2xs">
-        <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-4">
-            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-                <% if (store.logo_url) { %>
-                    <img src="<%= store.logo_url %>" alt="Logo" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-contain border border-[#E3E9E5] bg-white p-0.5 shrink-0">
-                <% } else { %>
-                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#08110D] text-[#19D98B] font-semibold text-sm sm:text-base flex items-center justify-center font-display shrink-0 shadow-2xs">
-                        <%= (store.store_name || 'S').charAt(0).toUpperCase() %>
-                    </div>
-                <% } %>
-                <div class="min-w-0">
-                    <h1 class="text-xs sm:text-sm font-semibold text-[#08110D] truncate flex items-center gap-1.5 sm:gap-2">
-                        <span class="truncate max-w-[120px] sm:max-w-[200px]"><%= store.store_name %></span>
-                        <span class="text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full uppercase shrink-0 <%= isPro ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700' %>">
-                            <%= isPro ? 'PRO' : 'FREE' %>
-                        </span>
-                        <% if (!isPro) { %>
-                            <button type="button" onclick="triggerUpgradeModal('General Pro Features')" class="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#08110D] hover:bg-black text-[#19D98B] transition shrink-0 hidden sm:flex items-center gap-1 shadow-2xs">
-                                <span>⚡ Upgrade</span>
-                            </button>
-                        <% } %>
-                    </h1>
-                    <p class="text-[11px] sm:text-xs text-[#6B756F] truncate"><%= store.email || store.whatsapp_number %></p>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-1.5 sm:gap-2">
-                <% if (!isPro) { %>
-                    <button type="button" onclick="triggerUpgradeModal('General Pro Features')" class="sm:hidden text-[10px] font-bold px-2 py-1.5 rounded-xl bg-[#08110D] text-[#19D98B] transition flex items-center gap-1 shadow-2xs">
-                        <span>⚡ Pro</span>
-                    </button>
-                <% } %>
-                <!-- Store QR Icon / Button -->
-                <button type="button" onclick="openQrModal()" title="Store QR Code" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] text-xs font-medium p-2 sm:px-3 sm:py-2 rounded-xl border border-[#E3E9E5] transition flex items-center gap-1.5">
-                    <svg class="w-4 h-4 text-[#08110D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
-                    </svg>
-                    <span class="hidden sm:inline">Store QR</span>
-                </button>
-                <!-- Sound Toggle -->
-                <button onclick="toggleAudio()" id="soundToggle" title="Audio Chimes" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] text-xs font-medium p-2 sm:px-3 sm:py-2 rounded-xl border border-[#E3E9E5] transition flex items-center gap-1.5">
-                    <span id="soundToggleIcon" class="text-xs">🔊</span>
-                    <span id="soundToggleText" class="hidden sm:inline">Sound: ON</span>
-                </button>
-                <!-- Storefront Link -->
-                <a href="/<%= store.slug %>" target="_blank" title="View Public Storefront" class="bg-[#08110D] text-[#19D98B] font-medium text-xs p-2 sm:px-3.5 sm:py-2 rounded-xl transition flex items-center gap-1 shadow-2xs">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                    </svg>
-                    <span class="hidden sm:inline">Storefront ↗</span>
-                </a>
-                <!-- Logout -->
-                <a href="/merchant/logout" title="Sign Out" class="text-[#6B756F] hover:text-red-600 p-1.5 sm:p-2 transition">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                    </svg>
-                </a>
-            </div>
-        </div>
-
-        <!-- Desktop Navigation Tabs (Hidden on mobile; sticky bottom bar used on mobile) -->
-        <div class="hidden sm:flex max-w-7xl mx-auto px-4 items-center gap-2 overflow-x-auto text-xs font-medium border-t border-[#E3E9E5]/60 pt-2 pb-2">
-            <a href="/merchant" class="px-3.5 py-1.5 rounded-xl bg-[#08110D] text-white font-semibold">Orders</a>
-            <a href="/merchant/items" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Products</a>
-            <a href="/merchant/ledger" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Sales Ledger</a>
-            <a href="/merchant/reviews" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Reviews</a>
-            <a href="/merchant/debts" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Debts</a>
-            <a href="/merchant/messages" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] flex items-center gap-1.5">
-                <span>Live Chat</span>
-                <span id="navChatUnreadBadge" class="hidden bg-[#19D98B] text-[#08110D] text-[10px] font-semibold px-2 py-0.2 rounded-full animate-pulse shadow-2xs">0 new</span>
-            </a>
-            <a href="/merchant/settings" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Settings</a>
-            <a href="/merchant/verification" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] flex items-center gap-1">
-                <span>🛡️</span> <span>Trust & Verification</span>
-            </a>
-        </div>
-    </header>
+    <!-- Merchant Header (Universal Component) -->
+    <%- include('components/header_nav.ejs', { activeTab: 'orders' }) %>
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24 sm:pb-8 flex-1 w-full space-y-5 sm:space-y-6">
@@ -187,212 +111,181 @@
             </div>
         <% } %>
 
-        <!-- Store Visitor Analytics (Included in Every Plan: Free, Pro, Business) -->
-        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4">
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <!-- Store Performance Summary & 2x2 Mobile KPI Grid -->
+        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-4 sm:p-5 shadow-xs space-y-3 sm:space-y-4">
+            <div class="flex items-center justify-between gap-2">
                 <div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-[10px] uppercase font-semibold text-[#087A50] bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">All Plans</span>
-                        <span class="text-[10px] uppercase font-semibold text-[#6B756F] tracking-wider">Store Traffic</span>
-                    </div>
-                    <h2 class="text-base font-semibold text-[#08110D] mt-0.5">Store Visitor Analytics</h2>
+                    <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider">Store Performance</span>
+                    <h2 class="text-sm sm:text-base font-extrabold text-[#08110D] font-display">Overview & KPIs</h2>
                 </div>
 
-                <!-- 7 Timeframe Tabs (Today, Yesterday, 7 Days, 1 Month, Quarterly, Yearly, Lifetime) -->
-                <div class="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1 lg:pb-0 text-xs font-medium bg-[#F8FAF8] p-1 rounded-2xl border border-[#E3E9E5]">
-                    <button type="button" onclick="switchVisitorPeriod('today')" id="vbtn-today" class="visitor-tab-btn px-3 py-1.5 rounded-xl bg-[#08110D] text-white font-semibold transition text-xs whitespace-nowrap">Today</button>
-                    <button type="button" onclick="switchVisitorPeriod('yesterday')" id="vbtn-yesterday" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Yesterday</button>
-                    <button type="button" onclick="switchVisitorPeriod('7days')" id="vbtn-7days" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">7 Days</button>
-                    <button type="button" onclick="switchVisitorPeriod('month')" id="vbtn-month" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">1 Month</button>
-                    <button type="button" onclick="switchVisitorPeriod('quarterly')" id="vbtn-quarterly" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Quarterly</button>
-                    <button type="button" onclick="switchVisitorPeriod('yearly')" id="vbtn-yearly" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Yearly</button>
-                    <button type="button" onclick="switchVisitorPeriod('lifetime')" id="vbtn-lifetime" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Lifetime</button>
-                </div>
-            </div>
-
-            <!-- Visitor Stats Grid (Total & Unique Visitors Only) -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="p-4 sm:p-5 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
-                    <span class="text-[10px] uppercase font-semibold text-[#6B756F]">Total Store Visits</span>
-                    <div class="text-2xl sm:text-3xl font-bold text-[#08110D] font-mono mt-1" id="statVisits">
-                        <%= (visitorMetrics && visitorMetrics.today && visitorMetrics.today.visits) || 0 %>
-                    </div>
-                    <span class="text-[11px] text-[#6B756F]" id="statVisitsSub">Page views recorded</span>
-                </div>
-
-                <div class="p-4 sm:p-5 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
-                    <span class="text-[10px] uppercase font-semibold text-[#6B756F]">Unique Visitors</span>
-                    <div class="text-2xl sm:text-3xl font-bold text-[#087A50] font-mono mt-1" id="statUniqueVisitors">
-                        <%= (visitorMetrics && visitorMetrics.today && visitorMetrics.today.unique_visitors) || 0 %>
-                    </div>
-                    <span class="text-[11px] text-[#6B756F]" id="statUniqueSub">Distinct shoppers</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Live Customer Tracking (Pro & Business Feature) -->
-        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full <%= (isPro || (store.plan_tier === 'business')) ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700' %>">
-                            <%= (isPro || (store.plan_tier === 'business')) ? 'Live Telemetry' : 'Pro & Business Feature' %>
-                        </span>
-                        <span class="text-[10px] uppercase font-semibold text-[#6B756F] tracking-wider">Active Visitors</span>
-                    </div>
-                    <div class="flex items-center gap-2 mt-0.5">
-                        <h2 class="text-base font-semibold text-[#08110D]">Live Customer Tracking</h2>
-                        <% if (isPro || (store.plan_tier === 'business')) { %>
-                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-                                <span id="liveActiveCountText">0 Active Now</span>
-                            </span>
-                        <% } %>
-                    </div>
-                </div>
-
-                <% if (store.plan_tier === 'business') { %>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs text-[#6B756F]">Branch:</span>
-                        <select id="liveBranchFilter" onchange="fetchLiveVisitors()" class="bg-[#F8FAF8] border border-[#E3E9E5] text-xs font-medium text-[#08110D] rounded-xl px-3 py-1.5 outline-none">
-                            <option value="">All Branches</option>
-                        </select>
-                    </div>
-                <% } %>
-            </div>
-
-            <% if (isPro || (store.plan_tier === 'business')) { %>
-                <!-- Live Visitors Active Table / Stream -->
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-xs">
-                        <thead>
-                            <tr class="border-b border-[#E3E9E5] text-[11px] font-bold uppercase text-[#6B756F] bg-[#F8FAF8]">
-                                <th class="p-3 rounded-l-xl">Shopper</th>
-                                <th class="p-3">Currently Viewing</th>
-                                <th class="p-3">Traffic Source</th>
-                                <th class="p-3">Time on Site</th>
-                                <th class="p-3 rounded-r-xl text-right">Latest Pulse</th>
-                            </tr>
-                        </thead>
-                        <tbody id="liveVisitorsTableBody" class="divide-y divide-[#E3E9E5]/60 font-body">
-                            <tr>
-                                <td colspan="5" class="p-6 text-center text-[#6B756F] text-xs">
-                                    <div class="inline-flex items-center gap-2">
-                                        <span class="animate-spin text-base">⏳</span>
-                                        <span>Listening for live store visitors...</span>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            <% } else { %>
-                <!-- Free Tier Locked Banner -->
-                <div class="p-6 sm:p-7 rounded-2xl bg-[#F8FAF8] border border-dashed border-[#E3E9E5] text-center space-y-3">
-                    <div class="w-10 h-10 rounded-xl bg-gray-200 text-[#08110D] flex items-center justify-center mx-auto text-base">
-                        🔒
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-bold text-[#08110D] font-display">Live Customer Tracking is Locked</h3>
-                        <p class="text-xs text-[#6B756F] max-w-md mx-auto mt-1">
-                            Upgrade to <strong>Pro</strong> or <strong>Business</strong> to see who is actively browsing your storefront in real time, what products they are looking at, their traffic source, and live shopper counts.
-                        </p>
-                    </div>
-                    <div>
-                        <button type="button" onclick="triggerUpgradeModal('Live Customer Tracking')" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs px-5 py-2.5 rounded-xl transition shadow-2xs inline-flex items-center gap-1.5 font-display">
-                            <span>⚡ Upgrade to Pro</span>
-                            <span>&rarr;</span>
-                        </button>
-                    </div>
-                </div>
-            <% } %>
-        </div>
-
-        <!-- Revenue Metrics Dashboard with Timeframe Switcher -->
-        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                    <span class="text-[10px] uppercase font-semibold text-[#6B756F] tracking-wider">Store Performance</span>
-                    <h2 class="text-base font-semibold text-[#08110D]">Revenue & Ledger Summary</h2>
-                </div>
-
-                <div class="flex items-center gap-2">
-                    <span class="text-xs font-medium text-[#6B756F]">Timeframe:</span>
-                    <select id="timeframeSelect" onchange="handleTimeframeChange(this.value)" class="bg-[#F8FAF8] border border-[#E3E9E5] text-xs font-medium text-[#08110D] rounded-xl px-3 py-1.5 outline-none">
+                <div class="flex items-center gap-1.5">
+                    <select id="timeframeSelect" onchange="handleTimeframeChange(this.value)" class="bg-[#F8FAF8] border border-[#E3E9E5] text-xs font-semibold text-[#08110D] rounded-xl px-2.5 py-1.5 outline-none hover:border-[#08110D] transition">
                         <option value="today">Today</option>
                         <option value="yesterday">Yesterday</option>
                         <option value="this_week">This Week</option>
                         <option value="this_month">This Month</option>
                         <option value="last_month">Last Month</option>
-                        <option value="3months" <%= !isPro ? 'class="text-gray-400"' : '' %>>Last 3 Months <%= !isPro ? '🔒 (Pro)' : '' %></option>
-                        <option value="6months" <%= !isPro ? 'class="text-gray-400"' : '' %>>Last 6 Months <%= !isPro ? '🔒 (Pro)' : '' %></option>
-                        <option value="yearly" <%= !isPro ? 'class="text-gray-400"' : '' %>>This Year <%= !isPro ? '🔒 (Pro)' : '' %></option>
-                        <option value="lifetime" <%= !isPro ? 'class="text-gray-400"' : '' %>>Full Lifetime <%= !isPro ? '🔒 (Pro)' : '' %></option>
+                        <option value="3months" <%= !isPro ? 'class="text-gray-400"' : '' %>>Last 3 Months <%= !isPro ? '🔒' : '' %></option>
+                        <option value="6months" <%= !isPro ? 'class="text-gray-400"' : '' %>>Last 6 Months <%= !isPro ? '🔒' : '' %></option>
+                        <option value="yearly" <%= !isPro ? 'class="text-gray-400"' : '' %>>This Year <%= !isPro ? '🔒' : '' %></option>
+                        <option value="lifetime" <%= !isPro ? 'class="text-gray-400"' : '' %>>Full Lifetime <%= !isPro ? '🔒' : '' %></option>
                     </select>
                 </div>
             </div>
 
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
-                    <span class="text-[10px] uppercase font-semibold text-[#6B756F]">Confirmed Revenue</span>
-                    <div class="text-lg sm:text-xl font-semibold text-[#087A50] mt-1" id="statRevenue">
+            <!-- 2x2 Grid on Mobile, 4-col on Desktop -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
+                <div class="p-3.5 sm:p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider">Confirmed</span>
+                        <span class="text-xs">💰</span>
+                    </div>
+                    <div class="text-base sm:text-xl font-bold text-[#087A50] font-mono mt-1" id="statRevenue">
                         ₦<%= Number(revenueMetrics.today.confirmed_revenue).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
                     </div>
-                    <span class="text-[11px] text-[#6B756F]"><span id="statConfirmedCount"><%= revenueMetrics.today.confirmed_count %></span> paid orders</span>
+                    <div class="text-[10px] sm:text-[11px] text-[#6B756F] mt-0.5 truncate">
+                        <span id="statConfirmedCount" class="font-bold text-[#08110D]"><%= revenueMetrics.today.confirmed_count %></span> paid orders
+                    </div>
                 </div>
 
-                <div class="p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
-                    <span class="text-[10px] uppercase font-semibold text-[#6B756F]">Pending Revenue</span>
-                    <div class="text-lg sm:text-xl font-semibold text-amber-700 mt-1" id="statPendingRevenue">
+                <div class="p-3.5 sm:p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider">Pending</span>
+                        <span class="text-xs">⏳</span>
+                    </div>
+                    <div class="text-base sm:text-xl font-bold text-amber-700 font-mono mt-1" id="statPendingRevenue">
                         ₦<%= Number(revenueMetrics.today.pending_revenue).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
                     </div>
-                    <span class="text-[11px] text-[#6B756F]"><span id="statPendingCount"><%= revenueMetrics.today.pending_count %></span> pending orders</span>
+                    <div class="text-[10px] sm:text-[11px] text-[#6B756F] mt-0.5 truncate">
+                        <span id="statPendingCount" class="font-bold text-[#08110D]"><%= revenueMetrics.today.pending_count %></span> pending
+                    </div>
                 </div>
 
-                <div class="p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
-                    <span class="text-[10px] uppercase font-semibold text-[#6B756F]">Average Order Value</span>
-                    <div class="text-lg sm:text-xl font-semibold text-[#08110D] mt-1" id="statAov">
+                <div class="p-3.5 sm:p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider">Visits</span>
+                        <span class="text-xs">👀</span>
+                    </div>
+                    <div class="text-base sm:text-xl font-bold text-[#08110D] font-mono mt-1" id="statVisits">
+                        <%= (visitorMetrics && visitorMetrics.today && visitorMetrics.today.visits) || 0 %>
+                    </div>
+                    <div class="text-[10px] sm:text-[11px] text-[#6B756F] mt-0.5 truncate" id="statVisitsSub">
+                        Page views recorded
+                    </div>
+                </div>
+
+                <div class="p-3.5 sm:p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider">Avg Order</span>
+                        <span class="text-xs">📊</span>
+                    </div>
+                    <div class="text-base sm:text-xl font-bold text-[#08110D] font-mono mt-1" id="statAov">
                         ₦<%= Number(revenueMetrics.today.aov).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
                     </div>
-                    <span class="text-[11px] text-[#6B756F]">Per completed sale</span>
-                </div>
-
-                <div class="p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
-                    <span class="text-[10px] uppercase font-semibold text-[#6B756F]">Fulfillment Split</span>
-                    <div class="text-sm font-semibold text-[#08110D] mt-1.5">
-                        Delivery: <span id="statDelivery"><%= revenueMetrics.today.delivery_count %></span> &bull; Pickup: <span id="statPickup"><%= revenueMetrics.today.pickup_count %></span>
+                    <div class="text-[10px] sm:text-[11px] text-[#6B756F] mt-0.5 truncate">
+                        Per sale
                     </div>
-                    <span class="text-[11px] text-[#6B756F]">Delivery vs Pickup</span>
                 </div>
+            </div>
+
+            <!-- Fulfillment Split Footer Pill -->
+            <div class="flex items-center justify-between text-[11px] text-[#6B756F] pt-1 px-1">
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-[#08110D]">Fulfillment:</span>
+                    <span>Delivery: <strong id="statDelivery" class="text-[#08110D]"><%= revenueMetrics.today.delivery_count %></strong></span>
+                    <span>&bull;</span>
+                    <span>Pickup: <strong id="statPickup" class="text-[#08110D]"><%= revenueMetrics.today.pickup_count %></strong></span>
+                </div>
+                <button type="button" onclick="toggleAnalyticsSection()" class="text-xs font-bold text-[#087A50] hover:underline flex items-center gap-1">
+                    <span id="analyticsToggleText">More Analytics</span>
+                    <span id="analyticsToggleChevron">▾</span>
+                </button>
             </div>
         </div>
 
-        <!-- Orders Section -->
-        <div class="space-y-4">
-            <div class="flex items-center justify-between">
+        <!-- Customer Orders Section -->
+        <div class="space-y-3.5">
+            <div class="flex items-center justify-between gap-2">
                 <div>
-                    <h2 class="text-base font-extrabold text-[#08110D] font-display">Customer Orders</h2>
-                    <p class="text-xs text-[#6B756F]">Manage payments, dispatch, and customer receipts</p>
+                    <h2 class="text-base sm:text-lg font-extrabold text-[#08110D] font-display flex items-center gap-2">
+                        <span>Customer Orders</span>
+                        <span id="orderCountBadge" class="text-xs font-mono font-bold bg-[#F8FAF8] text-[#087A50] border border-[#E3E9E5] px-2 py-0.5 rounded-full"><%= orders.length %></span>
+                    </h2>
+                    <p class="text-[11px] text-[#6B756F]">Fulfillment, bank payment confirmation & receipts</p>
                 </div>
-                <span class="text-xs font-bold text-[#6B756F] bg-white border border-[#E3E9E5] px-3 py-1.5 rounded-xl"><%= orders.length %> total orders</span>
             </div>
 
-            <!-- Orders List -->
-            <div class="space-y-3">
+            <!-- Search Bar & Filter Tabs -->
+            <div class="space-y-2">
+                <!-- Instant Search Input -->
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#6B756F] text-xs">🔍</span>
+                    <input type="text" id="orderSearchInput" oninput="filterOrdersList()" placeholder="Search customer, phone, ref (#...)" class="w-full bg-white border border-[#E3E9E5] rounded-2xl pl-9 pr-8 py-2.5 text-xs text-[#08110D] placeholder-[#6B756F]/60 outline-none focus:border-[#08110D] shadow-2xs transition">
+                    <button type="button" onclick="clearOrderSearch()" id="clearSearchBtn" class="absolute inset-y-0 right-0 pr-3 flex items-center text-[#6B756F] hover:text-[#08110D] text-xs hidden">✕</button>
+                </div>
+
+                <!-- Segmented Filter Tabs (Horizontally Scrollable) -->
+                <% 
+                    const claimedCount = orders.filter(o => o.payment_status === 'claimed').length;
+                %>
+                <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 text-xs font-semibold">
+                    <button type="button" onclick="setOrderStatusFilter('all')" id="ofilter-all" class="order-filter-btn px-3 py-1.5 rounded-xl bg-[#08110D] text-white whitespace-nowrap transition">
+                        All (<%= orders.length %>)
+                    </button>
+                    <% if (claimedCount > 0) { %>
+                        <button type="button" onclick="setOrderStatusFilter('claimed')" id="ofilter-claimed" class="order-filter-btn px-3 py-1.5 rounded-xl bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap transition flex items-center gap-1 animate-pulse">
+                            <span>🔔 Needs Action</span>
+                            <span class="bg-amber-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono"><%= claimedCount %></span>
+                        </button>
+                    <% } %>
+                    <button type="button" onclick="setOrderStatusFilter('pending')" id="ofilter-pending" class="order-filter-btn px-3 py-1.5 rounded-xl bg-white text-[#6B756F] border border-[#E3E9E5] hover:text-[#08110D] whitespace-nowrap transition">
+                        Pending
+                    </button>
+                    <button type="button" onclick="setOrderStatusFilter('paid')" id="ofilter-paid" class="order-filter-btn px-3 py-1.5 rounded-xl bg-white text-[#6B756F] border border-[#E3E9E5] hover:text-[#08110D] whitespace-nowrap transition">
+                        Paid
+                    </button>
+                    <button type="button" onclick="setOrderStatusFilter('dispatched')" id="ofilter-dispatched" class="order-filter-btn px-3 py-1.5 rounded-xl bg-white text-[#6B756F] border border-[#E3E9E5] hover:text-[#08110D] whitespace-nowrap transition">
+                        Dispatched
+                    </button>
+                    <button type="button" onclick="setOrderStatusFilter('completed')" id="ofilter-completed" class="order-filter-btn px-3 py-1.5 rounded-xl bg-white text-[#6B756F] border border-[#E3E9E5] hover:text-[#08110D] whitespace-nowrap transition">
+                        Completed
+                    </button>
+                </div>
+            </div>
+
+            <!-- Orders Stream / Cards -->
+            <div id="ordersContainer" class="space-y-3">
                 <% if (orders.length === 0) { %>
-                    <div class="p-12 text-center bg-white rounded-3xl border border-[#E3E9E5] text-[#6B756F] text-xs">
-                        No orders placed yet. Share your store link on WhatsApp to start receiving sales!
+                    <div class="p-8 sm:p-12 text-center bg-white rounded-3xl border border-[#E3E9E5] text-[#6B756F] text-xs space-y-3">
+                        <div class="w-12 h-12 rounded-2xl bg-[#19D98B]/10 text-[#087A50] text-xl flex items-center justify-center mx-auto">🛍️</div>
+                        <div>
+                            <h3 class="font-bold text-sm text-[#08110D]">No orders placed yet</h3>
+                            <p class="text-xs text-[#6B756F] mt-1 max-w-sm mx-auto">Share your storefront link or product links on WhatsApp and Instagram to start receiving orders!</p>
+                        </div>
+                        <button type="button" onclick="openQrModal()" class="inline-flex items-center gap-1.5 bg-[#08110D] text-[#19D98B] font-bold text-xs px-4 py-2 rounded-xl shadow-xs">
+                            <span>📱 Share Store QR & Link</span>
+                        </button>
                     </div>
                 <% } else { %>
                     <% orders.forEach(order => { %>
-                        <div class="p-5 bg-white rounded-3xl border border-[#E3E9E5] space-y-3 shadow-xs hover:border-[#08110D] transition">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div class="order-card p-4 sm:p-5 bg-white rounded-3xl border border-[#E3E9E5] space-y-3 shadow-xs hover:border-[#08110D] transition"
+                             data-order-id="<%= order.id %>"
+                             data-order-ref="<%= order.order_ref.toLowerCase() %>"
+                             data-order-status="<%= order.order_status %>"
+                             data-payment-status="<%= order.payment_status %>"
+                             data-payment-method="<%= order.payment_method %>"
+                             data-customer-name="<%= (order.customer_name || '').toLowerCase() %>"
+                             data-customer-phone="<%= (order.customer_phone || '').toLowerCase() %>"
+                             data-total-amount="<%= order.total_amount %>">
+                            
+                            <!-- Header Row -->
+                            <div class="flex items-center justify-between gap-2 flex-wrap">
                                 <div class="flex items-center gap-2">
                                     <span class="font-extrabold text-sm text-[#08110D] font-display">#<%= order.order_ref %></span>
-                                    <span class="text-[10px] text-[#6B756F]"><%= new Date(order.created_at).toLocaleString() %></span>
+                                    <span class="text-[10px] text-[#6B756F]"><%= new Date(order.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %></span>
                                 </div>
-                                <div class="flex items-center gap-2 flex-wrap">
+                                <div class="flex items-center gap-1.5 flex-wrap">
                                     <% if (order.payment_method === 'pay_on_delivery') { %>
                                         <span class="px-2 py-0.5 rounded-full font-bold text-[10px] bg-slate-100 text-slate-800 border border-slate-200">
                                             💵 Pay on Delivery
@@ -402,69 +295,96 @@
                                             🏦 Bank Transfer
                                         </span>
                                     <% } %>
-                                    <span class="px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px] <%= order.payment_status === 'paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' %>">
-                                        ● <%= order.payment_status %>
-                                    </span>
-                                    <span class="px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px] bg-gray-100 text-gray-800">
+
+                                    <% if (order.payment_status === 'paid') { %>
+                                        <span class="px-2 py-0.5 rounded-full font-bold uppercase text-[10px] bg-emerald-100 text-emerald-800">
+                                            ● Paid
+                                        </span>
+                                    <% } else if (order.payment_status === 'claimed') { %>
+                                        <span class="px-2 py-0.5 rounded-full font-bold uppercase text-[10px] bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
+                                            🔔 Claimed
+                                        </span>
+                                    <% } else { %>
+                                        <span class="px-2 py-0.5 rounded-full font-bold uppercase text-[10px] bg-gray-100 text-gray-700">
+                                            ● <%= order.payment_status %>
+                                        </span>
+                                    <% } %>
+
+                                    <span class="px-2 py-0.5 rounded-full font-bold uppercase text-[10px] bg-zinc-100 text-zinc-800 border border-zinc-200">
                                         <%= order.order_status %>
                                     </span>
                                 </div>
                             </div>
 
-                            <!-- Payment Claim Alert Banner -->
+                            <!-- Payment Claim Verification Box (High Priority) -->
                             <% if (order.payment_status === 'claimed') { %>
-                                <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                                <div class="p-3 sm:p-3.5 rounded-2xl bg-amber-50 border border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                                     <div class="space-y-1">
-                                        <div class="font-bold text-amber-900 flex items-center gap-1.5">
+                                        <div class="font-bold text-amber-950 flex items-center gap-1.5">
                                             <span>🔔</span> <span>Customer Claimed Bank Transfer</span>
                                         </div>
-                                        <div class="text-[11px] text-amber-800">
-                                            Transfer Note / Ref: <strong class="font-mono bg-amber-100 px-1 py-0.5 rounded"><%= order.payment_proof_ref || 'Customer confirmed transfer' %></strong>. Verify in your bank app before confirming.
+                                        <div class="text-[11px] text-amber-900">
+                                            Reference / Note: <strong class="font-mono bg-amber-200/70 px-1 py-0.5 rounded"><%= order.payment_proof_ref || 'Customer confirmed transfer' %></strong>. Check your bank app to verify funds before confirming.
                                         </div>
                                         <% if (order.receipt_url) { %>
-                                            <div class="pt-1">
-                                                <a href="<%= order.receipt_url %>" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-[#087A50] font-bold text-xs border border-amber-300 hover:bg-amber-100 transition shadow-2xs">
-                                                    <span>📎 View Customer Transfer Receipt Proof</span>
+                                            <div class="pt-0.5">
+                                                <a href="<%= order.receipt_url %>" target="_blank" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white text-[#087A50] font-bold text-xs border border-amber-300 hover:bg-amber-100 transition shadow-2xs">
+                                                    <span>📎 Customer Receipt Proof</span>
                                                     <span class="text-[10px]">↗</span>
                                                 </a>
                                             </div>
                                         <% } %>
                                     </div>
                                     <div class="flex items-center gap-2 shrink-0">
-                                        <button onclick="confirmPayment(<%= order.id %>)" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-xl shadow-2xs transition">
-                                            ✓ Confirm Payment
+                                        <button onclick="confirmPayment(<%= order.id %>)" class="min-h-[38px] bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-xl shadow-2xs transition text-xs flex items-center gap-1">
+                                            <span>✓</span> <span>Confirm Payment</span>
                                         </button>
-                                        <button onclick="rejectPayment(<%= order.id %>)" class="bg-white text-red-700 border border-red-200 hover:bg-red-50 font-bold px-3 py-1.5 rounded-xl transition">
-                                            ✕ Reject
+                                        <button onclick="rejectPayment(<%= order.id %>)" class="min-h-[38px] bg-white text-red-700 border border-red-300 hover:bg-red-50 font-bold px-3 py-1.5 rounded-xl transition text-xs">
+                                            <span>✕ Reject</span>
                                         </button>
                                     </div>
                                 </div>
                             <% } %>
 
-                            <div class="grid sm:grid-cols-3 gap-3 text-xs">
-                                <div>
-                                    <div class="text-[10px] uppercase font-bold text-[#6B756F]">Customer</div>
-                                    <div class="font-bold text-[#08110D]"><%= order.customer_name %></div>
-                                    <div class="text-[#6B756F]"><%= order.customer_phone %></div>
+                            <!-- Customer & Fulfillment Grid -->
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 text-xs pt-1">
+                                <!-- Customer Info with 1-Tap Quick Actions -->
+                                <div class="p-2.5 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]/70 space-y-1">
+                                    <span class="text-[10px] uppercase font-bold text-[#6B756F]">Customer</span>
+                                    <div class="font-bold text-[#08110D] truncate"><%= order.customer_name %></div>
+                                    <div class="flex items-center gap-2 pt-0.5">
+                                        <span class="text-[#6B756F] text-[11px] font-mono"><%= order.customer_phone %></span>
+                                        <% if (order.customer_phone) { 
+                                            const cleanPhone = order.customer_phone.replace(/[^0-9]/g, '');
+                                        %>
+                                            <a href="tel:<%= order.customer_phone %>" title="Call customer" class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center text-[10px] hover:bg-emerald-200 transition">📞</a>
+                                            <a href="https://wa.me/<%= cleanPhone %>" target="_blank" title="WhatsApp customer" class="w-6 h-6 rounded-lg bg-green-100 text-green-800 flex items-center justify-center text-[10px] hover:bg-green-200 transition">💬</a>
+                                        <% } %>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div class="text-[10px] uppercase font-bold text-[#6B756F]">Fulfillment</div>
-                                    <div class="font-bold text-[#08110D]"><%= order.fulfillment_type === 'pickup' ? 'In-Store Pickup' : 'Delivery' %></div>
-                                    <div class="text-[#6B756F] truncate"><%= order.delivery_address || 'Pickup' %></div>
+
+                                <!-- Fulfillment Info -->
+                                <div class="p-2.5 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]/70 space-y-1">
+                                    <span class="text-[10px] uppercase font-bold text-[#6B756F]">Fulfillment</span>
+                                    <div class="font-bold text-[#08110D]"><%= order.fulfillment_type === 'pickup' ? '🏪 In-Store Pickup' : '🚚 Delivery' %></div>
+                                    <div class="text-[11px] text-[#6B756F] line-clamp-1"><%= order.delivery_address || 'Customer pickup at store' %></div>
                                 </div>
-                                <div class="sm:text-right">
-                                    <div class="text-[10px] uppercase font-bold text-[#6B756F]">Total Amount</div>
-                                    <div class="text-base font-extrabold text-[#087A50] font-display">
+
+                                <!-- Amount -->
+                                <div class="p-2.5 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]/70 space-y-0.5 sm:text-right">
+                                    <span class="text-[10px] uppercase font-bold text-[#6B756F]">Order Total</span>
+                                    <div class="text-base font-extrabold text-[#087A50] font-mono">
                                         ₦<%= Number(order.total_amount).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
                                     </div>
-                                    <div class="text-[10px] text-[#6B756F]">Fee: ₦<%= Number(order.delivery_fee || 0).toLocaleString('en-US') %></div>
+                                    <div class="text-[10px] text-[#6B756F]">Delivery fee: ₦<%= Number(order.delivery_fee || 0).toLocaleString('en-US') %></div>
                                 </div>
                             </div>
 
-                            <div class="pt-3 border-t border-[#E3E9E5] flex flex-wrap items-center justify-between gap-3 text-xs">
+                            <!-- Footer Status & Action Controls -->
+                            <div class="pt-2.5 border-t border-[#E3E9E5] flex flex-wrap items-center justify-between gap-2.5 text-xs">
                                 <div class="flex items-center gap-2">
-                                    <span class="font-bold text-[#6B756F]">Status:</span>
-                                    <select onchange="updateStatus(<%= order.id %>, this.value)" class="bg-[#F8FAF8] border border-[#E3E9E5] font-bold text-xs rounded-xl px-2.5 py-1.5 outline-none">
+                                    <label class="text-[11px] font-bold text-[#6B756F]">Update Status:</label>
+                                    <select onchange="updateStatus(<%= order.id %>, this.value)" class="bg-[#F8FAF8] border border-[#E3E9E5] font-bold text-xs rounded-xl px-2.5 py-1.5 outline-none hover:border-[#08110D] transition min-h-[36px]">
                                         <option value="pending" <%= order.order_status === 'pending' ? 'selected' : '' %>>⏳ Pending</option>
                                         <option value="confirmed" <%= order.order_status === 'confirmed' ? 'selected' : '' %>>✓ Confirmed</option>
                                         <option value="dispatched" <%= order.order_status === 'dispatched' ? 'selected' : '' %>>🚚 Dispatched</option>
@@ -473,25 +393,140 @@
                                     </select>
                                 </div>
 
-                                <div class="flex items-center gap-2 flex-wrap">
+                                <div class="flex items-center gap-1.5 flex-wrap">
                                     <% if (order.receipt_url) { %>
-                                        <a href="<%= order.receipt_url %>" target="_blank" class="bg-white hover:bg-[#F8FAF8] text-[#087A50] font-bold px-3 py-1.5 rounded-xl border border-[#E3E9E5] transition flex items-center gap-1 shadow-2xs">
+                                        <a href="<%= order.receipt_url %>" target="_blank" class="min-h-[36px] bg-white hover:bg-[#F8FAF8] text-[#087A50] font-bold px-2.5 py-1.5 rounded-xl border border-[#E3E9E5] transition flex items-center gap-1 shadow-2xs">
                                             <span>📎 Receipt Proof ↗</span>
                                         </a>
                                     <% } %>
-                                    <a href="/merchant/messages" class="bg-[#08110D] text-[#19D98B] font-bold px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-2xs">
+                                    <a href="/merchant/messages" class="min-h-[36px] bg-[#08110D] text-[#19D98B] hover:bg-black font-bold px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-2xs transition">
                                         <span>💬 Chat</span>
                                     </a>
-                                    <a href="/receipt/<%= order.order_ref %>" target="_blank" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-bold px-3 py-1.5 rounded-xl border border-[#E3E9E5] transition">
+                                    <a href="/receipt/<%= order.order_ref %>" target="_blank" class="min-h-[36px] bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-bold px-3 py-1.5 rounded-xl border border-[#E3E9E5] transition flex items-center">
                                         Receipt ↗
                                     </a>
-                                    <a href="/order/<%= order.order_ref %>?token=<%= order.order_token %>" target="_blank" class="bg-white hover:bg-[#F8FAF8] text-[#6B756F] font-bold px-3 py-1.5 rounded-xl border border-[#E3E9E5] transition">
+                                    <a href="/order/<%= order.order_ref %>?token=<%= order.order_token %>" target="_blank" class="min-h-[36px] bg-white hover:bg-[#F8FAF8] text-[#6B756F] hover:text-[#08110D] font-bold px-2.5 py-1.5 rounded-xl border border-[#E3E9E5] transition flex items-center">
                                         Track ↗
                                     </a>
                                 </div>
                             </div>
+
                         </div>
                     <% }) %>
+                <% } %>
+            </div>
+
+            <!-- No search results placeholder -->
+            <div id="noSearchResultsNotice" class="hidden p-8 text-center bg-white rounded-3xl border border-[#E3E9E5] text-[#6B756F] text-xs">
+                No orders match your filter or search criteria.
+            </div>
+        </div>
+
+        <!-- Deep Visitor Analytics & Live Telemetry Section (Expandable on Mobile, Open on Desktop) -->
+        <div id="analyticsSection" class="bg-white rounded-3xl border border-[#E3E9E5] p-4 sm:p-5 shadow-xs space-y-4">
+            <div class="flex items-center justify-between cursor-pointer" onclick="toggleAnalyticsSection()">
+                <div class="flex items-center gap-2">
+                    <span class="w-8 h-8 rounded-xl bg-[#19D98B]/10 text-[#087A50] flex items-center justify-center font-bold text-sm">📈</span>
+                    <div>
+                        <h2 class="text-sm sm:text-base font-bold text-[#08110D] font-display">Store Traffic & Live Telemetry</h2>
+                        <p class="text-[11px] text-[#6B756F]">Visitor trends, unique shoppers, and active real-time sessions</p>
+                    </div>
+                </div>
+                <button type="button" class="w-8 h-8 rounded-xl bg-[#F8FAF8] border border-[#E3E9E5] text-[#08110D] flex items-center justify-center font-bold text-xs" id="analyticsHeaderToggleChevron">
+                    ▾
+                </button>
+            </div>
+
+            <div id="analyticsContent" class="space-y-4 pt-2 border-t border-[#E3E9E5]">
+                <!-- Timeframe switcher for Visitor Analytics -->
+                <div class="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1 text-xs font-medium bg-[#F8FAF8] p-1 rounded-2xl border border-[#E3E9E5]">
+                    <button type="button" onclick="switchVisitorPeriod('today')" id="vbtn-today" class="visitor-tab-btn px-3 py-1.5 rounded-xl bg-[#08110D] text-white font-semibold transition text-xs whitespace-nowrap">Today</button>
+                    <button type="button" onclick="switchVisitorPeriod('yesterday')" id="vbtn-yesterday" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Yesterday</button>
+                    <button type="button" onclick="switchVisitorPeriod('7days')" id="vbtn-7days" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">7 Days</button>
+                    <button type="button" onclick="switchVisitorPeriod('month')" id="vbtn-month" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">1 Month</button>
+                    <button type="button" onclick="switchVisitorPeriod('quarterly')" id="vbtn-quarterly" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Quarterly</button>
+                    <button type="button" onclick="switchVisitorPeriod('yearly')" id="vbtn-yearly" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Yearly</button>
+                    <button type="button" onclick="switchVisitorPeriod('lifetime')" id="vbtn-lifetime" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Lifetime</button>
+                </div>
+
+                <!-- Unique Shoppers & Visits Detail -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="p-3.5 sm:p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
+                        <span class="text-[10px] uppercase font-semibold text-[#6B756F]">Unique Shoppers</span>
+                        <div class="text-xl sm:text-2xl font-bold text-[#087A50] font-mono mt-1" id="statUniqueVisitors">
+                            <%= (visitorMetrics && visitorMetrics.today && visitorMetrics.today.unique_visitors) || 0 %>
+                        </div>
+                        <span class="text-[11px] text-[#6B756F]" id="statUniqueSub">Distinct shoppers</span>
+                    </div>
+
+                    <div class="p-3.5 sm:p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5] flex flex-col justify-between">
+                        <span class="text-[10px] uppercase font-semibold text-[#6B756F]">Live Active Count</span>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                            <span class="text-xl sm:text-2xl font-bold text-[#08110D] font-mono" id="liveActiveCountText">
+                                <%= (isPro || (store.plan_tier === 'business')) ? '0 Active Now' : 'Locked (Pro)' %>
+                            </span>
+                        </div>
+                        <span class="text-[11px] text-[#6B756F]">Real-time storefront visitors</span>
+                    </div>
+                </div>
+
+                <!-- Live Visitors Telemetry Table / Stream -->
+                <% if (isPro || (store.plan_tier === 'business')) { %>
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-[#08110D]">Live Shopper Feed</span>
+                            <% if (store.plan_tier === 'business') { %>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="text-[11px] text-[#6B756F]">Branch:</span>
+                                    <select id="liveBranchFilter" onchange="fetchLiveVisitors()" class="bg-[#F8FAF8] border border-[#E3E9E5] text-[11px] font-medium text-[#08110D] rounded-xl px-2.5 py-1 outline-none">
+                                        <option value="">All Branches</option>
+                                    </select>
+                                </div>
+                            <% } %>
+                        </div>
+
+                        <div class="overflow-x-auto rounded-2xl border border-[#E3E9E5]">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr class="border-b border-[#E3E9E5] text-[10px] font-bold uppercase text-[#6B756F] bg-[#F8FAF8]">
+                                        <th class="p-2.5">Shopper</th>
+                                        <th class="p-2.5">Currently Viewing</th>
+                                        <th class="p-2.5">Traffic Source</th>
+                                        <th class="p-2.5">Time on Site</th>
+                                        <th class="p-2.5 text-right">Latest Pulse</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="liveVisitorsTableBody" class="divide-y divide-[#E3E9E5]/60 font-body">
+                                    <tr>
+                                        <td colspan="5" class="p-4 text-center text-[#6B756F] text-xs">
+                                            <div class="inline-flex items-center gap-2">
+                                                <span class="animate-spin text-sm">⏳</span>
+                                                <span>Listening for live store visitors...</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <!-- Free Tier Locked Banner -->
+                    <div class="p-5 rounded-2xl bg-[#F8FAF8] border border-dashed border-[#E3E9E5] text-center space-y-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-gray-200 text-[#08110D] flex items-center justify-center mx-auto text-sm">
+                            🔒
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-bold text-[#08110D] font-display">Live Customer Tracking is a Pro Feature</h3>
+                            <p class="text-[11px] text-[#6B756F] max-w-sm mx-auto mt-0.5">
+                                See who is actively browsing your storefront in real time and what products they are looking at.
+                            </p>
+                        </div>
+                        <button type="button" onclick="triggerUpgradeModal('Live Customer Tracking')" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs px-4 py-2 rounded-xl transition shadow-2xs inline-flex items-center gap-1 font-display">
+                            <span>⚡ Upgrade to Pro</span>
+                            <span>&rarr;</span>
+                        </button>
+                    </div>
                 <% } %>
             </div>
         </div>
@@ -542,8 +577,6 @@
         </div>
     </div>
 
-    <%- include('components/upgrade_modal.ejs') %>
-
     <%- include('components/bottom_nav.ejs', { activeTab: 'orders' }) %>
 
     <script src="/assets/js/sound_engine.js"></script>
@@ -555,6 +588,99 @@
         let lastOrderId = <%= orders.length > 0 ? orders[0].id : 0 %>;
         let lastEventId = 0;
         let dashboardSSE = null;
+
+        // Order filtering & Search
+        let currentOrderFilter = 'all';
+
+        function setOrderStatusFilter(filter) {
+            currentOrderFilter = filter;
+            document.querySelectorAll('.order-filter-btn').forEach(btn => {
+                btn.classList.remove('bg-[#08110D]', 'text-white');
+                btn.classList.add('bg-white', 'text-[#6B756F]', 'border', 'border-[#E3E9E5]');
+            });
+            const activeBtn = document.getElementById('ofilter-' + filter);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-white', 'text-[#6B756F]', 'border', 'border-[#E3E9E5]');
+                activeBtn.classList.add('bg-[#08110D]', 'text-white');
+            }
+            filterOrdersList();
+        }
+
+        function clearOrderSearch() {
+            const input = document.getElementById('orderSearchInput');
+            if (input) {
+                input.value = '';
+                filterOrdersList();
+            }
+        }
+
+        function filterOrdersList() {
+            const searchInput = document.getElementById('orderSearchInput');
+            const clearBtn = document.getElementById('clearSearchBtn');
+            const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+            if (clearBtn) {
+                clearBtn.classList.toggle('hidden', query.length === 0);
+            }
+
+            const cards = document.querySelectorAll('.order-card');
+            let visibleCount = 0;
+
+            cards.forEach(card => {
+                const orderRef = card.getAttribute('data-order-ref') || '';
+                const customerName = card.getAttribute('data-customer-name') || '';
+                const customerPhone = card.getAttribute('data-customer-phone') || '';
+                const orderStatus = card.getAttribute('data-order-status') || '';
+                const paymentStatus = card.getAttribute('data-payment-status') || '';
+                const totalAmount = card.getAttribute('data-total-amount') || '';
+
+                // Filter condition
+                let matchesFilter = false;
+                if (currentOrderFilter === 'all') {
+                    matchesFilter = true;
+                } else if (currentOrderFilter === 'claimed') {
+                    matchesFilter = (paymentStatus === 'claimed');
+                } else if (currentOrderFilter === 'paid') {
+                    matchesFilter = (paymentStatus === 'paid');
+                } else if (currentOrderFilter === orderStatus) {
+                    matchesFilter = true;
+                }
+
+                // Search condition
+                let matchesSearch = true;
+                if (query.length > 0) {
+                    matchesSearch = orderRef.includes(query) ||
+                                    customerName.includes(query) ||
+                                    customerPhone.includes(query) ||
+                                    totalAmount.includes(query);
+                }
+
+                if (matchesFilter && matchesSearch) {
+                    card.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            const noResultsNotice = document.getElementById('noSearchResultsNotice');
+            if (noResultsNotice) {
+                noResultsNotice.classList.toggle('hidden', visibleCount > 0 || cards.length === 0);
+            }
+        }
+
+        // Mobile collapsible analytics section
+        let isAnalyticsExpanded = true;
+        function toggleAnalyticsSection() {
+            isAnalyticsExpanded = !isAnalyticsExpanded;
+            const content = document.getElementById('analyticsContent');
+            const chevron = document.getElementById('analyticsHeaderToggleChevron');
+            const text = document.getElementById('analyticsToggleText');
+            const bottomChevron = document.getElementById('analyticsToggleChevron');
+            if (content) content.classList.toggle('hidden', !isAnalyticsExpanded);
+            if (chevron) chevron.textContent = isAnalyticsExpanded ? '▾' : '▸';
+            if (text) text.textContent = isAnalyticsExpanded ? 'Less Analytics' : 'More Analytics';
+            if (bottomChevron) bottomChevron.textContent = isAnalyticsExpanded ? '▴' : '▾';
+        }
 
         function triggerUpgradeModal(featureName) {
             openProUpgradeModal(featureName === 'ledger' ? 'Extended & Lifetime Sales Ledger' : (featureName || 'Pro Features'));
@@ -871,6 +997,9 @@
             if (isTrackingAuthorized) {
                 fetchLiveVisitors();
                 setInterval(fetchLiveVisitors, 8000);
+            }
+            if (window.innerWidth < 768) {
+                toggleAnalyticsSection();
             }
         });
     </script>

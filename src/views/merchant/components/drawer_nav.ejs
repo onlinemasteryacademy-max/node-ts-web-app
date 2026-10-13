@@ -1,0 +1,245 @@
+<!-- Mobile Secondary Navigation Drawer Component (Batch 2 & 3) -->
+<div id="merchantDrawerBackdrop" 
+     class="fixed inset-0 z-50 bg-[#08110D]/60 backdrop-blur-xs transition-opacity duration-300 opacity-0 pointer-events-none"
+     onclick="closeMerchantDrawer()">
+</div>
+
+<aside id="merchantDrawer" 
+       class="fixed top-0 right-0 bottom-0 z-50 w-[85%] max-w-sm bg-white shadow-2xl flex flex-col justify-between transform translate-x-full transition-transform duration-300 ease-out font-body"
+       aria-label="Merchant Navigation Menu">
+    
+    <!-- Drawer Top Header -->
+    <div class="p-4 sm:p-5 border-b border-[#E3E9E5] bg-[#F8FAF8] flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3 min-w-0">
+            <% if (typeof store !== 'undefined' && store && store.logo_url) { %>
+                <img src="<%= store.logo_url %>" alt="Logo" class="w-10 h-10 rounded-xl object-contain border border-[#E3E9E5] bg-white p-0.5 shrink-0 shadow-2xs">
+            <% } else { %>
+                <div class="w-10 h-10 rounded-xl bg-[#08110D] text-[#19D98B] font-bold text-sm flex items-center justify-center font-display shrink-0 shadow-2xs">
+                    <%= (typeof store !== 'undefined' && store && store.store_name ? store.store_name.charAt(0).toUpperCase() : 'S') %>
+                </div>
+            <% } %>
+            <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-xs sm:text-sm font-bold text-[#08110D] truncate font-display">
+                        <%= (typeof store !== 'undefined' && store && store.store_name) ? store.store_name : 'My Store' %>
+                    </h3>
+                    <span class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full shrink-0 <%= (typeof isPro !== 'undefined' && isPro) ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700' %>">
+                        <%= (typeof isPro !== 'undefined' && isPro) ? 'PRO' : 'FREE' %>
+                    </span>
+                </div>
+                <p class="text-[11px] text-[#6B756F] truncate mt-0.5 font-mono">
+                    <%= (typeof store !== 'undefined' && store && store.slug) ? store.slug + '.zlik.store' : 'zlik merchant' %>
+                </p>
+            </div>
+        </div>
+
+        <button type="button" 
+                onclick="closeMerchantDrawer()" 
+                class="w-9 h-9 rounded-xl bg-white border border-[#E3E9E5] text-[#6B756F] hover:text-[#08110D] hover:bg-gray-50 flex items-center justify-center transition shadow-2xs shrink-0"
+                aria-label="Close menu">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Drawer Navigation Content (Scrollable) -->
+    <div class="flex-1 overflow-y-auto px-3.5 py-4 space-y-5 text-xs">
+        
+        <!-- Section 1: Overview & Reports -->
+        <div class="space-y-1">
+            <span class="px-2.5 text-[10px] font-extrabold uppercase tracking-wider text-[#6B756F] font-mono">Overview & Reports</span>
+            
+            <a href="/merchant" class="flex items-center justify-between px-3 py-2.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'orders') ? 'bg-[#08110D] text-white font-semibold shadow-2xs' : 'text-[#08110D] hover:bg-[#F8FAF8]' %>">
+                <div class="flex items-center gap-3">
+                    <span class="text-base">📊</span>
+                    <span>Dashboard & Orders</span>
+                </div>
+                <span class="text-[10px] <%= (typeof activeTab !== 'undefined' && activeTab === 'orders') ? 'text-[#19D98B]' : 'text-[#6B756F]' %> font-mono">Primary</span>
+            </a>
+
+            <a href="/merchant/ledger" class="flex items-center justify-between px-3 py-2.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'ledger') ? 'bg-[#08110D] text-white font-semibold shadow-2xs' : 'text-[#08110D] hover:bg-[#F8FAF8]' %>">
+                <div class="flex items-center gap-3">
+                    <span class="text-base">📈</span>
+                    <span>Sales Ledger & Analytics</span>
+                </div>
+                <span class="text-[10px] text-[#6B756F]">&rarr;</span>
+            </a>
+
+            <a href="/merchant/reviews" class="flex items-center justify-between px-3 py-2.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'reviews') ? 'bg-[#08110D] text-white font-semibold shadow-2xs' : 'text-[#08110D] hover:bg-[#F8FAF8]' %>">
+                <div class="flex items-center gap-3">
+                    <span class="text-base">⭐</span>
+                    <span>Customer Reviews</span>
+                </div>
+                <% if (typeof pending_count !== 'undefined' && pending_count > 0) { %>
+                    <span class="bg-[#19D98B] text-[#08110D] font-bold text-[10px] px-2 py-0.5 rounded-full"><%= pending_count %> new</span>
+                <% } else { %>
+                    <span class="text-[10px] text-[#6B756F]">&rarr;</span>
+                <% } %>
+            </a>
+        </div>
+
+        <!-- Section 2: Store Management -->
+        <div class="space-y-1 pt-2 border-t border-[#E3E9E5]">
+            <span class="px-2.5 text-[10px] font-extrabold uppercase tracking-wider text-[#6B756F] font-mono">Store Management</span>
+            
+            <a href="/merchant/items" class="flex items-center justify-between px-3 py-2.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'products') ? 'bg-[#08110D] text-white font-semibold shadow-2xs' : 'text-[#08110D] hover:bg-[#F8FAF8]' %>">
+                <div class="flex items-center gap-3">
+                    <span class="text-base">📦</span>
+                    <span>Products & Inventory</span>
+                </div>
+                <span class="text-[10px] text-[#6B756F]">&rarr;</span>
+            </a>
+
+            <a href="/merchant/settings" class="flex items-center justify-between px-3 py-2.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'settings') ? 'bg-[#08110D] text-white font-semibold shadow-2xs' : 'text-[#08110D] hover:bg-[#F8FAF8]' %>">
+                <div class="flex items-center gap-3">
+                    <span class="text-base">⚙️</span>
+                    <span>Store Settings & Payout Bank</span>
+                </div>
+                <span class="text-[10px] text-[#6B756F]">&rarr;</span>
+            </a>
+
+            <a href="/merchant/verification" class="flex items-center justify-between px-3 py-2.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'verification') ? 'bg-[#08110D] text-white font-semibold shadow-2xs' : 'text-[#08110D] hover:bg-[#F8FAF8]' %>">
+                <div class="flex items-center gap-3">
+                    <span class="text-base">🛡️</span>
+                    <span>Trust & Identity Verification</span>
+                </div>
+                <span class="text-[10px] font-bold text-[#087A50] bg-emerald-50 px-2 py-0.5 rounded-full">KYC</span>
+            </a>
+        </div>
+
+        <!-- Section 3: Preferences & Utilities -->
+        <div class="space-y-1 pt-2 border-t border-[#E3E9E5]">
+            <span class="px-2.5 text-[10px] font-extrabold uppercase tracking-wider text-[#6B756F] font-mono">Preferences & Tools</span>
+            
+            <!-- Sound Audio Chime Toggle -->
+            <button type="button" 
+                    onclick="handleDrawerToggleAudio()" 
+                    id="drawerSoundToggle" 
+                    class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[#08110D] hover:bg-[#F8FAF8] transition text-left">
+                <div class="flex items-center gap-3">
+                    <span id="drawerSoundIcon" class="text-base">🔊</span>
+                    <span>Order Sound Chimes</span>
+                </div>
+                <span id="drawerSoundState" class="text-[10px] font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-[#087A50] border border-emerald-200">ON</span>
+            </button>
+
+            <!-- Storefront QR Code -->
+            <button type="button" 
+                    onclick="closeMerchantDrawer(); if(typeof openQrModal === 'function') openQrModal(); else window.location.href='/merchant/settings#qr';" 
+                    class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[#08110D] hover:bg-[#F8FAF8] transition text-left">
+                <div class="flex items-center gap-3">
+                    <span class="text-base">📱</span>
+                    <span>Storefront QR Code</span>
+                </div>
+                <span class="text-[10px] text-[#6B756F]">View</span>
+            </button>
+
+            <!-- Public Storefront Preview -->
+            <% if (typeof store !== 'undefined' && store && store.slug) { %>
+                <a href="/<%= store.slug %>" target="_blank" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-[#087A50] bg-emerald-50/60 hover:bg-emerald-100/50 transition">
+                    <div class="flex items-center gap-3">
+                        <span class="text-base">↗</span>
+                        <span class="font-semibold">View Live Storefront</span>
+                    </div>
+                    <span class="text-[10px] font-mono text-[#087A50]">Open</span>
+                </a>
+            <% } %>
+        </div>
+
+        <!-- Section 4: Pro Plan Status -->
+        <div class="p-3.5 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5] space-y-2">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm">⚡</span>
+                    <span class="font-bold text-[#08110D]">Plan: <%= (typeof isPro !== 'undefined' && isPro) ? 'Pro Seller' : 'Free Tier' %></span>
+                </div>
+                <% if (typeof isPro !== 'undefined' && !isPro) { %>
+                    <button type="button" 
+                            onclick="closeMerchantDrawer(); if(typeof triggerUpgradeModal === 'function') triggerUpgradeModal('Drawer Navigation'); else window.location.href='/#pricing';"
+                            class="bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-[10px] px-2.5 py-1 rounded-lg transition shadow-2xs font-display">
+                        Upgrade
+                    </button>
+                <% } else { %>
+                    <span class="text-[10px] font-bold text-[#087A50] bg-emerald-100 px-2 py-0.5 rounded-full font-mono">ACTIVE</span>
+                <% } %>
+            </div>
+            <p class="text-[11px] text-[#6B756F] leading-tight">
+                <%= (typeof isPro !== 'undefined' && isPro) ? 'Unlimited products, multi-stores, full ledger history & live analytics active.' : 'Upgrade to Pro for unlimited products, 15 store templates, and full sales history.' %>
+            </p>
+        </div>
+    </div>
+
+    <!-- Drawer Footer Actions -->
+    <div class="p-4 border-t border-[#E3E9E5] bg-[#F8FAF8] shrink-0 space-y-2">
+        <a href="/merchant/logout" 
+           onclick="return confirm('Are you sure you want to sign out of zlik merchant?');"
+           class="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-red-200 bg-white text-red-700 hover:bg-red-50 font-bold text-xs transition shadow-2xs">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+            </svg>
+            <span>Sign Out</span>
+        </a>
+        <p class="text-[10px] text-center text-[#6B756F]/80">zlik merchant v1.0.0 &bull; Selling, Made Slick</p>
+    </div>
+</aside>
+
+<script>
+    function openMerchantDrawer() {
+        const backdrop = document.getElementById('merchantDrawerBackdrop');
+        const drawer = document.getElementById('merchantDrawer');
+        if (!drawer || !backdrop) return;
+        
+        backdrop.classList.remove('opacity-0', 'pointer-events-none');
+        backdrop.classList.add('opacity-100', 'pointer-events-auto');
+        drawer.classList.remove('translate-x-full');
+        document.body.style.overflow = 'hidden';
+
+        // Sync drawer audio button state
+        syncDrawerAudioState();
+    }
+
+    function closeMerchantDrawer() {
+        const backdrop = document.getElementById('merchantDrawerBackdrop');
+        const drawer = document.getElementById('merchantDrawer');
+        if (!drawer || !backdrop) return;
+
+        backdrop.classList.remove('opacity-100', 'pointer-events-auto');
+        backdrop.classList.add('opacity-0', 'pointer-events-none');
+        drawer.classList.add('translate-x-full');
+        document.body.style.overflow = '';
+    }
+
+    function syncDrawerAudioState() {
+        const drawerState = document.getElementById('drawerSoundState');
+        const drawerIcon = document.getElementById('drawerSoundIcon');
+        const isMuted = (typeof audioMuted !== 'undefined') ? audioMuted : (localStorage.getItem('zlik_sound_muted') === 'true');
+        
+        if (drawerState && drawerIcon) {
+            if (isMuted) {
+                drawerState.textContent = 'MUTED';
+                drawerState.className = 'text-[10px] font-bold font-mono px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 border border-gray-200';
+                drawerIcon.textContent = '🔇';
+            } else {
+                drawerState.textContent = 'ON';
+                drawerState.className = 'text-[10px] font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-[#087A50] border border-emerald-200';
+                drawerIcon.textContent = '🔊';
+            }
+        }
+    }
+
+    function handleDrawerToggleAudio() {
+        if (typeof toggleAudio === 'function') {
+            toggleAudio();
+        } else {
+            const current = localStorage.getItem('zlik_sound_muted') === 'true';
+            localStorage.setItem('zlik_sound_muted', (!current).toString());
+        }
+        syncDrawerAudioState();
+    }
+
+    // Close drawer on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeMerchantDrawer();
+    });
+</script>

@@ -41,20 +41,17 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
-    <!-- Header Navigation -->
-    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E3E9E5] shadow-2xs">
-        <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-4">
-            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-                <a href="/merchant" class="text-xs font-medium text-[#6B756F] hover:text-[#08110D] flex items-center gap-1 transition shrink-0">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                    </svg>
-                    <span class="hidden sm:inline">Dashboard</span>
-                </a>
-                <span class="text-gray-300 hidden sm:inline">/</span>
-                <h1 class="text-xs sm:text-sm font-semibold text-[#08110D] truncate">Sales Ledger</h1>
+    <!-- Merchant Header (Universal Component) -->
+    <%- include('components/header_nav.ejs', { activeTab: 'ledger', pageTitle: 'Sales Ledger', backUrl: '/merchant' }) %>
+
+    <main class="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24 sm:pb-8 flex-1 w-full space-y-5 sm:space-y-6">
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E3E9E5]/60 pb-3">
+            <div>
+                <h2 class="text-base sm:text-lg font-extrabold text-[#08110D] font-display">Sales Ledger & Revenue</h2>
+                <p class="text-xs text-[#6B756F]">Historical transactions, confirmed payouts, and customer broadcasts</p>
             </div>
-            <div class="flex items-center gap-1.5 sm:gap-2">
+            <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 <button type="button" onclick="openDailySalesRecapModal()" title="Daily Sales Recap" class="bg-white hover:bg-gray-50 text-[#08110D] border border-[#E3E9E5] text-xs font-semibold p-2 sm:px-3 sm:py-2 rounded-xl transition flex items-center gap-1.5 shadow-2xs">
                     <span>📲</span>
                     <span class="hidden sm:inline">Daily Recap</span>
@@ -71,23 +68,11 @@
                 <% } else { %>
                     <button onclick="openProUpgradeModal('CSV Sales Ledger Export')" title="Export CSV (Pro)" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] text-xs font-medium p-2 sm:px-3.5 sm:py-2 rounded-xl border border-[#E3E9E5] transition flex items-center gap-1.5">
                         <span>🔒</span>
-                        <span class="hidden sm:inline">Export CSV (Pro)</span>
+                        <span class="hidden sm:inline">Export (Pro)</span>
                     </button>
                 <% } %>
             </div>
         </div>
-
-        <div class="hidden sm:flex max-w-7xl mx-auto px-4 items-center gap-2 overflow-x-auto text-xs font-medium border-t border-[#E3E9E5]/60 pt-2 pb-2">
-            <a href="/merchant" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Orders</a>
-            <a href="/merchant/items" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Products</a>
-            <a href="/merchant/ledger" class="px-3.5 py-1.5 rounded-xl bg-[#08110D] text-white font-semibold">Sales Ledger</a>
-            <a href="/merchant/debts" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Debts</a>
-            <a href="/merchant/messages" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Live Chat</a>
-            <a href="/merchant/settings" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Settings</a>
-        </div>
-    </header>
-
-    <main class="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24 sm:pb-8 flex-1 w-full space-y-5 sm:space-y-6">
 
 
 

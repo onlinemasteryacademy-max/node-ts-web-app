@@ -1,0 +1,61 @@
+<!-- Reusable Mobile Bottom Sheet Shell Component (Batch 2) -->
+<!-- 
+  Usage:
+  Include this partial with:
+  {
+    sheetId: 'uniqueSheetId',
+    sheetTitle: 'Sheet Title',
+    sheetSubtitle: 'Optional subtitle',
+    sheetIcon: '📦',
+    maxHeightClass: 'max-h-[90vh]'
+  }
+-->
+
+<div id="<%= typeof sheetId !== 'undefined' ? sheetId + 'Backdrop' : 'sheetBackdrop' %>" 
+     class="fixed inset-0 z-50 bg-[#08110D]/65 backdrop-blur-xs transition-opacity duration-300 opacity-0 pointer-events-none flex items-end sm:items-center justify-center p-0 sm:p-4 font-body"
+     onclick="if(event.target === this) { if(typeof closeSheet === 'function') closeSheet('<%= typeof sheetId !== 'undefined' ? sheetId : '' %>'); }">
+    
+    <div id="<%= typeof sheetId !== 'undefined' ? sheetId : 'mobileSheet' %>" 
+         class="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl border border-[#E3E9E5] overflow-hidden flex flex-col transform translate-y-full sm:translate-y-0 sm:scale-95 transition-all duration-300 ease-out <%= typeof maxHeightClass !== 'undefined' ? maxHeightClass : 'max-h-[88vh]' %>"
+         role="dialog"
+         aria-modal="true">
+        
+        <!-- Drag Handle for Mobile Viewports -->
+        <div class="sm:hidden w-full pt-3 pb-1 flex justify-center shrink-0 cursor-grab active:cursor-grabbing">
+            <span class="w-10 h-1.5 rounded-full bg-[#D1DCD6]"></span>
+        </div>
+
+        <!-- Sticky Sheet Header -->
+        <div class="px-5 py-3.5 border-b border-[#E3E9E5] flex items-center justify-between bg-[#F8FAF8] shrink-0">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <% if (typeof sheetIcon !== 'undefined' && sheetIcon) { %>
+                    <span class="w-8 h-8 rounded-xl bg-white border border-[#E3E9E5] flex items-center justify-center text-sm shadow-2xs shrink-0">
+                        <%= sheetIcon %>
+                    </span>
+                <% } %>
+                <div class="min-w-0">
+                    <h3 class="font-bold text-sm text-[#08110D] truncate font-display">
+                        <%= typeof sheetTitle !== 'undefined' ? sheetTitle : 'Dialog' %>
+                    </h3>
+                    <% if (typeof sheetSubtitle !== 'undefined' && sheetSubtitle) { %>
+                        <p class="text-[11px] text-[#6B756F] truncate mt-0.5">
+                            <%= sheetSubtitle %>
+                        </p>
+                    <% } %>
+                </div>
+            </div>
+
+            <button type="button" 
+                    onclick="if(typeof closeSheet === 'function') closeSheet('<%= typeof sheetId !== 'undefined' ? sheetId : '' %>');"
+                    class="w-8 h-8 rounded-full bg-white border border-[#E3E9E5] text-[#6B756F] hover:text-[#08110D] hover:bg-gray-50 flex items-center justify-center transition shadow-2xs shrink-0 font-bold text-xs"
+                    aria-label="Close">
+                ✕
+            </button>
+        </div>
+
+        <!-- Scrollable Body Slot Placeholder -->
+        <div class="overflow-y-auto flex-1 p-5 text-xs pb-safe">
+            <!-- Sheet content injected here -->
+        </div>
+    </div>
+</div>

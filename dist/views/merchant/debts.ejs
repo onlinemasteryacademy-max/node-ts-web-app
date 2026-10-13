@@ -41,39 +41,21 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
-    <!-- Header Navigation -->
-    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E3E9E5] shadow-2xs">
-        <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-4">
-            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-                <a href="/merchant" class="text-xs font-medium text-[#6B756F] hover:text-[#08110D] flex items-center gap-1 transition shrink-0">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                    </svg>
-                    <span class="hidden sm:inline">Dashboard</span>
-                </a>
-                <span class="text-gray-300 hidden sm:inline">/</span>
-                <h1 class="text-xs sm:text-sm font-semibold text-[#08110D] truncate">Debt Tracker</h1>
-            </div>
-            <div class="flex items-center gap-1.5 sm:gap-2">
-                <button onclick="openNewDebtModal()" class="bg-[#08110D] hover:bg-black text-[#19D98B] text-xs font-semibold px-3 sm:px-3.5 py-2 rounded-xl transition shadow-2xs flex items-center gap-1">
-                    <span class="text-sm leading-none">+</span>
-                    <span>Record</span>
-                    <span class="hidden sm:inline">Debt</span>
-                </button>
-            </div>
-        </div>
-
-        <div class="hidden sm:flex max-w-7xl mx-auto px-4 items-center gap-2 overflow-x-auto text-xs font-medium border-t border-[#E3E9E5]/60 pt-2 pb-2">
-            <a href="/merchant" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Orders</a>
-            <a href="/merchant/items" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Products</a>
-            <a href="/merchant/ledger" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Sales Ledger</a>
-            <a href="/merchant/debts" class="px-3.5 py-1.5 rounded-xl bg-[#08110D] text-white font-semibold">Debts</a>
-            <a href="/merchant/messages" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Live Chat</a>
-            <a href="/merchant/settings" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Settings</a>
-        </div>
-    </header>
+    <!-- Merchant Header (Universal Component) -->
+    <%- include('components/header_nav.ejs', { activeTab: 'debts', pageTitle: 'Debt Tracker' }) %>
 
     <main class="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24 sm:pb-8 flex-1 w-full space-y-5 sm:space-y-6">
+
+        <div class="flex items-center justify-between gap-3 border-b border-[#E3E9E5]/60 pb-3">
+            <div>
+                <h2 class="text-base sm:text-lg font-extrabold text-[#08110D] font-display">Customer Debt Tracker</h2>
+                <p class="text-xs text-[#6B756F]">Track pending customer credit, due dates, and send 1-click WhatsApp reminders</p>
+            </div>
+            <button onclick="openNewDebtModal()" class="bg-[#08110D] hover:bg-black text-[#19D98B] text-xs font-semibold px-3.5 py-2 rounded-xl transition shadow-2xs flex items-center gap-1.5 shrink-0">
+                <span class="text-sm leading-none">+</span>
+                <span>Record Debt</span>
+            </button>
+        </div>
 
 
 
@@ -116,40 +98,57 @@
             </div>
         </div>
 
-        <!-- Debts List -->
-        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 sm:p-6 shadow-xs space-y-4">
-            <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
+        <!-- Debts List Container -->
+        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-4 sm:p-6 shadow-xs space-y-3.5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b border-[#E3E9E5] pb-3">
                 <div>
-                    <h3 class="font-semibold text-sm text-[#08110D]">Customer Debts</h3>
-                    <p class="text-[11px] text-[#6B756F]">Track unpaid balances and send WhatsApp payment reminders.</p>
+                    <h3 class="font-extrabold text-sm text-[#08110D] font-display">Customer Debts</h3>
+                    <p class="text-[11px] text-[#6B756F]">Track unpaid balances, due dates, and send 1-click WhatsApp payment reminders.</p>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="filterDebts('all')" id="debtFilter-all" class="px-3 py-1 rounded-xl text-xs font-semibold bg-[#08110D] text-white transition">All</button>
-                    <button onclick="filterDebts('pending')" id="debtFilter-pending" class="px-3 py-1 rounded-xl text-xs font-medium text-[#6B756F] hover:bg-gray-100 transition">Pending</button>
-                    <button onclick="filterDebts('paid')" id="debtFilter-paid" class="px-3 py-1 rounded-xl text-xs font-medium text-[#6B756F] hover:bg-gray-100 transition">Settled</button>
+                <!-- Filter Pills -->
+                <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 text-xs font-semibold">
+                    <button onclick="filterDebts('all')" id="debtFilter-all" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#08110D] text-white transition whitespace-nowrap">All</button>
+                    <button onclick="filterDebts('pending')" id="debtFilter-pending" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-[#6B756F] border border-[#E3E9E5] hover:text-[#08110D] transition whitespace-nowrap">Pending</button>
+                    <button onclick="filterDebts('paid')" id="debtFilter-paid" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-[#6B756F] border border-[#E3E9E5] hover:text-[#08110D] transition whitespace-nowrap">Settled</button>
                 </div>
+            </div>
+
+            <!-- Instant Search Bar -->
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#6B756F] text-xs">🔍</span>
+                <input type="text" id="debtSearchInput" oninput="filterDebtsList()" placeholder="Search debtor by name, phone, or item note..." class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-2xl pl-9 pr-8 py-2.5 text-xs text-[#08110D] placeholder-[#6B756F]/60 outline-none focus:border-[#08110D] shadow-2xs transition">
+                <button type="button" onclick="clearDebtSearch()" id="clearDebtSearchBtn" class="absolute inset-y-0 right-0 pr-3 flex items-center text-[#6B756F] hover:text-[#08110D] text-xs hidden">✕</button>
             </div>
 
             <div id="debtsContainer" class="space-y-3">
                 <% if (!debts || debts.length === 0) { %>
-                    <div class="p-12 text-center text-[#6B756F] text-xs space-y-2">
-                        <p class="text-base">🎉 No outstanding debts recorded.</p>
-                        <p class="text-[11px]">Click "Record New Debt" to track a customer credit or pay-later balance.</p>
+                    <div class="p-8 sm:p-12 text-center text-[#6B756F] text-xs space-y-2.5">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-[#087A50] text-xl flex items-center justify-center mx-auto">🎉</div>
+                        <h4 class="font-bold text-sm text-[#08110D]">No outstanding debts recorded</h4>
+                        <p class="text-[11px] max-w-sm mx-auto text-[#6B756F]">Click "Record Debt" to track a customer credit, installment, or pay-later balance.</p>
                     </div>
                 <% } else { %>
                     <% debts.forEach(debt => { 
                         const isPending = debt.status === 'pending';
                     %>
-                        <div class="debt-card p-4 rounded-2xl border border-[#E3E9E5] bg-[#F8FAF8] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:border-[#08110D] transition" data-status="<%= debt.status %>">
-                            <div class="space-y-1">
-                                <div class="flex items-center gap-2">
-                                    <h4 class="font-bold text-sm text-[#08110D]"><%= debt.customer_name %></h4>
-                                    <span class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full <%= isPending ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-800' %>">
+                        <div class="debt-card p-3.5 sm:p-4 rounded-2xl border border-[#E3E9E5] bg-[#F8FAF8] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs hover:border-[#08110D] transition" 
+                             data-status="<%= debt.status %>"
+                             data-customer-name="<%= (debt.customer_name || '').toLowerCase() %>"
+                             data-customer-phone="<%= (debt.customer_phone || '').toLowerCase() %>"
+                             data-description="<%= (debt.description || '').toLowerCase() %>"
+                             data-notes="<%= (debt.notes || '').toLowerCase() %>">
+                            <div class="space-y-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h4 class="font-bold text-sm text-[#08110D] truncate"><%= debt.customer_name %></h4>
+                                    <span class="text-[9.5px] font-bold uppercase px-2 py-0.5 rounded-full <%= isPending ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200' %>">
                                         ● <%= isPending ? 'Pending' : 'Settled' %>
                                     </span>
                                 </div>
-                                <div class="text-[#6B756F] flex flex-wrap items-center gap-3 text-[11px]">
-                                    <span>📞 <%= debt.customer_phone %></span>
+                                <div class="text-[#6B756F] flex flex-wrap items-center gap-2 text-[11px]">
+                                    <span class="font-mono">📞 <%= debt.customer_phone %></span>
+                                    <% if (debt.customer_phone) { %>
+                                        <a href="tel:<%= debt.customer_phone %>" title="Call customer" class="w-5 h-5 rounded-md bg-emerald-100 text-emerald-800 flex items-center justify-center text-[9px] hover:bg-emerald-200 transition">📞</a>
+                                    <% } %>
                                     <% if (debt.description) { %>
                                         <span>&bull; Item: <strong><%= debt.description %></strong></span>
                                     <% } %>
@@ -158,13 +157,13 @@
                                     <% } %>
                                 </div>
                                 <% if (debt.notes) { %>
-                                    <p class="text-[11px] text-[#6B756F] italic">Note: <%= debt.notes %></p>
+                                    <p class="text-[10.5px] text-[#6B756F] italic">Note: <%= debt.notes %></p>
                                 <% } %>
                             </div>
 
                             <div class="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E3E9E5]/60">
-                                <div class="text-right">
-                                    <div class="text-base font-bold font-mono <%= isPending ? 'text-red-600' : 'text-[#087A50]' %>">
+                                <div class="text-left sm:text-right">
+                                    <div class="text-base font-extrabold font-mono <%= isPending ? 'text-red-600' : 'text-[#087A50]' %>">
                                         ₦<%= Number(debt.amount).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
                                     </div>
                                     <span class="text-[10px] text-[#6B756F]"><%= new Date(debt.created_at).toLocaleDateString() %></span>
@@ -172,30 +171,37 @@
 
                                 <div class="flex items-center gap-1.5 shrink-0">
                                     <% if (isPending) { %>
-                                        <button type="button" onclick="sendWhatsAppReminder(<%= debt.id %>)" class="bg-[#19D98B]/20 hover:bg-[#19D98B]/30 text-[#087A50] font-semibold text-xs px-3 py-2 rounded-xl transition flex items-center gap-1" title="Send WhatsApp Payment Reminder">
+                                        <button type="button" onclick="sendWhatsAppReminder(<%= debt.id %>)" class="min-h-[34px] bg-[#19D98B]/20 hover:bg-[#19D98B]/30 text-[#087A50] font-bold text-xs px-2.5 sm:px-3 py-1.5 rounded-xl transition flex items-center gap-1 shadow-2xs" title="Send WhatsApp Payment Reminder">
                                             <span>💬</span> <span class="hidden sm:inline">WhatsApp</span>
                                         </button>
-                                        <button type="button" onclick="markDebtPaid(<%= debt.id %>)" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs px-3 py-2 rounded-xl transition shadow-2xs" title="Mark as Paid">
+                                        <button type="button" onclick="markDebtPaid(<%= debt.id %>)" class="min-h-[34px] bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs px-3 py-1.5 rounded-xl transition shadow-2xs flex items-center gap-1" title="Mark as Paid">
                                             <span>✓ Paid</span>
                                         </button>
                                     <% } %>
-                                    <button type="button" onclick="deleteDebt(<%= debt.id %>)" class="text-[#6B756F] hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition" title="Delete Record">
-                                        🗑
+                                    <button type="button" onclick="deleteDebt(<%= debt.id %>)" class="min-h-[34px] text-[#6B756F] hover:text-red-700 p-2 rounded-xl hover:bg-red-50 transition" title="Delete Record">
+                                        🗑️
                                     </button>
                                 </div>
                             </div>
                         </div>
                     <% }) %>
                 <% } %>
+
+                <!-- Empty Search Results Notice -->
+                <div id="noDebtsSearchNotice" class="hidden p-8 text-center text-[#6B756F] text-xs">
+                    No debts match your search query or filter.
+                </div>
             </div>
         </div>
     </main>
 
-    <!-- Record New Debt Modal -->
+    <!-- Record New Debt Modal (Mobile Bottom Sheet Pattern) -->
     <div id="newDebtModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-        <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full p-6 space-y-4 border border-[#E3E9E5] shadow-2xl text-xs max-h-[90vh] overflow-y-auto pb-safe sm:pb-6">
+        <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-md w-full p-5 sm:p-6 space-y-4 border border-[#E3E9E5] shadow-2xl text-xs max-h-[90vh] overflow-y-auto pb-safe sm:pb-6">
+            <!-- Mobile Drag Handle -->
+            <div class="w-10 h-1 bg-gray-300 rounded-full mx-auto my-2 sm:hidden shrink-0"></div>
             <div class="flex items-center justify-between pb-3 border-b border-[#E3E9E5]">
-                <h3 class="font-semibold text-sm text-[#08110D]">Record Customer Debt</h3>
+                <h3 class="font-extrabold text-sm text-[#08110D] font-display">Record Customer Debt</h3>
                 <button type="button" onclick="closeNewDebtModal()" class="text-[#6B756F] font-bold text-sm hover:text-black p-1">✕</button>
             </div>
 
@@ -348,26 +354,67 @@
             }
         }
 
+        let currentDebtFilter = 'all';
+
         function filterDebts(status) {
+            currentDebtFilter = status;
+            ['all', 'pending', 'paid'].forEach(s => {
+                const btn = document.getElementById(`debtFilter-${s}`);
+                if (btn) {
+                    if (s === status) {
+                        btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold bg-[#08110D] text-white transition whitespace-nowrap';
+                    } else {
+                        btn.className = 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-[#6B756F] border border-[#E3E9E5] hover:text-[#08110D] transition whitespace-nowrap';
+                    }
+                }
+            });
+            filterDebtsList();
+        }
+
+        function clearDebtSearch() {
+            const input = document.getElementById('debtSearchInput');
+            if (input) {
+                input.value = '';
+                filterDebtsList();
+            }
+        }
+
+        function filterDebtsList() {
+            const searchInput = document.getElementById('debtSearchInput');
+            const clearBtn = document.getElementById('clearDebtSearchBtn');
+            const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+            if (clearBtn) {
+                clearBtn.classList.toggle('hidden', query.length === 0);
+            }
+
             const cards = document.querySelectorAll('.debt-card');
+            let visibleCount = 0;
+
             cards.forEach(card => {
-                if (status === 'all' || card.dataset.status === status) {
+                const status = card.getAttribute('data-status') || '';
+                const custName = card.getAttribute('data-customer-name') || '';
+                const custPhone = card.getAttribute('data-customer-phone') || '';
+                const desc = card.getAttribute('data-description') || '';
+                const notes = card.getAttribute('data-notes') || '';
+
+                const matchesStatus = (currentDebtFilter === 'all' || status === currentDebtFilter);
+                let matchesSearch = true;
+                if (query.length > 0) {
+                    matchesSearch = custName.includes(query) || custPhone.includes(query) || desc.includes(query) || notes.includes(query);
+                }
+
+                if (matchesStatus && matchesSearch) {
                     card.classList.remove('hidden');
+                    visibleCount++;
                 } else {
                     card.classList.add('hidden');
                 }
             });
 
-            ['all', 'pending', 'paid'].forEach(s => {
-                const btn = document.getElementById(`debtFilter-${s}`);
-                if (btn) {
-                    if (s === status) {
-                        btn.className = 'px-3 py-1 rounded-xl text-xs font-semibold bg-[#08110D] text-white transition';
-                    } else {
-                        btn.className = 'px-3 py-1 rounded-xl text-xs font-medium text-[#6B756F] hover:bg-gray-100 transition';
-                    }
-                }
-            });
+            const noSearchNotice = document.getElementById('noDebtsSearchNotice');
+            if (noSearchNotice) {
+                noSearchNotice.classList.toggle('hidden', visibleCount > 0 || cards.length === 0);
+            }
         }
     </script>
     <%- include('components/upgrade_modal.ejs') %>

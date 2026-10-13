@@ -1,0 +1,125 @@
+<!-- Merchant Universal Header Component (Batch 2 & 3) -->
+<header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E3E9E5] shadow-2xs font-body select-none">
+    <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-4">
+        
+        <!-- Left: Brand / Store Identity or Contextual Back Button -->
+        <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+            <% if (typeof backUrl !== 'undefined' && backUrl) { %>
+                <!-- Contextual Back Button on Child Screens -->
+                <a href="<%= backUrl %>" 
+                   class="w-9 h-9 rounded-xl bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] flex items-center justify-center transition border border-[#E3E9E5] shrink-0"
+                   aria-label="Back">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                </a>
+            <% } %>
+
+            <!-- Store Avatar / Logo -->
+            <% if (typeof store !== 'undefined' && store && store.logo_url) { %>
+                <img src="<%= store.logo_url %>" alt="Logo" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-contain border border-[#E3E9E5] bg-white p-0.5 shrink-0 shadow-2xs">
+            <% } else { %>
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#08110D] text-[#19D98B] font-bold text-sm sm:text-base flex items-center justify-center font-display shrink-0 shadow-2xs">
+                    <%= (typeof store !== 'undefined' && store && store.store_name ? store.store_name.charAt(0).toUpperCase() : 'S') %>
+                </div>
+            <% } %>
+
+            <div class="min-w-0">
+                <div class="flex items-center gap-1.5 sm:gap-2">
+                    <h1 class="text-xs sm:text-sm font-bold text-[#08110D] truncate font-display max-w-[130px] sm:max-w-[200px]">
+                        <%= (typeof pageTitle !== 'undefined' && pageTitle) ? pageTitle : ((typeof store !== 'undefined' && store && store.store_name) ? store.store_name : 'Merchant') %>
+                    </h1>
+                    <span class="text-[9px] sm:text-[10px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-full uppercase shrink-0 <%= (typeof isPro !== 'undefined' && isPro) ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700' %>">
+                        <%= (typeof isPro !== 'undefined' && isPro) ? 'PRO' : 'FREE' %>
+                    </span>
+                    <% if (typeof isPro !== 'undefined' && !isPro) { %>
+                        <button type="button" 
+                                onclick="if(typeof triggerUpgradeModal === 'function') triggerUpgradeModal('Header Upgrade'); else window.location.href='/#pricing';"
+                                class="text-[9px] sm:text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#08110D] hover:bg-black text-[#19D98B] transition shrink-0 hidden sm:flex items-center gap-1 shadow-2xs font-display">
+                            <span>⚡ Upgrade</span>
+                        </button>
+                    <% } %>
+                </div>
+                <p class="text-[11px] sm:text-xs text-[#6B756F] truncate">
+                    <%= (typeof store !== 'undefined' && store) ? (store.email || store.whatsapp_number || store.slug + '.zlik.store') : 'Merchant Console' %>
+                </p>
+            </div>
+        </div>
+
+        <!-- Right Header Actions -->
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            
+            <!-- Desktop-Only Utility Actions (Keeps Desktop Experience 100% Intact) -->
+            <div class="hidden sm:flex items-center gap-1.5 sm:gap-2">
+                <!-- Store QR Modal Trigger (Desktop) -->
+                <button type="button" onclick="if(typeof openQrModal === 'function') openQrModal(); else window.location.href='/merchant/settings#qr';" title="Store QR Code" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] text-xs font-semibold px-3 py-2 rounded-xl border border-[#E3E9E5] transition flex items-center gap-1.5 shadow-2xs">
+                    <svg class="w-4 h-4 text-[#08110D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                    </svg>
+                    <span>Store QR</span>
+                </button>
+
+                <!-- Sound Audio Chimes Toggle (Desktop) -->
+                <button onclick="if(typeof toggleAudio === 'function') toggleAudio(); else handleDrawerToggleAudio();" id="soundToggle" title="Audio Chimes" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] text-xs font-semibold px-3 py-2 rounded-xl border border-[#E3E9E5] transition flex items-center gap-1.5 shadow-2xs">
+                    <span id="soundToggleIcon" class="text-xs">🔊</span>
+                    <span id="soundToggleText">Sound: ON</span>
+                </button>
+            </div>
+
+            <!-- Public Storefront Link (Available on Mobile & Desktop) -->
+            <% if (typeof store !== 'undefined' && store && store.slug) { %>
+                <a href="/<%= store.slug %>" 
+                   target="_blank" 
+                   title="View Public Storefront" 
+                   class="bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs p-2 sm:px-3.5 sm:py-2 rounded-xl transition flex items-center gap-1.5 shadow-2xs">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                    <span class="hidden sm:inline">Storefront ↗</span>
+                </a>
+            <% } %>
+
+            <!-- Mobile Hamburger Menu Button (Triggers Secondary Drawer) -->
+            <button type="button" 
+                    onclick="openMerchantDrawer()" 
+                    class="sm:hidden w-10 h-10 rounded-xl bg-[#F8FAF8] hover:bg-[#E3E9E5] border border-[#E3E9E5] text-[#08110D] flex items-center justify-center transition shadow-2xs active:scale-95 shrink-0"
+                    aria-label="Open Navigation Menu">
+                <svg class="w-5 h-5 text-[#08110D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+
+            <!-- Desktop Sign Out Link -->
+            <a href="/merchant/logout" 
+               onclick="return confirm('Are you sure you want to sign out of zlik merchant?');"
+               title="Sign Out" 
+               class="hidden sm:flex text-[#6B756F] hover:text-red-600 p-2 rounded-xl transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+
+    <!-- Desktop Navigation Tabs (Preserved on >= 640px screens; Sticky bottom bar is used on mobile) -->
+    <div class="hidden sm:flex max-w-7xl mx-auto px-4 items-center gap-2 overflow-x-auto text-xs font-medium border-t border-[#E3E9E5]/60 pt-2 pb-2">
+        <a href="/merchant" class="px-3.5 py-1.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'orders') ? 'bg-[#08110D] text-white font-semibold' : 'text-[#6B756F] hover:text-[#08110D]' %>">Orders</a>
+        <a href="/merchant/items" class="px-3.5 py-1.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'products') ? 'bg-[#08110D] text-white font-semibold' : 'text-[#6B756F] hover:text-[#08110D]' %>">Products</a>
+        <a href="/merchant/ledger" class="px-3.5 py-1.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'ledger') ? 'bg-[#08110D] text-white font-semibold' : 'text-[#6B756F] hover:text-[#08110D]' %>">Sales Ledger</a>
+        <a href="/merchant/reviews" class="px-3.5 py-1.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'reviews') ? 'bg-[#08110D] text-white font-semibold' : 'text-[#6B756F] hover:text-[#08110D]' %> flex items-center gap-1.5">
+            <span>Reviews</span>
+            <% if (typeof pending_count !== 'undefined' && pending_count > 0) { %>
+                <span class="bg-[#19D98B] text-[#08110D] text-[10px] font-bold px-1.5 py-0.2 rounded-full"><%= pending_count %></span>
+            <% } %>
+        </a>
+        <a href="/merchant/debts" class="px-3.5 py-1.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'debts') ? 'bg-[#08110D] text-white font-semibold' : 'text-[#6B756F] hover:text-[#08110D]' %>">Debts</a>
+        <a href="/merchant/messages" class="px-3.5 py-1.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'chat') ? 'bg-[#08110D] text-white font-semibold' : 'text-[#6B756F] hover:text-[#08110D]' %> flex items-center gap-1.5">
+            <span>Live Chat</span>
+            <span id="navChatUnreadBadge" class="hidden bg-[#19D98B] text-[#08110D] text-[10px] font-semibold px-2 py-0.2 rounded-full animate-pulse shadow-2xs">0 new</span>
+        </a>
+        <a href="/merchant/settings" class="px-3.5 py-1.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'settings') ? 'bg-[#08110D] text-white font-semibold' : 'text-[#6B756F] hover:text-[#08110D]' %>">Settings</a>
+        <a href="/merchant/verification" class="px-3.5 py-1.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'verification') ? 'bg-[#08110D] text-white font-semibold' : 'text-[#6B756F] hover:text-[#08110D]' %> flex items-center gap-1">
+            <span>🛡️</span> <span>Trust & Verification</span>
+        </a>
+    </div>
+</header>
