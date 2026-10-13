@@ -45,11 +45,11 @@
     <main class="max-w-4xl mx-auto px-4 py-6 pb-24 flex-1 w-full space-y-6">
 
         <!-- Banner / Overview Card -->
-        <div class="bg-gradient-to-r from-emerald-950 via-[#08110D] to-[#0A1A12] border border-[#19D98B]/30 rounded-3xl p-6 text-white shadow-lg space-y-4">
+        <div class="bg-gradient-to-r from-emerald-950 via-[#08110D] to-[#0A1A12] border border-[#19D98B]/30 rounded-2xl p-5 sm:p-6 text-white shadow-lg space-y-4">
             <div class="flex items-start justify-between gap-4">
                 <div class="space-y-1.5">
                     <div class="flex items-center gap-2">
-                        <span class="text-lg">🛡️</span>
+                        <svg class="w-5 h-5 text-[#19D98B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                         <h1 class="text-base sm:text-lg font-extrabold font-display text-[#19D98B]">Seller Accountability & Verification</h1>
                     </div>
                     <p class="text-xs text-[#E3E9E5]/80 max-w-2xl leading-relaxed">
@@ -59,7 +59,17 @@
                 <div class="hidden sm:block text-right">
                     <div class="text-[10px] text-white/50 uppercase font-bold font-mono">Gating Status</div>
                     <div class="text-xs font-extrabold font-mono <%= isGated ? 'text-amber-400' : 'text-[#19D98B]' %>">
-                        <%= isGated ? '🔒 ORDERS LOCKED' : '🟢 ORDERS ACTIVE' %>
+                        <% if (isGated) { %>
+                            <span class="inline-flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                <span>ORDERS LOCKED</span>
+                            </span>
+                        <% } else { %>
+                            <span class="inline-flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-[#19D98B]"></span>
+                                <span>ORDERS ACTIVE</span>
+                            </span>
+                        <% } %>
                     </div>
                 </div>
             </div>
@@ -67,7 +77,7 @@
             <!-- Steps Matrix -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-white/10 text-xs">
                 <!-- Step 1: Identity -->
-                <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <div class="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-1">
                     <div class="flex items-center justify-between">
                         <span class="text-[10px] uppercase font-mono font-bold text-white/60">Step 1</span>
                         <span class="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full <%= sellerProfile && sellerProfile.identity_status === 'verified' ? 'bg-emerald-500/20 text-[#19D98B]' : 'bg-amber-500/20 text-amber-300' %>">
@@ -79,7 +89,7 @@
                 </div>
 
                 <!-- Step 2: Bank -->
-                <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <div class="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-1">
                     <div class="flex items-center justify-between">
                         <span class="text-[10px] uppercase font-mono font-bold text-white/60">Step 2</span>
                         <span class="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full <%= sellerProfile && sellerProfile.bank_status === 'verified' ? 'bg-emerald-500/20 text-[#19D98B]' : 'bg-amber-500/20 text-amber-300' %>">
@@ -91,7 +101,7 @@
                 </div>
 
                 <!-- Step 3: Orders Gating -->
-                <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                <div class="p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-1">
                     <div class="flex items-center justify-between">
                         <span class="text-[10px] uppercase font-mono font-bold text-white/60">Step 3</span>
                         <span class="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full <%= !isGated ? 'bg-emerald-500/20 text-[#19D98B]' : 'bg-white/10 text-white/50' %>">
@@ -105,27 +115,30 @@
         </div>
 
         <!-- Section 1: Individual Identity Verification (BVN / NIN) -->
-        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-6 shadow-xs space-y-5 text-xs">
+        <div class="bg-white rounded-2xl border border-[#E3E9E5] p-5 sm:p-6 shadow-2xs space-y-5 text-xs">
             <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3.5">
                 <div>
                     <h2 class="text-sm font-bold text-[#08110D]">1. Personal Identity Verification</h2>
                     <p class="text-[11px] text-[#6B756F] mt-0.5">Verify your Bank Verification Number (BVN) or National Identification Number (NIN).</p>
                 </div>
                 <% if (sellerProfile && sellerProfile.identity_status === 'verified') { %>
-                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 font-mono">
-                        <span>✓</span> <span>VERIFIED</span>
+                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1.5 font-mono">
+                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>VERIFIED</span>
                     </span>
                 <% } else { %>
-                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1 font-mono">
-                        <span>⏳</span> <span>ACTION REQUIRED</span>
+                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1.5 font-mono">
+                        <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>ACTION REQUIRED</span>
                     </span>
                 <% } %>
             </div>
 
             <% if (sellerProfile && sellerProfile.identity_status === 'verified') { %>
-                <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 space-y-2">
+                <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 space-y-2">
                     <div class="font-bold text-xs flex items-center gap-1.5">
-                        <span class="text-base">✓</span> <span>Identity Successfully Verified</span>
+                        <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Identity Successfully Verified</span>
                     </div>
                     <p class="text-[11px] text-emerald-800">
                         Your identity has been authenticated against regulatory authorities. Consent was recorded on <%= sellerProfile.consent_timestamp || 'file' %>.
@@ -134,9 +147,9 @@
             <% } else { %>
                 <form onsubmit="handleIdentitySubmit(event)" class="space-y-4">
                     <!-- NDPA 2023 Consent Notice -->
-                    <div class="p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5] space-y-2.5">
+                    <div class="p-4 rounded-xl bg-[#F8FAF8] border border-[#E3E9E5] space-y-2.5">
                         <div class="flex items-center gap-2">
-                            <span class="text-sm">🔒</span>
+                            <svg class="w-4 h-4 text-[#08110D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                             <span class="font-bold text-xs text-[#08110D]">Nigeria Data Protection Act (NDPA) 2023 Compliance</span>
                         </div>
                         <p class="text-[11px] text-[#6B756F] leading-relaxed">
@@ -186,24 +199,26 @@
         </div>
 
         <!-- Section 2: Payout Bank Account Verification -->
-        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-6 shadow-xs space-y-4 text-xs">
+        <div class="bg-white rounded-2xl border border-[#E3E9E5] p-5 sm:p-6 shadow-2xs space-y-4 text-xs">
             <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3.5">
                 <div>
                     <h2 class="text-sm font-bold text-[#08110D]">2. Payout Bank Details & Protection</h2>
                     <p class="text-[11px] text-[#6B756F] mt-0.5">Where direct transfer customer payments will be deposited.</p>
                 </div>
                 <% if (sellerProfile && sellerProfile.bank_status === 'verified') { %>
-                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 font-mono">
-                        <span>✓</span> <span>VERIFIED BANK</span>
+                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1.5 font-mono">
+                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>VERIFIED BANK</span>
                     </span>
                 <% } else { %>
-                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1 font-mono">
-                        <span>⏳</span> <span>PENDING</span>
+                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1.5 font-mono">
+                        <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>PENDING</span>
                     </span>
                 <% } %>
             </div>
 
-            <div class="p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="p-4 rounded-xl bg-[#F8FAF8] border border-[#E3E9E5] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div class="space-y-1">
                     <div class="text-xs font-bold text-[#08110D]">
                         <%= store.bank_name || 'No Bank Configured' %>
@@ -220,23 +235,26 @@
         </div>
 
         <!-- Section 3: Registered Business (CAC) Verification -->
-        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-6 shadow-xs space-y-4 text-xs">
+        <div class="bg-white rounded-2xl border border-[#E3E9E5] p-5 sm:p-6 shadow-2xs space-y-4 text-xs">
             <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3.5">
                 <div>
                     <h2 class="text-sm font-bold text-[#08110D]">3. Registered Business (CAC) Verification</h2>
                     <p class="text-[11px] text-[#6B756F] mt-0.5">For registered enterprises, limited liability companies (Ltd), and incorporated entities.</p>
                 </div>
                 <% if (sellerProfile && sellerProfile.business_status === 'verified') { %>
-                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 font-mono">
-                        <span>✓</span> <span>VERIFIED BUSINESS (CAC)</span>
+                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1.5 font-mono">
+                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>VERIFIED BUSINESS (CAC)</span>
                     </span>
                 <% } else if (sellerProfile && sellerProfile.business_status === 'pending') { %>
-                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1 font-mono">
-                        <span>⏳</span> <span>PENDING COMPLIANCE REVIEW</span>
+                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1.5 font-mono">
+                        <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>PENDING COMPLIANCE REVIEW</span>
                     </span>
                 <% } else if (sellerProfile && sellerProfile.business_status === 'rejected') { %>
-                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-red-100 text-red-800 border border-red-300 flex items-center gap-1 font-mono">
-                        <span>✕</span> <span>REJECTED</span>
+                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-red-100 text-red-800 border border-red-300 flex items-center gap-1.5 font-mono">
+                        <svg class="w-3.5 h-3.5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        <span>REJECTED</span>
                     </span>
                 <% } else { %>
                     <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 border border-gray-300 font-mono">
@@ -246,9 +264,10 @@
             </div>
 
             <% if (sellerProfile && sellerProfile.business_status === 'verified' && businessProfile) { %>
-                <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 space-y-2">
+                <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 space-y-2">
                     <div class="font-bold text-xs flex items-center gap-1.5">
-                        <span class="text-base">✓</span> <span>Corporate Affairs Commission (CAC) Verified</span>
+                        <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Corporate Affairs Commission (CAC) Verified</span>
                     </div>
                     <div class="text-[11px] text-emerald-900 grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 font-mono">
                         <div>Registered Name: <strong><%= businessProfile.registered_name %></strong></div>
@@ -258,9 +277,10 @@
                     </div>
                 </div>
             <% } else if (sellerProfile && sellerProfile.business_status === 'pending' && businessProfile) { %>
-                <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 space-y-2">
+                <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 space-y-2">
                     <div class="font-bold text-xs flex items-center gap-1.5">
-                        <span class="text-base">⏳</span> <span>Under Compliance Review</span>
+                        <svg class="w-4 h-4 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Under Compliance Review</span>
                     </div>
                     <p class="text-[11px] text-amber-800 leading-relaxed">
                         Your registered business details (<strong><%= businessProfile.registered_name %></strong>, RC/BN: <strong><%= businessProfile.registration_number %></strong>) have been submitted to Zlik Trust & Compliance. You will receive an update once records are cross-checked with official registries.
@@ -362,7 +382,7 @@
             btn.disabled = true;
             btn.textContent = 'Verifying with Regulatory Authority...';
             feedback.className = 'p-3 rounded-xl text-xs font-medium bg-blue-50 text-blue-900 border border-blue-200 block';
-            feedback.innerHTML = '<span class="animate-spin">🔄</span> Querying official identity database...';
+            feedback.innerHTML = '<span class="inline-flex items-center gap-1.5"><svg class="w-3.5 h-3.5 animate-spin text-blue-700" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Querying official identity database...</span></span>';
 
             try {
                 const res = await fetch('/api/merchant/verification/submit-identity', {
@@ -379,15 +399,15 @@
                 const data = await res.json();
                 if (data.success) {
                     feedback.className = 'p-3 rounded-xl text-xs font-medium bg-emerald-50 text-emerald-900 border border-emerald-200 block';
-                    feedback.innerHTML = `✓ ${data.message || 'Identity verified!'}`;
+                    feedback.innerHTML = `<span class="inline-flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>${data.message || 'Identity verified!'}</span></span>`;
                     setTimeout(() => location.reload(), 1200);
                 } else {
                     feedback.className = 'p-3 rounded-xl text-xs font-medium bg-amber-50 text-amber-900 border border-amber-200 block';
-                    feedback.innerHTML = `⚠️ ${data.error || 'Verification pending review.'}`;
+                    feedback.innerHTML = `<span class="inline-flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg><span>${data.error || 'Verification pending review.'}</span></span>`;
                 }
             } catch (err) {
                 feedback.className = 'p-3 rounded-xl text-xs font-medium bg-red-50 text-red-900 border border-red-200 block';
-                feedback.innerHTML = '❌ Network error during verification.';
+                feedback.innerHTML = '<span class="inline-flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg><span>Network error during verification.</span></span>';
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Verify Identity Securely →';
@@ -415,7 +435,7 @@
             btn.disabled = true;
             btn.textContent = 'Submitting CAC Verification...';
             feedback.className = 'p-3 rounded-xl text-xs font-medium bg-blue-50 text-blue-900 border border-blue-200 block';
-            feedback.innerHTML = '<span class="animate-spin">🔄</span> Submitting business details for compliance check...';
+            feedback.innerHTML = '<span class="inline-flex items-center gap-1.5"><svg class="w-3.5 h-3.5 animate-spin text-blue-700" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Submitting business details for compliance check...</span></span>';
 
             try {
                 const res = await fetch('/api/merchant/verification/submit-business', {
@@ -435,15 +455,15 @@
                 const data = await res.json();
                 if (data.success) {
                     feedback.className = 'p-3 rounded-xl text-xs font-medium bg-emerald-50 text-emerald-900 border border-emerald-200 block';
-                    feedback.innerHTML = `✓ ${data.message || 'Business verification submitted successfully!'}`;
+                    feedback.innerHTML = `<span class="inline-flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>${data.message || 'Business verification submitted successfully!'}</span></span>`;
                     setTimeout(() => location.reload(), 1400);
                 } else {
                     feedback.className = 'p-3 rounded-xl text-xs font-medium bg-amber-50 text-amber-900 border border-amber-200 block';
-                    feedback.innerHTML = `⚠️ ${data.error || 'Submission could not be completed.'}`;
+                    feedback.innerHTML = `<span class="inline-flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg><span>${data.error || 'Submission could not be completed.'}</span></span>`;
                 }
             } catch (err) {
                 feedback.className = 'p-3 rounded-xl text-xs font-medium bg-red-50 text-red-900 border border-red-200 block';
-                feedback.innerHTML = '❌ Network error during submission.';
+                feedback.innerHTML = '<span class="inline-flex items-center gap-1.5"><svg class="w-3.5 h-3.5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg><span>Network error during submission.</span></span>';
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Submit CAC Business Verification →';

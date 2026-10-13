@@ -53,21 +53,21 @@
             </div>
             <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                 <button type="button" onclick="openDailySalesRecapModal()" title="Daily Sales Recap" class="bg-white hover:bg-gray-50 text-[#08110D] border border-[#E3E9E5] text-xs font-semibold p-2 sm:px-3 sm:py-2 rounded-xl transition flex items-center gap-1.5 shadow-2xs">
-                    <span>📲</span>
+                    <svg class="w-4 h-4 text-[#08110D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                     <span class="hidden sm:inline">Daily Recap</span>
                 </button>
                 <button type="button" onclick="openCustomerBroadcastModal()" title="Customer Broadcasts" class="bg-white hover:bg-gray-50 text-[#08110D] border border-[#E3E9E5] text-xs font-semibold p-2 sm:px-3 sm:py-2 rounded-xl transition flex items-center gap-1.5 shadow-2xs">
-                    <span>📢</span>
+                    <svg class="w-4 h-4 text-[#08110D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
                     <span class="hidden sm:inline">Broadcasts</span>
                 </button>
                 <% if (isPro) { %>
                     <a href="/api/merchant/ledger/export" title="Export CSV" class="bg-[#08110D] hover:bg-black text-[#19D98B] text-xs font-semibold p-2 sm:px-3.5 sm:py-2 rounded-xl transition shadow-2xs flex items-center gap-1.5">
-                        <span>📥</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                         <span class="hidden sm:inline">Export CSV</span>
                     </a>
                 <% } else { %>
                     <button onclick="openProUpgradeModal('CSV Sales Ledger Export')" title="Export CSV (Pro)" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] text-xs font-medium p-2 sm:px-3.5 sm:py-2 rounded-xl border border-[#E3E9E5] transition flex items-center gap-1.5">
-                        <span>🔒</span>
+                        <svg class="w-3.5 h-3.5 text-[#6B756F]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                         <span class="hidden sm:inline">Export (Pro)</span>
                     </button>
                 <% } %>
@@ -87,10 +87,22 @@
                 <button type="button" onclick="switchLedgerPeriod('this_week')" id="ltab-this_week" class="ledger-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition whitespace-nowrap">This Week</button>
                 <button type="button" onclick="switchLedgerPeriod('this_month')" id="ltab-this_month" class="ledger-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition whitespace-nowrap">This Month</button>
                 <button type="button" onclick="switchLedgerPeriod('last_month')" id="ltab-last_month" class="ledger-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition whitespace-nowrap">Last Month</button>
-                <button type="button" onclick="switchLedgerPeriod('3months')" id="ltab-3months" class="ledger-tab-btn px-3 py-1.5 rounded-xl <%= isPro ? 'text-[#6B756F] hover:text-[#08110D]' : 'text-gray-400 bg-gray-50' %> transition whitespace-nowrap">Last 3 Months <%= !isPro ? '🔒' : '' %></button>
-                <button type="button" onclick="switchLedgerPeriod('6months')" id="ltab-6months" class="ledger-tab-btn px-3 py-1.5 rounded-xl <%= isPro ? 'text-[#6B756F] hover:text-[#08110D]' : 'text-gray-400 bg-gray-50' %> transition whitespace-nowrap">Last 6 Months <%= !isPro ? '🔒' : '' %></button>
-                <button type="button" onclick="switchLedgerPeriod('yearly')" id="ltab-yearly" class="ledger-tab-btn px-3 py-1.5 rounded-xl <%= isPro ? 'text-[#6B756F] hover:text-[#08110D]' : 'text-gray-400 bg-gray-50' %> transition whitespace-nowrap">This Year <%= !isPro ? '🔒' : '' %></button>
-                <button type="button" onclick="switchLedgerPeriod('lifetime')" id="ltab-lifetime" class="ledger-tab-btn px-3 py-1.5 rounded-xl <%= isPro ? 'bg-[#08110D] text-white font-semibold' : 'text-gray-400 bg-gray-50' %> transition whitespace-nowrap">Lifetime <%= !isPro ? '🔒' : '' %></button>
+                <button type="button" onclick="switchLedgerPeriod('3months')" id="ltab-3months" data-locked="<%= !isPro ? 'true' : 'false' %>" class="ledger-tab-btn px-3 py-1.5 rounded-xl <%= isPro ? 'text-[#6B756F] hover:text-[#08110D]' : 'text-gray-400 bg-gray-50' %> transition whitespace-nowrap inline-flex items-center gap-1">
+                    <span>Last 3 Months</span>
+                    <% if (!isPro) { %><svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg><% } %>
+                </button>
+                <button type="button" onclick="switchLedgerPeriod('6months')" id="ltab-6months" data-locked="<%= !isPro ? 'true' : 'false' %>" class="ledger-tab-btn px-3 py-1.5 rounded-xl <%= isPro ? 'text-[#6B756F] hover:text-[#08110D]' : 'text-gray-400 bg-gray-50' %> transition whitespace-nowrap inline-flex items-center gap-1">
+                    <span>Last 6 Months</span>
+                    <% if (!isPro) { %><svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg><% } %>
+                </button>
+                <button type="button" onclick="switchLedgerPeriod('yearly')" id="ltab-yearly" data-locked="<%= !isPro ? 'true' : 'false' %>" class="ledger-tab-btn px-3 py-1.5 rounded-xl <%= isPro ? 'text-[#6B756F] hover:text-[#08110D]' : 'text-gray-400 bg-gray-50' %> transition whitespace-nowrap inline-flex items-center gap-1">
+                    <span>This Year</span>
+                    <% if (!isPro) { %><svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg><% } %>
+                </button>
+                <button type="button" onclick="switchLedgerPeriod('lifetime')" id="ltab-lifetime" data-locked="<%= !isPro ? 'true' : 'false' %>" class="ledger-tab-btn px-3 py-1.5 rounded-xl <%= isPro ? 'bg-[#08110D] text-white font-semibold' : 'text-gray-400 bg-gray-50' %> transition whitespace-nowrap inline-flex items-center gap-1">
+                    <span>Lifetime</span>
+                    <% if (!isPro) { %><svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg><% } %>
+                </button>
             </div>
         </div>
 
@@ -130,7 +142,7 @@
         </div>
 
         <!-- Ledger Table Card -->
-        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 sm:p-6 shadow-xs space-y-4">
+        <div class="bg-white rounded-2xl border border-[#E3E9E5] p-4 sm:p-5 shadow-2xs space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E3E9E5] pb-4">
                 <div>
                     <h3 class="font-semibold text-sm text-[#08110D]">Sales Transactions Ledger</h3>
@@ -209,7 +221,7 @@
 
     <!-- Pro Upgrade Modal -->
     <div id="proUpgradeModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-5 border border-[#E3E9E5] shadow-2xl text-center">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-5 border border-[#E3E9E5] shadow-2xl text-center">
             <div class="space-y-1.5">
                 <span class="text-[10px] font-semibold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-[#19D98B]/20 text-[#087A50] font-mono">
                     Pro Feature
@@ -220,7 +232,7 @@
                 </p>
             </div>
 
-            <div class="bg-[#F8FAF8] rounded-2xl p-4 border border-[#E3E9E5] text-left space-y-2 text-xs">
+            <div class="bg-[#F8FAF8] rounded-xl p-4 border border-[#E3E9E5] text-left space-y-2 text-xs">
                 <div class="font-semibold text-[11px] text-[#08110D] uppercase tracking-wider">Included in Zlik Pro (₦5,000/mo or ₦50,000/yr):</div>
                 <ul class="space-y-1.5 text-xs text-[#08110D]">
                     <li class="flex items-center gap-2">
@@ -255,10 +267,12 @@
 
     <!-- Daily Sales WhatsApp Recap Modal -->
     <div id="dailyRecapModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 hidden">
-        <div class="bg-white rounded-3xl max-w-lg w-full p-0 shadow-2xl border border-[#E3E9E5] overflow-hidden max-h-[92vh] flex flex-col text-xs">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-0 shadow-2xl border border-[#E3E9E5] overflow-hidden max-h-[92vh] flex flex-col text-xs">
             <div class="px-5 py-4 border-b border-[#E3E9E5] flex items-center justify-between bg-[#F8FAF8] shrink-0">
-                <div class="flex items-center gap-2">
-                    <span class="p-1.5 rounded-xl bg-emerald-100 text-emerald-900 text-base">📲</span>
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-100 text-[#087A50] flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    </div>
                     <div>
                         <h3 class="font-extrabold text-sm text-[#08110D] font-display">Daily Sales WhatsApp Recap</h3>
                         <p class="text-[10.5px] text-[#6B756F]">Formatted summary of today's sales & top items</p>
@@ -270,11 +284,11 @@
             <div class="p-5 overflow-y-auto flex-1 space-y-4">
                 <!-- Summary Metrics Grid -->
                 <div class="grid grid-cols-2 gap-2.5">
-                    <div class="bg-[#F8FAF8] p-3 rounded-2xl border border-[#E3E9E5]">
+                    <div class="bg-[#F8FAF8] p-3 rounded-xl border border-[#E3E9E5]">
                         <span class="text-[10px] text-[#6B756F] uppercase font-bold">Gross Revenue Today</span>
                         <div id="recapGrossRevenue" class="text-base font-extrabold text-[#087A50] font-mono mt-0.5">₦0.00</div>
                     </div>
-                    <div class="bg-[#F8FAF8] p-3 rounded-2xl border border-[#E3E9E5]">
+                    <div class="bg-[#F8FAF8] p-3 rounded-xl border border-[#E3E9E5]">
                         <span class="text-[10px] text-[#6B756F] uppercase font-bold">Orders Placed</span>
                         <div id="recapOrdersCount" class="text-base font-extrabold text-[#08110D] font-mono mt-0.5">0</div>
                     </div>
@@ -283,7 +297,7 @@
                 <!-- Top Items Section -->
                 <div>
                     <span class="font-bold text-[#08110D] text-[11px] block mb-1">Top Selling Products:</span>
-                    <div id="recapTopItemsList" class="space-y-1.5 bg-[#F8FAF8] p-3 rounded-2xl border border-[#E3E9E5] text-[11px] text-[#6B756F]">
+                    <div id="recapTopItemsList" class="space-y-1.5 bg-[#F8FAF8] p-3 rounded-xl border border-[#E3E9E5] text-[11px] text-[#6B756F]">
                         Loading breakdown...
                     </div>
                 </div>
@@ -292,9 +306,12 @@
                 <div>
                     <div class="flex items-center justify-between mb-1">
                         <span class="font-bold text-[#08110D] text-[11px]">WhatsApp Message Output:</span>
-                        <button type="button" onclick="copyRecapText()" id="copyRecapBtn" class="text-[10.5px] font-bold text-[#087A50] hover:underline">📋 Copy Text</button>
+                        <button type="button" onclick="copyRecapText()" id="copyRecapBtn" class="text-[10.5px] font-bold text-[#087A50] hover:underline flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            <span>Copy Text</span>
+                        </button>
                     </div>
-                    <pre id="recapTextPreview" class="bg-[#08110D] text-[#19D98B] p-3.5 rounded-2xl font-mono text-[11px] whitespace-pre-wrap max-h-48 overflow-y-auto border border-emerald-900"></pre>
+                    <pre id="recapTextPreview" class="bg-[#08110D] text-[#19D98B] p-3.5 rounded-xl font-mono text-[11px] whitespace-pre-wrap max-h-48 overflow-y-auto border border-emerald-900"></pre>
                 </div>
             </div>
 
@@ -303,7 +320,8 @@
                     Close
                 </button>
                 <button type="button" onclick="openRecapInWhatsApp()" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs px-5 py-2.5 rounded-xl transition shadow-2xs font-display flex items-center gap-1.5">
-                    <span>📲 Send to WhatsApp</span>
+                    <svg class="w-4 h-4 text-[#19D98B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                    <span>Send to WhatsApp</span>
                 </button>
             </div>
         </div>
@@ -311,10 +329,12 @@
 
     <!-- Customer Marketing Broadcasts Modal -->
     <div id="customerBroadcastModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 hidden">
-        <div class="bg-white rounded-3xl max-w-2xl w-full p-0 shadow-2xl border border-[#E3E9E5] overflow-hidden max-h-[95vh] flex flex-col text-xs">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-0 shadow-2xl border border-[#E3E9E5] overflow-hidden max-h-[95vh] flex flex-col text-xs">
             <div class="px-5 py-4 border-b border-[#E3E9E5] flex items-center justify-between bg-[#F8FAF8] shrink-0">
-                <div class="flex items-center gap-2">
-                    <span class="p-1.5 rounded-xl bg-purple-100 text-purple-900 text-base">📢</span>
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-purple-100 text-purple-900 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+                    </div>
                     <div>
                         <h3 class="font-extrabold text-sm text-[#08110D] font-display">Customer Marketing Broadcasts</h3>
                         <p class="text-[10.5px] text-[#6B756F]">Reach past buyers with personalized WhatsApp promos</p>
@@ -351,17 +371,21 @@
                 <div>
                     <label class="block font-bold text-[#08110D] mb-1.5">2. Campaign Type</label>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        <button type="button" onclick="selectBroadcastTemplate('promo_discount')" id="tplBtnPromo" class="p-2.5 rounded-xl border-2 border-[#087A50] bg-emerald-50 text-[#087A50] font-bold text-[11px] transition">
-                            🎁 Promo Discount
+                        <button type="button" onclick="selectBroadcastTemplate('promo_discount')" id="tplBtnPromo" class="p-2.5 rounded-xl border-2 border-[#087A50] bg-emerald-50 text-[#087A50] font-bold text-[11px] transition flex items-center justify-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                            <span>Promo Discount</span>
                         </button>
-                        <button type="button" onclick="selectBroadcastTemplate('new_arrivals')" id="tplBtnArrivals" class="p-2.5 rounded-xl border border-[#E3E9E5] bg-[#F8FAF8] text-[#08110D] font-bold text-[11px] transition">
-                            ✨ New Arrivals
+                        <button type="button" onclick="selectBroadcastTemplate('new_arrivals')" id="tplBtnArrivals" class="p-2.5 rounded-xl border border-[#E3E9E5] bg-[#F8FAF8] text-[#08110D] font-bold text-[11px] transition flex items-center justify-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                            <span>New Arrivals</span>
                         </button>
-                        <button type="button" onclick="selectBroadcastTemplate('thank_you')" id="tplBtnThankYou" class="p-2.5 rounded-xl border border-[#E3E9E5] bg-[#F8FAF8] text-[#08110D] font-bold text-[11px] transition">
-                            🙏 Thank You
+                        <button type="button" onclick="selectBroadcastTemplate('thank_you')" id="tplBtnThankYou" class="p-2.5 rounded-xl border border-[#E3E9E5] bg-[#F8FAF8] text-[#08110D] font-bold text-[11px] transition flex items-center justify-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                            <span>Thank You</span>
                         </button>
-                        <button type="button" onclick="selectBroadcastTemplate('custom')" id="tplBtnCustom" class="p-2.5 rounded-xl border border-[#E3E9E5] bg-[#F8FAF8] text-[#08110D] font-bold text-[11px] transition">
-                            ✍️ Custom Text
+                        <button type="button" onclick="selectBroadcastTemplate('custom')" id="tplBtnCustom" class="p-2.5 rounded-xl border border-[#E3E9E5] bg-[#F8FAF8] text-[#08110D] font-bold text-[11px] transition flex items-center justify-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            <span>Custom Text</span>
                         </button>
                     </div>
                 </div>
@@ -418,7 +442,7 @@
             currentLedgerPeriod = period;
             document.querySelectorAll('.ledger-tab-btn').forEach(btn => {
                 btn.classList.remove('bg-[#08110D]', 'text-white', 'font-semibold');
-                if (!btn.textContent.includes('🔒')) {
+                if (btn.dataset.locked !== 'true') {
                     btn.classList.add('text-[#6B756F]');
                 }
             });
@@ -553,8 +577,10 @@
             if (currentRecapData && currentRecapData.whatsapp_text) {
                 navigator.clipboard.writeText(currentRecapData.whatsapp_text);
                 const btn = document.getElementById('copyRecapBtn');
-                btn.textContent = '✓ Copied!';
-                setTimeout(() => { btn.textContent = '📋 Copy Text'; }, 1500);
+                btn.innerHTML = '<svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>Copied!</span>';
+                setTimeout(() => { 
+                    btn.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg><span>Copy Text</span>'; 
+                }, 1500);
             }
         }
 
@@ -664,8 +690,9 @@
                             <div class="font-bold text-[#08110D]">${c.customer_name} ${c.is_vip ? '<span class="text-[9px] bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded font-bold">VIP</span>' : ''}</div>
                             <div class="text-[10px] text-[#6B756F] font-mono">${c.customer_phone} • ${c.orders_count} orders (${c.total_spent_formatted})</div>
                         </div>
-                        <a href="${waLink}" target="_blank" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-[10.5px] px-3 py-1.5 rounded-lg transition shadow-2xs shrink-0 flex items-center gap-1">
-                            <span>📲 Message ↗</span>
+                        <a href="${waLink}" target="_blank" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-[10.5px] px-3 py-1.5 rounded-lg transition shadow-2xs shrink-0 flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-[#19D98B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                            <span>Message ↗</span>
                         </a>
                     </div>
                 `;

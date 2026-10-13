@@ -50,21 +50,23 @@
 
         <!-- Storefront Gating & Verification Banner (Batch 6) -->
         <% if (typeof isGated !== 'undefined' && isGated) { %>
-            <div class="bg-gradient-to-r from-emerald-950 via-[#08110D] to-[#0A1A12] border border-[#19D98B]/30 rounded-3xl p-5 text-white shadow-lg space-y-3">
+            <div class="bg-gradient-to-r from-emerald-950 via-[#08110D] to-[#0A1A12] border border-[#19D98B]/30 rounded-2xl p-4 sm:p-5 text-white shadow-md space-y-3">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div class="flex items-start gap-3">
-                        <span class="w-10 h-10 rounded-2xl bg-[#19D98B]/20 text-[#19D98B] flex items-center justify-center text-lg font-bold shrink-0 border border-[#19D98B]/40">🛡️</span>
+                        <div class="w-9 h-9 rounded-xl bg-[#19D98B]/20 text-[#19D98B] flex items-center justify-center shrink-0 border border-[#19D98B]/40">
+                            <svg class="w-5 h-5 text-[#19D98B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        </div>
                         <div>
-                            <h4 class="font-bold text-sm text-[#19D98B] flex items-center gap-2">
+                            <h4 class="font-bold text-xs sm:text-sm text-[#19D98B] flex items-center gap-2 flex-wrap">
                                 <span>Activate Storefront Orders & Bank Direct Transfers</span>
-                                <span class="text-[10px] font-mono uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">Orders Gated</span>
+                                <span class="text-[9.5px] font-mono uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">Orders Gated</span>
                             </h4>
-                            <p class="text-xs text-[#E3E9E5]/80 mt-1 max-w-2xl leading-relaxed">
+                            <p class="text-[11px] sm:text-xs text-[#E3E9E5]/80 mt-1 max-w-2xl leading-relaxed">
                                 To protect your business and prevent fraudulent transfers, customers cannot submit orders or view payout account details until your identity and payout bank account are verified.
                             </p>
                         </div>
                     </div>
-                    <a href="/merchant/verification" class="shrink-0 bg-[#19D98B] hover:bg-[#15bf7a] text-[#08110D] font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-md flex items-center gap-1.5 self-start sm:self-center">
+                    <a href="/merchant/verification" class="shrink-0 bg-[#19D98B] hover:bg-[#15bf7a] text-[#08110D] font-bold text-xs px-3.5 py-2 rounded-xl transition shadow-sm flex items-center gap-1.5 self-start sm:self-center">
                         <span>Complete Verification</span>
                         <span>&rarr;</span>
                     </a>
@@ -95,27 +97,29 @@
 
         <!-- Low Stock Alert Banner -->
         <% if (lowStockItems && lowStockItems.length > 0) { %>
-            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                <div class="flex items-center gap-2.5">
-                    <span class="w-7 h-7 rounded-full bg-amber-200 text-amber-900 flex items-center justify-center text-xs font-mono font-bold shrink-0">⚠️</span>
-                    <div>
-                        <h4 class="font-semibold text-amber-950">Low Stock Notice (<%= lowStockItems.length %> <%= lowStockItems.length === 1 ? 'item' : 'items' %>)</h4>
-                        <p class="text-[11px] text-amber-800 mt-0.5">
+            <div class="bg-amber-50/80 border border-amber-200 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-7 h-7 rounded-lg bg-amber-100 text-amber-900 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4 text-amber-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    </div>
+                    <div class="min-w-0">
+                        <h4 class="font-semibold text-amber-950 truncate">Low Stock Notice (<%= lowStockItems.length %> <%= lowStockItems.length === 1 ? 'item' : 'items' %>)</h4>
+                        <p class="text-[11px] text-amber-800 mt-0.5 line-clamp-1">
                             <%= lowStockItems.map(i => `${i.title} (${i.stock_quantity} left)`).slice(0, 3).join(', ') %><%= lowStockItems.length > 3 ? ` and ${lowStockItems.length - 3} more` : '' %>
                         </p>
                     </div>
                 </div>
-                <a href="/merchant/items" class="shrink-0 bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs px-3.5 py-2 rounded-xl transition shadow-2xs">
+                <a href="/merchant/items" class="shrink-0 bg-[#08110D] hover:bg-black text-[#19D98B] font-semibold text-xs px-3.5 py-1.5 rounded-xl transition shadow-2xs">
                     Restock Products
                 </a>
             </div>
         <% } %>
 
         <!-- Store Performance Summary & 2x2 Mobile KPI Grid -->
-        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-4 sm:p-5 shadow-xs space-y-3 sm:space-y-4">
+        <div class="bg-white rounded-2xl border border-[#E3E9E5] p-4 sm:p-5 shadow-2xs space-y-3.5 sm:space-y-4">
             <div class="flex items-center justify-between gap-2">
                 <div>
-                    <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider">Store Performance</span>
+                    <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider font-mono">Store Performance</span>
                     <h2 class="text-sm sm:text-base font-extrabold text-[#08110D] font-display">Overview & KPIs</h2>
                 </div>
 
@@ -126,71 +130,71 @@
                         <option value="this_week">This Week</option>
                         <option value="this_month">This Month</option>
                         <option value="last_month">Last Month</option>
-                        <option value="3months" <%= !isPro ? 'class="text-gray-400"' : '' %>>Last 3 Months <%= !isPro ? '🔒' : '' %></option>
-                        <option value="6months" <%= !isPro ? 'class="text-gray-400"' : '' %>>Last 6 Months <%= !isPro ? '🔒' : '' %></option>
-                        <option value="yearly" <%= !isPro ? 'class="text-gray-400"' : '' %>>This Year <%= !isPro ? '🔒' : '' %></option>
-                        <option value="lifetime" <%= !isPro ? 'class="text-gray-400"' : '' %>>Full Lifetime <%= !isPro ? '🔒' : '' %></option>
+                        <option value="3months" <%= !isPro ? 'class="text-gray-400"' : '' %>>Last 3 Months <%= !isPro ? '(Pro)' : '' %></option>
+                        <option value="6months" <%= !isPro ? 'class="text-gray-400"' : '' %>>Last 6 Months <%= !isPro ? '(Pro)' : '' %></option>
+                        <option value="yearly" <%= !isPro ? 'class="text-gray-400"' : '' %>>This Year <%= !isPro ? '(Pro)' : '' %></option>
+                        <option value="lifetime" <%= !isPro ? 'class="text-gray-400"' : '' %>>Full Lifetime <%= !isPro ? '(Pro)' : '' %></option>
                     </select>
                 </div>
             </div>
 
             <!-- 2x2 Grid on Mobile, 4-col on Desktop -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
-                <div class="p-3.5 sm:p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
+                <div class="p-3.5 sm:p-4 rounded-xl bg-white border border-[#E3E9E5] shadow-2xs">
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider">Confirmed</span>
-                        <span class="text-xs">💰</span>
+                        <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider font-mono">Paid Sales</span>
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                     </div>
-                    <div class="text-base sm:text-xl font-bold text-[#087A50] font-mono mt-1" id="statRevenue">
+                    <div class="text-base sm:text-xl font-bold text-[#087A50] font-mono mt-1.5" id="statRevenue">
                         ₦<%= Number(revenueMetrics.today.confirmed_revenue).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
                     </div>
-                    <div class="text-[10px] sm:text-[11px] text-[#6B756F] mt-0.5 truncate">
+                    <div class="text-[10.5px] text-[#6B756F] mt-0.5 truncate">
                         <span id="statConfirmedCount" class="font-bold text-[#08110D]"><%= revenueMetrics.today.confirmed_count %></span> paid orders
                     </div>
                 </div>
 
-                <div class="p-3.5 sm:p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
+                <div class="p-3.5 sm:p-4 rounded-xl bg-white border border-[#E3E9E5] shadow-2xs">
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider">Pending</span>
-                        <span class="text-xs">⏳</span>
+                        <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider font-mono">Pending</span>
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
                     </div>
-                    <div class="text-base sm:text-xl font-bold text-amber-700 font-mono mt-1" id="statPendingRevenue">
+                    <div class="text-base sm:text-xl font-bold text-amber-700 font-mono mt-1.5" id="statPendingRevenue">
                         ₦<%= Number(revenueMetrics.today.pending_revenue).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
                     </div>
-                    <div class="text-[10px] sm:text-[11px] text-[#6B756F] mt-0.5 truncate">
+                    <div class="text-[10.5px] text-[#6B756F] mt-0.5 truncate">
                         <span id="statPendingCount" class="font-bold text-[#08110D]"><%= revenueMetrics.today.pending_count %></span> pending
                     </div>
                 </div>
 
-                <div class="p-3.5 sm:p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
+                <div class="p-3.5 sm:p-4 rounded-xl bg-white border border-[#E3E9E5] shadow-2xs">
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider">Visits</span>
-                        <span class="text-xs">👀</span>
+                        <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider font-mono">Page Visits</span>
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
                     </div>
-                    <div class="text-base sm:text-xl font-bold text-[#08110D] font-mono mt-1" id="statVisits">
+                    <div class="text-base sm:text-xl font-bold text-[#08110D] font-mono mt-1.5" id="statVisits">
                         <%= (visitorMetrics && visitorMetrics.today && visitorMetrics.today.visits) || 0 %>
                     </div>
-                    <div class="text-[10px] sm:text-[11px] text-[#6B756F] mt-0.5 truncate" id="statVisitsSub">
+                    <div class="text-[10.5px] text-[#6B756F] mt-0.5 truncate" id="statVisitsSub">
                         Page views recorded
                     </div>
                 </div>
 
-                <div class="p-3.5 sm:p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
+                <div class="p-3.5 sm:p-4 rounded-xl bg-white border border-[#E3E9E5] shadow-2xs">
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider">Avg Order</span>
-                        <span class="text-xs">📊</span>
+                        <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider font-mono">Avg Order</span>
+                        <span class="w-2 h-2 rounded-full bg-zinc-400"></span>
                     </div>
-                    <div class="text-base sm:text-xl font-bold text-[#08110D] font-mono mt-1" id="statAov">
+                    <div class="text-base sm:text-xl font-bold text-[#08110D] font-mono mt-1.5" id="statAov">
                         ₦<%= Number(revenueMetrics.today.aov).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
                     </div>
-                    <div class="text-[10px] sm:text-[11px] text-[#6B756F] mt-0.5 truncate">
-                        Per sale
+                    <div class="text-[10.5px] text-[#6B756F] mt-0.5 truncate">
+                        Per transaction
                     </div>
                 </div>
             </div>
 
             <!-- Fulfillment Split Footer Pill -->
-            <div class="flex items-center justify-between text-[11px] text-[#6B756F] pt-1 px-1">
+            <div class="flex items-center justify-between text-[11px] text-[#6B756F] pt-1 px-1 border-t border-[#E3E9E5]/60">
                 <div class="flex items-center gap-2">
                     <span class="font-bold text-[#08110D]">Fulfillment:</span>
                     <span>Delivery: <strong id="statDelivery" class="text-[#08110D]"><%= revenueMetrics.today.delivery_count %></strong></span>
@@ -205,14 +209,14 @@
         </div>
 
         <!-- Customer Orders Section -->
-        <div class="space-y-3.5">
+        <div class="space-y-3">
             <div class="flex items-center justify-between gap-2">
                 <div>
                     <h2 class="text-base sm:text-lg font-extrabold text-[#08110D] font-display flex items-center gap-2">
                         <span>Customer Orders</span>
-                        <span id="orderCountBadge" class="text-xs font-mono font-bold bg-[#F8FAF8] text-[#087A50] border border-[#E3E9E5] px-2 py-0.5 rounded-full"><%= orders.length %></span>
+                        <span id="orderCountBadge" class="text-xs font-mono font-bold bg-white text-[#087A50] border border-[#E3E9E5] px-2 py-0.5 rounded-full"><%= orders.length %></span>
                     </h2>
-                    <p class="text-[11px] text-[#6B756F]">Fulfillment, bank payment confirmation & receipts</p>
+                    <p class="text-[11px] text-[#6B756F]">Tap any order row to expand details and action controls</p>
                 </div>
             </div>
 
@@ -220,8 +224,10 @@
             <div class="space-y-2">
                 <!-- Instant Search Input -->
                 <div class="relative">
-                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#6B756F] text-xs">🔍</span>
-                    <input type="text" id="orderSearchInput" oninput="filterOrdersList()" placeholder="Search customer, phone, ref (#...)" class="w-full bg-white border border-[#E3E9E5] rounded-2xl pl-9 pr-8 py-2.5 text-xs text-[#08110D] placeholder-[#6B756F]/60 outline-none focus:border-[#08110D] shadow-2xs transition">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#6B756F]">
+                        <svg class="w-4 h-4 text-[#6B756F]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </span>
+                    <input type="text" id="orderSearchInput" oninput="filterOrdersList()" placeholder="Search customer name, phone, order ref (#...)" class="w-full bg-white border border-[#E3E9E5] rounded-xl pl-9 pr-8 py-2.5 text-xs text-[#08110D] placeholder-[#6B756F]/60 outline-none focus:border-[#08110D] shadow-2xs transition">
                     <button type="button" onclick="clearOrderSearch()" id="clearSearchBtn" class="absolute inset-y-0 right-0 pr-3 flex items-center text-[#6B756F] hover:text-[#08110D] text-xs hidden">✕</button>
                 </div>
 
@@ -230,12 +236,13 @@
                     const claimedCount = orders.filter(o => o.payment_status === 'claimed').length;
                 %>
                 <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 text-xs font-semibold">
-                    <button type="button" onclick="setOrderStatusFilter('all')" id="ofilter-all" class="order-filter-btn px-3 py-1.5 rounded-xl bg-[#08110D] text-white whitespace-nowrap transition">
+                    <button type="button" onclick="setOrderStatusFilter('all')" id="ofilter-all" class="order-filter-btn px-3 py-1.5 rounded-xl bg-[#08110D] text-white whitespace-nowrap transition shadow-2xs">
                         All (<%= orders.length %>)
                     </button>
                     <% if (claimedCount > 0) { %>
-                        <button type="button" onclick="setOrderStatusFilter('claimed')" id="ofilter-claimed" class="order-filter-btn px-3 py-1.5 rounded-xl bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap transition flex items-center gap-1 animate-pulse">
-                            <span>🔔 Needs Action</span>
+                        <button type="button" onclick="setOrderStatusFilter('claimed')" id="ofilter-claimed" class="order-filter-btn px-3 py-1.5 rounded-xl bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap transition flex items-center gap-1.5 animate-pulse">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+                            <span>Needs Action</span>
                             <span class="bg-amber-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono"><%= claimedCount %></span>
                         </button>
                     <% } %>
@@ -254,22 +261,28 @@
                 </div>
             </div>
 
-            <!-- Orders Stream / Cards -->
-            <div id="ordersContainer" class="space-y-3">
+            <!-- Orders Stream: Compact Collapsible Cards -->
+            <div id="ordersContainer" class="space-y-2.5">
                 <% if (orders.length === 0) { %>
-                    <div class="p-8 sm:p-12 text-center bg-white rounded-3xl border border-[#E3E9E5] text-[#6B756F] text-xs space-y-3">
-                        <div class="w-12 h-12 rounded-2xl bg-[#19D98B]/10 text-[#087A50] text-xl flex items-center justify-center mx-auto">🛍️</div>
+                    <div class="p-8 sm:p-12 text-center bg-white rounded-2xl border border-[#E3E9E5] text-[#6B756F] text-xs space-y-3">
+                        <div class="w-10 h-10 rounded-xl bg-[#19D98B]/10 text-[#087A50] flex items-center justify-center mx-auto">
+                            <svg class="w-5 h-5 text-[#087A50]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                        </div>
                         <div>
                             <h3 class="font-bold text-sm text-[#08110D]">No orders placed yet</h3>
-                            <p class="text-xs text-[#6B756F] mt-1 max-w-sm mx-auto">Share your storefront link or product links on WhatsApp and Instagram to start receiving orders!</p>
+                            <p class="text-xs text-[#6B756F] mt-1 max-w-sm mx-auto">Share your storefront link on WhatsApp and Instagram to start receiving orders directly.</p>
                         </div>
                         <button type="button" onclick="openQrModal()" class="inline-flex items-center gap-1.5 bg-[#08110D] text-[#19D98B] font-bold text-xs px-4 py-2 rounded-xl shadow-xs">
-                            <span>📱 Share Store QR & Link</span>
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                            <span>Share Store QR & Link</span>
                         </button>
                     </div>
                 <% } else { %>
-                    <% orders.forEach(order => { %>
-                        <div class="order-card p-4 sm:p-5 bg-white rounded-3xl border border-[#E3E9E5] space-y-3 shadow-xs hover:border-[#08110D] transition"
+                    <% orders.forEach(order => { 
+                        const isClaimed = (order.payment_status === 'claimed');
+                    %>
+                        <div class="order-card bg-white rounded-2xl border border-[#E3E9E5] transition shadow-2xs hover:border-[#08110D] overflow-hidden"
+                             id="orderCard-<%= order.id %>"
                              data-order-id="<%= order.id %>"
                              data-order-ref="<%= order.order_ref.toLowerCase() %>"
                              data-order-status="<%= order.order_status %>"
@@ -279,136 +292,167 @@
                              data-customer-phone="<%= (order.customer_phone || '').toLowerCase() %>"
                              data-total-amount="<%= order.total_amount %>">
                             
-                            <!-- Header Row -->
-                            <div class="flex items-center justify-between gap-2 flex-wrap">
-                                <div class="flex items-center gap-2">
-                                    <span class="font-extrabold text-sm text-[#08110D] font-display">#<%= order.order_ref %></span>
-                                    <span class="text-[10px] text-[#6B756F]"><%= new Date(order.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %></span>
+                            <!-- Compact Scannable Summary Row (Clickable) -->
+                            <div class="p-3.5 sm:p-4 flex items-center justify-between gap-3 cursor-pointer select-none transition hover:bg-[#F8FAF8]/70"
+                                 onclick="toggleOrderCard(<%= order.id %>)">
+                                
+                                <!-- Left Info: Order Ref, Customer Name, Timestamp -->
+                                <div class="min-w-0 flex-1 space-y-0.5">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="font-extrabold text-xs sm:text-sm text-[#08110D] font-display">#<%= order.order_ref %></span>
+                                        <span class="font-semibold text-xs text-[#08110D] truncate max-w-[130px] sm:max-w-[200px]"><%= order.customer_name || 'Customer' %></span>
+                                    </div>
+                                    <div class="flex items-center gap-2 text-[10.5px] text-[#6B756F]">
+                                        <span><%= new Date(order.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %></span>
+                                        <span>&bull;</span>
+                                        <span><%= order.fulfillment_type === 'pickup' ? 'Pickup' : 'Delivery' %></span>
+                                    </div>
                                 </div>
-                                <div class="flex items-center gap-1.5 flex-wrap">
-                                    <% if (order.payment_method === 'pay_on_delivery') { %>
-                                        <span class="px-2 py-0.5 rounded-full font-bold text-[10px] bg-slate-100 text-slate-800 border border-slate-200">
-                                            💵 Pay on Delivery
-                                        </span>
-                                    <% } else { %>
-                                        <span class="px-2 py-0.5 rounded-full font-bold text-[10px] bg-blue-50 text-blue-800 border border-blue-200">
-                                            🏦 Bank Transfer
-                                        </span>
-                                    <% } %>
 
-                                    <% if (order.payment_status === 'paid') { %>
-                                        <span class="px-2 py-0.5 rounded-full font-bold uppercase text-[10px] bg-emerald-100 text-emerald-800">
-                                            ● Paid
-                                        </span>
-                                    <% } else if (order.payment_status === 'claimed') { %>
-                                        <span class="px-2 py-0.5 rounded-full font-bold uppercase text-[10px] bg-amber-100 text-amber-900 border border-amber-300 animate-pulse">
-                                            🔔 Claimed
-                                        </span>
-                                    <% } else { %>
-                                        <span class="px-2 py-0.5 rounded-full font-bold uppercase text-[10px] bg-gray-100 text-gray-700">
-                                            ● <%= order.payment_status %>
-                                        </span>
-                                    <% } %>
+                                <!-- Right Info: Amount, Status Pill, Chevron -->
+                                <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                                    <div class="text-right">
+                                        <div class="text-xs sm:text-sm font-bold text-[#087A50] font-mono">
+                                            ₦<%= Number(order.total_amount).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
+                                        </div>
+                                        <div class="flex items-center justify-end gap-1 mt-0.5">
+                                            <% if (order.payment_status === 'paid') { %>
+                                                <span class="text-[9.5px] font-bold uppercase text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded-md">Paid</span>
+                                            <% } else if (order.payment_status === 'claimed') { %>
+                                                <span class="text-[9.5px] font-bold uppercase text-amber-900 bg-amber-100 border border-amber-300 px-1.5 py-0.2 rounded-md animate-pulse">Claimed</span>
+                                            <% } else { %>
+                                                <span class="text-[9.5px] font-bold uppercase text-gray-700 bg-gray-100 px-1.5 py-0.2 rounded-md"><%= order.payment_status %></span>
+                                            <% } %>
+                                            <span class="text-[9.5px] font-bold uppercase text-zinc-700 bg-zinc-100 px-1.5 py-0.2 rounded-md"><%= order.order_status %></span>
+                                        </div>
+                                    </div>
 
-                                    <span class="px-2 py-0.5 rounded-full font-bold uppercase text-[10px] bg-zinc-100 text-zinc-800 border border-zinc-200">
-                                        <%= order.order_status %>
-                                    </span>
+                                    <!-- Expand Chevron -->
+                                    <div class="w-7 h-7 rounded-lg bg-[#F8FAF8] border border-[#E3E9E5] flex items-center justify-center text-[#6B756F] transition-transform duration-200 order-chevron shrink-0" 
+                                         id="orderChevron-<%= order.id %>"
+                                         style="<%= isClaimed ? 'transform: rotate(180deg);' : '' %>">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Payment Claim Verification Box (High Priority) -->
-                            <% if (order.payment_status === 'claimed') { %>
-                                <div class="p-3 sm:p-3.5 rounded-2xl bg-amber-50 border border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                                    <div class="space-y-1">
-                                        <div class="font-bold text-amber-950 flex items-center gap-1.5">
-                                            <span>🔔</span> <span>Customer Claimed Bank Transfer</span>
-                                        </div>
-                                        <div class="text-[11px] text-amber-900">
-                                            Reference / Note: <strong class="font-mono bg-amber-200/70 px-1 py-0.5 rounded"><%= order.payment_proof_ref || 'Customer confirmed transfer' %></strong>. Check your bank app to verify funds before confirming.
-                                        </div>
-                                        <% if (order.receipt_url) { %>
-                                            <div class="pt-0.5">
-                                                <a href="<%= order.receipt_url %>" target="_blank" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white text-[#087A50] font-bold text-xs border border-amber-300 hover:bg-amber-100 transition shadow-2xs">
-                                                    <span>📎 Customer Receipt Proof</span>
-                                                    <span class="text-[10px]">↗</span>
-                                                </a>
+                            <!-- Expandable Inline Details Section -->
+                            <div id="orderDetails-<%= order.id %>" class="order-details-panel <%= isClaimed ? '' : 'hidden' %> border-t border-[#E3E9E5] bg-[#F8FAF8]/40 p-3.5 sm:p-5 space-y-3.5 text-xs">
+                                
+                                <!-- Bank Transfer Claim Verification Notice (High Priority) -->
+                                <% if (order.payment_status === 'claimed') { %>
+                                    <div class="p-3 sm:p-3.5 rounded-xl bg-amber-50 border border-amber-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                                        <div class="space-y-1">
+                                            <div class="font-bold text-amber-950 flex items-center gap-1.5">
+                                                <span class="w-2 h-2 rounded-full bg-amber-600 animate-ping"></span>
+                                                <span>Customer Claimed Bank Transfer</span>
                                             </div>
-                                        <% } %>
+                                            <div class="text-[11px] text-amber-900">
+                                                Reference / Note: <strong class="font-mono bg-amber-200/70 px-1 py-0.5 rounded"><%= order.payment_proof_ref || 'Customer confirmed transfer' %></strong>. Check your bank app to verify funds before confirming.
+                                            </div>
+                                            <% if (order.receipt_url) { %>
+                                                <div class="pt-0.5">
+                                                    <a href="<%= order.receipt_url %>" target="_blank" onclick="event.stopPropagation()" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white text-[#087A50] font-bold text-xs border border-amber-300 hover:bg-amber-100 transition shadow-2xs">
+                                                        <span>Customer Receipt Proof</span>
+                                                        <span class="text-[10px]">↗</span>
+                                                    </a>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <button onclick="event.stopPropagation(); confirmPayment(<%= order.id %>)" class="min-h-[36px] bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-xl shadow-2xs transition text-xs flex items-center gap-1.5">
+                                                <svg class="w-3.5 h-3.5 text-white shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                                <span>Confirm Payment</span>
+                                            </button>
+                                            <button onclick="event.stopPropagation(); rejectPayment(<%= order.id %>)" class="min-h-[36px] bg-white text-red-700 border border-red-300 hover:bg-red-50 font-bold px-3 py-1.5 rounded-xl transition text-xs">
+                                                <span>Reject</span>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div class="flex items-center gap-2 shrink-0">
-                                        <button onclick="confirmPayment(<%= order.id %>)" class="min-h-[38px] bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-1.5 rounded-xl shadow-2xs transition text-xs flex items-center gap-1">
-                                            <span>✓</span> <span>Confirm Payment</span>
-                                        </button>
-                                        <button onclick="rejectPayment(<%= order.id %>)" class="min-h-[38px] bg-white text-red-700 border border-red-300 hover:bg-red-50 font-bold px-3 py-1.5 rounded-xl transition text-xs">
-                                            <span>✕ Reject</span>
-                                        </button>
+                                <% } %>
+
+                                <!-- Customer Details & Direct 1-Tap Contact -->
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl bg-white border border-[#E3E9E5]">
+                                    <div class="space-y-0.5 min-w-0">
+                                        <span class="text-[10px] font-bold uppercase text-[#6B756F] tracking-wider font-mono">Customer Information</span>
+                                        <div class="font-bold text-xs text-[#08110D] truncate"><%= order.customer_name %></div>
+                                        <div class="text-[11px] text-[#6B756F] font-mono"><%= order.customer_phone || 'No phone number provided' %></div>
                                     </div>
-                                </div>
-                            <% } %>
 
-                            <!-- Customer & Fulfillment Grid -->
-                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 text-xs pt-1">
-                                <!-- Customer Info with 1-Tap Quick Actions -->
-                                <div class="p-2.5 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]/70 space-y-1">
-                                    <span class="text-[10px] uppercase font-bold text-[#6B756F]">Customer</span>
-                                    <div class="font-bold text-[#08110D] truncate"><%= order.customer_name %></div>
-                                    <div class="flex items-center gap-2 pt-0.5">
-                                        <span class="text-[#6B756F] text-[11px] font-mono"><%= order.customer_phone %></span>
-                                        <% if (order.customer_phone) { 
-                                            const cleanPhone = order.customer_phone.replace(/[^0-9]/g, '');
-                                        %>
-                                            <a href="tel:<%= order.customer_phone %>" title="Call customer" class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center text-[10px] hover:bg-emerald-200 transition">📞</a>
-                                            <a href="https://wa.me/<%= cleanPhone %>" target="_blank" title="WhatsApp customer" class="w-6 h-6 rounded-lg bg-green-100 text-green-800 flex items-center justify-center text-[10px] hover:bg-green-200 transition">💬</a>
-                                        <% } %>
-                                    </div>
-                                </div>
-
-                                <!-- Fulfillment Info -->
-                                <div class="p-2.5 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]/70 space-y-1">
-                                    <span class="text-[10px] uppercase font-bold text-[#6B756F]">Fulfillment</span>
-                                    <div class="font-bold text-[#08110D]"><%= order.fulfillment_type === 'pickup' ? '🏪 In-Store Pickup' : '🚚 Delivery' %></div>
-                                    <div class="text-[11px] text-[#6B756F] line-clamp-1"><%= order.delivery_address || 'Customer pickup at store' %></div>
-                                </div>
-
-                                <!-- Amount -->
-                                <div class="p-2.5 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]/70 space-y-0.5 sm:text-right">
-                                    <span class="text-[10px] uppercase font-bold text-[#6B756F]">Order Total</span>
-                                    <div class="text-base font-extrabold text-[#087A50] font-mono">
-                                        ₦<%= Number(order.total_amount).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
-                                    </div>
-                                    <div class="text-[10px] text-[#6B756F]">Delivery fee: ₦<%= Number(order.delivery_fee || 0).toLocaleString('en-US') %></div>
-                                </div>
-                            </div>
-
-                            <!-- Footer Status & Action Controls -->
-                            <div class="pt-2.5 border-t border-[#E3E9E5] flex flex-wrap items-center justify-between gap-2.5 text-xs">
-                                <div class="flex items-center gap-2">
-                                    <label class="text-[11px] font-bold text-[#6B756F]">Update Status:</label>
-                                    <select onchange="updateStatus(<%= order.id %>, this.value)" class="bg-[#F8FAF8] border border-[#E3E9E5] font-bold text-xs rounded-xl px-2.5 py-1.5 outline-none hover:border-[#08110D] transition min-h-[36px]">
-                                        <option value="pending" <%= order.order_status === 'pending' ? 'selected' : '' %>>⏳ Pending</option>
-                                        <option value="confirmed" <%= order.order_status === 'confirmed' ? 'selected' : '' %>>✓ Confirmed</option>
-                                        <option value="dispatched" <%= order.order_status === 'dispatched' ? 'selected' : '' %>>🚚 Dispatched</option>
-                                        <option value="completed" <%= order.order_status === 'completed' ? 'selected' : '' %>>🎉 Completed</option>
-                                        <option value="cancelled" <%= order.order_status === 'cancelled' ? 'selected' : '' %>>❌ Cancelled</option>
-                                    </select>
-                                </div>
-
-                                <div class="flex items-center gap-1.5 flex-wrap">
-                                    <% if (order.receipt_url) { %>
-                                        <a href="<%= order.receipt_url %>" target="_blank" class="min-h-[36px] bg-white hover:bg-[#F8FAF8] text-[#087A50] font-bold px-2.5 py-1.5 rounded-xl border border-[#E3E9E5] transition flex items-center gap-1 shadow-2xs">
-                                            <span>📎 Receipt Proof ↗</span>
-                                        </a>
+                                    <% if (order.customer_phone) { 
+                                        const cleanPhone = order.customer_phone.replace(/[^0-9]/g, '');
+                                    %>
+                                        <div class="flex items-center gap-2 shrink-0">
+                                            <a href="tel:<%= order.customer_phone %>" onclick="event.stopPropagation()" class="px-3 py-1.5 rounded-xl bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] border border-[#E3E9E5] font-semibold text-xs flex items-center gap-1.5 transition shadow-2xs">
+                                                <svg class="w-3.5 h-3.5 text-[#087A50]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                                <span>Call</span>
+                                            </a>
+                                            <a href="https://wa.me/<%= cleanPhone %>" target="_blank" onclick="event.stopPropagation()" class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-[#087A50] border border-emerald-200 font-semibold text-xs flex items-center gap-1.5 transition shadow-2xs">
+                                                <svg class="w-3.5 h-3.5 text-[#087A50]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                                <span>WhatsApp</span>
+                                            </a>
+                                        </div>
                                     <% } %>
-                                    <a href="/merchant/messages" class="min-h-[36px] bg-[#08110D] text-[#19D98B] hover:bg-black font-bold px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-2xs transition">
-                                        <span>💬 Chat</span>
-                                    </a>
-                                    <a href="/receipt/<%= order.order_ref %>" target="_blank" class="min-h-[36px] bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-bold px-3 py-1.5 rounded-xl border border-[#E3E9E5] transition flex items-center">
-                                        Receipt ↗
-                                    </a>
-                                    <a href="/order/<%= order.order_ref %>?token=<%= order.order_token %>" target="_blank" class="min-h-[36px] bg-white hover:bg-[#F8FAF8] text-[#6B756F] hover:text-[#08110D] font-bold px-2.5 py-1.5 rounded-xl border border-[#E3E9E5] transition flex items-center">
-                                        Track ↗
-                                    </a>
                                 </div>
+
+                                <!-- Fulfillment & Payment Information Grid -->
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    <!-- Fulfillment Card -->
+                                    <div class="p-3 rounded-xl bg-white border border-[#E3E9E5] space-y-1">
+                                        <span class="text-[10px] font-bold uppercase text-[#6B756F] tracking-wider font-mono">Fulfillment</span>
+                                        <div class="font-bold text-[#08110D]"><%= order.fulfillment_type === 'pickup' ? 'In-Store Pickup' : 'Delivery to Customer' %></div>
+                                        <div class="text-[11px] text-[#6B756F] leading-tight"><%= order.delivery_address || 'Customer will pick up at store' %></div>
+                                        <% if (order.delivery_fee) { %>
+                                            <div class="text-[10px] text-[#6B756F] pt-0.5 font-mono">Delivery fee: ₦<%= Number(order.delivery_fee).toLocaleString('en-US') %></div>
+                                        <% } %>
+                                    </div>
+
+                                    <!-- Payment Info Card -->
+                                    <div class="p-3 rounded-xl bg-white border border-[#E3E9E5] space-y-1">
+                                        <span class="text-[10px] font-bold uppercase text-[#6B756F] tracking-wider font-mono">Payment Details</span>
+                                        <div class="font-bold text-[#08110D]">
+                                            <%= order.payment_method === 'pay_on_delivery' ? 'Pay on Delivery' : 'Direct Bank Transfer' %>
+                                        </div>
+                                        <div class="text-[11px] text-[#6B756F]">
+                                            Status: <strong class="uppercase text-[#08110D]"><%= order.payment_status %></strong>
+                                        </div>
+                                        <div class="text-sm font-bold text-[#087A50] font-mono pt-0.5">
+                                            ₦<%= Number(order.total_amount).toLocaleString('en-US', {minimumFractionDigits: 2}) %> Total
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Action Controls Footer -->
+                                <div class="pt-2 border-t border-[#E3E9E5] flex flex-wrap items-center justify-between gap-2.5">
+                                    <div class="flex items-center gap-2">
+                                        <label class="text-[11px] font-bold text-[#6B756F]">Update Status:</label>
+                                        <select onclick="event.stopPropagation()" onchange="event.stopPropagation(); updateStatus(<%= order.id %>, this.value)" class="bg-white border border-[#E3E9E5] font-semibold text-xs rounded-xl px-2.5 py-1.5 outline-none hover:border-[#08110D] transition min-h-[36px]">
+                                            <option value="pending" <%= order.order_status === 'pending' ? 'selected' : '' %>>Pending</option>
+                                            <option value="confirmed" <%= order.order_status === 'confirmed' ? 'selected' : '' %>>Confirmed</option>
+                                            <option value="dispatched" <%= order.order_status === 'dispatched' ? 'selected' : '' %>>Dispatched</option>
+                                            <option value="completed" <%= order.order_status === 'completed' ? 'selected' : '' %>>Completed</option>
+                                            <option value="cancelled" <%= order.order_status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <% if (order.receipt_url) { %>
+                                            <a href="<%= order.receipt_url %>" target="_blank" onclick="event.stopPropagation()" class="min-h-[36px] bg-white hover:bg-[#F8FAF8] text-[#087A50] font-semibold px-2.5 py-1.5 rounded-xl border border-[#E3E9E5] transition flex items-center gap-1 shadow-2xs">
+                                                <span>Receipt Proof ↗</span>
+                                            </a>
+                                        <% } %>
+                                        <a href="/merchant/messages" onclick="event.stopPropagation()" class="min-h-[36px] bg-[#08110D] text-[#19D98B] hover:bg-black font-semibold px-3 py-1.5 rounded-xl flex items-center gap-1 shadow-2xs transition">
+                                            <span>Chat</span>
+                                        </a>
+                                        <a href="/receipt/<%= order.order_ref %>" target="_blank" onclick="event.stopPropagation()" class="min-h-[36px] bg-white hover:bg-[#F8FAF8] text-[#08110D] font-semibold px-3 py-1.5 rounded-xl border border-[#E3E9E5] transition flex items-center">
+                                            Receipt ↗
+                                        </a>
+                                        <a href="/order/<%= order.order_ref %>?token=<%= order.order_token %>" target="_blank" onclick="event.stopPropagation()" class="min-h-[36px] bg-white hover:bg-[#F8FAF8] text-[#6B756F] hover:text-[#08110D] font-semibold px-2.5 py-1.5 rounded-xl border border-[#E3E9E5] transition flex items-center">
+                                            Track ↗
+                                        </a>
+                                    </div>
+                                </div>
+
                             </div>
 
                         </div>
@@ -417,16 +461,18 @@
             </div>
 
             <!-- No search results placeholder -->
-            <div id="noSearchResultsNotice" class="hidden p-8 text-center bg-white rounded-3xl border border-[#E3E9E5] text-[#6B756F] text-xs">
+            <div id="noSearchResultsNotice" class="hidden p-8 text-center bg-white rounded-2xl border border-[#E3E9E5] text-[#6B756F] text-xs">
                 No orders match your filter or search criteria.
             </div>
         </div>
 
         <!-- Deep Visitor Analytics & Live Telemetry Section (Expandable on Mobile, Open on Desktop) -->
-        <div id="analyticsSection" class="bg-white rounded-3xl border border-[#E3E9E5] p-4 sm:p-5 shadow-xs space-y-4">
+        <div id="analyticsSection" class="bg-white rounded-2xl border border-[#E3E9E5] p-4 sm:p-5 shadow-2xs space-y-4">
             <div class="flex items-center justify-between cursor-pointer" onclick="toggleAnalyticsSection()">
-                <div class="flex items-center gap-2">
-                    <span class="w-8 h-8 rounded-xl bg-[#19D98B]/10 text-[#087A50] flex items-center justify-center font-bold text-sm">📈</span>
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-[#19D98B]/10 text-[#087A50] flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4 text-[#087A50]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                    </div>
                     <div>
                         <h2 class="text-sm sm:text-base font-bold text-[#08110D] font-display">Store Traffic & Live Telemetry</h2>
                         <p class="text-[11px] text-[#6B756F]">Visitor trends, unique shoppers, and active real-time sessions</p>
@@ -439,28 +485,28 @@
 
             <div id="analyticsContent" class="space-y-4 pt-2 border-t border-[#E3E9E5]">
                 <!-- Timeframe switcher for Visitor Analytics -->
-                <div class="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1 text-xs font-medium bg-[#F8FAF8] p-1 rounded-2xl border border-[#E3E9E5]">
-                    <button type="button" onclick="switchVisitorPeriod('today')" id="vbtn-today" class="visitor-tab-btn px-3 py-1.5 rounded-xl bg-[#08110D] text-white font-semibold transition text-xs whitespace-nowrap">Today</button>
-                    <button type="button" onclick="switchVisitorPeriod('yesterday')" id="vbtn-yesterday" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Yesterday</button>
-                    <button type="button" onclick="switchVisitorPeriod('7days')" id="vbtn-7days" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">7 Days</button>
-                    <button type="button" onclick="switchVisitorPeriod('month')" id="vbtn-month" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">1 Month</button>
-                    <button type="button" onclick="switchVisitorPeriod('quarterly')" id="vbtn-quarterly" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Quarterly</button>
-                    <button type="button" onclick="switchVisitorPeriod('yearly')" id="vbtn-yearly" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Yearly</button>
-                    <button type="button" onclick="switchVisitorPeriod('lifetime')" id="vbtn-lifetime" class="visitor-tab-btn px-3 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Lifetime</button>
+                <div class="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1 text-xs font-medium bg-[#F8FAF8] p-1 rounded-xl border border-[#E3E9E5]">
+                    <button type="button" onclick="switchVisitorPeriod('today')" id="vbtn-today" class="visitor-tab-btn px-3 py-1.5 rounded-lg bg-[#08110D] text-white font-semibold transition text-xs whitespace-nowrap">Today</button>
+                    <button type="button" onclick="switchVisitorPeriod('yesterday')" id="vbtn-yesterday" class="visitor-tab-btn px-3 py-1.5 rounded-lg text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Yesterday</button>
+                    <button type="button" onclick="switchVisitorPeriod('7days')" id="vbtn-7days" class="visitor-tab-btn px-3 py-1.5 rounded-lg text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">7 Days</button>
+                    <button type="button" onclick="switchVisitorPeriod('month')" id="vbtn-month" class="visitor-tab-btn px-3 py-1.5 rounded-lg text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">1 Month</button>
+                    <button type="button" onclick="switchVisitorPeriod('quarterly')" id="vbtn-quarterly" class="visitor-tab-btn px-3 py-1.5 rounded-lg text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Quarterly</button>
+                    <button type="button" onclick="switchVisitorPeriod('yearly')" id="vbtn-yearly" class="visitor-tab-btn px-3 py-1.5 rounded-lg text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Yearly</button>
+                    <button type="button" onclick="switchVisitorPeriod('lifetime')" id="vbtn-lifetime" class="visitor-tab-btn px-3 py-1.5 rounded-lg text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Lifetime</button>
                 </div>
 
                 <!-- Unique Shoppers & Visits Detail -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div class="p-3.5 sm:p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5]">
-                        <span class="text-[10px] uppercase font-semibold text-[#6B756F]">Unique Shoppers</span>
+                    <div class="p-3.5 sm:p-4 rounded-xl bg-white border border-[#E3E9E5] shadow-2xs">
+                        <span class="text-[10px] uppercase font-semibold text-[#6B756F] font-mono">Unique Shoppers</span>
                         <div class="text-xl sm:text-2xl font-bold text-[#087A50] font-mono mt-1" id="statUniqueVisitors">
                             <%= (visitorMetrics && visitorMetrics.today && visitorMetrics.today.unique_visitors) || 0 %>
                         </div>
                         <span class="text-[11px] text-[#6B756F]" id="statUniqueSub">Distinct shoppers</span>
                     </div>
 
-                    <div class="p-3.5 sm:p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5] flex flex-col justify-between">
-                        <span class="text-[10px] uppercase font-semibold text-[#6B756F]">Live Active Count</span>
+                    <div class="p-3.5 sm:p-4 rounded-xl bg-white border border-[#E3E9E5] shadow-2xs flex flex-col justify-between">
+                        <span class="text-[10px] uppercase font-semibold text-[#6B756F] font-mono">Live Active Count</span>
                         <div class="flex items-center gap-2 mt-1">
                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
                             <span class="text-xl sm:text-2xl font-bold text-[#08110D] font-mono" id="liveActiveCountText">
@@ -486,7 +532,7 @@
                             <% } %>
                         </div>
 
-                        <div class="overflow-x-auto rounded-2xl border border-[#E3E9E5]">
+                        <div class="overflow-x-auto rounded-xl border border-[#E3E9E5]">
                             <table class="w-full text-left border-collapse text-xs">
                                 <thead>
                                     <tr class="border-b border-[#E3E9E5] text-[10px] font-bold uppercase text-[#6B756F] bg-[#F8FAF8]">
@@ -501,7 +547,7 @@
                                     <tr>
                                         <td colspan="5" class="p-4 text-center text-[#6B756F] text-xs">
                                             <div class="inline-flex items-center gap-2">
-                                                <span class="animate-spin text-sm">⏳</span>
+                                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                                                 <span>Listening for live store visitors...</span>
                                             </div>
                                         </td>
@@ -512,9 +558,9 @@
                     </div>
                 <% } else { %>
                     <!-- Free Tier Locked Banner -->
-                    <div class="p-5 rounded-2xl bg-[#F8FAF8] border border-dashed border-[#E3E9E5] text-center space-y-2.5">
-                        <div class="w-8 h-8 rounded-xl bg-gray-200 text-[#08110D] flex items-center justify-center mx-auto text-sm">
-                            🔒
+                    <div class="p-5 rounded-xl bg-white border border-dashed border-[#E3E9E5] text-center space-y-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-gray-100 text-[#08110D] flex items-center justify-center mx-auto text-sm">
+                            <svg class="w-4 h-4 text-[#6B756F]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                         </div>
                         <div>
                             <h3 class="text-xs font-bold text-[#08110D] font-display">Live Customer Tracking is a Pro Feature</h3>
@@ -522,8 +568,9 @@
                                 See who is actively browsing your storefront in real time and what products they are looking at.
                             </p>
                         </div>
-                        <button type="button" onclick="triggerUpgradeModal('Live Customer Tracking')" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs px-4 py-2 rounded-xl transition shadow-2xs inline-flex items-center gap-1 font-display">
-                            <span>⚡ Upgrade to Pro</span>
+                        <button type="button" onclick="triggerUpgradeModal('Live Customer Tracking')" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs px-4 py-2 rounded-xl transition shadow-2xs inline-flex items-center gap-1.5 font-display">
+                            <svg class="w-3.5 h-3.5 text-[#19D98B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            <span>Upgrade to Pro</span>
                             <span>&rarr;</span>
                         </button>
                     </div>
@@ -537,10 +584,12 @@
 
     <!-- Store QR Code Modal -->
     <div id="storeQrModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
-        <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-sm w-full p-6 space-y-5 border border-[#E3E9E5] shadow-2xl text-center">
+        <div class="bg-white rounded-t-3xl sm:rounded-2xl max-w-sm w-full p-6 space-y-5 border border-[#E3E9E5] shadow-2xl text-center">
             <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
                 <div class="flex items-center gap-2 text-left">
-                    <span class="text-xl">📱</span>
+                    <div class="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-[#08110D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                    </div>
                     <div>
                         <h3 class="font-extrabold text-sm text-[#08110D] font-display">Storefront QR Code</h3>
                         <p class="text-[11px] text-[#6B756F]">Instant scan & direct order</p>
@@ -563,14 +612,17 @@
             <!-- Actions -->
             <div class="space-y-2 pb-safe sm:pb-0">
                 <button type="button" onclick="downloadQrCode()" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs py-3 rounded-xl transition shadow-2xs flex items-center justify-center gap-2 font-display">
-                    <span>⬇️</span> <span>Download Print-Ready QR (PNG)</span>
+                    <svg class="w-4 h-4 text-[#19D98B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span>Download Print-Ready QR (PNG)</span>
                 </button>
                 <div class="grid grid-cols-2 gap-2">
                     <button type="button" onclick="copyStoreUrl()" id="copyStoreUrlBtn" class="w-full bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] font-bold text-xs py-2.5 rounded-xl border border-[#E3E9E5] transition flex items-center justify-center gap-1.5">
-                        <span>📋</span> <span>Copy Link</span>
+                        <svg class="w-3.5 h-3.5 text-[#6B756F]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        <span>Copy Link</span>
                     </button>
-                    <a href="https://wa.me/?text=Order%20directly%20from%20our%20official%20store:%20https://zlik.store/<%= store.slug %>" target="_blank" class="w-full bg-[#19D98B]/15 hover:bg-[#19D98B]/25 text-[#087A50] font-bold text-xs py-2.5 rounded-xl border border-[#19D98B]/30 transition flex items-center justify-center gap-1.5">
-                        <span>💬</span> <span>WhatsApp</span>
+                    <a href="https://wa.me/?text=Order%20directly%20from%20our%20official%20store:%20https://zlik.store/<%= store.slug %>" target="_blank" class="w-full bg-emerald-50 hover:bg-emerald-100 text-[#087A50] font-bold text-xs py-2.5 rounded-xl border border-emerald-200 transition flex items-center justify-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-[#087A50]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        <span>WhatsApp</span>
                     </a>
                 </div>
             </div>
@@ -713,11 +765,28 @@
             } catch (e) {}
         }
 
+        function toggleOrderCard(orderId) {
+            const details = document.getElementById('orderDetails-' + orderId);
+            const chevron = document.getElementById('orderChevron-' + orderId);
+            if (!details) return;
+            const isHidden = details.classList.contains('hidden');
+            details.classList.toggle('hidden', !isHidden);
+            if (chevron) {
+                chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+            }
+        }
+
         function toggleAudio() {
             audioEnabled = !audioEnabled;
             const icon = document.getElementById('soundToggleIcon');
             const text = document.getElementById('soundToggleText');
-            if (icon) icon.textContent = audioEnabled ? '🔊' : '🔇';
+            if (icon) {
+                if (audioEnabled) {
+                    icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>';
+                } else {
+                    icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>';
+                }
+            }
             if (text) text.textContent = audioEnabled ? 'Sound: ON' : 'Sound: OFF';
         }
 
@@ -859,8 +928,12 @@
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(fullUrl).then(() => {
                     const btn = document.getElementById('copyStoreUrlBtn');
-                    btn.innerHTML = '<span>✓ Copied!</span>';
-                    setTimeout(() => btn.innerHTML = '<span>📋 Copy Link</span>', 2000);
+                    if (btn) {
+                        btn.innerHTML = '<svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span>Copied!</span>';
+                        setTimeout(() => {
+                            btn.innerHTML = '<svg class="w-3.5 h-3.5 text-[#6B756F]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg><span>Copy Link</span>';
+                        }, 2000);
+                    }
                 });
             }
         }
@@ -881,13 +954,13 @@
                 const data = await res.json();
                 if (!data.success) {
                     alert(data.error || 'Failed to initiate upgrade.');
-                    if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro ⚡'; }
+                    if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro'; }
                     return;
                 }
 
                 if (typeof PaystackPop === 'undefined') {
                     alert('Paystack gateway is loading. Please try again in a few seconds.');
-                    if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro ⚡'; }
+                    if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro'; }
                     return;
                 }
 
@@ -906,20 +979,20 @@
                         });
                         const vData = await vRes.json();
                         if (vData.success) {
-                            alert('🎉 Upgrade successful! Your store is now on Zlik ' + plan.toUpperCase());
+                            alert('Upgrade successful! Your store is now on Zlik ' + plan.toUpperCase());
                             location.reload();
                         } else {
                             alert(vData.error || 'Upgrade verification error. Please reload.');
                         }
                     },
                     onClose: function() {
-                        if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro ⚡'; }
+                        if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro'; }
                     }
                 });
                 handler.openIframe();
             } catch (err) {
                 alert('Network error initiating payment.');
-                if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro ⚡'; }
+                if (btn) { btn.disabled = false; btn.textContent = 'Upgrade to Pro'; }
             }
         }
 

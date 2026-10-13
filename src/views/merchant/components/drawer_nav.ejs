@@ -52,7 +52,7 @@
             
             <a href="/merchant" class="flex items-center justify-between px-3 py-2.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'orders') ? 'bg-[#08110D] text-white font-semibold shadow-2xs' : 'text-[#08110D] hover:bg-[#F8FAF8]' %>">
                 <div class="flex items-center gap-3">
-                    <span class="text-base">📊</span>
+                    <svg class="w-4 h-4 <%= (typeof activeTab !== 'undefined' && activeTab === 'orders') ? 'text-[#19D98B]' : 'text-[#6B756F]' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                     <span>Dashboard & Orders</span>
                 </div>
                 <span class="text-[10px] <%= (typeof activeTab !== 'undefined' && activeTab === 'orders') ? 'text-[#19D98B]' : 'text-[#6B756F]' %> font-mono">Primary</span>
@@ -60,7 +60,7 @@
 
             <a href="/merchant/ledger" class="flex items-center justify-between px-3 py-2.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'ledger') ? 'bg-[#08110D] text-white font-semibold shadow-2xs' : 'text-[#08110D] hover:bg-[#F8FAF8]' %>">
                 <div class="flex items-center gap-3">
-                    <span class="text-base">📈</span>
+                    <svg class="w-4 h-4 <%= (typeof activeTab !== 'undefined' && activeTab === 'ledger') ? 'text-[#19D98B]' : 'text-[#6B756F]' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
                     <span>Sales Ledger & Analytics</span>
                 </div>
                 <span class="text-[10px] text-[#6B756F]">&rarr;</span>
@@ -68,7 +68,7 @@
 
             <a href="/merchant/reviews" class="flex items-center justify-between px-3 py-2.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'reviews') ? 'bg-[#08110D] text-white font-semibold shadow-2xs' : 'text-[#08110D] hover:bg-[#F8FAF8]' %>">
                 <div class="flex items-center gap-3">
-                    <span class="text-base">⭐</span>
+                    <svg class="w-4 h-4 <%= (typeof activeTab !== 'undefined' && activeTab === 'reviews') ? 'text-[#19D98B]' : 'text-[#6B756F]' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
                     <span>Customer Reviews</span>
                 </div>
                 <% if (typeof pending_count !== 'undefined' && pending_count > 0) { %>
@@ -85,7 +85,7 @@
             
             <a href="/merchant/items" class="flex items-center justify-between px-3 py-2.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'products') ? 'bg-[#08110D] text-white font-semibold shadow-2xs' : 'text-[#08110D] hover:bg-[#F8FAF8]' %>">
                 <div class="flex items-center gap-3">
-                    <span class="text-base">📦</span>
+                    <svg class="w-4 h-4 <%= (typeof activeTab !== 'undefined' && activeTab === 'products') ? 'text-[#19D98B]' : 'text-[#6B756F]' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                     <span>Products & Inventory</span>
                 </div>
                 <span class="text-[10px] text-[#6B756F]">&rarr;</span>
@@ -93,7 +93,7 @@
 
             <a href="/merchant/settings" class="flex items-center justify-between px-3 py-2.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'settings') ? 'bg-[#08110D] text-white font-semibold shadow-2xs' : 'text-[#08110D] hover:bg-[#F8FAF8]' %>">
                 <div class="flex items-center gap-3">
-                    <span class="text-base">⚙️</span>
+                    <svg class="w-4 h-4 <%= (typeof activeTab !== 'undefined' && activeTab === 'settings') ? 'text-[#19D98B]' : 'text-[#6B756F]' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     <span>Store Settings & Payout Bank</span>
                 </div>
                 <span class="text-[10px] text-[#6B756F]">&rarr;</span>
@@ -101,7 +101,7 @@
 
             <a href="/merchant/verification" class="flex items-center justify-between px-3 py-2.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'verification') ? 'bg-[#08110D] text-white font-semibold shadow-2xs' : 'text-[#08110D] hover:bg-[#F8FAF8]' %>">
                 <div class="flex items-center gap-3">
-                    <span class="text-base">🛡️</span>
+                    <svg class="w-4 h-4 <%= (typeof activeTab !== 'undefined' && activeTab === 'verification') ? 'text-[#19D98B]' : 'text-[#6B756F]' %>" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                     <span>Trust & Identity Verification</span>
                 </div>
                 <span class="text-[10px] font-bold text-[#087A50] bg-emerald-50 px-2 py-0.5 rounded-full">KYC</span>
@@ -118,7 +118,7 @@
                     id="drawerSoundToggle" 
                     class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[#08110D] hover:bg-[#F8FAF8] transition text-left">
                 <div class="flex items-center gap-3">
-                    <span id="drawerSoundIcon" class="text-base">🔊</span>
+                    <svg id="drawerSoundIcon" class="w-4 h-4 text-[#6B756F]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
                     <span>Order Sound Chimes</span>
                 </div>
                 <span id="drawerSoundState" class="text-[10px] font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-[#087A50] border border-emerald-200">ON</span>
@@ -129,7 +129,7 @@
                     onclick="closeMerchantDrawer(); if(typeof openQrModal === 'function') openQrModal(); else window.location.href='/merchant/settings#qr';" 
                     class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[#08110D] hover:bg-[#F8FAF8] transition text-left">
                 <div class="flex items-center gap-3">
-                    <span class="text-base">📱</span>
+                    <svg class="w-4 h-4 text-[#6B756F]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
                     <span>Storefront QR Code</span>
                 </div>
                 <span class="text-[10px] text-[#6B756F]">View</span>
@@ -139,7 +139,7 @@
             <% if (typeof store !== 'undefined' && store && store.slug) { %>
                 <a href="/<%= store.slug %>" target="_blank" class="flex items-center justify-between px-3 py-2.5 rounded-xl text-[#087A50] bg-emerald-50/60 hover:bg-emerald-100/50 transition">
                     <div class="flex items-center gap-3">
-                        <span class="text-base">↗</span>
+                        <svg class="w-4 h-4 text-[#087A50]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                         <span class="font-semibold">View Live Storefront</span>
                     </div>
                     <span class="text-[10px] font-mono text-[#087A50]">Open</span>
@@ -151,7 +151,7 @@
         <div class="p-3.5 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5] space-y-2">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <span class="text-sm">⚡</span>
+                    <svg class="w-4 h-4 text-[#19D98B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                     <span class="font-bold text-[#08110D]">Plan: <%= (typeof isPro !== 'undefined' && isPro) ? 'Pro Seller' : 'Free Tier' %></span>
                 </div>
                 <% if (typeof isPro !== 'undefined' && !isPro) { %>
@@ -219,11 +219,11 @@
             if (isMuted) {
                 drawerState.textContent = 'MUTED';
                 drawerState.className = 'text-[10px] font-bold font-mono px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 border border-gray-200';
-                drawerIcon.textContent = '🔇';
+                drawerIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>';
             } else {
                 drawerState.textContent = 'ON';
                 drawerState.className = 'text-[10px] font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-50 text-[#087A50] border border-emerald-200';
-                drawerIcon.textContent = '🔊';
+                drawerIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>';
             }
         }
     }
