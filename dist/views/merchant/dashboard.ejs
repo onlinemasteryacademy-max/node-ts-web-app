@@ -115,11 +115,59 @@
                 <span id="navChatUnreadBadge" class="hidden bg-[#19D98B] text-[#08110D] text-[10px] font-semibold px-2 py-0.2 rounded-full animate-pulse shadow-2xs">0 new</span>
             </a>
             <a href="/merchant/settings" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D]">Settings</a>
+            <a href="/merchant/verification" class="px-3.5 py-1.5 rounded-xl text-[#6B756F] hover:text-[#08110D] flex items-center gap-1">
+                <span>🛡️</span> <span>Trust & Verification</span>
+            </a>
         </div>
     </header>
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24 sm:pb-8 flex-1 w-full space-y-5 sm:space-y-6">
+
+        <!-- Storefront Gating & Verification Banner (Batch 6) -->
+        <% if (typeof isGated !== 'undefined' && isGated) { %>
+            <div class="bg-gradient-to-r from-emerald-950 via-[#08110D] to-[#0A1A12] border border-[#19D98B]/30 rounded-3xl p-5 text-white shadow-lg space-y-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-start gap-3">
+                        <span class="w-10 h-10 rounded-2xl bg-[#19D98B]/20 text-[#19D98B] flex items-center justify-center text-lg font-bold shrink-0 border border-[#19D98B]/40">🛡️</span>
+                        <div>
+                            <h4 class="font-bold text-sm text-[#19D98B] flex items-center gap-2">
+                                <span>Activate Storefront Orders & Bank Direct Transfers</span>
+                                <span class="text-[10px] font-mono uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">Orders Gated</span>
+                            </h4>
+                            <p class="text-xs text-[#E3E9E5]/80 mt-1 max-w-2xl leading-relaxed">
+                                To protect your business and prevent fraudulent transfers, customers cannot submit orders or view payout account details until your identity and payout bank account are verified.
+                            </p>
+                        </div>
+                    </div>
+                    <a href="/merchant/verification" class="shrink-0 bg-[#19D98B] hover:bg-[#15bf7a] text-[#08110D] font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-md flex items-center gap-1.5 self-start sm:self-center">
+                        <span>Complete Verification</span>
+                        <span>&rarr;</span>
+                    </a>
+                </div>
+                <!-- Progress Steps -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-white/10 text-[11px]">
+                    <div class="flex items-center gap-2 p-2 rounded-xl bg-white/5">
+                        <span class="<%= typeof sellerProfile !== 'undefined' && sellerProfile && sellerProfile.identity_status === 'verified' ? 'text-[#19D98B]' : 'text-amber-400' %> font-bold">
+                            <%= typeof sellerProfile !== 'undefined' && sellerProfile && sellerProfile.identity_status === 'verified' ? '✓' : '1.' %>
+                        </span>
+                        <span class="text-white/90">Identity (BVN / NIN): <strong><%= typeof sellerProfile !== 'undefined' && sellerProfile ? sellerProfile.identity_status.toUpperCase() : 'PENDING' %></strong></span>
+                    </div>
+                    <div class="flex items-center gap-2 p-2 rounded-xl bg-white/5">
+                        <span class="<%= typeof sellerProfile !== 'undefined' && sellerProfile && sellerProfile.bank_status === 'verified' ? 'text-[#19D98B]' : 'text-amber-400' %> font-bold">
+                            <%= typeof sellerProfile !== 'undefined' && sellerProfile && sellerProfile.bank_status === 'verified' ? '✓' : '2.' %>
+                        </span>
+                        <span class="text-white/90">Payout Bank: <strong><%= typeof sellerProfile !== 'undefined' && sellerProfile ? sellerProfile.bank_status.toUpperCase() : 'PENDING' %></strong></span>
+                    </div>
+                    <div class="flex items-center gap-2 p-2 rounded-xl bg-white/5">
+                        <span class="<%= typeof isGated !== 'undefined' && !isGated ? 'text-[#19D98B]' : 'text-white/40' %> font-bold">
+                            <%= typeof isGated !== 'undefined' && !isGated ? '✓' : '3.' %>
+                        </span>
+                        <span class="text-white/90">Order Acceptance: <strong><%= typeof isGated !== 'undefined' && !isGated ? 'ACTIVE' : 'GATED' %></strong></span>
+                    </div>
+                </div>
+            </div>
+        <% } %>
 
         <!-- Low Stock Alert Banner -->
         <% if (lowStockItems && lowStockItems.length > 0) { %>

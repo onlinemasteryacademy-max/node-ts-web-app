@@ -21,14 +21,14 @@ export const PREDEFINED_ROLES: Record<string, AdminRole> = {
     name: 'Operations & Support Lead',
     description: 'Merchant CRM, 1-Click Store Impersonation, Store suspension, KYC badges, Orders view',
     is_system: true,
-    permissions: ['manage_merchants', 'impersonate_merchants', 'manage_verification', 'manage_broadcasts', 'view_audit_logs']
+    permissions: ['manage_merchants', 'impersonate_merchants', 'manage_verification', 'manage_security', 'manage_broadcasts', 'view_audit_logs']
   },
   moderator: {
     id: 'moderator',
     name: 'Trust & Safety Moderator',
     description: 'Global product catalog search, prohibited items flagging, seller verification reviews',
     is_system: true,
-    permissions: ['manage_catalog', 'manage_verification', 'view_audit_logs']
+    permissions: ['manage_catalog', 'manage_verification', 'manage_security', 'view_audit_logs']
   },
   finance_analyst: {
     id: 'finance_analyst',
@@ -48,6 +48,7 @@ export const SYSTEM_PERMISSIONS: Record<string, { label: string; desc: string }>
   manage_broadcasts: { label: 'Platform Announcements', desc: 'Broadcast global system announcements to active seller portals' },
   manage_team: { label: 'Admin Team & Roles', desc: 'Invite administrators and configure custom RBAC permissions' },
   manage_verification: { label: 'Merchant Verification Badges', desc: 'Approve or revoke verified checkmarks on merchant stores' },
+  manage_security: { label: 'Trust & Safety / Fraud Prevention', desc: 'Review seller verifications, manage fraud reports, configure identity providers, and toggle order gating' },
   manage_system_ops: { label: 'System Maintenance & Backups', desc: 'Perform live database snapshots and purge caches' },
   view_audit_logs: { label: 'Platform Audit Trails', desc: 'Inspect administrative audit records and transactional mail logs' }
 };

@@ -44,13 +44,36 @@
             <a href="/<%= store.slug %>" class="text-xs font-bold text-[#6B756F] hover:text-[#08110D] flex items-center gap-1.5 transition">
                 <span>←</span> Back to Store
             </a>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap justify-end">
                 <% if (store.logo_url) { %>
                     <img src="<%= store.logo_url %>" alt="Logo" class="w-7 h-7 rounded-lg object-contain border border-[#E3E9E5] bg-white p-0.5">
                 <% } %>
                 <span class="text-sm font-extrabold font-display text-[#08110D]"><%= store.store_name %></span>
+                <% if (Number(store.is_verified) === 1 || (typeof sellerProfile !== 'undefined' && sellerProfile && sellerProfile.composite_verification_status === 'verified')) { %>
+                    <% if (typeof sellerProfile !== 'undefined' && sellerProfile && sellerProfile.seller_type === 'business') { %>
+                        <span class="text-[9.5px] bg-[#19D98B]/20 text-[#087A50] font-bold px-2 py-0.2 rounded-full flex items-center gap-1" title="CAC Verified Business">
+                            <span>🛡️</span> <span>Verified Business</span>
+                        </span>
+                    <% } else { %>
+                        <span class="text-[9.5px] bg-[#19D98B]/20 text-[#087A50] font-bold px-2 py-0.2 rounded-full flex items-center gap-1" title="Verified Individual Seller">
+                            <span>✓</span> <span>Verified Individual</span>
+                        </span>
+                    <% } %>
+                <% } %>
             </div>
         </div>
+
+        <% if (typeof isGated !== 'undefined' && isGated) { %>
+        <div class="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs font-medium space-y-1.5 shadow-2xs">
+            <div class="flex items-center gap-2 font-bold text-amber-950">
+                <span class="text-sm">🔒</span>
+                <span>Store Verification in Progress — Orders Gated</span>
+            </div>
+            <p class="text-[11.5px] text-amber-800 leading-relaxed">
+                This store is currently undergoing merchant identity verification. To protect customers and eliminate payment diversion, order creation and direct bank transfer instructions are temporarily gated.
+            </p>
+        </div>
+        <% } %>
 
         <div class="flex items-center justify-between">
             <h1 class="text-2xl font-extrabold font-display text-[#08110D]">Complete Your Order</h1>
@@ -211,17 +234,50 @@
                     <div class="flex items-center justify-between bg-white/10 p-3.5 rounded-2xl border border-white/10">
                         <div>
                             <div class="text-[10px] text-white/60 uppercase font-bold">Account Number</div>
-                            <div class="text-xl font-bold font-mono text-[#19D98B] tracking-wider" id="accNumber"><%= store.bank_account_number || '0123456789' %></div>
+                            <% if (typeof isGated !== 'undefined' && isGated) { %>
+                                <div class="text-sm font-bold font-mono text-amber-300 tracking-wider">🔒 Hidden (Verification Pending)</div>
+                            <% } else { %>
+                                <div class="text-xl font-bold font-mono text-[#19D98B] tracking-wider" id="accNumber"><%= store.bank_account_number || '0123456789' %></div>
+                            <% } %>
                         </div>
+                        <% if (typeof isGated === 'undefined' || !isGated) { %>
                         <button id="copyBtn" onclick="copyAccountNumber()" class="bg-[#19D98B] text-[#08110D] text-xs font-bold font-display px-3.5 py-2 rounded-xl transition hover:opacity-90 shadow-2xs">
                             📋 Copy Account
                         </button>
+                        <% } %>
                     </div>
 
                     <div>
                         <div class="text-[10px] text-white/60 uppercase font-bold">Account Name</div>
                         <div class="text-xs font-semibold text-white"><%= store.bank_account_name || store.store_name %></div>
                     </div>
+
+                    <!-- Payment Recipient Name Match Indicator -->
+                    <% if (typeof activeBankAccount !== 'undefined' && activeBankAccount && activeBankAccount.verification_status === 'verified') { %>
+                        <div class="flex items-center gap-2.5 p-3 bg-emerald-950/80 border border-emerald-500/50 rounded-2xl text-emerald-200 text-xs">
+                            <span class="text-emerald-400 font-extrabold text-sm shrink-0">✓</span>
+                            <div>
+                                <div class="font-bold text-white">Bank Account Verified</div>
+                                <div class="text-[11px] text-emerald-300">Name confirmed against verified seller records: <span class="font-mono text-white"><%= activeBankAccount.account_name %></span></div>
+                            </div>
+                        </div>
+                    <% } else if (Number(store.is_verified) === 1 || (typeof sellerProfile !== 'undefined' && sellerProfile && sellerProfile.composite_verification_status === 'verified')) { %>
+                        <div class="flex items-center gap-2.5 p-3 bg-emerald-950/80 border border-emerald-500/50 rounded-2xl text-emerald-200 text-xs">
+                            <span class="text-emerald-400 font-extrabold text-sm shrink-0">✓</span>
+                            <div>
+                                <div class="font-bold text-white">Verified Store Account</div>
+                                <div class="text-[11px] text-emerald-300">Transfers are monitored under Zlik merchant verification standards.</div>
+                            </div>
+                        </div>
+                    <% } else { %>
+                        <div class="flex items-center gap-2.5 p-3 bg-amber-950/80 border border-amber-500/50 rounded-2xl text-amber-200 text-xs">
+                            <span class="text-amber-400 font-extrabold text-sm shrink-0">⚠️</span>
+                            <div>
+                                <div class="font-bold text-white">Verification Notice</div>
+                                <div class="text-[11px] text-amber-200">Confirm recipient name appears as "<%= store.bank_account_name || store.store_name %>" in your banking app before sending.</div>
+                            </div>
+                        </div>
+                    <% } %>
 
                     <div class="flex items-center justify-between bg-white/5 p-3 rounded-xl border border-white/10">
                         <div>
@@ -239,6 +295,27 @@
                     💡 <%= store.payment_instructions %>
                 </div>
                 <% } %>
+            </div>
+
+            <!-- Direct Transfer Protection & Anti-Diversion Warning Box -->
+            <div class="p-5 rounded-3xl bg-amber-50 border border-amber-300 text-amber-950 text-xs space-y-2.5 shadow-2xs">
+                <div class="flex items-center gap-2 font-bold text-amber-950">
+                    <span class="text-lg">🛡️</span>
+                    <span class="font-display">Direct Transfer Safety Notice</span>
+                </div>
+                <ul class="list-disc pl-4 space-y-1.5 text-[11.5px] text-amber-900 leading-relaxed">
+                    <li><strong>Direct Transfer:</strong> You are transferring money directly into the seller's bank account. Zlik does not hold funds in escrow and cannot reverse completed bank transfers.</li>
+                    <li><strong>Verify Recipient:</strong> Ensure your banking app displays <strong><%= store.bank_account_name || store.store_name %></strong> before entering your PIN.</li>
+                    <li><strong>Anti-Diversion Rule:</strong> Only pay into the official account listed above. Never send money to an alternate account sent via WhatsApp or phone.</li>
+                </ul>
+                <div class="pt-2 flex items-center justify-between border-t border-amber-200">
+                    <button type="button" onclick="openCheckoutDisputeModal('payment_diversion')" class="text-red-700 hover:text-red-900 font-bold text-xs flex items-center gap-1 underline">
+                        <span>🚩</span> <span>Report Payment Diversion</span>
+                    </button>
+                    <button type="button" onclick="openCheckoutDisputeModal('other')" class="text-amber-800 hover:text-amber-950 text-xs font-semibold underline">
+                        Report Issue
+                    </button>
+                </div>
             </div>
 
             <!-- Transfer Confirmation & Receipt Proof Card -->
@@ -297,9 +374,15 @@
 
                     <!-- Submit & Back Buttons -->
                     <div class="space-y-2.5 pt-2">
-                        <button type="submit" id="submitOrderBtn" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-extrabold text-xs py-4 rounded-2xl transition shadow-md flex items-center justify-center gap-2 uppercase tracking-wider font-display">
-                            <span>✓</span> <span>I Have Paid — Complete Order</span>
-                        </button>
+                        <% if (typeof isGated !== 'undefined' && isGated) { %>
+                            <button type="button" disabled class="w-full bg-gray-400 text-white font-extrabold text-xs py-4 rounded-2xl cursor-not-allowed opacity-60 uppercase tracking-wider font-display">
+                                🔒 Orders Gated (Verification Pending)
+                            </button>
+                        <% } else { %>
+                            <button type="submit" id="submitOrderBtn" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-extrabold text-xs py-4 rounded-2xl transition shadow-md flex items-center justify-center gap-2 uppercase tracking-wider font-display">
+                                <span>✓</span> <span>I Have Paid — Complete Order</span>
+                            </button>
+                        <% } %>
                         <button type="button" onclick="goToStep(1)" class="w-full text-center text-xs font-bold text-[#6B756F] hover:text-[#08110D] py-2 transition">
                             ← Edit Contact & Delivery Details
                         </button>
@@ -312,6 +395,7 @@
     </div>
 
     <script>
+        const isStoreGated = <%= Boolean(typeof isGated !== 'undefined' && isGated) %>;
         const storeData = <%- JSON.stringify(store) %>;
         let cart = [];
         let fulfillment = 'delivery';
@@ -499,6 +583,12 @@
             const errDiv = document.getElementById('checkoutError');
             errDiv.classList.add('hidden');
 
+            if (isStoreGated) {
+                errDiv.textContent = 'This store is undergoing merchant verification. Orders are temporarily gated until merchant verification is completed.';
+                errDiv.classList.remove('hidden');
+                return;
+            }
+
             const custName = document.getElementById('custName').value.trim();
             const custPhone = document.getElementById('custPhone').value.trim();
             const custAddress = document.getElementById('custAddress')?.value.trim();
@@ -635,6 +725,68 @@
             }
         }
 
+        // Checkout Dispute Modal Handlers
+        function openCheckoutDisputeModal(category) {
+            const modal = document.getElementById('checkoutDisputeModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                if (category) {
+                    const catSelect = document.getElementById('chkDisputeCategory');
+                    if (catSelect) catSelect.value = category;
+                }
+            }
+        }
+
+        function closeCheckoutDisputeModal() {
+            const modal = document.getElementById('checkoutDisputeModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function handleCheckoutDisputeSubmit(event) {
+            event.preventDefault();
+            const btn = document.getElementById('chkDisputeSubmitBtn');
+            const errDiv = document.getElementById('chkDisputeError');
+            const successDiv = document.getElementById('chkDisputeSuccess');
+            const caseRefSpan = document.getElementById('chkDisputeCaseRef');
+
+            errDiv.classList.add('hidden');
+            errDiv.textContent = '';
+            btn.disabled = true;
+            btn.textContent = 'Submitting Report...';
+
+            const payload = {
+                reporter_name: document.getElementById('chkDisputeName').value.trim(),
+                reporter_email: document.getElementById('chkDisputeEmail').value.trim(),
+                reporter_phone: document.getElementById('chkDisputePhone').value.trim() || undefined,
+                store_id: storeData.id,
+                store_slug: storeData.slug,
+                category: document.getElementById('chkDisputeCategory').value,
+                description: document.getElementById('chkDisputeDesc').value.trim()
+            };
+
+            try {
+                const res = await fetch('/api/disputes/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Failed to submit report');
+                }
+
+                if (caseRefSpan) caseRefSpan.textContent = data.case_reference || 'REF-' + Date.now();
+                if (successDiv) successDiv.classList.remove('hidden');
+                document.getElementById('checkoutDisputeForm').reset();
+                btn.classList.add('hidden');
+            } catch (err) {
+                errDiv.textContent = err.message || 'An error occurred while submitting dispute';
+                errDiv.classList.remove('hidden');
+                btn.disabled = false;
+                btn.textContent = 'Submit Report';
+            }
+        }
+
         function escapeHtml(str) {
             if (!str) return '';
             const div = document.createElement('div');
@@ -646,5 +798,77 @@
             renderSummary();
         });
     </script>
+
+    <!-- Checkout Dispute / Payment Diversion Modal -->
+    <div id="checkoutDisputeModal" class="fixed inset-0 z-[80] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 border border-[#E3E9E5] shadow-2xl text-left max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🚩</span>
+                    <div>
+                        <h3 class="font-extrabold text-sm text-[#08110D] font-display">Report Store / Payment Diversion</h3>
+                        <p class="text-[11px] text-[#6B756F]">Reported Store: <%= store.store_name %></p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeCheckoutDisputeModal()" class="text-[#6B756F] hover:text-[#08110D] font-bold text-lg p-1">✕</button>
+            </div>
+
+            <form id="checkoutDisputeForm" onsubmit="handleCheckoutDisputeSubmit(event)" class="space-y-3.5 text-xs">
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">Your Full Name *</label>
+                    <input type="text" id="chkDisputeName" required placeholder="e.g. Samuel Adebayo" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-[#08110D] mb-1">Your Email Address *</label>
+                        <input type="email" id="chkDisputeEmail" required placeholder="name@example.com" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-[#08110D] mb-1">Phone Number (Optional)</label>
+                        <input type="tel" id="chkDisputePhone" placeholder="08012345678" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">Reason for Report *</label>
+                    <select id="chkDisputeCategory" required class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] font-medium">
+                        <option value="payment_diversion">Payment Diversion (Seller asked to transfer to a different account)</option>
+                        <option value="impersonation">Brand or Business Impersonation</option>
+                        <option value="non_delivery">Non-Delivery Issue</option>
+                        <option value="other">Other Violation</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">Details *</label>
+                    <textarea id="chkDisputeDesc" required rows="3" placeholder="Provide details (e.g. account details provided by seller, messages)..." class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]"></textarea>
+                </div>
+
+                <div id="chkDisputeError" class="hidden p-3 rounded-xl bg-red-50 text-red-700 text-xs border border-red-200"></div>
+
+                <div id="chkDisputeSuccess" class="hidden p-4 rounded-2xl bg-emerald-50 text-emerald-950 text-xs border border-emerald-300 space-y-2">
+                    <div class="font-bold flex items-center gap-1.5 text-emerald-900">
+                        <span>✓</span> <span>Dispute Report Received</span>
+                    </div>
+                    <p class="text-[11.5px] text-emerald-800">
+                        Our Super Admin Compliance team has received your report. The merchant's profile is being reviewed.
+                    </p>
+                    <div class="font-mono font-bold text-xs bg-white p-2 rounded-xl border border-emerald-200 text-[#087A50]">
+                        Case Reference: <span id="chkDisputeCaseRef"></span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-2 border-t border-[#E3E9E5]">
+                    <button type="button" onclick="closeCheckoutDisputeModal()" class="text-[#6B756F] hover:text-[#08110D] font-bold text-xs py-2 px-3">
+                        Cancel
+                    </button>
+                    <button type="submit" id="chkDisputeSubmitBtn" class="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs px-5 py-3 rounded-xl transition font-display shadow-xs flex items-center gap-1.5">
+                        <span>Submit Report</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>

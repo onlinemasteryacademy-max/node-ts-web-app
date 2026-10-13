@@ -28,7 +28,17 @@ export const PERSISTENCE_TABLES: string[] = [
   'subscription_payments',
   'analytics_events',
   'active_visitors',
-  'reviews'
+  'reviews',
+  'seller_profiles',
+  'seller_verifications',
+  'business_profiles',
+  'seller_bank_accounts',
+  'verification_provider_configs',
+  'fraud_reports',
+  'fraud_case_events',
+  'risk_events',
+  'security_audit_logs',
+  'integration_events'
 ];
 
 /**

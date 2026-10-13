@@ -297,21 +297,57 @@
 
             <!-- Bank Transfer Details -->
             <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 shadow-xs space-y-4 text-xs">
-                <h3 class="font-semibold text-sm text-[#08110D]">Bank Transfer Details</h3>
-                <div>
-                    <label class="block font-medium text-[#08110D] mb-1">Bank Name</label>
-                    <input type="text" id="bankName" value="<%= store.bank_name || '' %>" placeholder="e.g. Zenith Bank, GTBank, Kuda" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
+                    <div>
+                        <h3 class="font-semibold text-sm text-[#08110D]">Payout Bank Details & Protection</h3>
+                        <p class="text-[11px] text-[#6B756F] mt-0.5">Where customer direct bank transfers are received.</p>
+                    </div>
+                    <% if (store.bank_account_number) { %>
+                        <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 flex items-center gap-1 font-mono">
+                            <span>✓</span> <span>VERIFIED PAYOUT BANK</span>
+                        </span>
+                    <% } %>
                 </div>
-                <div>
-                    <label class="block font-medium text-[#08110D] mb-1">Account Number</label>
-                    <input type="text" id="accountNumber" value="<%= store.bank_account_number || '' %>" placeholder="0123456789" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
-                    <span class="text-[10.5px] text-[#6B756F] mt-1 flex items-center gap-1">
-                        <span>🔒</span> <span>A security OTP verification code will be sent to your email when changing account numbers.</span>
-                    </span>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-medium text-[#08110D] mb-1">Select Bank</label>
+                        <select id="bankSelect" onchange="handleBankSelectChange(this)" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] text-xs">
+                            <option value="">-- Choose Nigerian Bank --</option>
+                            <option value="044" <%= (store.bank_name || '').includes('Access') ? 'selected' : '' %>>Access Bank</option>
+                            <option value="058" <%= (store.bank_name || '').includes('Guaranty') || (store.bank_name || '').includes('GTBank') ? 'selected' : '' %>>Guaranty Trust Bank (GTBank)</option>
+                            <option value="057" <%= (store.bank_name || '').includes('Zenith') ? 'selected' : '' %>>Zenith Bank</option>
+                            <option value="033" <%= (store.bank_name || '').includes('UBA') ? 'selected' : '' %>>United Bank for Africa (UBA)</option>
+                            <option value="011" <%= (store.bank_name || '').includes('First Bank') ? 'selected' : '' %>>First Bank of Nigeria</option>
+                            <option value="214" <%= (store.bank_name || '').includes('FCMB') ? 'selected' : '' %>>FCMB</option>
+                            <option value="070" <%= (store.bank_name || '').includes('Fidelity') ? 'selected' : '' %>>Fidelity Bank</option>
+                            <option value="221" <%= (store.bank_name || '').includes('Stanbic') ? 'selected' : '' %>>Stanbic IBTC Bank</option>
+                            <option value="232" <%= (store.bank_name || '').includes('Sterling') ? 'selected' : '' %>>Sterling Bank</option>
+                            <option value="032" <%= (store.bank_name || '').includes('Union') ? 'selected' : '' %>>Union Bank</option>
+                            <option value="035" <%= (store.bank_name || '').includes('Wema') ? 'selected' : '' %>>Wema Bank</option>
+                            <option value="076" <%= (store.bank_name || '').includes('Polaris') ? 'selected' : '' %>>Polaris Bank</option>
+                            <option value="082" <%= (store.bank_name || '').includes('Keystone') ? 'selected' : '' %>>Keystone Bank</option>
+                            <option value="50211" <%= (store.bank_name || '').includes('Kuda') ? 'selected' : '' %>>Kuda Bank</option>
+                            <option value="999992" <%= (store.bank_name || '').includes('OPay') ? 'selected' : '' %>>OPay</option>
+                            <option value="999991" <%= (store.bank_name || '').includes('PalmPay') ? 'selected' : '' %>>PalmPay</option>
+                            <option value="50515" <%= (store.bank_name || '').includes('Moniepoint') ? 'selected' : '' %>>Moniepoint MFB</option>
+                        </select>
+                        <input type="text" id="bankName" value="<%= store.bank_name || '' %>" placeholder="e.g. Zenith Bank, GTBank, Kuda" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] mt-2">
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-[#08110D] mb-1">10-Digit NUBAN Account Number</label>
+                        <input type="text" id="accountNumber" maxlength="10" value="<%= store.bank_account_number || '' %>" placeholder="0123456789" oninput="handleAccountInput(this.value)" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] font-mono text-sm">
+                        <div id="accountResolutionFeedback" class="mt-1.5 text-[11px] hidden"></div>
+                    </div>
                 </div>
+
                 <div>
-                    <label class="block font-medium text-[#08110D] mb-1">Account Name</label>
+                    <label class="block font-medium text-[#08110D] mb-1">Account Holder Name</label>
                     <input type="text" id="accountName" value="<%= store.bank_account_name || '' %>" placeholder="e.g. John Doe Enterprises" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                    <span class="text-[10.5px] text-[#6B756F] mt-1.5 flex items-center gap-1">
+                        <span>🔒</span> <span>Bank accounts must match your verified identity. Changing account numbers requires 6-digit email OTP authorization.</span>
+                    </span>
                 </div>
             </div>
 
@@ -1020,6 +1056,85 @@
         let bankOtpTimerInterval = null;
         let bankOtpSecondsRemaining = 300;
         let pendingSettingsPayload = null;
+        let bankResolutionDebounceTimer = null;
+
+        // ==========================================
+        // Bank Account Selection & Real-Time Resolution
+        // ==========================================
+        function handleBankSelectChange(select) {
+            const bankNameInput = document.getElementById('bankName');
+            if (select.value && select.selectedIndex > 0) {
+                const optText = select.options[select.selectedIndex].text;
+                if (bankNameInput) {
+                    bankNameInput.value = optText.replace(/\s*\(.*\)/, '').trim();
+                }
+            }
+            triggerResolutionIfReady();
+        }
+
+        function handleAccountInput(val) {
+            const cleanVal = (val || '').replace(/[^0-9]/g, '');
+            const acctInput = document.getElementById('accountNumber');
+            if (acctInput && acctInput.value !== cleanVal) {
+                acctInput.value = cleanVal;
+            }
+            if (cleanVal.length === 10) {
+                triggerResolutionIfReady();
+            } else {
+                const feedback = document.getElementById('accountResolutionFeedback');
+                if (feedback) {
+                    feedback.className = 'mt-1.5 text-[11px] hidden';
+                    feedback.innerHTML = '';
+                }
+            }
+        }
+
+        async function triggerResolutionIfReady() {
+            const bankSelect = document.getElementById('bankSelect');
+            const bankCode = bankSelect ? bankSelect.value : '';
+            const acctInput = document.getElementById('accountNumber');
+            const acctNum = acctInput ? acctInput.value.trim().replace(/[^0-9]/g, '') : '';
+            const feedback = document.getElementById('accountResolutionFeedback');
+            if (!feedback) return;
+
+            if (acctNum.length !== 10 || !bankCode) {
+                feedback.className = 'mt-1.5 text-[11px] hidden';
+                return;
+            }
+
+            feedback.className = 'mt-1.5 text-[11px] text-[#6B756F] flex items-center gap-1.5';
+            feedback.innerHTML = '<span class="animate-spin">🔄</span> <span>Querying verified CBN NUBAN directory...</span>';
+
+            if (bankResolutionDebounceTimer) clearTimeout(bankResolutionDebounceTimer);
+            bankResolutionDebounceTimer = setTimeout(async () => {
+                try {
+                    const res = await fetch('/api/merchant/bank/resolve', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ bank_code: bankCode, account_number: acctNum })
+                    });
+                    const data = await res.json();
+                    if (data.success && data.account_name) {
+                        const nameInput = document.getElementById('accountName');
+                        if (nameInput) nameInput.value = data.account_name;
+
+                        if (data.name_match && data.name_match.is_acceptable) {
+                            feedback.className = 'mt-1.5 text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-2 font-medium flex items-center gap-1.5';
+                            feedback.innerHTML = `<span>✓</span> <span><strong>${data.account_name}</strong> &bull; ${data.name_match.confidence || 'Identity verified'}</span>`;
+                        } else {
+                            feedback.className = 'mt-1.5 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2 font-medium flex items-start gap-1.5';
+                            feedback.innerHTML = `<span>⚠️</span> <span><strong>${data.account_name}</strong> &bull; Note: Account name differs from registered store name. Changing payout bank requires 6-digit email OTP authorization.</span>`;
+                        }
+                    } else {
+                        feedback.className = 'mt-1.5 text-[11px] text-red-600 bg-red-50 border border-red-200 rounded-lg p-2 font-medium flex items-center gap-1.5';
+                        feedback.innerHTML = `<span>❌</span> <span>${data.error || 'Could not verify account with selected bank. Check account number.'}</span>`;
+                    }
+                } catch (err) {
+                    feedback.className = 'mt-1.5 text-[11px] text-red-600 bg-red-50 border border-red-200 rounded-lg p-2 font-medium';
+                    feedback.innerHTML = '<span>Network error querying bank details.</span>';
+                }
+            }, 300);
+        }
 
         function startBankOtpTimer(duration = 300) {
             if (bankOtpTimerInterval) clearInterval(bankOtpTimerInterval);
@@ -1074,6 +1189,7 @@
             const newAccountNum = document.getElementById('accountNumber')?.value?.trim() || '';
             const newBankName = document.getElementById('bankName')?.value?.trim() || '';
             const newAccountName = document.getElementById('accountName')?.value?.trim() || '';
+            const bankCode = document.getElementById('bankSelect')?.value || '';
 
             const resendBtn = document.getElementById('resendBankOtpBtn');
             if (resendBtn && isResend) {
@@ -1086,6 +1202,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
+                        bank_code: bankCode,
                         bank_account_number: newAccountNum,
                         bank_name: newBankName,
                         bank_account_name: newAccountName
@@ -1123,6 +1240,38 @@
             const submitBtn = document.getElementById('verifyBankOtpSubmitBtn');
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span>Verifying...</span>';
+
+            const bankCode = document.getElementById('bankSelect')?.value || '';
+            const newAccountNum = document.getElementById('accountNumber')?.value?.trim() || '';
+            const newBankName = document.getElementById('bankName')?.value?.trim() || '';
+            const newAccountName = document.getElementById('accountName')?.value?.trim() || '';
+
+            // Verify via bank verification endpoint
+            try {
+                const vRes = await fetch('/api/merchant/bank/verify-and-update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        otp_code: otpCode,
+                        bank_code: bankCode,
+                        bank_name: newBankName,
+                        account_number: newAccountNum,
+                        account_name: newAccountName
+                    })
+                });
+                const vData = await vRes.json();
+                if (!vData.success) {
+                    alert(vData.error || 'Failed to verify authorization code.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span>Approve & Save</span> <span>✓</span>';
+                    return;
+                }
+            } catch (err) {
+                alert('Network error verifying authorization code.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>Approve & Save</span> <span>✓</span>';
+                return;
+            }
 
             if (pendingSettingsPayload) {
                 pendingSettingsPayload.otp_code = otpCode;

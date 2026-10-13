@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            zlikDark: '#08110D',
+            zlikGreen: '#19D98B',
+            zlikDeepGreen: '#087A50',
+            zlikBg: '#F8FAF8',
+            zlikWhite: '#FFFFFF',
+            zlikSecondary: '#6B756F',
+            zlikBorder: '#E3E9E5'
+          },
+          fontFamily: {
+            display: ['Montserrat', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #08110D; color: #FFFFFF; }
+    .font-display { font-family: 'Montserrat', sans-serif; }
+  </style>
+</head>
+<body class="bg-[#08110D] text-white min-h-screen selection:bg-[#19D98B] selection:text-[#08110D]">
+
+  <!-- Top Navbar -->
+  <header class="border-b border-white/10 bg-[#08110D]/90 sticky top-0 z-40 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <a href="/<%= adminPath %>" class="text-2xl font-extrabold font-display tracking-tight text-white flex items-center gap-1">
+          zlik<span class="text-[#19D98B]">.</span>
+          <span class="text-xs uppercase px-2 py-0.5 ml-2 bg-[#19D98B]/20 text-[#19D98B] font-bold rounded tracking-wider">Console</span>
+        </a>
+        <span class="text-white/30 hidden sm:inline">/</span>
+        <a href="/<%= adminPath %>/security" class="text-sm font-semibold text-white/70 hover:text-white flex items-center gap-1.5 hidden sm:flex">
+          🛡️ Security & Trust
+        </a>
+        <span class="text-white/30 hidden sm:inline">/</span>
+        <span class="text-sm font-semibold text-[#19D98B] hidden sm:inline">Verification Queue</span>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <a href="/<%= adminPath %>/security" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/20 text-white/80 hover:text-white hover:border-white/40 transition">
+          ← Security Cockpit
+        </a>
+        <div class="text-right hidden sm:block">
+          <div class="text-xs font-bold text-white"><%= currentAdmin ? currentAdmin.name : 'Administrator' %></div>
+          <div class="text-[11px] text-[#19D98B] uppercase font-semibold tracking-wider"><%= currentAdmin && currentAdmin.role_info ? currentAdmin.role_info.name : 'Super Admin' %></div>
+        </div>
+        <a href="/<%= adminPath %>/logout" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition">
+          Sign out
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+    <!-- Header & Summary -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+      <div>
+        <h1 class="text-2xl font-extrabold font-display text-white flex items-center gap-2">
+          <span>📋 Seller Verification & Risk Queue</span>
+        </h1>
+        <p class="text-xs text-white/60 mt-1">
+          Review personal and business seller applications, inspect bank account resolution, and enforce order gating.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="/<%= adminPath %>/security" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 border border-white/10 hover:border-white/30 transition">
+          📊 Overview
+        </a>
+        <a href="/<%= adminPath %>/security/integrations" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 border border-white/10 hover:border-white/30 transition">
+          ⚙️ Monnify Settings
+        </a>
+      </div>
+    </div>
+
+    <!-- Filters & Search Form -->
+    <form method="GET" action="/<%= adminPath %>/security/queue" class="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Search query -->
+        <div>
+          <label class="block text-[11px] font-semibold text-white/60 uppercase mb-1.5">Search Store / Seller</label>
+          <input type="text" name="search" value="<%= filters.search %>" placeholder="Store name, legal name, owner..." class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-white/30 focus:outline-none focus:border-[#19D98B]">
+        </div>
+
+        <!-- Verification Status -->
+        <div>
+          <label class="block text-[11px] font-semibold text-white/60 uppercase mb-1.5">Verification Status</label>
+          <select name="status" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-[#19D98B]">
+            <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>All Statuses</option>
+            <option value="pending" <%= filters.status === 'pending' ? 'selected' : '' %>>Pending Review</option>
+            <option value="under_review" <%= filters.status === 'under_review' ? 'selected' : '' %>>Under Review</option>
+            <option value="unverified" <%= filters.status === 'unverified' ? 'selected' : '' %>>Unverified</option>
+            <option value="verified" <%= filters.status === 'verified' ? 'selected' : '' %>>Verified</option>
+            <option value="rejected" <%= filters.status === 'rejected' ? 'selected' : '' %>>Rejected</option>
+            <option value="suspended" <%= filters.status === 'suspended' ? 'selected' : '' %>>Suspended</option>
+          </select>
+        </div>
+
+        <!-- Seller Type -->
+        <div>
+          <label class="block text-[11px] font-semibold text-white/60 uppercase mb-1.5">Seller Account Type</label>
+          <select name="type" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-[#19D98B]">
+            <option value="all" <%= filters.type === 'all' ? 'selected' : '' %>>All Types</option>
+            <option value="personal" <%= filters.type === 'personal' ? 'selected' : '' %>>Personal (Individual)</option>
+            <option value="business" <%= filters.type === 'business' ? 'selected' : '' %>>Registered Business</option>
+          </select>
+        </div>
+
+        <!-- Risk Level -->
+        <div>
+          <label class="block text-[11px] font-semibold text-white/60 uppercase mb-1.5">Risk Assessment</label>
+          <select name="risk" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-[#19D98B]">
+            <option value="all" <%= filters.risk === 'all' ? 'selected' : '' %>>All Risk Levels</option>
+            <option value="low" <%= filters.risk === 'low' ? 'selected' : '' %>>Low Risk (0-24)</option>
+            <option value="medium" <%= filters.risk === 'medium' ? 'selected' : '' %>>Medium Risk (25-49)</option>
+            <option value="high" <%= filters.risk === 'high' ? 'selected' : '' %>>High Risk (50-74)</option>
+            <option value="critical" <%= filters.risk === 'critical' ? 'selected' : '' %>>Critical Risk (75-100)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-2">
+        <span class="text-xs text-white/50">
+          Showing <span class="font-bold text-white"><%= queue.length %></span> seller profiles
+        </span>
+        <div class="flex items-center gap-2">
+          <a href="/<%= adminPath %>/security/queue" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white/60 hover:text-white transition">
+            Clear Filters
+          </a>
+          <button type="submit" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-[#19D98B] text-[#08110D] hover:opacity-90 transition">
+            Apply Filter
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Queue Results Table -->
+    <div class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="bg-white/[0.02] text-white/50 border-b border-white/10">
+              <th class="p-4 font-semibold">Store / Owner</th>
+              <th class="p-4 font-semibold">Type</th>
+              <th class="p-4 font-semibold">Bank Resolution</th>
+              <th class="p-4 font-semibold">Risk Meter</th>
+              <th class="p-4 font-semibold">Status</th>
+              <th class="p-4 font-semibold">Order Gating</th>
+              <th class="p-4 font-semibold text-right">Quick Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            <% if (queue && queue.length > 0) { %>
+              <% queue.forEach(s => { %>
+                <tr class="hover:bg-white/[0.02] transition" id="seller-row-<%= s.id %>">
+                  <td class="p-4">
+                    <div class="font-bold text-white text-sm">
+                      <%= s.public_store_name || (s.store ? s.store.store_name : 'Unnamed Store') %>
+                    </div>
+                    <div class="text-[11px] text-white/50 mt-0.5">
+                      Legal: <span class="text-white/80"><%= s.legal_name || 'Not provided' %></span>
+                      <% if (s.store && s.store.slug) { %>
+                        &bull; <a href="/store/<%= s.store.slug %>" target="_blank" class="text-[#19D98B] hover:underline font-mono">/<%= s.store.slug %></a>
+                      <% } %>
+                    </div>
+                  </td>
+
+                  <td class="p-4">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= s.seller_type === 'business' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30' %>">
+                      <%= s.seller_type %>
+                    </span>
+                  </td>
+
+                  <td class="p-4">
+                    <% if (s.bank) { %>
+                      <div class="font-semibold text-white/90"><%= s.bank.bank_name %></div>
+                      <div class="font-mono text-[11px] text-white/60"><%= s.bank.account_number_masked %></div>
+                      <div class="text-[10px] text-white/40"><%= s.bank.account_name %></div>
+                    <% } else { %>
+                      <span class="text-white/40 italic">No bank attached</span>
+                    <% } %>
+                  </td>
+
+                  <td class="p-4">
+                    <div class="flex items-center gap-2">
+                      <% if (s.risk_level === 'critical') { %>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">CRITICAL</span>
+                      <% } else if (s.risk_level === 'high') { %>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30">HIGH</span>
+                      <% } else if (s.risk_level === 'medium') { %>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">MEDIUM</span>
+                      <% } else { %>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">LOW</span>
+                      <% } %>
+                      <span class="font-mono text-white/60 font-semibold"><%= s.risk_score %>/100</span>
+                    </div>
+                  </td>
+
+                  <td class="p-4">
+                    <% if (s.composite_verification_status === 'verified') { %>
+                      <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 w-max">
+                        ✓ VERIFIED
+                      </span>
+                    <% } else if (s.composite_verification_status === 'pending' || s.composite_verification_status === 'under_review') { %>
+                      <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1 w-max animate-pulse">
+                        ⏳ PENDING REVIEW
+                      </span>
+                    <% } else if (s.composite_verification_status === 'rejected') { %>
+                      <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-red-500/20 text-red-400 border border-red-500/30 flex items-center gap-1 w-max">
+                        ✕ REJECTED
+                      </span>
+                    <% } else if (s.composite_verification_status === 'suspended') { %>
+                      <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-red-600/30 text-red-300 border border-red-600/40 flex items-center gap-1 w-max">
+                        🚫 SUSPENDED
+                      </span>
+                    <% } else { %>
+                      <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-white/10 text-white/50 w-max">
+                        UNVERIFIED
+                      </span>
+                    <% } %>
+                  </td>
+
+                  <td class="p-4">
+                    <% if (Number(s.order_gating_enabled) === 1) { %>
+                      <span class="text-emerald-400 font-semibold flex items-center gap-1">
+                        ● Accepting Orders
+                      </span>
+                    <% } else { %>
+                      <span class="text-red-400 font-semibold flex items-center gap-1">
+                        ■ Gated (No Orders)
+                      </span>
+                    <% } %>
+                  </td>
+
+                  <td class="p-4 text-right whitespace-nowrap">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <a href="/<%= adminPath %>/security/seller/<%= s.id %>" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white/10 text-white hover:bg-[#19D98B] hover:text-[#08110D] transition">
+                        Investigate 🔍
+                      </a>
+
+                      <% if (s.composite_verification_status !== 'verified') { %>
+                        <button onclick="handleQuickAction(<%= s.id %>, 'approve_verification')" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-black transition" title="Approve Verification">
+                          ✓ Approve
+                        </button>
+                      <% } else { %>
+                        <button onclick="handleQuickAction(<%= s.id %>, 'reject_verification')" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition" title="Revoke Verification">
+                          Revoke
+                        </button>
+                      <% } %>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="7" class="p-12 text-center text-white/40">
+                  No seller profiles matched the selected filters.
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    async function handleQuickAction(sellerId, action) {
+      const reason = prompt(`Enter reason / mandatory audit note for ${action.replace('_', ' ')}:`, 'Administrative manual review');
+      if (reason === null) return;
+
+      try {
+        const res = await fetch('/api/admin/security/action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, seller_id: sellerId, reason })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(data.message || 'Action executed successfully.');
+          window.location.reload();
+        } else {
+          alert('Error: ' + (data.error || 'Failed to execute action'));
+        }
+      } catch (err) {
+        alert('Request failed: ' + err.message);
+      }
+    }
+  </script>
+
+</body>
+</html>

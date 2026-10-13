@@ -506,6 +506,171 @@ function initSchema(db) {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
+    -- =============================================================
+    -- SECURITY, FRAUD PREVENTION & SELLER IDENTITY TABLES
+    -- =============================================================
+
+    CREATE TABLE IF NOT EXISTS seller_profiles (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      store_id INTEGER NOT NULL UNIQUE,
+      seller_type TEXT NOT NULL DEFAULT 'personal',
+      legal_name TEXT DEFAULT NULL,
+      public_store_name TEXT DEFAULT NULL,
+      identity_status TEXT NOT NULL DEFAULT 'not_started',
+      bank_status TEXT NOT NULL DEFAULT 'not_started',
+      business_status TEXT NOT NULL DEFAULT 'not_started',
+      composite_verification_status TEXT NOT NULL DEFAULT 'unverified',
+      risk_level TEXT NOT NULL DEFAULT 'low',
+      risk_score INTEGER NOT NULL DEFAULT 0,
+      order_gating_enabled INTEGER NOT NULL DEFAULT 1,
+      identity_consent_given INTEGER NOT NULL DEFAULT 0,
+      consent_timestamp TEXT DEFAULT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS seller_verifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      seller_id INTEGER NOT NULL,
+      verification_type TEXT NOT NULL,
+      provider TEXT NOT NULL DEFAULT 'monnify',
+      provider_reference TEXT DEFAULT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      result_code TEXT DEFAULT NULL,
+      failure_reason TEXT DEFAULT NULL,
+      verified_at TEXT DEFAULT NULL,
+      expires_at TEXT DEFAULT NULL,
+      redacted_metadata_json TEXT DEFAULT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS business_profiles (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      seller_id INTEGER NOT NULL UNIQUE,
+      registered_name TEXT NOT NULL,
+      registration_number TEXT NOT NULL,
+      business_type TEXT NOT NULL DEFAULT 'sole_proprietorship',
+      jurisdiction TEXT NOT NULL DEFAULT 'Nigeria',
+      tin TEXT DEFAULT NULL,
+      registered_address TEXT DEFAULT NULL,
+      representative_name TEXT NOT NULL,
+      representative_role TEXT NOT NULL DEFAULT 'Proprietor',
+      representative_phone TEXT NOT NULL,
+      document_url TEXT DEFAULT NULL,
+      verification_status TEXT NOT NULL DEFAULT 'pending',
+      verified_at TEXT DEFAULT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS seller_bank_accounts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      seller_id INTEGER NOT NULL,
+      bank_code TEXT NOT NULL,
+      bank_name TEXT NOT NULL,
+      account_number_encrypted TEXT NOT NULL,
+      account_number_masked TEXT NOT NULL,
+      account_number_hash TEXT NOT NULL,
+      account_name TEXT NOT NULL,
+      account_type TEXT NOT NULL DEFAULT 'individual',
+      name_match_score REAL NOT NULL DEFAULT 0.0,
+      name_match_result TEXT NOT NULL DEFAULT 'pending',
+      verification_status TEXT NOT NULL DEFAULT 'pending',
+      provider_reference TEXT DEFAULT NULL,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      verified_at TEXT DEFAULT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS verification_provider_configs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      provider_key TEXT NOT NULL UNIQUE,
+      display_name TEXT NOT NULL,
+      environment TEXT NOT NULL DEFAULT 'sandbox',
+      base_url TEXT NOT NULL DEFAULT 'https://sandbox.monnify.com',
+      api_key_encrypted TEXT DEFAULT NULL,
+      secret_key_encrypted TEXT DEFAULT NULL,
+      api_key_masked TEXT DEFAULT NULL,
+      contract_code TEXT DEFAULT NULL,
+      enabled_capabilities_json TEXT NOT NULL DEFAULT '["account_enquiry"]',
+      status TEXT NOT NULL DEFAULT 'not_configured',
+      last_tested_at TEXT DEFAULT NULL,
+      last_test_result TEXT DEFAULT NULL,
+      last_test_error TEXT DEFAULT NULL,
+      created_by_admin_id INTEGER DEFAULT NULL,
+      updated_by_admin_id INTEGER DEFAULT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS fraud_reports (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      case_reference TEXT NOT NULL UNIQUE,
+      reporter_name TEXT NOT NULL,
+      reporter_email TEXT NOT NULL,
+      reporter_phone TEXT DEFAULT NULL,
+      reported_store_id INTEGER NOT NULL,
+      order_id INTEGER DEFAULT NULL,
+      category TEXT NOT NULL DEFAULT 'other',
+      severity TEXT NOT NULL DEFAULT 'medium',
+      status TEXT NOT NULL DEFAULT 'new',
+      description TEXT NOT NULL,
+      evidence_urls_json TEXT DEFAULT NULL,
+      assigned_admin_id INTEGER DEFAULT NULL,
+      resolution_code TEXT DEFAULT NULL,
+      resolution_summary TEXT DEFAULT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS fraud_case_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      case_id INTEGER NOT NULL,
+      actor_type TEXT NOT NULL DEFAULT 'system',
+      actor_id INTEGER DEFAULT NULL,
+      event_type TEXT NOT NULL,
+      message TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS risk_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      seller_id INTEGER NOT NULL,
+      event_type TEXT NOT NULL,
+      score_delta INTEGER NOT NULL DEFAULT 0,
+      new_score INTEGER NOT NULL DEFAULT 0,
+      reason_code TEXT NOT NULL,
+      metadata_json TEXT DEFAULT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS security_audit_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      actor_type TEXT NOT NULL DEFAULT 'system',
+      actor_id INTEGER DEFAULT NULL,
+      action TEXT NOT NULL,
+      target_type TEXT DEFAULT NULL,
+      target_id INTEGER DEFAULT NULL,
+      reason TEXT DEFAULT NULL,
+      ip_address TEXT DEFAULT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS integration_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      provider TEXT NOT NULL,
+      endpoint TEXT NOT NULL,
+      request_method TEXT NOT NULL DEFAULT 'GET',
+      status_code INTEGER DEFAULT NULL,
+      duration_ms INTEGER DEFAULT NULL,
+      result TEXT NOT NULL DEFAULT 'success',
+      error_code TEXT DEFAULT NULL,
+      correlation_id TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
     -- Composite Performance Indices
     CREATE INDEX IF NOT EXISTS idx_store_customer ON customers (store_id, phone_normalized);
     CREATE INDEX IF NOT EXISTS idx_store_claim ON payment_claims (store_id);
@@ -528,6 +693,18 @@ function initSchema(db) {
     CREATE INDEX IF NOT EXISTS idx_email_verif_email ON email_verifications (email);
     CREATE INDEX IF NOT EXISTS idx_sub_payments_ref ON subscription_payments (reference);
     CREATE INDEX IF NOT EXISTS idx_sub_payments_store ON subscription_payments (store_id);
+    -- Security & Trust Indices
+    CREATE INDEX IF NOT EXISTS idx_seller_store ON seller_profiles (store_id);
+    CREATE INDEX IF NOT EXISTS idx_seller_comp_status ON seller_profiles (composite_verification_status);
+    CREATE INDEX IF NOT EXISTS idx_verif_seller ON seller_verifications (seller_id, verification_type);
+    CREATE INDEX IF NOT EXISTS idx_verif_status ON seller_verifications (status);
+    CREATE INDEX IF NOT EXISTS idx_bank_seller_active ON seller_bank_accounts (seller_id, is_active);
+    CREATE INDEX IF NOT EXISTS idx_bank_hash ON seller_bank_accounts (account_number_hash);
+    CREATE INDEX IF NOT EXISTS idx_fraud_store_status ON fraud_reports (reported_store_id, status);
+    CREATE INDEX IF NOT EXISTS idx_fraud_severity ON fraud_reports (severity, status);
+    CREATE INDEX IF NOT EXISTS idx_risk_seller ON risk_events (seller_id);
+    CREATE INDEX IF NOT EXISTS idx_sec_audit_action ON security_audit_logs (action, created_at);
+    CREATE INDEX IF NOT EXISTS idx_integ_provider_result ON integration_events (provider, result, created_at);
   `);
     // Safe migrations for existing SQLite databases
     const safeAlters = [

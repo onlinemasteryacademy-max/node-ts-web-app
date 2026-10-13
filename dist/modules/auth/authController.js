@@ -7,6 +7,7 @@ exports.authRoutes = authRoutes;
 const node_crypto_1 = __importDefault(require("node:crypto"));
 const db_js_1 = require("../../db/db.js");
 const helpers_js_1 = require("../../utils/helpers.js");
+const storeNameValidator_js_1 = require("../../utils/storeNameValidator.js");
 const mailer_js_1 = require("../email/mailer.js");
 const OTP_LIFETIME_SECONDS = 300; // 5 minutes validity
 function parseDateMs(dateStr) {
@@ -45,6 +46,11 @@ async function authRoutes(fastify) {
         }
         if (!email.includes('@') || !email.includes('.')) {
             return reply.send({ success: false, error: 'Please enter a valid email address' });
+        }
+        // Validate store name against Zlik Trust & Security rules
+        const nameCheck = (0, storeNameValidator_js_1.validateStoreName)(storeName, 'personal', false);
+        if (!nameCheck.valid) {
+            return reply.send({ success: false, error: nameCheck.reason });
         }
         // Validate username / slug uniqueness & reservation
         const slugCheck = (0, helpers_js_1.validateStoreSlugAvailability)(rawSlug);

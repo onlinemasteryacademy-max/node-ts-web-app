@@ -106,6 +106,19 @@
     </div>
     <% } %>
 
+    <!-- Storefront Order Gating Notice Banner (Batch 6) -->
+    <% if (typeof isGated !== 'undefined' && isGated) { %>
+    <div class="bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-xs text-amber-900 shadow-2xs">
+        <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <span class="text-sm">🔒</span>
+                <span><strong>Store Verification Notice:</strong> This storefront is currently completing merchant identity verification. Product browsing is active, but ordering and direct bank transfers are temporarily gated.</span>
+            </div>
+            <span class="hidden sm:inline-block text-[10px] uppercase font-mono font-bold bg-amber-200 text-amber-950 px-2.5 py-0.5 rounded-full shrink-0">Orders Gated</span>
+        </div>
+    </div>
+    <% } %>
+
     <!-- Store Top Banner / Nav -->
     <header class="sticky <%= typeof isDemo !== 'undefined' && isDemo ? 'top-[45px]' : 'top-0' %> z-30 bg-white/95 backdrop-blur-md border-b border-[#E3E9E5] transition shadow-xs">
         <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
@@ -120,7 +133,28 @@
                 <div class="min-w-0">
                     <h1 class="text-base font-extrabold text-[#08110D] font-display truncate flex items-center gap-1.5">
                         <span><%= store.store_name %></span>
-                        <span class="text-[10px] bg-[#19D98B]/20 text-[#087A50] font-bold px-2 py-0.5 rounded-full">✓ Verified</span>
+                        <% if (Number(store.is_verified) === 1 || (typeof sellerProfile !== 'undefined' && sellerProfile && sellerProfile.composite_verification_status === 'verified')) { %>
+                            <% if (typeof sellerProfile !== 'undefined' && sellerProfile && sellerProfile.seller_type === 'business') { %>
+                                <button type="button" onclick="openTrustModal()" class="text-[10px] bg-[#19D98B]/20 hover:bg-[#19D98B]/30 text-[#087A50] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 transition cursor-pointer" title="Verified Business (CAC Registered)">
+                                    <span>🛡️</span> <span>Verified Business (CAC)</span>
+                                    <% if (typeof businessProfile !== 'undefined' && businessProfile && businessProfile.rc_number) { %>
+                                        <span class="opacity-80 font-mono text-[9px]">(<%= businessProfile.rc_number %>)</span>
+                                    <% } %>
+                                </button>
+                            <% } else { %>
+                                <button type="button" onclick="openTrustModal()" class="text-[10px] bg-[#19D98B]/20 hover:bg-[#19D98B]/30 text-[#087A50] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 transition cursor-pointer" title="Verified Individual Seller">
+                                    <span>✓</span> <span>Verified Individual</span>
+                                </button>
+                            <% } %>
+                        <% } else if (typeof isGated !== 'undefined' && isGated) { %>
+                            <span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full border border-amber-300 flex items-center gap-0.5" title="Seller undergoing verification">
+                                <span>🔒</span> <span>Pending Verification</span>
+                            </span>
+                        <% } else { %>
+                            <button type="button" onclick="openTrustModal()" class="text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-2 py-0.5 rounded-full border border-gray-200 flex items-center gap-0.5 transition cursor-pointer" title="Under Verification">
+                                <span>ℹ️</span> <span>Under Verification</span>
+                            </button>
+                        <% } %>
                     </h1>
                     <p class="text-xs text-[#6B756F] truncate"><%= store.bio || (templateConfig ? templateConfig.hero_headline : 'Order directly for quick delivery') %></p>
                 </div>
@@ -355,15 +389,54 @@
         </div>
     </main>
 
+    <!-- Storefront Trust & Safety Disclosure Banner -->
+    <div class="max-w-4xl mx-auto px-4 mt-12 mb-4 w-full">
+        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 text-xs shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-start gap-3">
+                <span class="text-xl shrink-0 mt-0.5">🛡️</span>
+                <div class="space-y-1">
+                    <div class="font-bold text-[#08110D] font-display flex items-center gap-2">
+                        <span>Buyer Safety & Store Accountability</span>
+                        <% if (typeof sellerProfile !== 'undefined' && sellerProfile && sellerProfile.seller_type === 'business') { %>
+                            <span class="text-[9.5px] bg-[#19D98B]/20 text-[#087A50] font-bold px-2 py-0.2 rounded-full">CAC Verified</span>
+                        <% } else if (typeof sellerProfile !== 'undefined' && sellerProfile && sellerProfile.composite_verification_status === 'verified') { %>
+                            <span class="text-[9.5px] bg-[#19D98B]/20 text-[#087A50] font-bold px-2 py-0.2 rounded-full">ID Verified</span>
+                        <% } %>
+                    </div>
+                    <p class="text-[11.5px] text-[#6B756F] leading-relaxed">
+                        Zlik verifies merchant identity and bank account ownership to deter impersonation and payment diversion. Direct transfers are paid directly to the seller; Zlik does not hold customer funds in escrow.
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0 self-start sm:self-center">
+                <button type="button" onclick="openTrustModal()" class="bg-[#F8FAF8] hover:bg-[#E3E9E5] text-[#08110D] border border-[#E3E9E5] px-3 py-1.5 rounded-xl font-bold text-xs transition">
+                    View Verification
+                </button>
+                <button type="button" onclick="openDisputeModal()" class="text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded-xl font-bold text-xs transition flex items-center gap-1">
+                    <span>🚩</span> <span>Report Store</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Storefront Footer ("Powered by Zlik" Attribution on Free Plan) -->
-    <% if (typeof showPoweredBy === 'undefined' || showPoweredBy) { %>
-        <footer class="text-center py-8 text-xs text-[#6B756F] border-t border-[#E3E9E5]/60 mt-12 bg-white/40">
-            <a href="/" target="_blank" class="inline-flex items-center gap-1.5 opacity-70 hover:opacity-100 transition">
-                <span>Powered by</span>
-                <span class="font-bold text-[#08110D] font-display tracking-tight">zlik</span>
-            </a>
-        </footer>
-    <% } %>
+    <footer class="text-center py-8 text-xs text-[#6B756F] border-t border-[#E3E9E5]/60 mt-4 bg-white/40 space-y-2">
+        <div class="flex items-center justify-center gap-4 text-[11px]">
+            <button type="button" onclick="openTrustModal()" class="hover:text-[#08110D] underline font-medium">Trust & Safety Policy</button>
+            <span>&bull;</span>
+            <button type="button" onclick="openDisputeModal()" class="text-red-600 hover:text-red-800 underline font-medium">Report Dispute</button>
+            <span>&bull;</span>
+            <a href="/privacy" target="_blank" class="hover:text-[#08110D] underline font-medium">NDPA Privacy</a>
+        </div>
+        <% if (typeof showPoweredBy === 'undefined' || showPoweredBy) { %>
+            <div>
+                <a href="/" target="_blank" class="inline-flex items-center gap-1.5 opacity-70 hover:opacity-100 transition">
+                    <span>Powered by</span>
+                    <span class="font-bold text-[#08110D] font-display tracking-tight">zlik</span>
+                </a>
+            </div>
+        <% } %>
+    </footer>
 
     <!-- Cart Sliding Drawer -->
     <div id="cartDrawer" class="fixed inset-0 z-50 overflow-hidden pointer-events-none transition-all duration-300">
@@ -2134,9 +2207,13 @@
             }
             const err = document.getElementById('modalStep2Error');
             if (err) err.classList.add('hidden');
-        }
+        const isStoreGated = <%= Boolean(typeof isGated !== 'undefined' && isGated) %>;
 
         function openCheckoutModal() {
+            if (isStoreGated) {
+                alert('This storefront is currently undergoing merchant verification. Product browsing is active, but ordering and direct bank transfers are temporarily gated until merchant verification is completed.');
+                return;
+            }
             if (cart.length === 0) return;
             sendShopperHeartbeat('Checkout', 'Order Checkout');
             const subtotal = cart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
@@ -2709,6 +2786,242 @@
                     card.classList.add('hidden');
                 }
             });
+        }
+
+    <!-- Storefront Trust & Verification Modal -->
+    <div id="storeTrustModal" class="fixed inset-0 z-[80] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-5 border border-[#E3E9E5] shadow-2xl text-left">
+            <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🛡️</span>
+                    <div>
+                        <h3 class="font-extrabold text-sm text-[#08110D] font-display">Store Verification Profile</h3>
+                        <p class="text-[11px] text-[#6B756F]"><%= store.store_name %></p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeTrustModal()" class="text-[#6B756F] hover:text-[#08110D] font-bold text-lg p-1">✕</button>
+            </div>
+
+            <div class="space-y-4 text-xs">
+                <% if (typeof sellerProfile !== 'undefined' && sellerProfile && sellerProfile.seller_type === 'business' && (sellerProfile.composite_verification_status === 'verified' || Number(store.is_verified) === 1)) { %>
+                    <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-1.5">
+                        <div class="flex items-center gap-2 font-bold text-emerald-950">
+                            <span>✓</span>
+                            <span>Verified Registered Business (CAC)</span>
+                        </div>
+                        <p class="text-[11px] text-emerald-900 leading-relaxed">
+                            This store has submitted registered business credentials verified against Corporate Affairs Commission (CAC) corporate records.
+                        </p>
+                    </div>
+                    <div class="bg-[#F8FAF8] p-3.5 rounded-2xl border border-[#E3E9E5] space-y-2 text-[11.5px]">
+                        <div class="flex justify-between py-1 border-b border-[#E3E9E5]/60">
+                            <span class="text-[#6B756F]">Registered Business:</span>
+                            <span class="font-bold text-[#08110D]"><%= (typeof businessProfile !== 'undefined' && businessProfile && businessProfile.business_name) ? businessProfile.business_name : store.store_name %></span>
+                        </div>
+                        <div class="flex justify-between py-1 border-b border-[#E3E9E5]/60">
+                            <span class="text-[#6B756F]">CAC Registration:</span>
+                            <span class="font-bold font-mono text-[#087A50]"><%= (typeof businessProfile !== 'undefined' && businessProfile && businessProfile.rc_number) ? businessProfile.rc_number : 'RC Verified' %></span>
+                        </div>
+                        <div class="flex justify-between py-1">
+                            <span class="text-[#6B756F]">Business Entity:</span>
+                            <span class="font-bold text-[#08110D]"><%= (typeof businessProfile !== 'undefined' && businessProfile && businessProfile.business_type) ? businessProfile.business_type.toUpperCase() : 'REGISTERED BUSINESS' %></span>
+                        </div>
+                    </div>
+                <% } else if (Number(store.is_verified) === 1 || (typeof sellerProfile !== 'undefined' && sellerProfile && sellerProfile.composite_verification_status === 'verified')) { %>
+                    <div class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-1.5">
+                        <div class="flex items-center gap-2 font-bold text-emerald-950">
+                            <span>✓</span>
+                            <span>Verified Individual Seller</span>
+                        </div>
+                        <p class="text-[11px] text-emerald-900 leading-relaxed">
+                            This store is operated by a verified individual sole proprietor whose personal identity and bank payout account ownership have been validated.
+                        </p>
+                    </div>
+                    <div class="bg-[#F8FAF8] p-3.5 rounded-2xl border border-[#E3E9E5] space-y-1.5 text-[11px] text-[#6B756F]">
+                        <p>🔒 <strong>NDPA 2023 Privacy Compliance:</strong> Personal identity numbers (BVN/NIN) are securely tokenized and never displayed publicly to safeguard seller privacy.</p>
+                    </div>
+                <% } else { %>
+                    <div class="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl space-y-1.5">
+                        <div class="flex items-center gap-2 font-bold text-amber-950">
+                            <span>ℹ️</span>
+                            <span>Under Verification</span>
+                        </div>
+                        <p class="text-[11px] text-amber-900 leading-relaxed">
+                            This storefront is currently undergoing initial merchant verification and compliance screening.
+                        </p>
+                    </div>
+                <% } %>
+
+                <div class="p-3.5 bg-gray-50 border border-gray-200 rounded-2xl space-y-1 text-[11px] text-gray-700">
+                    <div class="font-bold text-[#08110D] flex items-center gap-1.5">
+                        <span>⚖️</span> <span>Platform Trust Disclosure</span>
+                    </div>
+                    <p class="leading-relaxed">
+                        Verification confirms seller identity and bank account ownership to deter impersonation and payment diversion. It does not constitute an endorsement, warranty, or guarantee of honest behavior. Zlik does not hold customer funds in escrow; payment is transferred directly from buyer to seller.
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-[#E3E9E5]">
+                <button type="button" onclick="closeTrustModal(); openDisputeModal();" class="text-red-700 hover:text-red-800 font-bold text-xs flex items-center gap-1">
+                    <span>🚩</span> <span>Report Fraud or Dispute</span>
+                </button>
+                <button type="button" onclick="closeTrustModal()" class="bg-[#08110D] text-white px-4 py-2 rounded-xl text-xs font-bold font-display">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Storefront Customer Dispute / Fraud Report Modal -->
+    <div id="storeDisputeModal" class="fixed inset-0 z-[85] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 border border-[#E3E9E5] shadow-2xl text-left max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">🚩</span>
+                    <div>
+                        <h3 class="font-extrabold text-sm text-[#08110D] font-display">Report Store Dispute or Fraud</h3>
+                        <p class="text-[11px] text-[#6B756F]">Reported Store: <%= store.store_name %></p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeDisputeModal()" class="text-[#6B756F] hover:text-[#08110D] font-bold text-lg p-1">✕</button>
+            </div>
+
+            <form id="storeDisputeForm" onsubmit="handleDisputeSubmit(event)" class="space-y-3.5 text-xs">
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">Your Full Name *</label>
+                    <input type="text" id="disputeReporterName" required placeholder="e.g. Samuel Adebayo" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-[#08110D] mb-1">Your Email Address *</label>
+                        <input type="email" id="disputeReporterEmail" required placeholder="name@example.com" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-[#08110D] mb-1">Phone Number (Optional)</label>
+                        <input type="tel" id="disputeReporterPhone" placeholder="08012345678" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">Dispute Category *</label>
+                    <select id="disputeCategory" required class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] font-medium">
+                        <option value="payment_diversion">Payment Diversion (Seller requested alternate account)</option>
+                        <option value="non_delivery">Non-Delivery (Paid but order never delivered)</option>
+                        <option value="counterfeit_item">Counterfeit or Misleading Item</option>
+                        <option value="impersonation">Brand or Business Impersonation</option>
+                        <option value="unresponsive_merchant">Unresponsive Merchant</option>
+                        <option value="other">Other Violation</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">Order Reference (Optional)</label>
+                    <input type="text" id="disputeOrderRef" placeholder="e.g. ZLK-ORD-..." class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-[#08110D] mb-1">Detailed Explanation *</label>
+                    <textarea id="disputeDescription" required rows="3" placeholder="Please describe what occurred in detail..." class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D]"></textarea>
+                </div>
+
+                <div id="disputeError" class="hidden p-3 rounded-xl bg-red-50 text-red-700 text-xs border border-red-200"></div>
+
+                <div id="disputeSuccess" class="hidden p-4 rounded-2xl bg-emerald-50 text-emerald-950 text-xs border border-emerald-300 space-y-2">
+                    <div class="font-bold flex items-center gap-1.5 text-emerald-900">
+                        <span>✓</span> <span>Dispute Report Logged Successfully</span>
+                    </div>
+                    <p class="text-[11.5px] text-emerald-800">
+                        Your dispute has been transmitted to our Super Admin Compliance Team for formal review.
+                    </p>
+                    <div class="font-mono font-bold text-xs bg-white p-2 rounded-xl border border-emerald-200 text-[#087A50]">
+                        Case Reference: <span id="disputeCaseRef"></span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-2 border-t border-[#E3E9E5]">
+                    <button type="button" onclick="closeDisputeModal()" class="text-[#6B756F] hover:text-[#08110D] font-bold text-xs py-2 px-3">
+                        Cancel
+                    </button>
+                    <button type="submit" id="disputeSubmitBtn" class="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs px-5 py-3 rounded-xl transition font-display shadow-xs flex items-center gap-1.5">
+                        <span>Submit Dispute Report</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Storefront Trust & Dispute Modal Handlers
+        function openTrustModal() {
+            document.getElementById('storeTrustModal').classList.remove('hidden');
+        }
+
+        function closeTrustModal() {
+            document.getElementById('storeTrustModal').classList.add('hidden');
+        }
+
+        function openDisputeModal(category) {
+            const modal = document.getElementById('storeDisputeModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                if (category) {
+                    const catSelect = document.getElementById('disputeCategory');
+                    if (catSelect) catSelect.value = category;
+                }
+            }
+        }
+
+        function closeDisputeModal() {
+            const modal = document.getElementById('storeDisputeModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function handleDisputeSubmit(event) {
+            event.preventDefault();
+            const btn = document.getElementById('disputeSubmitBtn');
+            const errDiv = document.getElementById('disputeError');
+            const successDiv = document.getElementById('disputeSuccess');
+            const caseRefSpan = document.getElementById('disputeCaseRef');
+
+            errDiv.classList.add('hidden');
+            errDiv.textContent = '';
+            btn.disabled = true;
+            btn.textContent = 'Submitting Report...';
+
+            const payload = {
+                reporter_name: document.getElementById('disputeReporterName').value.trim(),
+                reporter_email: document.getElementById('disputeReporterEmail').value.trim(),
+                reporter_phone: document.getElementById('disputeReporterPhone').value.trim() || undefined,
+                store_id: storeData.id,
+                store_slug: storeData.slug,
+                order_ref: document.getElementById('disputeOrderRef').value.trim() || undefined,
+                category: document.getElementById('disputeCategory').value,
+                description: document.getElementById('disputeDescription').value.trim()
+            };
+
+            try {
+                const res = await fetch('/api/disputes/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error(data.error || 'Failed to submit dispute report');
+                }
+
+                if (caseRefSpan) caseRefSpan.textContent = data.case_reference || 'REF-' + Date.now();
+                if (successDiv) successDiv.classList.remove('hidden');
+                document.getElementById('storeDisputeForm').reset();
+                btn.classList.add('hidden');
+            } catch (err) {
+                errDiv.textContent = err.message || 'An error occurred while submitting dispute';
+                errDiv.classList.remove('hidden');
+                btn.disabled = false;
+                btn.textContent = 'Submit Dispute Report';
+            }
         }
 
         // Store Share Modal

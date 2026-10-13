@@ -45,7 +45,6 @@ function copyRecursiveSafe(src, dest) {
 
 const sources = [
   path.join(rootDir, 'src', 'public', 'uploads'),
-  path.join(rootDir, 'dist', 'public', 'uploads'),
   path.join(projectRoot, 'php-web-app', 'uploads'),
   path.join(projectRoot, 'uploads')
 ];

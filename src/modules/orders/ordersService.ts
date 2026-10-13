@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import { getDb, dbFetchOne, dbFetchAll, dbInsert, dbUpdate, dbQuery } from '../../db/db.js';
 import { normalizePhoneNumber, resolveOrCreateCustomer, checkCustomerOpenOrdersLimit } from '../../utils/helpers.js';
 import { realtimeHub } from '../chat/chatService.js';
+import { isStoreOrderGated } from '../security/securityService.js';
 
 export interface OrderItem {
   id?: number;
@@ -42,9 +43,19 @@ export function createOrder(input: CreateOrderInput): {
   error?: string;
   open_orders_exceeded?: boolean;
   existing_orders?: any[];
+  is_gated?: boolean;
 } {
   const store = dbFetchOne<any>('stores', { id: input.store_id });
   if (!store) return { success: false, error: 'Store not found' };
+
+  // Storefront Gating Enforcement (Batch 6)
+  if (isStoreOrderGated(input.store_id)) {
+    return {
+      success: false,
+      error: 'This storefront is currently undergoing seller identity verification and is not yet authorized to accept customer orders or bank transfers.',
+      is_gated: true
+    };
+  }
 
   const paymentMethod = input.payment_method || 'bank_transfer';
   if (paymentMethod === 'bank_transfer' && store.allow_bank_transfer === 0) {

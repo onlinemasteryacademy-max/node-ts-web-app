@@ -13,6 +13,7 @@ const node_crypto_1 = __importDefault(require("node:crypto"));
 const db_js_1 = require("../../db/db.js");
 const helpers_js_1 = require("../../utils/helpers.js");
 const chatService_js_1 = require("../chat/chatService.js");
+const securityService_js_1 = require("../security/securityService.js");
 /**
  * Create Order with Identity Resolution & Anti-Spam Check
  */
@@ -20,6 +21,14 @@ function createOrder(input) {
     const store = (0, db_js_1.dbFetchOne)('stores', { id: input.store_id });
     if (!store)
         return { success: false, error: 'Store not found' };
+    // Storefront Gating Enforcement (Batch 6)
+    if ((0, securityService_js_1.isStoreOrderGated)(input.store_id)) {
+        return {
+            success: false,
+            error: 'This storefront is currently undergoing seller identity verification and is not yet authorized to accept customer orders or bank transfers.',
+            is_gated: true
+        };
+    }
     const paymentMethod = input.payment_method || 'bank_transfer';
     if (paymentMethod === 'bank_transfer' && store.allow_bank_transfer === 0) {
         return { success: false, error: 'Direct Bank Transfer is not accepted by this store.' };

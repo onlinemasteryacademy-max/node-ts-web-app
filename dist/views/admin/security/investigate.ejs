@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            zlikDark: '#08110D',
+            zlikGreen: '#19D98B',
+            zlikDeepGreen: '#087A50',
+            zlikBg: '#F8FAF8',
+            zlikWhite: '#FFFFFF',
+            zlikSecondary: '#6B756F',
+            zlikBorder: '#E3E9E5'
+          },
+          fontFamily: {
+            display: ['Montserrat', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #08110D; color: #FFFFFF; }
+    .font-display { font-family: 'Montserrat', sans-serif; }
+  </style>
+</head>
+<body class="bg-[#08110D] text-white min-h-screen selection:bg-[#19D98B] selection:text-[#08110D]">
+
+  <!-- Top Navbar -->
+  <header class="border-b border-white/10 bg-[#08110D]/90 sticky top-0 z-40 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <a href="/<%= adminPath %>" class="text-2xl font-extrabold font-display tracking-tight text-white flex items-center gap-1">
+          zlik<span class="text-[#19D98B]">.</span>
+          <span class="text-xs uppercase px-2 py-0.5 ml-2 bg-[#19D98B]/20 text-[#19D98B] font-bold rounded tracking-wider">Console</span>
+        </a>
+        <span class="text-white/30 hidden sm:inline">/</span>
+        <a href="/<%= adminPath %>/security" class="text-sm font-semibold text-white/70 hover:text-white flex items-center gap-1.5 hidden sm:flex">
+          🛡️ Security & Trust
+        </a>
+        <span class="text-white/30 hidden sm:inline">/</span>
+        <a href="/<%= adminPath %>/security/queue" class="text-sm font-semibold text-white/70 hover:text-white hidden sm:flex">
+          Queue
+        </a>
+        <span class="text-white/30 hidden sm:inline">/</span>
+        <span class="text-sm font-semibold text-[#19D98B] hidden sm:inline">Seller #<%= seller.id %></span>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <a href="/<%= adminPath %>/security/queue" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/20 text-white/80 hover:text-white hover:border-white/40 transition">
+          ← Back to Queue
+        </a>
+        <div class="text-right hidden sm:block">
+          <div class="text-xs font-bold text-white"><%= currentAdmin ? currentAdmin.name : 'Administrator' %></div>
+          <div class="text-[11px] text-[#19D98B] uppercase font-semibold tracking-wider"><%= currentAdmin && currentAdmin.role_info ? currentAdmin.role_info.name : 'Super Admin' %></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Seller Header & Profile Banner -->
+    <div class="bg-white/5 border border-white/10 rounded-3xl p-6 sm:p-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+      <div class="space-y-2">
+        <div class="flex items-center gap-3 flex-wrap">
+          <h1 class="text-2xl sm:text-3xl font-extrabold font-display text-white">
+            <%= seller.public_store_name || (store ? store.store_name : 'Unknown Store') %>
+          </h1>
+          <span class="px-2.5 py-1 rounded-md text-xs font-bold uppercase <%= seller.seller_type === 'business' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30' %>">
+            <%= seller.seller_type %>
+          </span>
+          <% if (seller.composite_verification_status === 'verified') { %>
+            <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              ✓ VERIFIED SELLER
+            </span>
+          <% } else if (seller.composite_verification_status === 'suspended') { %>
+            <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-red-600/30 text-red-300 border border-red-600/40">
+              🚫 SUSPENDED
+            </span>
+          <% } else { %>
+            <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+              ⏳ <%= seller.composite_verification_status.toUpperCase() %>
+            </span>
+          <% } %>
+        </div>
+
+        <div class="text-xs text-white/60 flex items-center gap-4 flex-wrap">
+          <span>Seller ID: <strong class="text-white">#<%= seller.id %></strong></span>
+          <span>Store ID: <strong class="text-white">#<%= seller.store_id %></strong></span>
+          <span>Legal Name: <strong class="text-white"><%= seller.legal_name || 'Not provided' %></strong></span>
+          <% if (store && store.slug) { %>
+            <span>Public Storefront: <a href="/store/<%= store.slug %>" target="_blank" class="text-[#19D98B] hover:underline font-mono">/<%= store.slug %> ↗</a></span>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Action Buttons Panel -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <% if (seller.composite_verification_status !== 'verified') { %>
+          <button onclick="executeAction('approve_verification')" class="px-4 py-2 rounded-xl text-xs font-bold bg-[#19D98B] text-[#08110D] hover:opacity-90 shadow-lg shadow-[#19D98B]/20 transition">
+            ✓ Approve Verification
+          </button>
+        <% } else { %>
+          <button onclick="executeAction('reject_verification')" class="px-4 py-2 rounded-xl text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500 hover:text-white transition">
+            Revoke Verification
+          </button>
+        <% } %>
+
+        <button onclick="executeAction('toggle_order_gating')" class="px-4 py-2 rounded-xl text-xs font-bold bg-white/10 text-white hover:bg-white/20 transition">
+          <%= Number(seller.order_gating_enabled) === 1 ? 'Disable Orders' : 'Enable Orders' %>
+        </button>
+
+        <% if (store && store.status === 'active') { %>
+          <button onclick="executeAction('suspend_store')" class="px-4 py-2 rounded-xl text-xs font-bold bg-red-600/20 text-red-400 border border-red-600/30 hover:bg-red-600 hover:text-white transition">
+            🚫 Suspend Store
+          </button>
+        <% } else { %>
+          <button onclick="executeAction('restore_store')" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600/20 text-emerald-400 border border-emerald-600/30 hover:bg-emerald-600 hover:text-white transition">
+            Restore Store
+          </button>
+        <% } %>
+
+        <button onclick="promptRiskAdjustment()" class="px-3 py-2 rounded-xl text-xs font-semibold bg-white/5 border border-white/10 hover:border-white/30 text-white/70 hover:text-white transition">
+          Adjust Risk
+        </button>
+      </div>
+    </div>
+
+    <!-- 4 Key Telemetry Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <!-- Risk Score Meter -->
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-3">
+        <div class="text-xs font-semibold text-white/60 uppercase">Risk Evaluation</div>
+        <div class="flex items-baseline justify-between">
+          <div class="text-3xl font-extrabold font-display <%= seller.risk_level === 'critical' ? 'text-red-400' : (seller.risk_level === 'high' ? 'text-orange-400' : (seller.risk_level === 'medium' ? 'text-amber-400' : 'text-emerald-400')) %>">
+            <%= seller.risk_score %><span class="text-sm text-white/40">/100</span>
+          </div>
+          <span class="text-xs uppercase font-extrabold tracking-wider <%= seller.risk_level === 'critical' ? 'text-red-400' : (seller.risk_level === 'high' ? 'text-orange-400' : (seller.risk_level === 'medium' ? 'text-amber-400' : 'text-emerald-400')) %>">
+            <%= seller.risk_level %> RISK
+          </span>
+        </div>
+        <div class="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+          <div class="h-full <%= seller.risk_level === 'critical' ? 'bg-red-500' : (seller.risk_level === 'high' ? 'bg-orange-500' : (seller.risk_level === 'medium' ? 'bg-amber-400' : 'bg-emerald-400')) %>" style="width: <%= Math.min(100, seller.risk_score) %>%"></div>
+        </div>
+      </div>
+
+      <!-- Order Gating Status -->
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-2">
+        <div class="text-xs font-semibold text-white/60 uppercase">Order Acceptance Gating</div>
+        <div class="text-xl font-extrabold font-display <%= Number(seller.order_gating_enabled) === 1 ? 'text-emerald-400' : 'text-red-400' %>">
+          <%= Number(seller.order_gating_enabled) === 1 ? 'ACCEPTING ORDERS' : 'STORE GATED (BLOCKED)' %>
+        </div>
+        <div class="text-xs text-white/50">
+          <%= Number(seller.order_gating_enabled) === 1 ? 'Customers can view bank details and checkout.' : 'Order placement and transfer instructions disabled.' %>
+        </div>
+      </div>
+
+      <!-- Lifetime Volume -->
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-2">
+        <div class="text-xs font-semibold text-white/60 uppercase">Processed Store GMV</div>
+        <div class="text-3xl font-extrabold font-display text-[#19D98B]">
+          ₦<%= Number(stats.totalGmv || 0).toLocaleString() %>
+        </div>
+        <div class="text-xs text-white/50">
+          Across <%= stats.totalOrders %> orders &bull; <%= stats.totalProducts %> listed products
+        </div>
+      </div>
+
+      <!-- Customer Disputes Count -->
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-2">
+        <div class="text-xs font-semibold text-white/60 uppercase">Customer Fraud Reports</div>
+        <div class="text-3xl font-extrabold font-display <%= fraudReports.length > 0 ? 'text-red-400' : 'text-white' %>">
+          <%= fraudReports.length %>
+        </div>
+        <div class="text-xs text-white/50">
+          <%= fraudReports.filter(f => f.status === 'new' || f.status === 'under_review').length %> currently open disputes
+        </div>
+      </div>
+    </div>
+
+    <!-- Payout Bank Accounts & Verification Section -->
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-white/10 pb-4">
+        <h2 class="text-sm font-bold font-display uppercase tracking-wider text-white flex items-center gap-2">
+          <span>🏦 Payout Bank Accounts</span>
+        </h2>
+        <span class="text-xs text-white/40">Protected by AES-256-GCM encryption & HMAC duplicate detection</span>
+      </div>
+
+      <% if (bankAccounts && bankAccounts.length > 0) { %>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <% bankAccounts.forEach(b => { %>
+            <div class="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-2 relative">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-bold text-white"><%= b.bank_name %></span>
+                <% if (b.verification_status === 'verified') { %>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">✓ VERIFIED</span>
+                <% } else { %>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">PENDING RESOLUTION</span>
+                <% } %>
+              </div>
+              <div class="font-mono text-sm text-[#19D98B]"><%= b.account_number_masked %></div>
+              <div class="text-xs text-white/70">Account Name: <strong class="text-white"><%= b.account_name %></strong></div>
+              <div class="text-[11px] text-white/50 flex items-center justify-between pt-1">
+                <span>Name Match: <code class="text-emerald-300 font-bold"><%= b.name_match_result %></code></span>
+                <span>Match Score: <strong><%= (Number(b.name_match_score || 0) * 100).toFixed(0) %>%</strong></span>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <div class="py-6 text-center text-white/40 text-xs">
+          No bank accounts registered by this merchant yet.
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Registered Business Profile (if applicable) -->
+    <% if (business) { %>
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+        <div class="flex items-center justify-between border-b border-white/10 pb-4">
+          <h2 class="text-sm font-bold font-display uppercase tracking-wider text-white flex items-center gap-2">
+            <span>🏢 CAC Registered Business Profile</span>
+          </h2>
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= business.verification_status === 'verified' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400' %>">
+            <%= business.verification_status %>
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+          <div>
+            <div class="text-white/50 uppercase text-[10px] font-semibold">Registered Entity Name</div>
+            <div class="text-white font-bold mt-0.5"><%= business.registered_name %></div>
+          </div>
+          <div>
+            <div class="text-white/50 uppercase text-[10px] font-semibold">RC / BN Number</div>
+            <div class="text-white font-mono font-bold mt-0.5"><%= business.registration_number %></div>
+          </div>
+          <div>
+            <div class="text-white/50 uppercase text-[10px] font-semibold">Legal Representative</div>
+            <div class="text-white font-bold mt-0.5"><%= business.representative_name %> (<%= business.representative_role %>)</div>
+          </div>
+          <div>
+            <div class="text-white/50 uppercase text-[10px] font-semibold">Representative Phone</div>
+            <div class="text-white font-mono font-bold mt-0.5"><%= business.representative_phone %></div>
+          </div>
+        </div>
+
+        <% if (business.registered_address) { %>
+          <div class="text-xs text-white/70 pt-2 border-t border-white/5">
+            Registered Address: <%= business.registered_address %>
+          </div>
+        <% } %>
+
+        <% if (business.verification_status !== 'verified') { %>
+          <div class="flex items-center gap-2 pt-3 border-t border-white/10">
+            <button onclick="executeAction('approve_business')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#19D98B] text-[#08110D] hover:opacity-90 transition">
+              ✓ Approve CAC Business
+            </button>
+            <button onclick="executeAction('reject_business')" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500 hover:text-white transition">
+              ✕ Reject CAC Business
+            </button>
+          </div>
+        <% } %>
+      </div>
+    <% } %>
+
+    <!-- Identity Verification Attempts -->
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-white/10 pb-4">
+        <h2 class="text-sm font-bold font-display uppercase tracking-wider text-white flex items-center gap-2">
+          <span>🛡️ Identity Verification Attempts</span>
+        </h2>
+        <span class="text-xs text-white/40">Provider Audit Records</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="text-white/40 border-b border-white/5">
+              <th class="pb-3 font-semibold">Timestamp</th>
+              <th class="pb-3 font-semibold">Type</th>
+              <th class="pb-3 font-semibold">Provider</th>
+              <th class="pb-3 font-semibold">Reference</th>
+              <th class="pb-3 font-semibold">Status</th>
+              <th class="pb-3 font-semibold text-right">Failure Reason</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            <% if (verifications && verifications.length > 0) { %>
+              <% verifications.forEach(v => { %>
+                <tr class="hover:bg-white/[0.02]">
+                  <td class="py-3 text-white/50 font-mono text-[11px]"><%= v.created_at %></td>
+                  <td class="py-3 font-semibold text-white"><%= v.verification_type %></td>
+                  <td class="py-3 text-white/70"><%= v.provider %></td>
+                  <td class="py-3 font-mono text-[11px] text-white/60"><%= v.provider_reference || '-' %></td>
+                  <td class="py-3">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= v.status === 'verified' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400' %>">
+                      <%= v.status %>
+                    </span>
+                  </td>
+                  <td class="py-3 text-right text-red-300 font-sans"><%= v.failure_reason || '-' %></td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="6" class="py-6 text-center text-white/40">No verification attempts logged yet.</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Fraud Reports & Customer Disputes -->
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-white/10 pb-4">
+        <h2 class="text-sm font-bold font-display uppercase tracking-wider text-white flex items-center gap-2">
+          <span>🚨 Customer Fraud Reports & Complaints</span>
+        </h2>
+        <span class="text-xs text-white/40">Direct-transfer dispute filings</span>
+      </div>
+
+      <% if (fraudReports && fraudReports.length > 0) { %>
+        <div class="space-y-3">
+          <% fraudReports.forEach(r => { %>
+            <div class="p-4 rounded-xl bg-white/[0.02] border border-white/10 space-y-2 text-xs">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-white flex items-center gap-2">
+                  <span>Case <%= r.case_reference %></span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-500/20 text-red-400"><%= r.category %></span>
+                </span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= r.status === 'resolved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400' %>">
+                  <%= r.status %>
+                </span>
+              </div>
+              <div class="text-white/80"><%= r.description %></div>
+              <div class="text-[11px] text-white/50 flex items-center justify-between pt-1">
+                <span>Reporter: <%= r.reporter_name %> (<%= r.reporter_email %>)</span>
+                <span class="font-mono text-[10px]"><%= r.created_at %></span>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <div class="py-6 text-center text-white/40 text-xs">
+          Zero fraud reports or complaints logged against this merchant.
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Risk Events Timeline -->
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-white/10 pb-4">
+        <h2 class="text-sm font-bold font-display uppercase tracking-wider text-white flex items-center gap-2">
+          <span>⚡ Risk Events Timeline</span>
+        </h2>
+        <span class="text-xs text-white/40">Explainable risk adjustments</span>
+      </div>
+
+      <div class="space-y-2">
+        <% if (riskEvents && riskEvents.length > 0) { %>
+          <% riskEvents.forEach(evt => { %>
+            <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-xs flex items-center justify-between">
+              <div>
+                <span class="font-bold text-white"><%= evt.event_type %></span>
+                <span class="text-white/50 ml-2">Reason: <code class="text-amber-300 font-mono"><%= evt.reason_code %></code></span>
+              </div>
+              <div class="text-right">
+                <span class="font-mono font-bold <%= evt.score_delta > 0 ? 'text-red-400' : 'text-emerald-400' %>">
+                  <%= evt.score_delta > 0 ? '+' : '' %><%= evt.score_delta %> pts
+                </span>
+                <span class="text-white/40 text-[10px] font-mono ml-2">(Score: <%= evt.new_score %>/100)</span>
+              </div>
+            </div>
+          <% }); %>
+        <% } else { %>
+          <div class="py-6 text-center text-white/40 text-xs">No risk adjustments triggered.</div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Security Audit Logs for this seller -->
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-white/10 pb-4">
+        <h2 class="text-sm font-bold font-display uppercase tracking-wider text-white flex items-center gap-2">
+          <span>📜 Audit Trail for Seller #<%= seller.id %></span>
+        </h2>
+        <span class="text-xs text-white/40">Immutable log</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs font-mono text-[11px]">
+          <thead>
+            <tr class="text-white/40 border-b border-white/5">
+              <th class="pb-2.5 font-semibold">Timestamp</th>
+              <th class="pb-2.5 font-semibold">Actor</th>
+              <th class="pb-2.5 font-semibold">Action</th>
+              <th class="pb-2.5 font-semibold">Reason</th>
+              <th class="pb-2.5 font-semibold text-right">IP</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            <% if (auditLogs && auditLogs.length > 0) { %>
+              <% auditLogs.forEach(l => { %>
+                <tr>
+                  <td class="py-2 text-white/50"><%= l.created_at %></td>
+                  <td class="py-2 text-emerald-400"><%= l.actor_type %><%= l.actor_id ? ' #' + l.actor_id : '' %></td>
+                  <td class="py-2 text-white"><%= l.action %></td>
+                  <td class="py-2 text-white/60 font-sans"><%= l.reason || '-' %></td>
+                  <td class="py-2 text-right text-white/40"><%= l.ip_address || 'internal' %></td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="5" class="py-6 text-center text-white/40 font-sans">No audit events recorded for this seller.</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const sellerId = <%= seller.id %>;
+
+    async function executeAction(action, details = null) {
+      const reason = prompt(`Enter reason / mandatory audit note for this action:`, 'Administrative manual review');
+      if (reason === null) return;
+
+      try {
+        const res = await fetch('/api/admin/security/action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, seller_id: sellerId, reason, details })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(data.message || 'Action executed successfully.');
+          window.location.reload();
+        } else {
+          alert('Error: ' + (data.error || 'Failed to execute action'));
+        }
+      } catch (err) {
+        alert('Request failed: ' + err.message);
+      }
+    }
+
+    function promptRiskAdjustment() {
+      const deltaStr = prompt('Enter score change delta (e.g. +20 or -15):', '+10');
+      if (!deltaStr) return;
+      const delta = parseInt(deltaStr, 10);
+      if (isNaN(delta) || delta === 0) {
+        alert('Invalid delta value.');
+        return;
+      }
+      executeAction('adjust_risk', { delta, reason_code: 'MANUAL_OVERRIDE' });
+    }
+  </script>
+
+</body>
+</html>

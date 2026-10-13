@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trust & Identity Verification — <%= store.store_name %> | Zlik Merchant</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        zlikDark: '#08110D',
+                        zlikGreen: '#19D98B',
+                        zlikDeep: '#087A50',
+                        zlikBg: '#F8FAF8',
+                        zlikWhite: '#FFFFFF',
+                        zlikMuted: '#6B756F',
+                        zlikBorder: '#E3E9E5'
+                    },
+                    fontFamily: {
+                        display: ['Montserrat', 'sans-serif'],
+                        body: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8FAF8; color: #08110D; }
+        .font-display { font-family: 'Montserrat', sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased bg-[#F8FAF8]">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-[#E3E9E5] sticky top-0 z-30 shadow-2xs">
+        <div class="max-w-4xl mx-auto px-4 py-3.5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="/merchant" class="text-xs font-bold text-[#6B756F] hover:text-[#08110D] flex items-center gap-1 transition">
+                    <span>←</span> <span>Dashboard</span>
+                </a>
+                <span class="text-[#E3E9E5]">|</span>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm">🛡️</span>
+                    <span class="text-xs font-extrabold font-display text-[#08110D]">Trust & Identity Verification</span>
+                </div>
+            </div>
+            <div>
+                <% if (sellerProfile && sellerProfile.composite_verification_status === 'verified') { %>
+                    <span class="text-[10px] font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 flex items-center gap-1 font-mono">
+                        <span>✓</span> <span>VERIFIED MERCHANT</span>
+                    </span>
+                <% } else { %>
+                    <span class="text-[10px] font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1 font-mono">
+                        <span>🔒</span> <span>ORDERS GATED</span>
+                    </span>
+                <% } %>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 py-6 pb-24 flex-1 w-full space-y-6">
+
+        <!-- Banner / Overview Card -->
+        <div class="bg-gradient-to-r from-emerald-950 via-[#08110D] to-[#0A1A12] border border-[#19D98B]/30 rounded-3xl p-6 text-white shadow-lg space-y-4">
+            <div class="flex items-start justify-between gap-4">
+                <div class="space-y-1.5">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">🛡️</span>
+                        <h1 class="text-base sm:text-lg font-extrabold font-display text-[#19D98B]">Seller Accountability & Verification</h1>
+                    </div>
+                    <p class="text-xs text-[#E3E9E5]/80 max-w-2xl leading-relaxed">
+                        To maintain high customer trust across Nigeria and prevent payment diversion, every merchant is held accountable to a verified identity and authorized payout bank account.
+                    </p>
+                </div>
+                <div class="hidden sm:block text-right">
+                    <div class="text-[10px] text-white/50 uppercase font-bold font-mono">Gating Status</div>
+                    <div class="text-xs font-extrabold font-mono <%= isGated ? 'text-amber-400' : 'text-[#19D98B]' %>">
+                        <%= isGated ? '🔒 ORDERS LOCKED' : '🟢 ORDERS ACTIVE' %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Steps Matrix -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-white/10 text-xs">
+                <!-- Step 1: Identity -->
+                <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-mono font-bold text-white/60">Step 1</span>
+                        <span class="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full <%= sellerProfile && sellerProfile.identity_status === 'verified' ? 'bg-emerald-500/20 text-[#19D98B]' : 'bg-amber-500/20 text-amber-300' %>">
+                            <%= sellerProfile ? sellerProfile.identity_status.toUpperCase() : 'PENDING' %>
+                        </span>
+                    </div>
+                    <div class="font-bold text-white">Identity (BVN / NIN)</div>
+                    <div class="text-[10.5px] text-white/60">Verified with official database</div>
+                </div>
+
+                <!-- Step 2: Bank -->
+                <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-mono font-bold text-white/60">Step 2</span>
+                        <span class="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full <%= sellerProfile && sellerProfile.bank_status === 'verified' ? 'bg-emerald-500/20 text-[#19D98B]' : 'bg-amber-500/20 text-amber-300' %>">
+                            <%= sellerProfile ? sellerProfile.bank_status.toUpperCase() : 'PENDING' %>
+                        </span>
+                    </div>
+                    <div class="font-bold text-white">Payout Bank</div>
+                    <div class="text-[10.5px] text-white/60">Name matches verified identity</div>
+                </div>
+
+                <!-- Step 3: Orders Gating -->
+                <div class="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-mono font-bold text-white/60">Step 3</span>
+                        <span class="text-[10px] font-bold font-mono px-2 py-0.5 rounded-full <%= !isGated ? 'bg-emerald-500/20 text-[#19D98B]' : 'bg-white/10 text-white/50' %>">
+                            <%= !isGated ? 'UNLOCKED' : 'GATED' %>
+                        </span>
+                    </div>
+                    <div class="font-bold text-white">Customer Orders</div>
+                    <div class="text-[10.5px] text-white/60">Instant peer-to-peer bank transfers</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 1: Individual Identity Verification (BVN / NIN) -->
+        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-6 shadow-xs space-y-5 text-xs">
+            <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3.5">
+                <div>
+                    <h2 class="text-sm font-bold text-[#08110D]">1. Personal Identity Verification</h2>
+                    <p class="text-[11px] text-[#6B756F] mt-0.5">Verify your Bank Verification Number (BVN) or National Identification Number (NIN).</p>
+                </div>
+                <% if (sellerProfile && sellerProfile.identity_status === 'verified') { %>
+                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 font-mono">
+                        <span>✓</span> <span>VERIFIED</span>
+                    </span>
+                <% } else { %>
+                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1 font-mono">
+                        <span>⏳</span> <span>ACTION REQUIRED</span>
+                    </span>
+                <% } %>
+            </div>
+
+            <% if (sellerProfile && sellerProfile.identity_status === 'verified') { %>
+                <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 space-y-2">
+                    <div class="font-bold text-xs flex items-center gap-1.5">
+                        <span class="text-base">✓</span> <span>Identity Successfully Verified</span>
+                    </div>
+                    <p class="text-[11px] text-emerald-800">
+                        Your identity has been authenticated against regulatory authorities. Consent was recorded on <%= sellerProfile.consent_timestamp || 'file' %>.
+                    </p>
+                </div>
+            <% } else { %>
+                <form onsubmit="handleIdentitySubmit(event)" class="space-y-4">
+                    <!-- NDPA 2023 Consent Notice -->
+                    <div class="p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5] space-y-2.5">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm">🔒</span>
+                            <span class="font-bold text-xs text-[#08110D]">Nigeria Data Protection Act (NDPA) 2023 Compliance</span>
+                        </div>
+                        <p class="text-[11px] text-[#6B756F] leading-relaxed">
+                            Under the NDPA 2023 and CBN privacy directives, your 11-digit credential is used strictly for identity confirmation via Monnify and is <strong>NEVER stored in plaintext</strong> or logged on Zlik servers.
+                        </p>
+                        <label class="flex items-start gap-2.5 pt-1 cursor-pointer">
+                            <input type="checkbox" id="identityConsentCheck" required class="mt-0.5 w-4 h-4 accent-[#08110D] cursor-pointer">
+                            <span class="text-[11px] font-semibold text-[#08110D]">
+                                I hereby consent to Zlik verifying my identity details with official regulatory databases in accordance with the NDPA 2023. *
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block font-medium text-[#08110D] mb-1">Credential Type *</label>
+                            <select id="identityType" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] font-medium text-xs">
+                                <option value="bvn">Bank Verification Number (BVN)</option>
+                                <option value="nin">National Identification Number (NIN)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-medium text-[#08110D] mb-1">11-Digit Number *</label>
+                            <input type="text" id="identityNumber" maxlength="11" placeholder="22222222222" required class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] font-mono text-sm tracking-wider">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block font-medium text-[#08110D] mb-1">Legal First Name (Optional)</label>
+                            <input type="text" id="idFirstName" placeholder="e.g. Chinedu" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] text-xs">
+                        </div>
+                        <div>
+                            <label class="block font-medium text-[#08110D] mb-1">Legal Last Name (Optional)</label>
+                            <input type="text" id="idLastName" placeholder="e.g. Eze" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] text-xs">
+                        </div>
+                    </div>
+
+                    <div id="identityFeedbackBox" class="hidden p-3 rounded-xl text-xs font-medium"></div>
+
+                    <button type="submit" id="submitIdentityBtn" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs px-6 py-3 rounded-xl transition shadow-xs flex items-center justify-center gap-2 font-display">
+                        <span>Verify Identity Securely</span>
+                        <span>&rarr;</span>
+                    </button>
+                </form>
+            <% } %>
+        </div>
+
+        <!-- Section 2: Payout Bank Account Verification -->
+        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-6 shadow-xs space-y-4 text-xs">
+            <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3.5">
+                <div>
+                    <h2 class="text-sm font-bold text-[#08110D]">2. Payout Bank Details & Protection</h2>
+                    <p class="text-[11px] text-[#6B756F] mt-0.5">Where direct transfer customer payments will be deposited.</p>
+                </div>
+                <% if (sellerProfile && sellerProfile.bank_status === 'verified') { %>
+                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 font-mono">
+                        <span>✓</span> <span>VERIFIED BANK</span>
+                    </span>
+                <% } else { %>
+                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1 font-mono">
+                        <span>⏳</span> <span>PENDING</span>
+                    </span>
+                <% } %>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-[#F8FAF8] border border-[#E3E9E5] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="space-y-1">
+                    <div class="text-xs font-bold text-[#08110D]">
+                        <%= store.bank_name || 'No Bank Configured' %>
+                    </div>
+                    <div class="text-[11px] text-[#6B756F] font-mono">
+                        Account: <%= store.bank_account_number ? (store.bank_account_number.slice(0, 4) + '••••' + store.bank_account_number.slice(-2)) : 'Not set' %> 
+                        &bull; Name: <%= store.bank_account_name || 'Not set' %>
+                    </div>
+                </div>
+                <a href="/merchant/settings" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-2xs font-display shrink-0">
+                    <%= store.bank_account_number ? 'Update Payout Bank (with OTP) ↗' : 'Add Payout Bank ↗' %>
+                </a>
+            </div>
+        </div>
+
+        <!-- Section 3: Registered Business (CAC) Verification -->
+        <div class="bg-white rounded-3xl border border-[#E3E9E5] p-6 shadow-xs space-y-4 text-xs">
+            <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3.5">
+                <div>
+                    <h2 class="text-sm font-bold text-[#08110D]">3. Registered Business (CAC) Verification</h2>
+                    <p class="text-[11px] text-[#6B756F] mt-0.5">For registered enterprises, limited liability companies (Ltd), and incorporated entities.</p>
+                </div>
+                <% if (sellerProfile && sellerProfile.business_status === 'verified') { %>
+                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 font-mono">
+                        <span>✓</span> <span>VERIFIED BUSINESS (CAC)</span>
+                    </span>
+                <% } else if (sellerProfile && sellerProfile.business_status === 'pending') { %>
+                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1 font-mono">
+                        <span>⏳</span> <span>PENDING COMPLIANCE REVIEW</span>
+                    </span>
+                <% } else if (sellerProfile && sellerProfile.business_status === 'rejected') { %>
+                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-red-100 text-red-800 border border-red-300 flex items-center gap-1 font-mono">
+                        <span>✕</span> <span>REJECTED</span>
+                    </span>
+                <% } else { %>
+                    <span class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 border border-gray-300 font-mono">
+                        INDIVIDUAL SELLER (OPTIONAL)
+                    </span>
+                <% } %>
+            </div>
+
+            <% if (sellerProfile && sellerProfile.business_status === 'verified' && businessProfile) { %>
+                <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 space-y-2">
+                    <div class="font-bold text-xs flex items-center gap-1.5">
+                        <span class="text-base">✓</span> <span>Corporate Affairs Commission (CAC) Verified</span>
+                    </div>
+                    <div class="text-[11px] text-emerald-900 grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 font-mono">
+                        <div>Registered Name: <strong><%= businessProfile.registered_name %></strong></div>
+                        <div>CAC Number: <strong><%= businessProfile.registration_number %></strong></div>
+                        <div>Business Type: <strong><%= businessProfile.business_type %></strong></div>
+                        <div>Representative: <strong><%= businessProfile.representative_name %> (<%= businessProfile.representative_role %>)</strong></div>
+                    </div>
+                </div>
+            <% } else if (sellerProfile && sellerProfile.business_status === 'pending' && businessProfile) { %>
+                <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 space-y-2">
+                    <div class="font-bold text-xs flex items-center gap-1.5">
+                        <span class="text-base">⏳</span> <span>Under Compliance Review</span>
+                    </div>
+                    <p class="text-[11px] text-amber-800 leading-relaxed">
+                        Your registered business details (<strong><%= businessProfile.registered_name %></strong>, RC/BN: <strong><%= businessProfile.registration_number %></strong>) have been submitted to Zlik Trust & Compliance. You will receive an update once records are cross-checked with official registries.
+                    </p>
+                </div>
+            <% } else { %>
+                <p class="text-[11px] text-[#6B756F] leading-relaxed">
+                    Personal sellers are not required to provide CAC documents. If your business is legally registered with the CAC (RC or BN number) or you wish to use corporate suffixes (Ltd, Plc, Holdings), complete business verification below.
+                </p>
+
+                <form onsubmit="handleBusinessSubmit(event)" class="space-y-4 pt-1">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block font-medium text-[#08110D] mb-1">Registered Company Name *</label>
+                            <input type="text" id="busRegisteredName" placeholder="e.g. Adeola & Sons Trading Ltd" required class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] text-xs">
+                        </div>
+                        <div>
+                            <label class="block font-medium text-[#08110D] mb-1">CAC Registration Number (RC/BN) *</label>
+                            <input type="text" id="busRegNumber" placeholder="e.g. RC123456 or BN987654" required class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] font-mono text-xs uppercase">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block font-medium text-[#08110D] mb-1">Business Structure *</label>
+                            <select id="busType" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] font-medium text-xs">
+                                <option value="sole_proprietorship">Sole Proprietorship / Enterprise (BN)</option>
+                                <option value="limited_liability">Private Limited Company (Ltd)</option>
+                                <option value="public_limited">Public Limited Company (Plc)</option>
+                                <option value="incorporated_trustee">Incorporated Trustee / NGO (IT)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-medium text-[#08110D] mb-1">Authorized Representative *</label>
+                            <input type="text" id="busRepName" value="<%= sellerProfile.legal_name || store.owner_name || '' %>" placeholder="e.g. John Doe" required class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] text-xs">
+                        </div>
+                        <div>
+                            <label class="block font-medium text-[#08110D] mb-1">Representative Role *</label>
+                            <select id="busRepRole" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] font-medium text-xs">
+                                <option value="Director">Director</option>
+                                <option value="Proprietor">Proprietor / Owner</option>
+                                <option value="Managing Partner">Managing Partner</option>
+                                <option value="Authorized Officer">Authorized Officer</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block font-medium text-[#08110D] mb-1">Representative Phone *</label>
+                            <input type="text" id="busRepPhone" value="<%= store.whatsapp_number || '' %>" placeholder="e.g. 08012345678" required class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] font-mono text-xs">
+                        </div>
+                        <div>
+                            <label class="block font-medium text-[#08110D] mb-1">Tax Identification Number (TIN - Optional)</label>
+                            <input type="text" id="busTin" placeholder="e.g. 12345678-0001" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] font-mono text-xs">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block font-medium text-[#08110D] mb-1">Registered Business Address (Optional)</label>
+                        <input type="text" id="busAddress" placeholder="e.g. 15 Broad Street, Marina, Lagos" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-3 outline-none focus:border-[#08110D] text-xs">
+                    </div>
+
+                    <div id="businessFeedbackBox" class="hidden p-3 rounded-xl text-xs font-medium"></div>
+
+                    <button type="submit" id="submitBusinessBtn" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs px-6 py-3 rounded-xl transition shadow-xs flex items-center justify-center gap-2 font-display">
+                        <span>Submit CAC Business Verification</span>
+                        <span>&rarr;</span>
+                    </button>
+                </form>
+            <% } %>
+        </div>
+
+    </main>
+
+    <%- include('components/bottom_nav.ejs', { activeTab: 'settings' }) %>
+
+    <script>
+        async function handleIdentitySubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitIdentityBtn');
+            const feedback = document.getElementById('identityFeedbackBox');
+            const consent = document.getElementById('identityConsentCheck').checked;
+            const type = document.getElementById('identityType').value;
+            const identifier = document.getElementById('identityNumber').value.trim();
+            const firstName = document.getElementById('idFirstName')?.value?.trim();
+            const lastName = document.getElementById('idLastName')?.value?.trim();
+
+            if (!consent) {
+                alert('NDPA 2023 Consent is legally required.');
+                return;
+            }
+
+            if (identifier.length !== 11) {
+                alert('Please enter an exact 11-digit number.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Verifying with Regulatory Authority...';
+            feedback.className = 'p-3 rounded-xl text-xs font-medium bg-blue-50 text-blue-900 border border-blue-200 block';
+            feedback.innerHTML = '<span class="animate-spin">🔄</span> Querying official identity database...';
+
+            try {
+                const res = await fetch('/api/merchant/verification/submit-identity', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type,
+                        identifier,
+                        consent_given: consent,
+                        first_name: firstName,
+                        last_name: lastName
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    feedback.className = 'p-3 rounded-xl text-xs font-medium bg-emerald-50 text-emerald-900 border border-emerald-200 block';
+                    feedback.innerHTML = `✓ ${data.message || 'Identity verified!'}`;
+                    setTimeout(() => location.reload(), 1200);
+                } else {
+                    feedback.className = 'p-3 rounded-xl text-xs font-medium bg-amber-50 text-amber-900 border border-amber-200 block';
+                    feedback.innerHTML = `⚠️ ${data.error || 'Verification pending review.'}`;
+                }
+            } catch (err) {
+                feedback.className = 'p-3 rounded-xl text-xs font-medium bg-red-50 text-red-900 border border-red-200 block';
+                feedback.innerHTML = '❌ Network error during verification.';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Verify Identity Securely →';
+            }
+        }
+
+        async function handleBusinessSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBusinessBtn');
+            const feedback = document.getElementById('businessFeedbackBox');
+            const registeredName = document.getElementById('busRegisteredName')?.value?.trim();
+            const registrationNumber = document.getElementById('busRegNumber')?.value?.trim();
+            const businessType = document.getElementById('busType')?.value;
+            const representativeName = document.getElementById('busRepName')?.value?.trim();
+            const representativeRole = document.getElementById('busRepRole')?.value;
+            const representativePhone = document.getElementById('busRepPhone')?.value?.trim();
+            const tin = document.getElementById('busTin')?.value?.trim();
+            const registeredAddress = document.getElementById('busAddress')?.value?.trim();
+
+            if (!registeredName || !registrationNumber || !representativeName || !representativePhone) {
+                alert('Please complete all required fields.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Submitting CAC Verification...';
+            feedback.className = 'p-3 rounded-xl text-xs font-medium bg-blue-50 text-blue-900 border border-blue-200 block';
+            feedback.innerHTML = '<span class="animate-spin">🔄</span> Submitting business details for compliance check...';
+
+            try {
+                const res = await fetch('/api/merchant/verification/submit-business', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        registered_name: registeredName,
+                        registration_number: registrationNumber,
+                        business_type: businessType,
+                        representative_name: representativeName,
+                        representative_role: representativeRole,
+                        representative_phone: representativePhone,
+                        tin,
+                        registered_address: registeredAddress
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    feedback.className = 'p-3 rounded-xl text-xs font-medium bg-emerald-50 text-emerald-900 border border-emerald-200 block';
+                    feedback.innerHTML = `✓ ${data.message || 'Business verification submitted successfully!'}`;
+                    setTimeout(() => location.reload(), 1400);
+                } else {
+                    feedback.className = 'p-3 rounded-xl text-xs font-medium bg-amber-50 text-amber-900 border border-amber-200 block';
+                    feedback.innerHTML = `⚠️ ${data.error || 'Submission could not be completed.'}`;
+                }
+            } catch (err) {
+                feedback.className = 'p-3 rounded-xl text-xs font-medium bg-red-50 text-red-900 border border-red-200 block';
+                feedback.innerHTML = '❌ Network error during submission.';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Submit CAC Business Verification →';
+            }
+        }
+    </script>
+</body>
+</html>

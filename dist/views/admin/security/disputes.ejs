@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            zlikDark: '#08110D',
+            zlikGreen: '#19D98B',
+            zlikDeepGreen: '#087A50',
+            zlikBg: '#F8FAF8',
+            zlikWhite: '#FFFFFF',
+            zlikSecondary: '#6B756F',
+            zlikBorder: '#E3E9E5'
+          },
+          fontFamily: {
+            display: ['Montserrat', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #08110D; color: #FFFFFF; }
+    .font-display { font-family: 'Montserrat', sans-serif; }
+  </style>
+</head>
+<body class="bg-[#08110D] text-white min-h-screen selection:bg-[#19D98B] selection:text-[#08110D]">
+
+  <!-- Top Navbar -->
+  <header class="border-b border-white/10 bg-[#08110D]/90 sticky top-0 z-40 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <a href="/<%= adminPath %>" class="text-2xl font-extrabold font-display tracking-tight text-white flex items-center gap-1">
+          zlik<span class="text-[#19D98B]">.</span>
+          <span class="text-xs uppercase px-2 py-0.5 ml-2 bg-[#19D98B]/20 text-[#19D98B] font-bold rounded tracking-wider">Console</span>
+        </a>
+        <span class="text-white/30 hidden sm:inline">/</span>
+        <a href="/<%= adminPath %>/security" class="text-sm font-semibold text-white/70 hover:text-white flex items-center gap-1.5 hidden sm:flex">
+          🛡️ Security & Trust
+        </a>
+        <span class="text-white/30 hidden sm:inline">/</span>
+        <span class="text-sm font-semibold text-[#19D98B] hidden sm:inline">Dispute Management</span>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <a href="/<%= adminPath %>/security" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/20 text-white/80 hover:text-white hover:border-white/40 transition">
+          ← Security Cockpit
+        </a>
+        <div class="flex items-center space-x-2 text-xs font-medium text-white/70 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg">
+          <span class="w-2 h-2 rounded-full bg-[#19D98B]"></span>
+          <span><%= currentAdmin ? currentAdmin.name : 'Super Admin' %></span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Page Title & Metrics Pills -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-extrabold font-display text-white tracking-tight flex items-center gap-3">
+          <span>⚖️ Customer Fraud Disputes & Incident Cases</span>
+        </h1>
+        <p class="text-xs text-white/60 mt-1">
+          Review, investigate, and resolve peer-to-peer customer transfer disputes, payment diversion alerts, and fraud reports.
+        </p>
+      </div>
+
+      <!-- Quick Filter Pills -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <a href="?status=all" class="px-3 py-1.5 rounded-lg text-xs font-semibold <%= currentFilter.status === 'all' ? 'bg-[#19D98B] text-[#08110D]' : 'bg-white/5 text-white/70 hover:bg-white/10' %> transition">
+          All Cases (<%= counts.all %>)
+        </a>
+        <a href="?status=new" class="px-3 py-1.5 rounded-lg text-xs font-semibold <%= currentFilter.status === 'new' ? 'bg-amber-400 text-[#08110D]' : 'bg-white/5 text-white/70 hover:bg-white/10' %> transition">
+          New (<%= counts.new %>)
+        </a>
+        <a href="?status=investigating" class="px-3 py-1.5 rounded-lg text-xs font-semibold <%= currentFilter.status === 'investigating' ? 'bg-blue-400 text-[#08110D]' : 'bg-white/5 text-white/70 hover:bg-white/10' %> transition">
+          Investigating (<%= counts.investigating %>)
+        </a>
+        <a href="?status=resolved" class="px-3 py-1.5 rounded-lg text-xs font-semibold <%= currentFilter.status === 'resolved' ? 'bg-emerald-400 text-[#08110D]' : 'bg-white/5 text-white/70 hover:bg-white/10' %> transition">
+          Resolved (<%= counts.resolved %>)
+        </a>
+        <a href="?status=dismissed" class="px-3 py-1.5 rounded-lg text-xs font-semibold <%= currentFilter.status === 'dismissed' ? 'bg-gray-400 text-[#08110D]' : 'bg-white/5 text-white/70 hover:bg-white/10' %> transition">
+          Dismissed (<%= counts.dismissed %>)
+        </a>
+      </div>
+    </div>
+
+    <!-- Reports Table -->
+    <div class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden shadow-xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="text-white/40 border-b border-white/10 bg-white/[0.02]">
+              <th class="py-3 px-4 font-semibold">Case Ref</th>
+              <th class="py-3 px-4 font-semibold">Reported Storefront</th>
+              <th class="py-3 px-4 font-semibold">Customer Reporter</th>
+              <th class="py-3 px-4 font-semibold">Category</th>
+              <th class="py-3 px-4 font-semibold">Severity</th>
+              <th class="py-3 px-4 font-semibold">Status</th>
+              <th class="py-3 px-4 font-semibold">Filed Date</th>
+              <th class="py-3 px-4 font-semibold text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            <% if (reports && reports.length > 0) { %>
+              <% reports.forEach(r => { %>
+                <tr class="hover:bg-white/[0.03] transition">
+                  <td class="py-3.5 px-4 font-mono font-bold text-[#19D98B]">
+                    <%= r.case_reference %>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <% if (r.store) { %>
+                      <div class="font-bold text-white"><%= r.store.store_name %></div>
+                      <div class="text-[11px] text-white/50 font-mono">
+                        <a href="/<%= adminPath %>/security/investigate/<%= r.reported_store_id %>" class="text-blue-400 hover:underline">Investigate Seller ↗</a>
+                      </div>
+                    <% } else { %>
+                      <span class="text-white/40 font-mono">Store #<%= r.reported_store_id %></span>
+                    <% } %>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <div class="font-bold text-white"><%= r.reporter_name %></div>
+                    <div class="text-[11px] text-white/50"><%= r.reporter_email %></div>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-white/10 text-white/80">
+                      <%= r.category.replace('_', ' ') %>
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <% if (r.severity === 'critical') { %>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30 uppercase">CRITICAL</span>
+                    <% } else if (r.severity === 'high') { %>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30 uppercase">HIGH</span>
+                    <% } else { %>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 uppercase">MEDIUM</span>
+                    <% } %>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <% if (r.status === 'new') { %>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 uppercase">NEW</span>
+                    <% } else if (r.status === 'investigating') { %>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-400/20 text-blue-300 border border-blue-400/30 uppercase">INVESTIGATING</span>
+                    <% } else if (r.status === 'resolved') { %>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 uppercase">RESOLVED</span>
+                    <% } else { %>
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-400/20 text-gray-300 border border-gray-400/30 uppercase">DISMISSED</span>
+                    <% } %>
+                  </td>
+                  <td class="py-3.5 px-4 text-white/50 text-[11px] font-mono">
+                    <%= r.created_at ? r.created_at.slice(0, 16) : 'N/A' %>
+                  </td>
+                  <td class="py-3.5 px-4 text-right">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <% if (r.status === 'new') { %>
+                        <button onclick="takeDisputeAction(<%= r.id %>, 'start_investigation')" class="px-2.5 py-1 rounded bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500 hover:text-white transition font-bold text-[10px]">
+                          Investigate
+                        </button>
+                      <% } %>
+                      <% if (r.status !== 'resolved' && r.status !== 'dismissed') { %>
+                        <button onclick="promptResolveDispute(<%= r.id %>)" class="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500 hover:text-white transition font-bold text-[10px]">
+                          Resolve
+                        </button>
+                        <button onclick="takeDisputeAction(<%= r.id %>, 'dismiss')" class="px-2.5 py-1 rounded bg-white/5 text-white/60 hover:bg-white/10 hover:text-white transition font-bold text-[10px]">
+                          Dismiss
+                        </button>
+                        <button onclick="confirmSuspendSeller(<%= r.id %>, <%= r.reported_store_id %>)" class="px-2.5 py-1 rounded bg-red-600/20 text-red-400 border border-red-600/30 hover:bg-red-600 hover:text-white transition font-bold text-[10px]">
+                          Suspend Store
+                        </button>
+                      <% } %>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="8" class="py-12 text-center text-white/40">
+                  <div class="text-3xl mb-2">🎉</div>
+                  <div class="font-bold text-sm text-white/60">No dispute reports match this filter</div>
+                  <div class="text-xs text-white/40 mt-1">Platform customer incident queue is clear.</div>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    async function takeDisputeAction(reportId, action, extra = {}) {
+      try {
+        const res = await fetch(`/api/admin/security/disputes/${reportId}/action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, ...extra })
+        });
+        const data = await res.json();
+        if (data.success) {
+          location.reload();
+        } else {
+          alert(data.error || 'Could not process action');
+        }
+      } catch (err) {
+        alert('Network request failed');
+      }
+    }
+
+    function promptResolveDispute(reportId) {
+      const code = prompt('Resolution code: Enter "resolved_refunded" or "resolved_merchant_cleared":', 'resolved_refunded');
+      if (!code) return;
+      const notes = prompt('Resolution summary / notes for customer and audit log:', 'Dispute resolved following compliance verification.');
+      if (!notes) return;
+      takeDisputeAction(reportId, 'resolve', { resolution_code: code, summary: notes });
+    }
+
+    function confirmSuspendSeller(reportId, storeId) {
+      const reason = prompt('Confirm storefront suspension reason for confirmed fraud:', 'Confirmed fraudulent transaction & payment diversion.');
+      if (!reason) return;
+      takeDisputeAction(reportId, 'suspend_seller', { summary: reason });
+    }
+  </script>
+</body>
+</html>

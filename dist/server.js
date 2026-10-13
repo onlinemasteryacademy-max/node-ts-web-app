@@ -24,6 +24,11 @@ const chatWs_js_1 = require("./modules/chat/chatWs.js");
 const ordersController_js_1 = require("./modules/orders/ordersController.js");
 const authController_js_1 = require("./modules/auth/authController.js");
 const adminController_js_1 = require("./modules/admin/adminController.js");
+const adminSecurityController_js_1 = require("./modules/admin/adminSecurityController.js");
+const providerController_js_1 = require("./modules/verification/providerController.js");
+const bankVerificationController_js_1 = require("./modules/verification/bankVerificationController.js");
+const verificationController_js_1 = require("./modules/verification/verificationController.js");
+const disputesController_js_1 = require("./modules/fraud/disputesController.js");
 const debtsController_js_1 = require("./modules/debts/debtsController.js");
 const ledgerController_js_1 = require("./modules/ledger/ledgerController.js");
 const marketingController_js_1 = require("./modules/marketing/marketingController.js");
@@ -45,6 +50,9 @@ const promises_1 = require("node:stream/promises");
 const env_js_1 = require("./config/env.js");
 const adminSecurity_js_1 = require("./modules/admin/adminSecurity.js");
 const persistence_js_1 = require("./db/persistence.js");
+const securityService_js_1 = require("./modules/security/securityService.js");
+const bankVerificationController_js_2 = require("./modules/verification/bankVerificationController.js");
+const storeNameValidator_js_1 = require("./utils/storeNameValidator.js");
 const bankChangeOtpStore = new Map();
 const fastify = (0, fastify_1.default)({
     logger: false,
@@ -72,6 +80,7 @@ fastify.register(session_1.default, {
 });
 // Initialize Super Admin Credentials & Security Baseline
 (0, adminSecurity_js_1.initSuperAdminAccount)();
+(0, securityService_js_1.initSecurityDataModel)();
 fastify.register(websocket_1.default);
 // Static Assets & Views Path Resolution (supports both tsx dev and compiled dist)
 const publicDir = node_fs_1.default.existsSync(node_path_1.default.join(__dirname, 'public'))
@@ -153,6 +162,11 @@ fastify.register(chatWs_js_1.chatWebSocketRoutes);
 fastify.register(ordersController_js_1.ordersRoutes);
 fastify.register(authController_js_1.authRoutes);
 fastify.register(adminController_js_1.adminRoutes);
+fastify.register(adminSecurityController_js_1.adminSecurityRoutes);
+fastify.register(providerController_js_1.providerRoutes);
+fastify.register(bankVerificationController_js_1.bankVerificationRoutes);
+fastify.register(verificationController_js_1.verificationRoutes);
+fastify.register(disputesController_js_1.disputesRoutes);
 fastify.register(debtsController_js_1.debtsRoutes);
 fastify.register(ledgerController_js_1.ledgerRoutes);
 fastify.register(marketingController_js_1.marketingRoutes);
@@ -296,51 +310,6 @@ fastify.delete('/api/merchant/items', async (req, reply) => {
     (0, db_js_1.dbDelete)('items', { id, store_id: store.id });
     return reply.send({ success: true });
 });
-// Merchant Payout Bank Change OTP Request
-fastify.post('/api/merchant/bank/request-otp', async (req, reply) => {
-    const store = req.session?.merchantStore;
-    if (!store)
-        return reply.code(401).send({ success: false, error: 'Unauthorized' });
-    const body = (req.body || {});
-    const newAccountNumber = (body.bank_account_number || '').trim();
-    const newBankName = (body.bank_name || '').trim();
-    const newAccountName = (body.bank_account_name || '').trim();
-    if (!newAccountNumber) {
-        return reply.code(400).send({ success: false, error: 'New account number is required.' });
-    }
-    // Get recipient email (store.email or owner email)
-    let ownerEmail = store.email;
-    if (!ownerEmail || !ownerEmail.includes('@')) {
-        const freshStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id });
-        if (freshStore && freshStore.email) {
-            ownerEmail = freshStore.email;
-        }
-    }
-    if (!ownerEmail || !ownerEmail.includes('@')) {
-        return reply.code(400).send({ success: false, error: 'No valid email address linked to your store account to receive verification OTP.' });
-    }
-    const otpCode = String(node_crypto_1.default.randomInt(100000, 999999));
-    const otpHash = node_crypto_1.default.createHash('sha256').update(otpCode).digest('hex');
-    const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
-    bankChangeOtpStore.set(store.id, {
-        otp_hash: otpHash,
-        expires_at: expiresAt,
-        account_number: newAccountNumber,
-        bank_name: newBankName,
-        account_name: newAccountName
-    });
-    // Dispatch Security OTP Email
-    await (0, mailer_js_1.sendBankAccountChangeOtp)(ownerEmail, store.store_name || 'Store Owner', otpCode, newBankName, newAccountNumber);
-    const parts = ownerEmail.split('@');
-    const maskedUser = parts[0].length > 2 ? parts[0].slice(0, 2) + '••••' + parts[0].slice(-1) : '••';
-    const maskedEmail = `${maskedUser}@${parts[1]}`;
-    return reply.send({
-        success: true,
-        message: `Security authorization code sent to ${maskedEmail}.`,
-        masked_email: maskedEmail,
-        expires_in: 300
-    });
-});
 fastify.post('/api/merchant/settings', async (req, reply) => {
     const store = req.session?.merchantStore;
     if (!store)
@@ -366,8 +335,17 @@ fastify.post('/api/merchant/settings', async (req, reply) => {
             updates.template_slug = body.template_slug;
         }
     }
-    if (body.store_name)
-        updates.store_name = body.store_name.trim();
+    if (body.store_name) {
+        const rawName = body.store_name.trim();
+        const seller = (0, securityService_js_1.getOrCreateSellerProfile)(store.id);
+        const isVerifiedBus = seller?.business_status === 'verified';
+        const sType = seller?.seller_type === 'business' ? 'business' : 'personal';
+        const nameCheck = (0, storeNameValidator_js_1.validateStoreName)(rawName, sType, isVerifiedBus);
+        if (!nameCheck.valid) {
+            return reply.send({ success: false, error: nameCheck.reason });
+        }
+        updates.store_name = rawName;
+    }
     if (body.bio !== undefined)
         updates.bio = body.bio.trim();
     if (body.logo_url !== undefined)
@@ -416,7 +394,7 @@ fastify.post('/api/merchant/settings', async (req, reply) => {
                 error: 'Security authorization code is required to change your payout bank account number.'
             });
         }
-        const record = bankChangeOtpStore.get(store.id);
+        const record = bankVerificationController_js_2.bankOtpStore.get(store.id) || bankChangeOtpStore.get(store.id);
         if (!record || Date.now() > record.expires_at) {
             return reply.send({
                 success: false,
@@ -432,13 +410,26 @@ fastify.post('/api/merchant/settings', async (req, reply) => {
                 error: 'Invalid 6-digit verification code. Please check your email and try again.'
             });
         }
-        // OTP Verified! Commit bank details and delete OTP
+        // OTP Verified! Commit bank details to stores & seller_bank_accounts
+        bankVerificationController_js_2.bankOtpStore.delete(store.id);
         bankChangeOtpStore.delete(store.id);
+        const bankNameVal = body.bank_name ? body.bank_name.trim() : (record.bank_name || 'Nigerian Bank');
+        const bankAccountNameVal = body.bank_account_name ? body.bank_account_name.trim() : (record.account_name || store.bank_account_name || store.store_name);
         updates.bank_account_number = rawNewBankAcct;
-        if (body.bank_name !== undefined)
-            updates.bank_name = body.bank_name ? body.bank_name.trim() : null;
-        if (body.bank_account_name !== undefined)
-            updates.bank_account_name = body.bank_account_name ? body.bank_account_name.trim() : null;
+        updates.bank_name = bankNameVal;
+        updates.bank_account_name = bankAccountNameVal;
+        const seller = (0, securityService_js_1.getOrCreateSellerProfile)(store.id);
+        (0, bankVerificationController_js_2.saveVerifiedBankAccountRecord)({
+            sellerId: seller.id,
+            storeId: store.id,
+            bankCode: record.bank_code || '000',
+            bankName: bankNameVal,
+            accountNumber: rawNewBankAcct,
+            accountName: bankAccountNameVal,
+            isVerified: true,
+            actorType: 'merchant',
+            ipAddress: req.ip
+        });
     }
     else {
         // If account number did not change, allow updating bank name and account name if provided
@@ -589,6 +580,8 @@ fastify.get('/merchant', async (req, reply) => {
     const visitorMetrics = (0, analyticsController_js_1.getStoreVisitorMetrics)(currentStore.id);
     const { isPro, config } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
     const templateConfig = (0, templates_js_1.getStoreTemplateConfig)(currentStore.template_slug);
+    const seller = (0, securityService_js_1.getOrCreateSellerProfile)(currentStore.id);
+    const isGated = (0, securityService_js_1.isStoreOrderGated)(currentStore.id);
     return reply.view('merchant/dashboard.ejs', {
         store: currentStore,
         orders,
@@ -598,7 +591,9 @@ fastify.get('/merchant', async (req, reply) => {
         isPro,
         planConfig: config,
         templateConfig,
-        allTemplates: templates_js_1.STORE_TEMPLATES
+        allTemplates: templates_js_1.STORE_TEMPLATES,
+        sellerProfile: seller,
+        isGated
     });
 });
 // 5. Merchant Live Chat Messages View
@@ -747,6 +742,29 @@ fastify.get('/merchant/settings', async (req, reply) => {
         planConfig: config
     });
 });
+// 9b. Merchant Trust & Identity Verification View
+fastify.get('/merchant/verification', async (req, reply) => {
+    const store = req.session?.merchantStore;
+    if (!store)
+        return reply.redirect('/merchant/login');
+    const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+    const seller = (0, securityService_js_1.getOrCreateSellerProfile)(currentStore.id);
+    const isGated = (0, securityService_js_1.isStoreOrderGated)(currentStore.id);
+    const bankAccounts = (0, db_js_1.dbFetchAll)('seller_bank_accounts', { seller_id: seller.id });
+    const verifications = (0, db_js_1.dbFetchAll)('seller_verifications', { seller_id: seller.id });
+    const businessProfile = (0, db_js_1.dbFetchOne)('business_profiles', { seller_id: seller.id });
+    const { isPro, config } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
+    return reply.view('merchant/verification.ejs', {
+        store: currentStore,
+        sellerProfile: seller,
+        businessProfile,
+        isGated,
+        bankAccounts,
+        verifications,
+        isPro,
+        planConfig: config
+    });
+});
 // 8. Order Tracking View
 fastify.get('/order/:ref', async (req, reply) => {
     const ref = req.params.ref;
@@ -806,7 +824,19 @@ const renderCheckout = async (req, reply) => {
         return reply.code(404).send('Store not found');
     const templateConfig = (0, templates_js_1.getStoreTemplateConfig)(store.template_slug);
     const hasActiveCoupons = checkHasActiveCoupons(store.id);
-    return reply.view('checkout.ejs', { store, templateConfig, hasActiveCoupons });
+    const seller = (0, securityService_js_1.getOrCreateSellerProfile)(store.id);
+    const isGated = (0, securityService_js_1.isStoreOrderGated)(store.id);
+    const businessProfile = (0, db_js_1.dbFetchOne)('business_profiles', { seller_id: seller.id });
+    const activeBankAccount = (0, db_js_1.dbFetchOne)('seller_bank_accounts', { seller_id: seller.id, is_active: 1 });
+    return reply.view('checkout.ejs', {
+        store,
+        templateConfig,
+        hasActiveCoupons,
+        isGated,
+        sellerProfile: seller,
+        businessProfile,
+        activeBankAccount
+    });
 };
 fastify.get('/store/:slug/checkout', renderCheckout);
 fastify.get('/:slug/checkout', renderCheckout);
@@ -823,7 +853,11 @@ const renderTemplateDemo = async (req, reply) => {
         templateConfig,
         allTemplates: templates_js_1.STORE_TEMPLATES,
         isDemo: true,
-        hasActiveCoupons: false
+        hasActiveCoupons: false,
+        isGated: false,
+        sellerProfile: null,
+        businessProfile: null,
+        activeBankAccount: null
     });
 };
 fastify.get('/demo/:slug', renderTemplateDemo);
@@ -843,6 +877,10 @@ const renderStorefront = async (req, reply) => {
     const planDetails = (0, helpers_js_1.getStorePlanDetails)(store);
     const templateConfig = (0, templates_js_1.getStoreTemplateConfig)(store.template_slug);
     const hasActiveCoupons = checkHasActiveCoupons(store.id);
+    const seller = (0, securityService_js_1.getOrCreateSellerProfile)(store.id);
+    const isGated = (0, securityService_js_1.isStoreOrderGated)(store.id);
+    const businessProfile = (0, db_js_1.dbFetchOne)('business_profiles', { seller_id: seller.id });
+    const activeBankAccount = (0, db_js_1.dbFetchOne)('seller_bank_accounts', { seller_id: seller.id, is_active: 1 });
     return reply.view('store.ejs', {
         store,
         items,
@@ -852,7 +890,11 @@ const renderStorefront = async (req, reply) => {
         isDemo: false,
         isPro: planDetails.isPro,
         showPoweredBy: Boolean(planDetails.config.features.powered_by_zlik),
-        hasActiveCoupons
+        hasActiveCoupons,
+        isGated,
+        sellerProfile: seller,
+        businessProfile,
+        activeBankAccount
     });
 };
 fastify.get('/store/:slug', renderStorefront);

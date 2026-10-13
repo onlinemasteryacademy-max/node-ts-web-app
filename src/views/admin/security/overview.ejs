@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            zlikDark: '#08110D',
+            zlikGreen: '#19D98B',
+            zlikDeepGreen: '#087A50',
+            zlikBg: '#F8FAF8',
+            zlikWhite: '#FFFFFF',
+            zlikSecondary: '#6B756F',
+            zlikBorder: '#E3E9E5'
+          },
+          fontFamily: {
+            display: ['Montserrat', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #08110D; color: #FFFFFF; }
+    .font-display { font-family: 'Montserrat', sans-serif; }
+  </style>
+</head>
+<body class="bg-[#08110D] text-white min-h-screen selection:bg-[#19D98B] selection:text-[#08110D]">
+
+  <!-- Top Navbar -->
+  <header class="border-b border-white/10 bg-[#08110D]/90 sticky top-0 z-40 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <a href="/<%= adminPath %>" class="text-2xl font-extrabold font-display tracking-tight text-white flex items-center gap-1">
+          zlik<span class="text-[#19D98B]">.</span>
+          <span class="text-xs uppercase px-2 py-0.5 ml-2 bg-[#19D98B]/20 text-[#19D98B] font-bold rounded tracking-wider">Console</span>
+        </a>
+        <span class="text-white/30 hidden sm:inline">/</span>
+        <span class="text-sm font-semibold text-white/90 flex items-center gap-1.5 hidden sm:flex">
+          <span class="text-emerald-400">🛡️</span> Security & Trust
+        </span>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <a href="/<%= adminPath %>" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/20 text-white/80 hover:text-white hover:border-white/40 transition">
+          ← Back to Cockpit
+        </a>
+        <div class="text-right hidden sm:block">
+          <div class="text-xs font-bold text-white"><%= currentAdmin ? currentAdmin.name : 'Administrator' %></div>
+          <div class="text-[11px] text-[#19D98B] uppercase font-semibold tracking-wider"><%= currentAdmin && currentAdmin.role_info ? currentAdmin.role_info.name : 'Super Admin' %></div>
+        </div>
+        <a href="/<%= adminPath %>/logout" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition">
+          Sign out
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    
+    <!-- Subnavigation Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+      <div>
+        <h1 class="text-2xl font-extrabold font-display text-white flex items-center gap-2">
+          <span>🛡️ Trust & Safety Console</span>
+        </h1>
+        <p class="text-xs text-white/60 mt-1">
+          Fraud prevention, verified seller accountability, Monnify identity adapters, and peer-to-peer risk management.
+        </p>
+      </div>
+
+      <!-- Action Navigation -->
+      <div class="flex items-center gap-2">
+        <a href="/<%= adminPath %>/security" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-[#19D98B] text-[#08110D] shadow-lg shadow-[#19D98B]/10">
+          📊 Security Cockpit
+        </a>
+        <a href="/<%= adminPath %>/security/queue" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white/5 border border-white/10 text-white hover:border-[#19D98B] hover:text-[#19D98B] transition flex items-center gap-1.5">
+          <span>📋 Verification Queue</span>
+          <% if (metrics.pendingQueue > 0) { %>
+            <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+              <%= metrics.pendingQueue %>
+            </span>
+          <% } %>
+        </a>
+        <a href="/<%= adminPath %>/security/disputes" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white/5 border border-white/10 text-white hover:border-[#19D98B] hover:text-[#19D98B] transition flex items-center gap-1.5">
+          <span>⚖️ Disputes & Cases</span>
+        </a>
+        <a href="/<%= adminPath %>/security/integrations" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white/5 border border-white/10 text-white hover:border-[#19D98B] hover:text-[#19D98B] transition flex items-center gap-1.5">
+          <span>⚙️ Monnify Settings</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Live Metrics Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <!-- Total Registered Sellers -->
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6 relative overflow-hidden">
+        <div class="text-xs text-white/60 font-semibold mb-1 uppercase tracking-wider">Registered Sellers</div>
+        <div class="text-3xl font-extrabold font-display text-white"><%= metrics.totalSellers %></div>
+        <div class="text-xs text-white/50 mt-2 font-medium">
+          ● <%= metrics.totalVerified %> Verified (<%= metrics.verifiedPersonal %> Personal · <%= metrics.verifiedBusiness %> Business)
+        </div>
+      </div>
+
+      <!-- Verification Queue -->
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6 relative overflow-hidden">
+        <div class="text-xs text-white/60 font-semibold mb-1 uppercase tracking-wider">Pending Verifications</div>
+        <div class="text-3xl font-extrabold font-display <%= metrics.pendingQueue > 0 ? 'text-amber-400' : 'text-white' %>">
+          <%= metrics.pendingQueue %>
+        </div>
+        <div class="text-xs text-white/50 mt-2 flex items-center justify-between">
+          <span>Awaiting manual or provider review</span>
+          <a href="/<%= adminPath %>/security/queue" class="text-amber-400 hover:underline font-bold">Review →</a>
+        </div>
+      </div>
+
+      <!-- High Risk Flagged -->
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6 relative overflow-hidden">
+        <div class="text-xs text-white/60 font-semibold mb-1 uppercase tracking-wider">Flagged High / Critical Risk</div>
+        <div class="text-3xl font-extrabold font-display <%= metrics.flaggedHighRisk > 0 ? 'text-red-400' : 'text-white' %>">
+          <%= metrics.flaggedHighRisk %>
+        </div>
+        <div class="text-xs text-white/50 mt-2 font-medium">
+          Score ≥ 50 / velocity or dispute alerts
+        </div>
+      </div>
+
+      <!-- Open Fraud Reports -->
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6 relative overflow-hidden">
+        <div class="text-xs text-white/60 font-semibold mb-1 uppercase tracking-wider">Open Fraud Reports</div>
+        <div class="text-3xl font-extrabold font-display <%= metrics.openFraudReports > 0 ? 'text-red-400' : 'text-emerald-400' %>">
+          <%= metrics.openFraudReports %>
+        </div>
+        <div class="text-xs text-white/50 mt-2 font-medium">
+          <%= metrics.totalFraudReports %> lifetime customer complaints
+        </div>
+      </div>
+    </div>
+
+    <!-- Provider Health & System Status Bar -->
+    <div class="bg-white/[0.03] border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-xl">
+          🏦
+        </div>
+        <div>
+          <div class="text-xs font-bold text-white flex items-center gap-2">
+            <span>Primary Identity Provider: Monnify</span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= metrics.providerEnvironment === 'live' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30' %>">
+              <%= metrics.providerEnvironment %>
+            </span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= metrics.providerStatus === 'active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/10 text-white/60' %>">
+              <%= metrics.providerStatus %>
+            </span>
+          </div>
+          <div class="text-[11px] text-white/50 mt-0.5">
+            Monnify Account Resolution · Bank Name Matching · Zero plaintext BVN/NIN storage (NDPA 2023)
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <div class="text-right text-[11px] text-white/60 hidden sm:block">
+          Order Gating Active: <span class="font-bold text-emerald-400"><%= metrics.orderGatedCount %> Stores</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two-Column Feed: Recent Verifications & Live Risk Stream -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- Column 1 & 2: Recent Seller Profiles -->
+      <div class="lg:col-span-2 bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+        <div class="flex items-center justify-between border-b border-white/10 pb-4">
+          <h2 class="text-sm font-bold font-display uppercase tracking-wider text-white flex items-center gap-2">
+            <span>🏪 Recent Sellers & Verification Status</span>
+          </h2>
+          <a href="/<%= adminPath %>/security/queue" class="text-xs text-[#19D98B] hover:underline font-semibold">
+            View All Queue →
+          </a>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="text-white/40 border-b border-white/5">
+                <th class="pb-3 font-semibold">Store / Legal Name</th>
+                <th class="pb-3 font-semibold">Type</th>
+                <th class="pb-3 font-semibold">Risk Level</th>
+                <th class="pb-3 font-semibold">Status</th>
+                <th class="pb-3 font-semibold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              <% if (recentSellers && recentSellers.length > 0) { %>
+                <% recentSellers.forEach(s => { %>
+                  <tr class="hover:bg-white/[0.02] transition">
+                    <td class="py-3.5 pr-2">
+                      <div class="font-bold text-white"><%= s.public_store_name || (s.store ? s.store.store_name : 'Unknown Store') %></div>
+                      <div class="text-[11px] text-white/50"><%= s.legal_name || 'No legal name set' %></div>
+                    </td>
+                    <td class="py-3.5 pr-2">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= s.seller_type === 'business' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30' %>">
+                        <%= s.seller_type %>
+                      </span>
+                    </td>
+                    <td class="py-3.5 pr-2">
+                      <% if (s.risk_level === 'critical') { %>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">CRITICAL (<%= s.risk_score %>)</span>
+                      <% } else if (s.risk_level === 'high') { %>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-500/20 text-orange-400 border border-orange-500/30">HIGH (<%= s.risk_score %>)</span>
+                      <% } else if (s.risk_level === 'medium') { %>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">MED (<%= s.risk_score %>)</span>
+                      <% } else { %>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">LOW (<%= s.risk_score %>)</span>
+                      <% } %>
+                    </td>
+                    <td class="py-3.5 pr-2">
+                      <% if (s.composite_verification_status === 'verified') { %>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">VERIFIED</span>
+                      <% } else if (s.composite_verification_status === 'pending' || s.composite_verification_status === 'under_review') { %>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">PENDING</span>
+                      <% } else if (s.composite_verification_status === 'rejected') { %>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/30">REJECTED</span>
+                      <% } else if (s.composite_verification_status === 'suspended') { %>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-600/30 text-red-300 border border-red-600/40">SUSPENDED</span>
+                      <% } else { %>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-white/10 text-white/50">UNVERIFIED</span>
+                      <% } %>
+                    </td>
+                    <td class="py-3.5 text-right whitespace-nowrap">
+                      <a href="/<%= adminPath %>/security/seller/<%= s.id %>" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white/10 text-white hover:bg-[#19D98B] hover:text-[#08110D] transition">
+                        Investigate 🔍
+                      </a>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } else { %>
+                <tr>
+                  <td colspan="5" class="py-8 text-center text-white/40">No seller profiles registered yet.</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Column 3: Live Risk Events Stream -->
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+        <h2 class="text-sm font-bold font-display uppercase tracking-wider text-white border-b border-white/10 pb-4 flex items-center justify-between">
+          <span>⚡ Live Risk Events</span>
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        </h2>
+
+        <div class="space-y-3">
+          <% if (recentRiskEvents && recentRiskEvents.length > 0) { %>
+            <% recentRiskEvents.forEach(evt => { %>
+              <div class="p-3 rounded-xl bg-white/[0.02] border border-white/5 text-xs space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-white"><%= evt.event_type %></span>
+                  <span class="font-mono text-[11px] <%= evt.score_delta > 0 ? 'text-red-400 font-bold' : 'text-emerald-400' %>">
+                    <%= evt.score_delta > 0 ? '+' : '' %><%= evt.score_delta %> pts
+                  </span>
+                </div>
+                <div class="text-[11px] text-white/60">
+                  Seller #<%= evt.seller_id %> &bull; Reason: <code class="text-amber-300"><%= evt.reason_code %></code>
+                </div>
+                <div class="text-[10px] text-white/40 font-mono">
+                  <%= evt.created_at %> &bull; Score now: <%= evt.new_score %>/100
+                </div>
+              </div>
+            <% }); %>
+          <% } else { %>
+            <div class="py-8 text-center text-white/40 text-xs">
+              Zero suspicious risk events triggered.
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Security Audit Trail -->
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-white/10 pb-4">
+        <h2 class="text-sm font-bold font-display uppercase tracking-wider text-white flex items-center gap-2">
+          <span>📜 High-Integrity Security Audit Logs</span>
+        </h2>
+        <span class="text-xs text-white/40">Append-only administrative audit trail</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="text-white/40 border-b border-white/5">
+              <th class="pb-3 font-semibold">Timestamp</th>
+              <th class="pb-3 font-semibold">Actor</th>
+              <th class="pb-3 font-semibold">Action</th>
+              <th class="pb-3 font-semibold">Target</th>
+              <th class="pb-3 font-semibold">Reason</th>
+              <th class="pb-3 font-semibold text-right">IP Address</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5 font-mono text-[11px]">
+            <% if (recentAuditLogs && recentAuditLogs.length > 0) { %>
+              <% recentAuditLogs.forEach(log => { %>
+                <tr class="hover:bg-white/[0.02]">
+                  <td class="py-2.5 text-white/50"><%= log.created_at %></td>
+                  <td class="py-2.5 font-bold text-emerald-400"><%= log.actor_type %><%= log.actor_id ? ' #' + log.actor_id : '' %></td>
+                  <td class="py-2.5 text-white font-semibold"><%= log.action %></td>
+                  <td class="py-2.5 text-white/70"><%= log.target_type %> #<%= log.target_id %></td>
+                  <td class="py-2.5 text-white/60 font-sans"><%= log.reason || '-' %></td>
+                  <td class="py-2.5 text-right text-white/40"><%= log.ip_address || 'internal' %></td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="6" class="py-8 text-center text-white/40 font-sans">No security audit events recorded yet.</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import crypto from 'node:crypto';
 import { dbFetchOne, dbFetchAll, dbInsert, dbUpdate } from '../../db/db.js';
 import { normalizePhoneNumber, hashPassword, comparePassword, validateStoreSlugAvailability, getPlatformSettings, getEffectivePlans } from '../../utils/helpers.js';
+import { validateStoreName } from '../../utils/storeNameValidator.js';
 import { sendEmailVerificationOtp, sendMerchantWelcomeEmail } from '../email/mailer.js';
 
 const OTP_LIFETIME_SECONDS = 300; // 5 minutes validity
@@ -41,6 +42,12 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     if (!email.includes('@') || !email.includes('.')) {
       return reply.send({ success: false, error: 'Please enter a valid email address' });
+    }
+
+    // Validate store name against Zlik Trust & Security rules
+    const nameCheck = validateStoreName(storeName, 'personal', false);
+    if (!nameCheck.valid) {
+      return reply.send({ success: false, error: nameCheck.reason });
     }
 
     // Validate username / slug uniqueness & reservation

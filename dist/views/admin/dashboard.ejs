@@ -70,6 +70,9 @@
       <button onclick="switchTab('overview')" id="tab-btn-overview" class="nav-tab active px-4 py-2 rounded-lg border border-transparent hover:text-[#19D98B] transition whitespace-nowrap">
         📊 Cockpit Overview
       </button>
+      <a href="/<%= typeof adminPath !== 'undefined' ? adminPath : 'admin' %>/security" class="px-4 py-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition whitespace-nowrap flex items-center gap-1.5 font-bold">
+        🛡️ Security & Trust
+      </a>
       <button onclick="switchTab('merchants')" id="tab-btn-merchants" class="nav-tab px-4 py-2 rounded-lg border border-transparent hover:text-[#19D98B] transition whitespace-nowrap">
         🏪 Merchants CRM (<%= stores.length %>)
       </button>

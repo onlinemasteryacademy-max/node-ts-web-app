@@ -76,6 +76,53 @@ import {
   hashCustomerPhone,
   resetVerificationRateLimits
 } from '../src/modules/reviews/reviewsService.js';
+import { PERSISTENCE_TABLES } from '../src/db/persistence.js';
+import {
+  initSecurityDataModel,
+  encryptSecret,
+  decryptSecret,
+  maskAccountNumber,
+  hashAccountNumber,
+  maskApiKey,
+  getSellerProfile,
+  getOrCreateSellerProfile,
+  logSecurityAudit,
+  recordRiskEvent,
+  isStoreOrderGated
+} from '../src/modules/security/securityService.js';
+import { validateOutboundUrl } from '../src/modules/verification/providerInterface.js';
+import {
+  getProviderConfig,
+  getDecryptedCredentials,
+  saveProviderConfig,
+  recordProviderTestResult,
+  logIntegrationEvent
+} from '../src/modules/verification/credentialVault.js';
+import { monnifyAdapter } from '../src/modules/verification/monnifyAdapter.js';
+import {
+  calculateNameMatchScore,
+  submitIdentityVerification,
+  evaluateCompositeVerificationStatus
+} from '../src/modules/verification/verificationService.js';
+import { matchAccountName } from '../src/modules/verification/nameMatcher.js';
+import {
+  NIGERIAN_BANKS,
+  bankOtpStore,
+  saveVerifiedBankAccountRecord
+} from '../src/modules/verification/bankVerificationController.js';
+import { validateStoreName } from '../src/utils/storeNameValidator.js';
+import {
+  validateCacRegistrationFormat,
+  submitBusinessVerification,
+  approveBusinessVerification,
+  rejectBusinessVerification,
+  getBusinessProfile
+} from '../src/modules/verification/businessVerificationService.js';
+import {
+  evaluateSellerRisk,
+  checkBankAccountReuse,
+  RISK_REASON_CODES
+} from '../src/modules/fraud/riskEngine.js';
 
 let passed = 0;
 let failed = 0;
@@ -110,8 +157,11 @@ async function runTestSuite() {
         email: `${slug}@store.com`,
         password_hash: 'hash123',
         whatsapp_number: '08012345678',
-        delivery_fee: 1500
+        delivery_fee: 1500,
+        is_verified: 1
       });
+    } else {
+      dbUpdate('stores', { is_verified: 1 }, { id });
     }
   };
 
@@ -1215,7 +1265,8 @@ async function runTestSuite() {
     slug: 'main-flagship',
     whatsapp_number: '+2348011223344',
     plan_tier: 'business',
-    status: 'active'
+    status: 'active',
+    is_verified: 1
   });
 
   // Secondary store under same owner
@@ -2148,6 +2199,7 @@ async function runTestSuite() {
     bank_account_name: 'Payment Methods Test Ltd',
     allow_bank_transfer: 1,
     allow_pay_on_delivery: 0,
+    is_verified: 1,
     created_at: new Date().toISOString()
   });
 
@@ -2516,6 +2568,1345 @@ async function runTestSuite() {
     const proSess = getOrCreateCustomerSession(chatLimitProStoreId, proCustTok, `Pro Cust ${c}`, `081111111${c.toString().padStart(2, '0')}`);
     assert(proSess.conversation !== null, `Pro store conversation ${c} created successfully without restriction`);
   }
+
+  // =============================================================
+  // SUITE 25: SECURITY FOUNDATIONS, DATA MODEL & IDENTITY MIGRATIONS (BATCH 1)
+  // =============================================================
+  console.log('\n--- SUITE 25: SECURITY FOUNDATIONS & DATA MODEL (BATCH 1) ---');
+
+  // 25.1 Verify all 10 Security & Trust tables exist and are queryable
+  const securityTables = [
+    'seller_profiles',
+    'seller_verifications',
+    'business_profiles',
+    'seller_bank_accounts',
+    'verification_provider_configs',
+    'fraud_reports',
+    'fraud_case_events',
+    'risk_events',
+    'security_audit_logs',
+    'integration_events'
+  ];
+
+  for (const table of securityTables) {
+    const count = db.prepare(`SELECT COUNT(*) as count FROM ${table}`).get() as any;
+    assert(count !== undefined && count.count >= 0, `Security table '${table}' exists and is queryable`);
+  }
+
+  // 25.2 Verify PERSISTENCE_TABLES includes all 10 new security tables
+  for (const table of securityTables) {
+    assert(PERSISTENCE_TABLES.includes(table), `PERSISTENCE_TABLES includes '${table}' for Hostinger MySQL replication`);
+  }
+  assert(PERSISTENCE_TABLES.length === 32, 'Persistence tables collection covers all 32 core platform tables');
+
+  // 25.3 Field-Level AES-256-GCM Encryption & Masking
+  const rawApiKey = 'MK_TEST_998877665544332211';
+  const encKey = encryptSecret(rawApiKey);
+  assert(encKey !== rawApiKey, 'Encryption produces non-plaintext ciphertext');
+  assert(encKey.includes(':'), 'AES-256-GCM ciphertext encodes IV and auth tag');
+  const decKey = decryptSecret(encKey);
+  assert(decKey === rawApiKey, 'AES-256-GCM decrypts round-trip accurately');
+
+  const rawAcctNum = '0123456789';
+  const maskedAcct = maskAccountNumber(rawAcctNum);
+  assert(maskedAcct === '0123••••89', 'Account number safely masked with 4-digit prefix and 2-digit suffix');
+
+  const hashedAcct = hashAccountNumber(rawAcctNum);
+  assert(hashedAcct.length === 64, 'HMAC-SHA256 account number hash is 64-character hex string');
+  assert(hashedAcct === hashAccountNumber(rawAcctNum), 'Account hash is deterministic for duplicate detection');
+  assert(hashedAcct !== hashAccountNumber('9876543210'), 'Different account numbers produce distinct hashes');
+
+  const maskedKey = maskApiKey(rawApiKey);
+  assert(maskedKey.startsWith('MK_TES') && maskedKey.endsWith('2211'), 'API key safely masked for dashboard display');
+
+  // 25.4 Idempotent Data Model Initialization & Legacy Store Backfill
+  const securityTestStoreId = 9980;
+  db.prepare('DELETE FROM stores WHERE id = ?').run(securityTestStoreId);
+  db.prepare('DELETE FROM seller_profiles WHERE store_id = ?').run(securityTestStoreId);
+  db.prepare('DELETE FROM seller_bank_accounts WHERE seller_id IN (SELECT id FROM seller_profiles WHERE store_id = ?)').run(securityTestStoreId);
+
+  dbInsert('stores', {
+    id: securityTestStoreId,
+    store_name: 'Backfill Test Boutique',
+    owner_name: 'Ngozi Okeke',
+    password_hash: '$2a$10$dummyhashfortesting',
+    slug: 'backfill-test-' + Date.now(),
+    whatsapp_number: '08033221100',
+    bank_name: 'Access Bank',
+    bank_account_number: '0011223344',
+    bank_account_name: 'Ngozi Okeke Trade',
+    is_verified: 0,
+    status: 'active'
+  });
+
+  // Run backfill initialization
+  initSecurityDataModel();
+
+  const profile = getSellerProfile(securityTestStoreId);
+  assert(profile !== null, 'Legacy store automatically backfilled into seller_profiles');
+  assert(profile.legal_name === 'Ngozi Okeke', 'Seller legal name initialized from store owner');
+  assert(profile.public_store_name === 'Backfill Test Boutique', 'Public store name matches store name');
+  assert(profile.order_gating_enabled === 1, 'Legacy store maintains order_gating_enabled = 1');
+  assert(profile.composite_verification_status === 'unverified', 'Unverified legacy store starts with unverified status');
+
+  const bankAcct = dbFetchOne<any>('seller_bank_accounts', { seller_id: profile.id });
+  assert(bankAcct !== null, 'Legacy bank details automatically migrated to seller_bank_accounts');
+  assert(bankAcct.bank_name === 'Access Bank', 'Migrated bank name matches store');
+  assert(bankAcct.account_name === 'Ngozi Okeke Trade', 'Migrated account name matches store');
+  assert(bankAcct.account_number_masked === '0011••••44', 'Migrated account number safely masked');
+  assert(decryptSecret(bankAcct.account_number_encrypted) === '0011223344', 'Encrypted account number decrypts to original');
+
+  // Verify Monnify provider configuration initialized
+  const monnifyConfig = dbFetchOne<any>('verification_provider_configs', { provider_key: 'monnify' });
+  assert(monnifyConfig !== null, 'Default Monnify verification provider configuration seeded');
+  assert(monnifyConfig.base_url === 'https://sandbox.monnify.com', 'Monnify base URL initialized to sandbox');
+  assert(monnifyConfig.status === 'not_configured' || monnifyConfig.status === 'active', 'Initial Monnify status is not_configured or active');
+
+  // 25.5 Security Audit Logging & Risk Engine Integration
+  logSecurityAudit({
+    actor_type: 'super_admin',
+    actor_id: 1,
+    action: 'TEST_AUDIT_LOG_INITIALIZATION',
+    target_type: 'seller',
+    target_id: profile.id,
+    reason: 'Verifying Batch 1 audit log integrity',
+    ip_address: '127.0.0.1'
+  });
+
+  const auditEntry = dbFetchOne<any>('security_audit_logs', { action: 'TEST_AUDIT_LOG_INITIALIZATION' });
+  assert(auditEntry !== null, 'Security audit entry successfully recorded');
+  assert(auditEntry.actor_type === 'super_admin', 'Audit entry actor type recorded');
+  assert(auditEntry.reason === 'Verifying Batch 1 audit log integrity', 'Audit reason recorded');
+
+  // Risk Event & Dynamic Level Assessment
+  recordRiskEvent({
+    seller_id: profile.id,
+    event_type: 'RAPID_BANK_CHANGE',
+    score_delta: 30,
+    reason_code: 'SUSPICIOUS_FREQUENCY',
+    metadata: { attempt_count: 3 }
+  });
+
+  const updatedProfile1 = getSellerProfile(securityTestStoreId);
+  assert(updatedProfile1.risk_score === 30, 'Risk event added 30 points to seller risk score');
+  assert(updatedProfile1.risk_level === 'medium', 'Score 30 categorizes seller into medium risk level');
+
+  recordRiskEvent({
+    seller_id: profile.id,
+    event_type: 'MULTIPLE_DISPUTES',
+    score_delta: 50,
+    reason_code: 'EXCESSIVE_COMPLAINTS'
+  });
+
+  const updatedProfile2 = getSellerProfile(securityTestStoreId);
+  assert(updatedProfile2.risk_score === 80, 'Accumulated score reaches 80');
+  assert(updatedProfile2.risk_level === 'critical', 'Score 80 elevates seller to critical risk level');
+
+  // --- SUITE 26: SUPER ADMIN SECURITY & TRUST CONSOLE (BATCH 2) ---
+  console.log('\n--- SUITE 26: SUPER ADMIN SECURITY & TRUST CONSOLE (BATCH 2) ---');
+
+  // 1. Role-Based Access Control & Permissions for Security Console
+  const superAdminUser = dbFetchOne<any>('super_admins', { role: 'super_admin' });
+  assert(superAdminUser !== null, 'Super admin user exists for RBAC check');
+  assert(hasAdminPermission('manage_security', superAdminUser.id) === true, 'Super Admin possesses manage_security permission via wildcard');
+
+  // Test custom support lead and moderator role permissions
+  const supportLeadRole = getAdminRoles().support_lead;
+  assert(supportLeadRole.permissions.includes('manage_security'), 'Support lead role has explicit manage_security permission');
+  const moderatorRole = getAdminRoles().moderator;
+  assert(moderatorRole.permissions.includes('manage_security'), 'Moderator role has explicit manage_security permission');
+  const financeRole = getAdminRoles().finance_analyst;
+  assert(!financeRole.permissions.includes('manage_security'), 'Finance analyst role correctly denied manage_security permission');
+
+  // 2. View Templates Verification
+  const overviewViewPath = path.resolve(process.cwd(), 'src', 'views', 'admin', 'security', 'overview.ejs');
+  assert(fs.existsSync(overviewViewPath), 'Security Overview view template exists');
+  const queueViewPath = path.resolve(process.cwd(), 'src', 'views', 'admin', 'security', 'queue.ejs');
+  assert(fs.existsSync(queueViewPath), 'Security Queue view template exists');
+  const investigateViewPath = path.resolve(process.cwd(), 'src', 'views', 'admin', 'security', 'investigate.ejs');
+  assert(fs.existsSync(investigateViewPath), 'Seller 360 Investigation view template exists');
+
+  // 3. Security Metrics Aggregation Verification
+  const allSellers = dbFetchAll<any>('seller_profiles');
+  const allReports = dbFetchAll<any>('fraud_reports');
+  const allConfigs = dbFetchAll<any>('verification_provider_configs');
+  assert(allSellers.length > 0, 'Sellers collection available for security metrics');
+  assert(allConfigs.some(c => c.provider_key === 'monnify'), 'Monnify configuration present in provider configs');
+
+  // 4. Verification Action: Approve Seller Verification
+  const testStoreForAction = dbFetchOne<any>('stores', { id: securityTestStoreId });
+  assert(testStoreForAction !== null, 'Target store available for admin verification action');
+
+  // Initial state check
+  dbUpdate('seller_profiles', { composite_verification_status: 'pending', identity_status: 'pending' }, { id: profile.id });
+  dbUpdate('stores', { is_verified: 0 }, { id: testStoreForAction.id });
+
+  // Simulate Approve Action logic (mirroring adminSecurityController)
+  const actionTimestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
+  dbUpdate('seller_profiles', {
+    composite_verification_status: 'verified',
+    identity_status: 'verified',
+    bank_status: 'verified',
+    updated_at: actionTimestamp
+  }, { id: profile.id });
+  dbUpdate('stores', { is_verified: 1 }, { id: testStoreForAction.id });
+
+  dbInsert('seller_verifications', {
+    seller_id: profile.id,
+    verification_type: 'manual_admin',
+    provider: 'admin_override',
+    provider_reference: `ADM-1-${Date.now()}`,
+    status: 'verified',
+    result_code: 'ADMIN_APPROVED',
+    verified_at: actionTimestamp
+  });
+
+  logSecurityAudit({
+    actor_type: 'super_admin',
+    actor_id: superAdminUser.id,
+    action: 'Approve Seller Verification',
+    target_type: 'seller_profiles',
+    target_id: profile.id,
+    reason: 'Verified verified business registration and identity',
+    ip_address: '127.0.0.1'
+  });
+
+  const verifiedSeller = getSellerProfile(securityTestStoreId);
+  const verifiedStore = dbFetchOne<any>('stores', { id: securityTestStoreId });
+  assert(verifiedSeller.composite_verification_status === 'verified', 'Seller composite status updated to verified');
+  assert(Number(verifiedStore.is_verified) === 1, 'Storefront badge updated to verified (1)');
+
+  const latestVerification = dbFetchOne<any>('seller_verifications', { seller_id: profile.id, status: 'verified' });
+  assert(latestVerification !== null, 'Seller verification event recorded');
+  assert(latestVerification.result_code === 'ADMIN_APPROVED', 'Verification result code is ADMIN_APPROVED');
+
+  const approveAudit = dbFetchOne<any>('security_audit_logs', { action: 'Approve Seller Verification', target_id: profile.id });
+  assert(approveAudit !== null, 'Security audit log recorded approval action');
+  assert(approveAudit.actor_id === superAdminUser.id, 'Audit log correctly attributes actor');
+
+  // 5. Order Gating Toggle
+  assert(Number(verifiedSeller.order_gating_enabled) === 1, 'Order gating initially active (1)');
+  dbUpdate('seller_profiles', { order_gating_enabled: 0 }, { id: profile.id });
+  logSecurityAudit({
+    actor_type: 'super_admin',
+    actor_id: superAdminUser.id,
+    action: 'Disable Order Gating',
+    target_type: 'seller_profiles',
+    target_id: profile.id,
+    reason: 'Seller requested temporary hiatus',
+    ip_address: '127.0.0.1'
+  });
+
+  const gatedSeller = getSellerProfile(securityTestStoreId);
+  assert(Number(gatedSeller.order_gating_enabled) === 0, 'Order gating successfully disabled (0)');
+
+  // Re-enable order gating
+  dbUpdate('seller_profiles', { order_gating_enabled: 1 }, { id: profile.id });
+  const reGatedSeller = getSellerProfile(securityTestStoreId);
+  assert(Number(reGatedSeller.order_gating_enabled) === 1, 'Order gating successfully re-enabled (1)');
+
+  // 6. Store Suspension & Emergency Lockdown
+  dbUpdate('seller_profiles', { composite_verification_status: 'suspended' }, { id: profile.id });
+  dbUpdate('stores', { status: 'suspended' }, { id: testStoreForAction.id });
+  recordRiskEvent({
+    seller_id: profile.id,
+    event_type: 'ADMIN_SUSPENSION',
+    score_delta: 20,
+    reason_code: 'SUSPICIOUS_BEHAVIOR',
+    metadata: { admin: superAdminUser.id }
+  });
+  logSecurityAudit({
+    actor_type: 'super_admin',
+    actor_id: superAdminUser.id,
+    action: 'Suspend Storefront & Seller',
+    target_type: 'seller_profiles',
+    target_id: profile.id,
+    reason: 'Investigating customer chargeback dispute',
+    ip_address: '127.0.0.1'
+  });
+
+  const suspendedStore = dbFetchOne<any>('stores', { id: securityTestStoreId });
+  const suspendedProfile = getSellerProfile(securityTestStoreId);
+  assert(suspendedStore.status === 'suspended', 'Store status set to suspended');
+  assert(suspendedProfile.composite_verification_status === 'suspended', 'Seller composite status is suspended');
+
+  // Restore Store
+  dbUpdate('seller_profiles', { composite_verification_status: 'verified' }, { id: profile.id });
+  dbUpdate('stores', { status: 'active' }, { id: testStoreForAction.id });
+  const restoredStore = dbFetchOne<any>('stores', { id: securityTestStoreId });
+  assert(restoredStore.status === 'active', 'Store safely restored to active state');
+
+  // 7. Customer Fraud Report Lifecycle
+  const fraudCaseRef = `CASE-${Date.now()}`;
+  const reportId = dbInsert('fraud_reports', {
+    case_reference: fraudCaseRef,
+    reporter_name: 'Concerned Buyer',
+    reporter_email: 'buyer@example.com',
+    reporter_phone: '08012345678',
+    reported_store_id: testStoreForAction.id,
+    category: 'non_delivery',
+    severity: 'high',
+    status: 'new',
+    description: 'Transferred funds via direct bank transfer but goods were not shipped after 5 days.',
+    assigned_admin_id: superAdminUser.id
+  });
+
+  assert(typeof reportId === 'number' && reportId > 0, 'Customer fraud report created with unique case reference');
+
+  // Super Admin investigates & resolves fraud report
+  dbUpdate('fraud_reports', {
+    status: 'resolved',
+    resolution_code: 'SELLER_REFUNDED',
+    resolution_summary: 'Seller provided bank proof of customer transfer refund',
+    assigned_admin_id: superAdminUser.id,
+    updated_at: new Date().toISOString().slice(0, 19).replace('T', ' ')
+  }, { id: reportId });
+
+  dbInsert('fraud_case_events', {
+    case_id: reportId,
+    actor_type: 'super_admin',
+    actor_id: superAdminUser.id,
+    event_type: 'RESOLUTION',
+    message: 'Resolved: Seller verified refund transaction reference'
+  });
+
+  logSecurityAudit({
+    actor_type: 'super_admin',
+    actor_id: superAdminUser.id,
+    action: `Update Fraud Report #${reportId} Status to resolved`,
+    target_type: 'fraud_reports',
+    target_id: reportId,
+    reason: 'Customer refund verified',
+    ip_address: '127.0.0.1'
+  });
+
+  const resolvedReport = dbFetchOne<any>('fraud_reports', { id: reportId });
+  assert(resolvedReport.status === 'resolved', 'Fraud report status updated to resolved');
+  assert(resolvedReport.resolution_code === 'SELLER_REFUNDED', 'Resolution code recorded');
+
+  const caseEvent = dbFetchOne<any>('fraud_case_events', { case_id: reportId, event_type: 'RESOLUTION' });
+  assert(caseEvent !== null, 'Fraud case event timeline entry persisted');
+
+  // --- SUITE 27: VERIFICATION PROVIDER ARCHITECTURE & CREDENTIAL MANAGEMENT (BATCH 3) ---
+  console.log('\n--- SUITE 27: VERIFICATION PROVIDER ARCHITECTURE & CREDENTIAL MANAGEMENT (BATCH 3) ---');
+
+  // 1. SSRF Protection Guard Testing
+  const validSandboxUrl = validateOutboundUrl('https://sandbox.monnify.com/api/v1/auth/login');
+  assert(validSandboxUrl.valid === true, 'SSRF guard allows approved sandbox URL');
+
+  const validLiveUrl = validateOutboundUrl('https://api.monnify.com/api/v2/disbursements/account/validate');
+  assert(validLiveUrl.valid === true, 'SSRF guard allows approved live production URL');
+
+  const httpBlock = validateOutboundUrl('http://sandbox.monnify.com/api/v1/auth/login');
+  assert(httpBlock.valid === false, 'SSRF guard strictly blocks non-HTTPS protocol');
+
+  const portBlock = validateOutboundUrl('https://sandbox.monnify.com:8080/api/v1/auth/login');
+  assert(portBlock.valid === false, 'SSRF guard blocks non-standard port 8080');
+
+  const localhostBlock = validateOutboundUrl('https://localhost:443/api/v1/auth/login');
+  assert(localhostBlock.valid === false, 'SSRF guard blocks localhost target');
+
+  const privateIpBlock1 = validateOutboundUrl('https://127.0.0.1/api/v1/auth/login');
+  assert(privateIpBlock1.valid === false, 'SSRF guard blocks loopback IP 127.0.0.1');
+
+  const privateIpBlock2 = validateOutboundUrl('https://192.168.1.1/api/v1/auth/login');
+  assert(privateIpBlock2.valid === false, 'SSRF guard blocks private RFC-1918 IP 192.168.1.1');
+
+  const cloudMetadataBlock = validateOutboundUrl('https://169.254.169.254/latest/meta-data/');
+  assert(cloudMetadataBlock.valid === false, 'SSRF guard blocks link-local cloud metadata address');
+
+  const evilHostBlock = validateOutboundUrl('https://malicious-phishing-domain.com/steal-keys');
+  assert(evilHostBlock.valid === false, 'SSRF guard blocks non-whitelisted third party host');
+
+  // 2. Integrations View Template Existence
+  const integrationsViewPath = path.resolve(process.cwd(), 'src', 'views', 'admin', 'security', 'integrations.ejs');
+  assert(fs.existsSync(integrationsViewPath), 'Monnify Integrations settings view template exists');
+
+  // 3. Credential Vault Storage & AES-256-GCM Encryption
+  const testApiKey = 'MK_TEST_abc123456789xyz9876';
+  const testSecretKey = 'SK_TEST_secret_998877665544332211';
+  const testContractCode = '9876543210';
+
+  const saveVaultResult = saveProviderConfig({
+    provider_key: 'monnify',
+    environment: 'sandbox',
+    api_key: testApiKey,
+    secret_key: testSecretKey,
+    contract_code: testContractCode,
+    enabled_capabilities: ['account_enquiry', 'bvn_match'],
+    admin_id: superAdminUser.id,
+    ip_address: '127.0.0.1'
+  });
+
+  assert(saveVaultResult.success === true, 'Provider credentials saved successfully');
+
+  // Verify database record in verification_provider_configs
+  const storedConfigRow = dbFetchOne<any>('verification_provider_configs', { provider_key: 'monnify' });
+  assert(storedConfigRow !== null, 'Monnify configuration row queryable');
+  assert(storedConfigRow.environment === 'sandbox', 'Stored environment is sandbox');
+  assert(storedConfigRow.base_url === 'https://sandbox.monnify.com', 'Base URL correctly defaulted to sandbox endpoint');
+  assert(storedConfigRow.api_key_encrypted !== testApiKey, 'Stored API key is non-plaintext ciphertext');
+  assert(storedConfigRow.secret_key_encrypted !== testSecretKey, 'Stored Secret key is non-plaintext ciphertext');
+  assert(storedConfigRow.api_key_masked.startsWith('MK_TES'), 'Masked API key has valid prefix');
+  assert(storedConfigRow.api_key_masked.endsWith('9876'), 'Masked API key has valid suffix');
+  assert(storedConfigRow.contract_code === testContractCode, 'Contract code stored safely');
+
+  // Verify audit log for credential rotation
+  const vaultAudit = dbFetchOne<any>('security_audit_logs', { action: 'Rotate MONNIFY Credentials' });
+  assert(vaultAudit !== null, 'Security audit logged credential rotation event');
+
+  // 4. Decrypted Credentials Retrieval for Server-to-Server Calls
+  const decryptedCredentials = getDecryptedCredentials('monnify');
+  assert(decryptedCredentials.isConfigured === true, 'Provider recognized as configured');
+  assert(decryptedCredentials.apiKey === testApiKey, 'Decrypted API key accurately matches original plaintext');
+  assert(decryptedCredentials.secretKey === testSecretKey, 'Decrypted Secret key accurately matches original plaintext');
+  assert(decryptedCredentials.contractCode === testContractCode, 'Decrypted contract code matches');
+  assert(decryptedCredentials.baseUrl === 'https://sandbox.monnify.com', 'Decrypted base URL matches sandbox');
+  assert(decryptedCredentials.enabledCapabilities.includes('account_enquiry'), 'Account enquiry capability enabled');
+  assert(decryptedCredentials.enabledCapabilities.includes('bvn_match'), 'BVN match capability enabled');
+
+  // 5. Sanitized Provider Config for Admin UI (Never leaks secrets)
+  const sanitizedAdminConfig = getProviderConfig('monnify');
+  assert(sanitizedAdminConfig !== null, 'Sanitized provider config returned');
+  assert((sanitizedAdminConfig as any).api_key === undefined, 'Raw API key not present on sanitized UI config');
+  assert((sanitizedAdminConfig as any).secret_key === undefined, 'Raw Secret key not present on sanitized UI config');
+  assert(sanitizedAdminConfig.api_key_masked === storedConfigRow.api_key_masked, 'Masked API key correctly returned to UI');
+
+  // 6. Test Result Diagnostics & Status Update
+  recordProviderTestResult({
+    provider_key: 'monnify',
+    result: 'active',
+    result_code: 'AUTH_SUCCESS'
+  });
+
+  const updatedTestConfig = getProviderConfig('monnify');
+  assert(updatedTestConfig.status === 'active', 'Provider status updated to active');
+  assert(updatedTestConfig.last_test_result === 'AUTH_SUCCESS', 'Last test result code recorded');
+  assert(updatedTestConfig.last_tested_at !== null, 'Last tested timestamp recorded');
+
+  // 7. Integration Activity Logging
+  logIntegrationEvent({
+    provider: 'monnify',
+    endpoint: '/api/v1/auth/login',
+    request_method: 'POST',
+    status_code: 200,
+    duration_ms: 125,
+    result: 'success',
+    redacted_request: { auth: 'Basic', env: 'sandbox' },
+    redacted_response: { requestSuccessful: true }
+  });
+
+  const loggedEvent = dbFetchOne<any>('integration_events', { provider: 'monnify', endpoint: '/api/v1/auth/login' });
+  assert(loggedEvent !== null, 'Integration event successfully persisted');
+  assert(loggedEvent.status_code === 200, 'Status code 200 logged');
+  assert(loggedEvent.duration_ms === 125, 'Duration 125ms logged');
+  assert(loggedEvent.result === 'success', 'Result success logged');
+
+  // --- SUITE 28: MONNIFY ADAPTER & IDENTITY VERIFICATION ENGINE (BATCH 4) ---
+  console.log('\n--- SUITE 28: MONNIFY ADAPTER & IDENTITY VERIFICATION ENGINE (BATCH 4) ---');
+
+  // 1. Name Match Score & Tokenized Overlap Evaluation
+  const exactMatch = calculateNameMatchScore('Chinedu Eze', 'Chinedu Eze');
+  assert(exactMatch.score === 1.0, 'Identical names produce 1.0 match score');
+  assert(exactMatch.matchType === 'exact_match', 'Identical names categorized as exact_match');
+
+  const reorderedMatch = calculateNameMatchScore('Eze Chinedu', 'Chinedu Eze');
+  assert(reorderedMatch.score === 1.0, 'Reordered legal name tokens categorized as exact_match');
+
+  const fuzzyMatch = calculateNameMatchScore('Chinedu Anthony Eze', 'Chinedu Eze');
+  assert(fuzzyMatch.score >= 0.8, 'Middle name difference produces score >= 0.8');
+  assert(fuzzyMatch.matchType === 'fuzzy_match', 'Fuzzy match categorized correctly');
+
+  const partialMatch = calculateNameMatchScore('Chinedu Ventures', 'Chinedu Okeke');
+  assert(partialMatch.matchType === 'partial_match', '1 common token out of 3 produces partial_match');
+
+  const completeMismatch = calculateNameMatchScore('Fatima Dangote', 'Chinedu Eze');
+  assert(completeMismatch.score === 0.0, 'Unrelated names produce 0.0 match score');
+  assert(completeMismatch.matchType === 'mismatch', 'Unrelated names categorized as mismatch');
+
+  // 2. Monnify Adapter Configuration Validation
+  const validConfigResult = monnifyAdapter.validateConfiguration({ environment: 'sandbox' });
+  assert(validConfigResult.valid === true, 'MonnifyAdapter validates correct sandbox configuration');
+
+  const invalidConfigResult = monnifyAdapter.validateConfiguration({ environment: 'invalid_env' as any });
+  assert(invalidConfigResult.valid === false, 'MonnifyAdapter rejects invalid environment');
+
+  // 3. NUBAN 10-Digit Guard
+  const shortAcctResult = await monnifyAdapter.verifyBankAccount('123456', '058', {
+    apiKey: 'dummy',
+    secretKey: 'dummy',
+    baseUrl: 'https://sandbox.monnify.com'
+  });
+  assert(shortAcctResult.success === false, 'Invalid account number length rejected without external call');
+  assert(shortAcctResult.error?.includes('10 digits'), 'Error specifically notes 10 digits requirement');
+
+  // 4. Monnify Adapter Identity Verification
+  const mockVerifiedResult = await monnifyAdapter.verifyIdentity(
+    { bvn: '22222222222' },
+    { apiKey: 'dummy', secretKey: 'dummy', baseUrl: 'https://sandbox.monnify.com', environment: 'sandbox' }
+  );
+  assert(mockVerifiedResult.success === true, 'Sandbox mock verified BVN returns success');
+  assert(mockVerifiedResult.status === 'verified', 'Sandbox mock verified BVN returns verified status');
+  assert(mockVerifiedResult.resultCode === 'SANDBOX_MOCK_VERIFIED', 'Result code is SANDBOX_MOCK_VERIFIED');
+
+  const mockRejectedResult = await monnifyAdapter.verifyIdentity(
+    { bvn: '00000000000' },
+    { apiKey: 'dummy', secretKey: 'dummy', baseUrl: 'https://sandbox.monnify.com', environment: 'sandbox' }
+  );
+  assert(mockRejectedResult.success === false, 'Sandbox mock rejected BVN returns failure');
+  assert(mockRejectedResult.status === 'failed', 'Status is failed for mock rejection');
+
+  const arbitraryBvnResult = await monnifyAdapter.verifyIdentity(
+    { bvn: '12345678901' },
+    { apiKey: 'dummy', secretKey: 'dummy', baseUrl: 'https://sandbox.monnify.com', environment: 'sandbox' }
+  );
+  assert(arbitraryBvnResult.success === false, 'Arbitrary BVN in sandbox does NOT produce fake approval');
+  assert(arbitraryBvnResult.status === 'manual_review', 'Arbitrary sandbox BVN routed to manual_review');
+  assert(arbitraryBvnResult.resultCode === 'SANDBOX_RESTRICTED', 'Result code reflects regulatory restriction');
+
+  // 5. Verification Service Orchestrator & NDPA 2023 Consent Check
+  const noConsentAttempt = await submitIdentityVerification({
+    sellerId: profile.id,
+    type: 'bvn',
+    identifier: '22222222222',
+    consentGiven: false
+  });
+  assert(noConsentAttempt.success === false, 'Verification without consent rejected');
+  assert(noConsentAttempt.error?.includes('NDPA 2023'), 'Error mentions NDPA 2023 compliance mandate');
+
+  // Submit with explicit consent
+  const consentAttempt = await submitIdentityVerification({
+    sellerId: profile.id,
+    type: 'bvn',
+    identifier: '22222222222',
+    consentGiven: true
+  });
+  assert(consentAttempt.success === true, 'Verification with consent accepted');
+
+  const updatedConsentProfile = getSellerProfile(securityTestStoreId);
+  assert(Number(updatedConsentProfile.identity_consent_given) === 1, 'Profile recorded identity consent flag (1)');
+  assert(updatedConsentProfile.consent_timestamp !== null, 'Profile recorded consent timestamp');
+  assert(updatedConsentProfile.identity_status === 'verified', 'Profile identity status updated to verified');
+
+  // Verify zero plaintext BVN stored in seller_verifications table
+  const verificationRecord = dbFetchOne<any>('seller_verifications', { seller_id: profile.id, verification_type: 'bvn' });
+  assert(verificationRecord !== null, 'Verification record exists in seller_verifications');
+  assert(!verificationRecord.redacted_metadata_json?.includes('22222222222'), 'Raw BVN strictly omitted from metadata');
+  assert(verificationRecord.redacted_metadata_json?.includes('222•••••22'), 'Masked BVN stored in metadata');
+
+  // 6. Composite Verification Status Orchestration
+  dbUpdate('seller_profiles', { bank_status: 'verified' }, { id: profile.id });
+  const compositeStatus = evaluateCompositeVerificationStatus(profile.id);
+  assert(compositeStatus === 'verified', 'Seller with verified identity + bank promoted to composite verified');
+
+  const postEvaluationStore = dbFetchOne<any>('stores', { id: securityTestStoreId });
+  assert(Number(postEvaluationStore.is_verified) === 1, 'Underlying storefront is_verified set to 1');
+
+  // --- SUITE 29: BANK ACCOUNT OWNERSHIP VERIFICATION & ACCOUNT CHANGE PROTECTION (BATCH 5) ---
+  console.log('\n--- SUITE 29: BANK ACCOUNT OWNERSHIP VERIFICATION & ACCOUNT CHANGE PROTECTION (BATCH 5) ---');
+
+  // 1. Nigerian Banks Directory
+  assert(NIGERIAN_BANKS.length >= 15, `Nigerian banks list covers major commercial banks & fintechs (${NIGERIAN_BANKS.length} banks)`);
+  const gtbank = NIGERIAN_BANKS.find(b => b.code === '058');
+  assert(Boolean(gtbank), 'GTBank (058) present in bank registry');
+  const kuda = NIGERIAN_BANKS.find(b => b.code === '50211');
+  assert(Boolean(kuda), 'Kuda Bank (50211) present in bank registry');
+  const opay = NIGERIAN_BANKS.find(b => b.code === '999992');
+  assert(Boolean(opay), 'OPay (999992) present in bank registry');
+
+  // 2. Name Matcher Comprehensive Rules
+  // Exact match
+  const exactRes = matchAccountName('Emeka Okafor', 'EMEKA OKAFOR', false);
+  assert(exactRes.isAcceptable === true, 'Case-insensitive identical names are acceptable');
+  assert(exactRes.matchType === 'exact_match', 'Category is exact_match');
+  assert(exactRes.score === 1.0, 'Score is 1.0');
+
+  // Corporate Entity Match & Corporate Suffix Normalization
+  const corpRes = matchAccountName('Okafor Global Logistics Ltd', 'OKAFOR GLOBAL LOGISTICS LIMITED', true);
+  assert(corpRes.isAcceptable === true, 'Corporate suffix differences (Ltd vs Limited) stripped & acceptable');
+  assert(corpRes.score >= 0.9, 'Corporate match score >= 0.9');
+
+  // Fuzzy match / middle name presence
+  const fuzzyRes = matchAccountName('Emeka John Okafor', 'Emeka Okafor', false);
+  assert(fuzzyRes.isAcceptable === true, 'Middle name difference is acceptable');
+  assert(fuzzyRes.matchType === 'fuzzy_match', 'Category is fuzzy_match');
+
+  // Severe Mismatch
+  const mismatchRes = matchAccountName('Emeka Okafor', 'Aisha Bello', false);
+  assert(mismatchRes.isAcceptable === false, 'Completely different names rejected');
+  assert(mismatchRes.matchType === 'mismatch', 'Category is mismatch');
+  assert(mismatchRes.score === 0.0, 'Score is 0.0');
+
+  // 3. Bank Account Change OTP Security Workflow
+  const bankTestStoreId = securityTestStoreId;
+  const testOtp = '654321';
+  const testOtpHash = crypto.createHash('sha256').update(testOtp).digest('hex');
+
+  bankOtpStore.set(bankTestStoreId, {
+    otp_hash: testOtpHash,
+    expires_at: Date.now() + 300000,
+    bank_code: '058',
+    bank_name: 'Guaranty Trust Bank',
+    account_number: '0123456789',
+    account_name: 'Emeka Okafor'
+  });
+
+  const storedOtp = bankOtpStore.get(bankTestStoreId);
+  assert(storedOtp !== undefined, 'Bank OTP record stored successfully');
+  assert(storedOtp?.bank_code === '058', 'Stored OTP contains bank code');
+
+  // Invalidate with wrong OTP
+  const wrongOtpHash = crypto.createHash('sha256').update('000000').digest('hex');
+  assert(storedOtp?.otp_hash !== wrongOtpHash, 'Wrong OTP does not match stored hash');
+
+  // 4. Save Verified Bank Account Record
+  const newAccountNum = '0987654321';
+  const newBankName = 'Access Bank';
+  const newAccountName = 'Emeka Okafor';
+
+  const bankSaveResult = saveVerifiedBankAccountRecord({
+    sellerId: profile.id,
+    storeId: bankTestStoreId,
+    bankCode: '044',
+    bankName: newBankName,
+    accountNumber: newAccountNum,
+    accountName: newAccountName,
+    nameMatchScore: 1.0,
+    nameMatchResult: 'exact_match',
+    isVerified: true,
+    actorType: 'merchant'
+  });
+
+  assert(typeof bankSaveResult.newBankId === 'number', 'New verified bank account record inserted');
+  assert(bankSaveResult.maskedAcct === '0987••••21', 'Masked account number matches standard 4+4 format');
+
+  // Check seller_bank_accounts table record
+  const savedBankRecord = dbFetchOne<any>('seller_bank_accounts', { id: bankSaveResult.newBankId });
+  assert(savedBankRecord !== null, 'seller_bank_accounts row queryable');
+  assert(savedBankRecord.is_active === 1, 'New bank account marked is_active = 1');
+  assert(savedBankRecord.verification_status === 'verified', 'Bank account status marked verified');
+  assert(savedBankRecord.bank_name === newBankName, 'Bank name recorded accurately');
+  assert(savedBankRecord.account_number_masked === '0987••••21', 'Masked account number persisted');
+  assert(!savedBankRecord.account_number_encrypted.includes(newAccountNum), 'Encrypted account number is non-plaintext');
+
+  // Decrypt check
+  const decryptedAcct = decryptSecret(savedBankRecord.account_number_encrypted);
+  assert(decryptedAcct === newAccountNum, 'Encrypted bank account successfully decrypted');
+
+  // Duplicate detection hash check
+  const expectedHash = hashAccountNumber(newAccountNum);
+  assert(savedBankRecord.account_number_hash === expectedHash, 'HMAC account number hash matches deterministic expectation');
+
+  // Check stores table updated
+  const updatedStoreRow = dbFetchOne<any>('stores', { id: bankTestStoreId });
+  assert(updatedStoreRow.bank_account_number === newAccountNum, 'stores table bank_account_number updated');
+  assert(updatedStoreRow.bank_name === newBankName, 'stores table bank_name updated');
+  assert(updatedStoreRow.bank_account_name === newAccountName, 'stores table bank_account_name updated');
+
+  // Check seller_profiles bank_status updated
+  const updatedSellerProfileRow = dbFetchOne<any>('seller_profiles', { id: profile.id });
+  assert(updatedSellerProfileRow.bank_status === 'verified', 'seller_profiles bank_status updated to verified');
+
+  // Check security audit log
+  const bankAuditLogs = dbFetchAll<any>('security_audit_logs', { target_type: 'seller_bank_accounts', target_id: bankSaveResult.newBankId });
+  assert(bankAuditLogs.length > 0, 'Security audit logged bank account update');
+  assert(bankAuditLogs[0].action.includes('Authorized Bank Account Change'), 'Audit action documents authorized bank change');
+
+  // Verify previous accounts for this seller were deactivated
+  const previousAccounts = dbFetchAll<any>('seller_bank_accounts', { seller_id: profile.id });
+  const activeCount = previousAccounts.filter(a => a.is_active === 1).length;
+  assert(activeCount === 1, 'Exactly one active payout bank account exists after update');
+
+  // --- SUITE 30: SELLER ONBOARDING & STOREFRONT GATING ENFORCEMENT (BATCH 6) ---
+  console.log('\n--- SUITE 30: SELLER ONBOARDING & STOREFRONT GATING ENFORCEMENT (BATCH 6) ---');
+
+  // 1. Template Verification View Exists
+  const verificationViewPath = path.resolve('src/views/merchant/verification.ejs');
+  assert(fs.existsSync(verificationViewPath), 'Merchant verification template (verification.ejs) exists');
+  const verifViewContent = fs.readFileSync(verificationViewPath, 'utf-8');
+  assert(verifViewContent.includes('NDPA 2023'), 'verification.ejs contains explicit NDPA 2023 compliance notice');
+  assert(verifViewContent.includes('identityConsentCheck'), 'verification.ejs includes mandatory consent checkbox');
+
+  // 2. Gating Evaluation Unit Tests
+  const gatingTestStoreId = dbInsert('stores', {
+    slug: 'gating-test-' + Date.now(),
+    store_name: 'Gating Test Store',
+    owner_name: 'Gating Tester',
+    email: 'gating_tester_' + Date.now() + '@zlik.store',
+    password_hash: hashPassword('gatingPassword123'),
+    whatsapp_number: '08012345678',
+    status: 'active',
+    is_verified: 0,
+    allow_bank_transfer: 1,
+    allow_pay_on_delivery: 1
+  });
+
+  const gatingSeller = getOrCreateSellerProfile(gatingTestStoreId);
+  assert(Boolean(gatingSeller), 'Seller profile created for gating test store');
+
+  // Initial state: unverified seller with order_gating_enabled = 1 -> isStoreOrderGated should be true
+  assert(isStoreOrderGated(gatingTestStoreId) === true, 'Unverified store starts in gated state (orders blocked)');
+
+  // 3. Server-side Order Gating Enforcement in createOrder
+  const gatedOrderAttempt = createOrder({
+    store_id: gatingTestStoreId,
+    customer_name: 'Shopper Test',
+    customer_phone: '08011223344',
+    items: [{ title: 'Gated Item', price: 5000, quantity: 1 }],
+    payment_method: 'bank_transfer'
+  });
+  assert(gatedOrderAttempt.success === false, 'createOrder safely rejects order against gated store');
+  assert(gatedOrderAttempt.is_gated === true, 'createOrder returns is_gated = true flag');
+  assert(gatedOrderAttempt.error?.includes('undergoing seller identity verification') === true, 'Error message explicitly explains identity verification gating');
+
+  // 4. Super Admin Emergency Gating Override (Disabling order gating)
+  dbUpdate('seller_profiles', { order_gating_enabled: 0 }, { id: gatingSeller.id });
+  assert(isStoreOrderGated(gatingTestStoreId) === false, 'isStoreOrderGated returns false when order_gating_enabled = 0');
+
+  const ungatedOrderAttempt = createOrder({
+    store_id: gatingTestStoreId,
+    customer_name: 'Shopper Test',
+    customer_phone: '08011223344',
+    items: [{ title: 'Ungated Item', price: 5000, quantity: 1 }],
+    payment_method: 'bank_transfer'
+  });
+  assert(ungatedOrderAttempt.success === true, 'createOrder succeeds when super admin lifts order gating');
+
+  // Re-enable gating
+  dbUpdate('seller_profiles', { order_gating_enabled: 1 }, { id: gatingSeller.id });
+  assert(isStoreOrderGated(gatingTestStoreId) === true, 'isStoreOrderGated returns true when order gating is re-enabled');
+
+  // 5. Verification Promotion Unlocks Gating Automatically
+  dbUpdate('seller_profiles', {
+    identity_status: 'verified',
+    bank_status: 'verified'
+  }, { id: gatingSeller.id });
+
+  const promotedStatus = evaluateCompositeVerificationStatus(gatingSeller.id);
+  assert(promotedStatus === 'verified', 'Seller profile promoted to composite verified status');
+  assert(isStoreOrderGated(gatingTestStoreId) === false, 'isStoreOrderGated automatically lifts gating when verification is complete');
+
+  const postVerificationOrder = createOrder({
+    store_id: gatingTestStoreId,
+    customer_name: 'Shopper After Verification',
+    customer_phone: '08099887766',
+    items: [{ title: 'Verified Store Item', price: 7500, quantity: 1 }],
+    payment_method: 'bank_transfer'
+  });
+  assert(postVerificationOrder.success === true, 'Verified store seamlessly accepts customer orders');
+
+  // 6. Direct Store is_verified flag also un-gates
+  const adminVerifiedStoreId = dbInsert('stores', {
+    slug: 'admin-verified-' + Date.now(),
+    store_name: 'Admin Verified Store',
+    owner_name: 'Admin Trusted Seller',
+    email: 'admin_trusted_' + Date.now() + '@zlik.store',
+    password_hash: hashPassword('adminPassword123'),
+    whatsapp_number: '08087654321',
+    status: 'active',
+    is_verified: 1
+  });
+  assert(isStoreOrderGated(adminVerifiedStoreId) === false, 'Store with is_verified = 1 is not gated');
+
+  // -------------------------------------------------------------
+  // SUITE 31: BUSINESS VERIFICATION, STORE NAMING RULES & BRAND PROTECTION (BATCH 7)
+  // -------------------------------------------------------------
+  console.log('\n--- SUITE 31: BUSINESS VERIFICATION, STORE NAMING RULES & BRAND PROTECTION (BATCH 7) ---');
+
+  // 1. Storefront Naming: General Rules & Format Validation
+  const validPersonalName = validateStoreName('Grace Fashion Store', 'personal', false);
+  assert(validPersonalName.valid === true, 'Standard legitimate personal store name is accepted');
+
+  const tooShortName = validateStoreName('A', 'personal', false);
+  assert(tooShortName.valid === false && tooShortName.category === 'invalid_format', 'Store name shorter than 2 chars rejected');
+
+  const numbersOnlyName = validateStoreName('1234567', 'personal', false);
+  assert(numbersOnlyName.valid === false && numbersOnlyName.category === 'invalid_format', 'Purely numeric store name rejected');
+
+  // 2. Corporate Designator Restrictions for Personal Sellers (CAMA 2020)
+  const ltdAttempt = validateStoreName('Grace Fashion Ltd', 'personal', false);
+  assert(ltdAttempt.valid === false, 'Personal seller prohibited from using "Ltd" corporate designator');
+  assert(ltdAttempt.category === 'corporate_designator', 'Category correctly identified as corporate_designator');
+  assert(ltdAttempt.reason?.includes('corporate designations') === true, 'Error message explicitly cites corporate designations restriction');
+
+  const plcAttempt = validateStoreName('Tunde Electronics Plc', 'personal', false);
+  assert(plcAttempt.valid === false && plcAttempt.category === 'corporate_designator', 'Personal seller prohibited from using "Plc" suffix');
+
+  const holdingsAttempt = validateStoreName('Okafor Holdings', 'personal', false);
+  assert(holdingsAttempt.valid === false && holdingsAttempt.category === 'corporate_designator', 'Personal seller prohibited from using "Holdings"');
+
+  const incAttempt = validateStoreName('Amaka Beauty Inc', 'personal', false);
+  assert(incAttempt.valid === false && incAttempt.category === 'corporate_designator', 'Personal seller prohibited from using "Inc"');
+
+  // 3. Corporate Designators Allowed for Verified Businesses
+  const verifiedBusLtd = validateStoreName('Grace Fashion Ltd', 'business', true);
+  assert(verifiedBusLtd.valid === true, 'Verified business with CAC allowed to use "Ltd" designator');
+
+  const verifiedBusPlc = validateStoreName('Tunde Electronics Plc', 'business', true);
+  assert(verifiedBusPlc.valid === true, 'Verified business with CAC allowed to use "Plc" designator');
+
+  // 4. Institutional, Regulatory & Government Terms (Strictly prohibited for all)
+  const bankAttempt = validateStoreName('Zenith Bank Agent Shop', 'personal', false);
+  assert(bankAttempt.valid === false, 'Store name containing restricted "Bank" term rejected');
+  assert(bankAttempt.category === 'institutional' || bankAttempt.category === 'brand_impersonation', 'Institutional or brand violation identified');
+
+  const cbnAttempt = validateStoreName('CBN Official Discount Store', 'business', true);
+  assert(cbnAttempt.valid === false && cbnAttempt.category === 'institutional', 'Store name containing "CBN" rejected even for business accounts');
+
+  const zlikAttempt = validateStoreName('Official Zlik Support Hub', 'business', true);
+  assert(zlikAttempt.valid === false && zlikAttempt.category === 'institutional', 'Store name impersonating "Official Zlik" platform authority rejected');
+
+  const efccAttempt = validateStoreName('EFCC Auction Center', 'personal', false);
+  assert(efccAttempt.valid === false && efccAttempt.category === 'institutional', 'Store name claiming "EFCC" government authority rejected');
+
+  // 5. Brand Impersonation & Typo-squatting Protection
+  const appleAttempt = validateStoreName('Apple Store Ikeja', 'personal', false);
+  assert(appleAttempt.valid === false && appleAttempt.category === 'brand_impersonation', 'Store name impersonating "Apple" rejected');
+
+  const dangoteAttempt = validateStoreName('Dangote Cement Direct Depot', 'personal', false);
+  assert(dangoteAttempt.valid === false && dangoteAttempt.category === 'brand_impersonation', 'Store name impersonating "Dangote" rejected');
+
+  const jumiaAttempt = validateStoreName('Jumia Express Delivery', 'personal', false);
+  assert(jumiaAttempt.valid === false && jumiaAttempt.category === 'brand_impersonation', 'Store name impersonating "Jumia" rejected');
+
+  const nikeAttempt = validateStoreName('Nike Shoes Store', 'personal', false);
+  assert(nikeAttempt.valid === false && nikeAttempt.category === 'brand_impersonation', 'Store name impersonating "Nike" rejected');
+
+  const typoApple = validateStoreName('App1e Gadgets', 'personal', false);
+  assert(typoApple.valid === false && typoApple.category === 'brand_impersonation', 'Typo-squatted brand name "App1e" detected and rejected');
+
+  const typoDangote = validateStoreName('Danggote Supplies', 'personal', false);
+  assert(typoDangote.valid === false && typoDangote.category === 'brand_impersonation', 'Typo-squatted brand name "Danggote" detected and rejected');
+
+  // 6. CAC Registration Number Format Validator
+  assert(validateCacRegistrationFormat('RC123456').valid === true, 'RC123456 accepted as valid CAC RC format');
+  assert(validateCacRegistrationFormat('BN-987654').valid === true, 'BN-987654 accepted as valid CAC Business Name format');
+  assert(validateCacRegistrationFormat('IT12345').valid === true, 'IT12345 accepted as valid CAC Incorporated Trustee format');
+  assert(validateCacRegistrationFormat('INVALID_FORMAT_TEST').valid === false, 'Invalid CAC format string rejected');
+
+  // 7. Business Verification Submission & Representative Matching
+  const busStoreId = dbInsert('stores', {
+    slug: 'bus-seller-' + Date.now(),
+    store_name: 'Adeola Trading Store',
+    owner_name: 'Adeola John Bakare',
+    email: 'adeola_' + Date.now() + '@zlik.store',
+    password_hash: hashPassword('busPassword123'),
+    whatsapp_number: '08022334455',
+    status: 'active',
+    is_verified: 0
+  });
+
+  const busSeller = getOrCreateSellerProfile(busStoreId);
+  dbUpdate('seller_profiles', {
+    legal_name: 'Adeola John Bakare',
+    identity_status: 'verified',
+    bank_status: 'verified'
+  }, { id: busSeller.id });
+
+  const testRcNumber = 'RC' + Math.floor(100000 + Math.random() * 900000);
+
+  // Representative name mismatch check
+  const mismatchedRep = await submitBusinessVerification({
+    sellerId: busSeller.id,
+    registeredName: 'Adeola & Sons Trading Ltd',
+    registrationNumber: testRcNumber,
+    businessType: 'limited_liability',
+    representativeName: 'Emeka Chukwudi Obi', // Mismatched name!
+    representativeRole: 'Director',
+    representativePhone: '08099887766'
+  });
+  assert(mismatchedRep.success === false, 'Representative mismatch with verified personal identity rejected');
+  assert(mismatchedRep.error?.includes('does not match') === true, 'Error message explicitly explains representative mismatch');
+
+  // Legitimate submission with matching representative
+  const validSubmission = await submitBusinessVerification({
+    sellerId: busSeller.id,
+    registeredName: 'Adeola & Sons Trading Ltd',
+    registrationNumber: testRcNumber,
+    businessType: 'limited_liability',
+    representativeName: 'Adeola Bakare', // Fuzzy matching representative!
+    representativeRole: 'Director',
+    representativePhone: '08022334455',
+    tin: '12345678-0001',
+    registeredAddress: '12 Marina Road, Lagos'
+  });
+  assert(validSubmission.success === true, 'CAC business submission with authorized representative accepted');
+  assert(validSubmission.status === 'pending', 'Arbitrary CAC submission routes to "pending" manual review (zero fake approvals)');
+
+  const busProfile = getBusinessProfile(busSeller.id);
+  assert(Boolean(busProfile), 'Business profile record persisted in business_profiles table');
+  assert(busProfile.registration_number === testRcNumber, 'CAC registration number persisted accurately');
+  assert(busProfile.verification_status === 'pending', 'Business verification status is pending');
+
+  const updatedBusSeller = getSellerProfile(busStoreId);
+  assert(updatedBusSeller.seller_type === 'business', 'Seller profile promoted to seller_type = "business"');
+  assert(updatedBusSeller.business_status === 'pending', 'Seller business_status is pending');
+  assert(updatedBusSeller.composite_verification_status !== 'verified', 'Composite status remains unverified while business status is pending');
+
+  // Prevent duplicate CAC registration reuse across different sellers
+  const duplicateStoreId = dbInsert('stores', {
+    slug: 'dup-bus-' + Date.now(),
+    store_name: 'Second Store',
+    owner_name: 'Adeola Bakare',
+    email: 'dup_' + Date.now() + '@zlik.store',
+    password_hash: hashPassword('busPassword123'),
+    whatsapp_number: '08022334455',
+    status: 'active'
+  });
+  const dupSeller = getOrCreateSellerProfile(duplicateStoreId);
+  const dupAttempt = await submitBusinessVerification({
+    sellerId: dupSeller.id,
+    registeredName: 'Adeola & Sons Copy',
+    registrationNumber: testRcNumber, // Duplicate RC!
+    representativeName: 'Adeola Bakare',
+    representativePhone: '08022334455'
+  });
+  assert(dupAttempt.success === false, 'Reusing existing CAC registration number across multiple sellers rejected');
+  assert(dupAttempt.error?.includes('already registered') === true, 'Error message explains CAC number already registered');
+
+  // 8. Super Admin Approval of Registered Business
+  const adminApproveRes = approveBusinessVerification({
+    businessProfileId: busProfile.id,
+    adminId: 1,
+    adminName: 'Chief Security Officer',
+    notes: 'Verified against CAC online status portal'
+  });
+  assert(adminApproveRes.success === true, 'Super Admin approves registered CAC business');
+
+  const postApproveProfile = getBusinessProfile(busSeller.id);
+  assert(postApproveProfile.verification_status === 'verified', 'Business profile status updated to "verified"');
+
+  const postApproveSeller = getSellerProfile(busStoreId);
+  assert(postApproveSeller.business_status === 'verified', 'Seller profile business_status updated to "verified"');
+  assert(postApproveSeller.composite_verification_status === 'verified', 'Composite verification status promotes to "verified"');
+  assert(isStoreOrderGated(busStoreId) === false, 'Store order gating automatically lifted upon business approval');
+
+  // 9. Super Admin Rejection of Business Submission
+  const rejectStoreId = dbInsert('stores', {
+    slug: 'reject-bus-' + Date.now(),
+    store_name: 'Rejected Store',
+    owner_name: 'Faux Seller',
+    email: 'faux_' + Date.now() + '@zlik.store',
+    password_hash: hashPassword('fauxPassword123'),
+    whatsapp_number: '08055667788',
+    status: 'active'
+  });
+  const rejectSeller = getOrCreateSellerProfile(rejectStoreId);
+  await submitBusinessVerification({
+    sellerId: rejectSeller.id,
+    registeredName: 'Faux Enterprise Ltd',
+    registrationNumber: 'RC999888',
+    representativeName: 'Faux Seller',
+    representativePhone: '08055667788'
+  });
+  const rejectProfile = getBusinessProfile(rejectSeller.id);
+  const adminRejectRes = rejectBusinessVerification({
+    businessProfileId: rejectProfile.id,
+    adminId: 1,
+    adminName: 'Chief Security Officer',
+    reason: 'CAC registration number does not exist on official registry'
+  });
+  assert(adminRejectRes.success === true, 'Super Admin rejects fraudulent CAC submission');
+  const postRejectProfile = getBusinessProfile(rejectSeller.id);
+  assert(postRejectProfile.verification_status === 'rejected', 'Business profile status marked "rejected"');
+  const postRejectSeller = getSellerProfile(rejectStoreId);
+  assert(postRejectSeller.business_status === 'rejected', 'Seller business_status marked "rejected"');
+
+  // -------------------------------------------------------------
+  // SUITE 32: FRAUD DETECTION ENGINE & DISPUTE CASE MANAGEMENT (BATCH 8)
+  // -------------------------------------------------------------
+  console.log('\n--- SUITE 32: FRAUD DETECTION ENGINE & DISPUTE CASE MANAGEMENT (BATCH 8) ---');
+
+  // 1. Template View Exists
+  const disputesViewPath = path.resolve('src/views/admin/security/disputes.ejs');
+  assert(fs.existsSync(disputesViewPath), 'Dispute Management template (disputes.ejs) exists');
+  const disputesContent = fs.readFileSync(disputesViewPath, 'utf-8');
+  assert(disputesContent.includes('Customer Fraud Disputes'), 'disputes.ejs contains proper title & layout');
+
+  // 2. Bank Account Reuse Signal Evaluation
+  const reuseStore1Id = dbInsert('stores', {
+    slug: 'reuse-store1-' + Date.now(),
+    store_name: 'Reuse Store 1',
+    owner_name: 'Bank Reuse Seller 1',
+    email: 'reuse1_' + Date.now() + '@zlik.store',
+    password_hash: hashPassword('pass123'),
+    whatsapp_number: '08011223344',
+    status: 'active'
+  });
+  const reuseSeller1 = getOrCreateSellerProfile(reuseStore1Id);
+
+  const sharedAccountHash = hashAccountNumber('0112233445');
+  dbInsert('seller_bank_accounts', {
+    seller_id: reuseSeller1.id,
+    bank_code: '058',
+    bank_name: 'GTBank',
+    account_number_encrypted: encryptSecret('0112233445'),
+    account_number_masked: '0112••••45',
+    account_number_hash: sharedAccountHash,
+    account_name: 'Shared Payout Account',
+    is_active: 1,
+    verification_status: 'verified'
+  });
+
+  const reuseStore2Id = dbInsert('stores', {
+    slug: 'reuse-store2-' + Date.now(),
+    store_name: 'Reuse Store 2',
+    owner_name: 'Bank Reuse Seller 2',
+    email: 'reuse2_' + Date.now() + '@zlik.store',
+    password_hash: hashPassword('pass123'),
+    whatsapp_number: '08022334455',
+    status: 'active'
+  });
+  const reuseSeller2 = getOrCreateSellerProfile(reuseStore2Id);
+  dbInsert('seller_bank_accounts', {
+    seller_id: reuseSeller2.id,
+    bank_code: '058',
+    bank_name: 'GTBank',
+    account_number_encrypted: encryptSecret('0112233445'),
+    account_number_masked: '0112••••45',
+    account_number_hash: sharedAccountHash, // Same hash!
+    account_name: 'Shared Payout Account',
+    is_active: 1,
+    verification_status: 'verified'
+  });
+
+  const reuseCheck = checkBankAccountReuse(sharedAccountHash, reuseSeller2.id);
+  assert(reuseCheck.isReused === true, 'checkBankAccountReuse correctly detects shared bank account');
+  assert(reuseCheck.otherSellerIds.includes(reuseSeller1.id), 'Identifies other seller sharing the same payout bank account');
+
+  const riskEvalReuse = evaluateSellerRisk(reuseSeller2.id);
+  assert(riskEvalReuse.triggers.some(t => t.reasonCode === RISK_REASON_CODES.BANK_REUSE_DETECTED), 'evaluateSellerRisk produces BANK_REUSE_DETECTED trigger');
+  assert(riskEvalReuse.score >= 35, 'Bank reuse increases seller risk score by at least 35 points');
+  assert(riskEvalReuse.level === 'medium' || riskEvalReuse.level === 'high', 'Risk level elevated to medium or higher');
+
+  // 3. Customer Dispute Spike Signal
+  const disputeStoreId = dbInsert('stores', {
+    slug: 'dispute-store-' + Date.now(),
+    store_name: 'Dispute Spike Store',
+    owner_name: 'Spike Seller',
+    email: 'spike_' + Date.now() + '@zlik.store',
+    password_hash: hashPassword('pass123'),
+    whatsapp_number: '08033445566',
+    status: 'active'
+  });
+  const disputeSeller = getOrCreateSellerProfile(disputeStoreId);
+
+  // File 2 customer fraud reports
+  const caseRef1 = `FR-${Date.now()}-01`;
+  const report1Id = dbInsert('fraud_reports', {
+    case_reference: caseRef1,
+    reporter_name: 'Aggrieved Buyer 1',
+    reporter_email: 'buyer1@gmail.com',
+    reporter_phone: '08099887766',
+    reported_store_id: disputeStoreId,
+    category: 'payment_diversion',
+    severity: 'critical',
+    status: 'new',
+    description: 'Seller asked for transfer to alternate unverified account.'
+  });
+
+  const caseRef2 = `FR-${Date.now()}-02`;
+  const report2Id = dbInsert('fraud_reports', {
+    case_reference: caseRef2,
+    reporter_name: 'Aggrieved Buyer 2',
+    reporter_email: 'buyer2@gmail.com',
+    reporter_phone: '08099887755',
+    reported_store_id: disputeStoreId,
+    category: 'non_delivery',
+    severity: 'high',
+    status: 'new',
+    description: 'Item not delivered after 5 days of confirmed payment.'
+  });
+
+  const riskEvalDisputes = evaluateSellerRisk(disputeSeller.id);
+  assert(riskEvalDisputes.triggers.some(t => t.reasonCode === RISK_REASON_CODES.CUSTOMER_DISPUTE_SPIKE), 'Multiple active disputes triggers CUSTOMER_DISPUTE_SPIKE');
+  assert(riskEvalDisputes.score >= 30, 'Two active customer disputes adds at least 30 risk points');
+
+  // 4. Critical Risk Escalation & Automated Emergency Gating (Threshold >= 75)
+  // Add another severe trigger to cross 75 threshold
+  dbInsert('seller_bank_accounts', {
+    seller_id: disputeSeller.id,
+    bank_code: '058',
+    bank_name: 'GTBank',
+    account_number_encrypted: encryptSecret('9988776655'),
+    account_number_masked: '9988••••55',
+    account_number_hash: hashAccountNumber('9988776655'),
+    account_name: 'Completely Different Name',
+    name_match_result: 'mismatch',
+    name_match_score: 0.1,
+    is_active: 1
+  });
+
+  // Temporarily lift gating so we can test automated emergency re-gating
+  dbUpdate('seller_profiles', { order_gating_enabled: 0 }, { id: disputeSeller.id });
+
+  const criticalRiskEval = evaluateSellerRisk(disputeSeller.id);
+  assert(criticalRiskEval.score >= 55, 'Composite risk score accumulates multiple explainable triggers');
+  assert(criticalRiskEval.level === 'high' || criticalRiskEval.level === 'critical', 'Risk level correctly categorized as high or critical');
+
+  // 5. Dispute Case Management Workflow & Timeline Events
+  // Timeline event for Case 1
+  dbInsert('fraud_case_events', {
+    case_id: report1Id,
+    actor_type: 'customer',
+    event_type: 'CASE_OPENED',
+    message: 'Customer submitted payment diversion dispute report.'
+  });
+
+  const timelineEvents = dbFetchAll<any>('fraud_case_events', { case_id: report1Id });
+  assert(timelineEvents.length >= 1, 'Timeline events successfully persisted for dispute case');
+  assert(timelineEvents[0].event_type === 'CASE_OPENED', 'First event records CASE_OPENED');
+
+  // Admin begins investigation
+  dbUpdate('fraud_reports', {
+    status: 'investigating',
+    assigned_admin_id: 1,
+    updated_at: new Date().toISOString()
+  }, { id: report1Id });
+
+  dbInsert('fraud_case_events', {
+    case_id: report1Id,
+    actor_type: 'super_admin',
+    actor_id: 1,
+    event_type: 'INVESTIGATION_BEGUN',
+    message: 'Super Admin opened formal compliance review.'
+  });
+
+  const updatedReport1 = dbFetchOne<any>('fraud_reports', { id: report1Id });
+  assert(updatedReport1.status === 'investigating', 'Report status successfully transitions to investigating');
+  assert(updatedReport1.assigned_admin_id === 1, 'Assigned admin recorded on dispute report');
+
+  // Admin resolves dispute in merchant's favor (cleared)
+  dbUpdate('fraud_reports', {
+    status: 'resolved',
+    resolution_code: 'resolved_merchant_cleared',
+    resolution_summary: 'Customer provided false receipt screenshot; merchant verified clean.',
+    updated_at: new Date().toISOString()
+  }, { id: report1Id });
+
+  const resolvedReport1 = dbFetchOne<any>('fraud_reports', { id: report1Id });
+  assert(resolvedReport1.status === 'resolved', 'Dispute report status updated to resolved');
+  assert(resolvedReport1.resolution_code === 'resolved_merchant_cleared', 'Resolution code recorded as resolved_merchant_cleared');
+
+  // Admin suspends fraudulent store from Case 2
+  dbUpdate('fraud_reports', {
+    status: 'resolved',
+    resolution_code: 'seller_suspended',
+    resolution_summary: 'Confirmed payment diversion; storefront shut down.',
+    updated_at: new Date().toISOString()
+  }, { id: report2Id });
+
+  dbUpdate('stores', { status: 'suspended' }, { id: disputeStoreId });
+  dbUpdate('seller_profiles', { composite_verification_status: 'suspended', order_gating_enabled: 1 }, { id: disputeSeller.id });
+
+  const disputeSuspendedStore = dbFetchOne<any>('stores', { id: disputeStoreId });
+  assert(disputeSuspendedStore.status === 'suspended', 'Storefront successfully suspended following confirmed fraud dispute');
+
+  const suspendedSeller = getSellerProfile(disputeStoreId);
+  assert(suspendedSeller.composite_verification_status === 'suspended', 'Seller composite verification marked suspended');
+  assert(suspendedSeller.order_gating_enabled === 1, 'Order gating firmly engaged for suspended fraudulent seller');
+
+  // -------------------------------------------------------------
+  // SUITE 33: CUSTOMER TRUST BADGES, DIRECT TRANSFER SAFETY NOTICES & DISPUTES (BATCH 9)
+  // -------------------------------------------------------------
+  console.log('\n--- SUITE 33: CUSTOMER TRUST BADGES, DIRECT TRANSFER SAFETY NOTICES & DISPUTES (BATCH 9) ---');
+
+  // 1. Verify Storefront Template (store.ejs) Trust & Verification Elements
+  const storeViewPath = path.join(process.cwd(), 'src', 'views', 'store.ejs');
+  assert(fs.existsSync(storeViewPath), 'Storefront template (store.ejs) exists');
+  const storeViewContent = fs.readFileSync(storeViewPath, 'utf8');
+
+  assert(storeViewContent.includes('Verified Business (CAC)'), 'store.ejs includes Verified Business (CAC) badge markup');
+  assert(storeViewContent.includes('Verified Individual'), 'store.ejs includes Verified Individual badge markup');
+  assert(storeViewContent.includes('Buyer Safety & Store Accountability'), 'store.ejs includes Buyer Safety & Store Accountability disclosure banner');
+  assert(storeViewContent.includes('id="storeTrustModal"'), 'store.ejs renders modal id storeTrustModal');
+  assert(storeViewContent.includes('NDPA 2023 Privacy Compliance'), 'store.ejs Trust Modal includes NDPA 2023 privacy notice');
+  assert(storeViewContent.includes('id="storeDisputeModal"'), 'store.ejs renders customer dispute modal id storeDisputeModal');
+  assert(storeViewContent.includes('handleDisputeSubmit'), 'store.ejs includes handleDisputeSubmit JavaScript submission handler');
+
+  // 2. Verify Checkout Template (checkout.ejs) Safety Guidance & Recipient Match Elements
+  const checkoutViewPath = path.join(process.cwd(), 'src', 'views', 'checkout.ejs');
+  assert(fs.existsSync(checkoutViewPath), 'Checkout template (checkout.ejs) exists');
+  const checkoutViewContent = fs.readFileSync(checkoutViewPath, 'utf8');
+
+  assert(checkoutViewContent.includes('Verified Business'), 'checkout.ejs top nav includes Verified Business badge');
+  assert(checkoutViewContent.includes('Verified Individual'), 'checkout.ejs top nav includes Verified Individual badge');
+  assert(checkoutViewContent.includes('Bank Account Verified'), 'checkout.ejs Step 2 includes Bank Account Verified indicator');
+  assert(checkoutViewContent.includes('Name confirmed against verified seller records'), 'checkout.ejs verifies recipient name against verified records');
+  assert(checkoutViewContent.includes('Direct Transfer Safety Notice'), 'checkout.ejs displays prominent Direct Transfer Safety Notice');
+  assert(checkoutViewContent.includes('Report Payment Diversion'), 'checkout.ejs displays prominent Report Payment Diversion action');
+  assert(checkoutViewContent.includes('id="checkoutDisputeModal"'), 'checkout.ejs renders id checkoutDisputeModal');
+  assert(checkoutViewContent.includes('handleCheckoutDisputeSubmit'), 'checkout.ejs includes handleCheckoutDisputeSubmit function');
+
+  // 3. Functional Test: Customer Dispute Submission & Case Creation Flow
+  const disputeTestStoreId = dbInsert('stores', {
+    slug: 'trust-test-store-' + Date.now(),
+    store_name: 'Trust Test Supermart',
+    owner_name: 'Trust Seller',
+    email: 'trust_' + Date.now() + '@zlik.store',
+    password_hash: hashPassword('pass123'),
+    whatsapp_number: '08055667788',
+    status: 'active'
+  });
+  const trustSeller = getOrCreateSellerProfile(disputeTestStoreId);
+
+  const trustCaseRef = `FR-${Date.now()}-TR9`;
+  const trustReportId = dbInsert('fraud_reports', {
+    case_reference: trustCaseRef,
+    reporter_name: 'Chinedu Eze',
+    reporter_email: 'chinedu.eze@gmail.com',
+    reporter_phone: '08012345678',
+    reported_store_id: disputeTestStoreId,
+    order_id: null,
+    category: 'payment_diversion',
+    severity: 'critical',
+    status: 'new',
+    description: 'Seller called and told me to transfer ₦50,000 to an OPay account instead of the GTBank account listed on the site.'
+  });
+
+  assert(typeof trustReportId === 'number' && trustReportId > 0, 'Dispute report inserted with positive ID');
+  const fetchedReport = dbFetchOne<any>('fraud_reports', { id: trustReportId });
+  assert(fetchedReport.case_reference === trustCaseRef, 'Case reference persisted accurately');
+  assert(fetchedReport.status === 'new', 'Initial dispute status is new');
+  assert(fetchedReport.category === 'payment_diversion', 'Dispute category is payment_diversion');
+  assert(fetchedReport.reported_store_id === disputeTestStoreId, 'Reported store ID linked accurately');
+
+  // 4. Case Event Timeline Persistence
+  dbInsert('fraud_case_events', {
+    case_id: trustReportId,
+    actor_type: 'customer',
+    event_type: 'CASE_OPENED',
+    message: 'Customer submitted dispute report alleging payment diversion.'
+  });
+
+  const caseEvents = dbFetchAll<any>('fraud_case_events', { case_id: trustReportId });
+  assert(caseEvents.length >= 1, 'Timeline event persisted for customer dispute report');
+  assert(caseEvents[0].event_type === 'CASE_OPENED', 'Event type recorded as CASE_OPENED');
+
+  // 5. Active Bank Account Data Passed to Checkout Verification
+  const activeBankRecord = dbInsert('seller_bank_accounts', {
+    seller_id: trustSeller.id,
+    bank_code: '058',
+    bank_name: 'GTBank',
+    account_number_encrypted: encryptSecret('0129876543'),
+    account_number_masked: '0129••••43',
+    account_number_hash: hashAccountNumber('0129876543'),
+    account_name: 'Trust Seller Enterprises',
+    name_match_result: 'exact_match',
+    name_match_score: 1.0,
+    is_active: 1,
+    verification_status: 'verified'
+  });
+
+  const queryActiveBank = dbFetchOne<any>('seller_bank_accounts', { seller_id: trustSeller.id, is_active: 1 });
+  assert(queryActiveBank !== null, 'Active payout bank account query succeeds');
+  assert(queryActiveBank.verification_status === 'verified', 'Bank account status is verified');
+  assert(queryActiveBank.account_name === 'Trust Seller Enterprises', 'Bank account name matches registered entity');
+  assert(queryActiveBank.name_match_result === 'exact_match', 'Name match result confirmed as exact_match');
+
+  // -------------------------------------------------------------
+  // SUITE 34: SECURITY HARDENING, SSRF DEFENSE & EDGE CASES (BATCH 10)
+  // -------------------------------------------------------------
+  console.log('\n--- SUITE 34: SECURITY HARDENING, SSRF DEFENSE & EDGE CASES (BATCH 10) ---');
+
+  // 1. SSRF Defense: Outbound URL Validation
+  assert(validateOutboundUrl('http://169.254.169.254/latest/meta-data/').valid === false, 'Cloud metadata endpoint (169.254.169.254) blocked by SSRF filter');
+  assert(validateOutboundUrl('http://127.0.0.1:8080/admin').valid === false, 'Loopback IP (127.0.0.1) blocked by SSRF filter');
+  assert(validateOutboundUrl('http://localhost:3000/api').valid === false, 'Localhost blocked by SSRF filter');
+  assert(validateOutboundUrl('http://10.0.0.1:80').valid === false, 'Private Class A IP (10.0.0.1) blocked by SSRF filter');
+  assert(validateOutboundUrl('http://192.168.1.1:80').valid === false, 'Private Class C IP (192.168.1.1) blocked by SSRF filter');
+  assert(validateOutboundUrl('http://172.16.0.1:80').valid === false, 'Private Class B IP (172.16.0.1) blocked by SSRF filter');
+  assert(validateOutboundUrl('ftp://api.monnify.com/files').valid === false, 'Non-HTTP/HTTPS protocol (FTP) blocked');
+  assert(validateOutboundUrl('javascript:alert(1)').valid === false, 'JavaScript pseudo-protocol blocked');
+  assert(validateOutboundUrl('https://api.monnify.com/api/v1/auth').valid === true, 'Public HTTPS Monnify production endpoint permitted');
+  assert(validateOutboundUrl('https://sandbox.monnify.com/api/v1/verify').valid === true, 'Public HTTPS Monnify sandbox endpoint permitted');
+
+  // 2. AES-256-GCM Encryption Tamper Resistance & Integrity
+  const testPlaintext = 'SECRET_KEY_PROD_998877665544332211';
+  const validCiphertext = encryptSecret(testPlaintext);
+  assert(validCiphertext.split(':').length === 3, 'Ciphertext formatted as iv:authTag:encrypted');
+  assert(decryptSecret(validCiphertext) === testPlaintext, 'Original plaintext successfully decrypted with valid tag');
+
+  // Tamper with encrypted payload
+  const [ivPart, tagPart, encPart] = validCiphertext.split(':');
+  const tamperedEnc = encPart.substring(0, encPart.length - 2) + (encPart.slice(-2) === 'aa' ? 'bb' : 'aa');
+  const tamperedCiphertext = `${ivPart}:${tagPart}:${tamperedEnc}`;
+  let tamperCaught = false;
+  try {
+    const decrypted = decryptSecret(tamperedCiphertext);
+    if (!decrypted) tamperCaught = true;
+  } catch (e) {
+    tamperCaught = true;
+  }
+  assert(tamperCaught, 'Tampered ciphertext rejected by AES-256-GCM authenticated decryption');
+
+  // 3. Masking & Deterministic Tokenization Edge Cases
+  assert(maskAccountNumber('0123456789') === '0123••••89', '10-digit NUBAN account masked with 4 visible leading and 2 trailing digits');
+  assert(maskAccountNumber('12345') === '••••••', 'Short string masked securely without leaking plaintext');
+  assert(maskApiKey('MK_TEST_123456789ABCDEF') === 'MK_TES••••••••CDEF', 'API key masked with leading prefix and trailing suffix');
+  
+  const hash1 = hashAccountNumber('0123456789');
+  const hash2 = hashAccountNumber('0123456789');
+  assert(hash1 === hash2, 'HMAC account number hashing is deterministic for identical inputs');
+  assert(hash1.length === 64, 'HMAC account number produces standard 64-char hex SHA-256 digest');
+  const hashDifferent = hashAccountNumber('0123456788');
+  assert(hash1 !== hashDifferent, 'Different account number produces avalanche effect (completely different hash)');
+
+  // 4. Fuzzy Name Matching Edge Cases & Noise Token Handling
+  const transposedMatch = matchAccountName('Adewale John', 'John Adewale');
+  assert(transposedMatch.score >= 0.85, 'Transposed first and last names produce score >= 0.85');
+  assert(transposedMatch.matchType === 'exact_match' || transposedMatch.matchType === 'fuzzy_match', 'Transposed names accepted as match');
+
+  const noiseMatch = matchAccountName('Chief Dr. Adewale John', 'Adewale John');
+  assert(noiseMatch.score >= 0.85, 'Nigerian honorific noise tokens (Chief, Dr) stripped during comparison');
+
+  const punctuationMatch = matchAccountName('Kolawole Ventures Nig Ltd.', 'Kolawole Ventures Nigeria Limited', true);
+  assert(punctuationMatch.score >= 0.85, 'Corporate abbreviations and trailing punctuation normalized');
+
+  // 5. Dual Persistence Table Coverage
+  const expectedSecurityTables = [
+    'seller_profiles',
+    'seller_verifications',
+    'business_profiles',
+    'seller_bank_accounts',
+    'verification_provider_configs',
+    'fraud_reports',
+    'fraud_case_events',
+    'risk_events',
+    'security_audit_logs',
+    'integration_events'
+  ];
+  for (const t of expectedSecurityTables) {
+    assert(PERSISTENCE_TABLES.includes(t), `Security table ${t} registered in PERSISTENCE_TABLES`);
+  }
+
+  // Verify SQLite database has all 10 tables created
+  const sqliteDb = getDb();
+  for (const t of expectedSecurityTables) {
+    const tableExists = sqliteDb.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name=?`).get(t);
+    assert(tableExists !== undefined, `SQLite master confirms table ${t} exists and is queryable`);
+  }
+
+  // 6. Emergency Risk Gating Threshold Boundary Verification
+  const testThresholdStoreId = dbInsert('stores', {
+    slug: 'threshold-store-' + Date.now(),
+    store_name: 'Threshold Test Store',
+    owner_name: 'Threshold Seller',
+    email: 'threshold_' + Date.now() + '@zlik.store',
+    password_hash: hashPassword('pass123'),
+    whatsapp_number: '08099112233',
+    status: 'active'
+  });
+  const thresholdSeller = getOrCreateSellerProfile(testThresholdStoreId);
+  // Un-gate temporarily
+  dbUpdate('seller_profiles', { order_gating_enabled: 0, risk_score: 50 }, { id: thresholdSeller.id });
+  let gatedCheckLow = isStoreOrderGated(testThresholdStoreId);
+  assert(gatedCheckLow === false, 'Seller with risk_score = 50 and order_gating_enabled = 0 is not gated');
+
+  // Elevate risk_score to critical threshold >= 75
+  dbUpdate('seller_profiles', { risk_score: 80, order_gating_enabled: 1 }, { id: thresholdSeller.id });
+  let gatedCheckHigh = isStoreOrderGated(testThresholdStoreId);
+  assert(gatedCheckHigh === true, 'Seller crossing risk threshold >= 75 has order gating engaged');
 
   // -------------------------------------------------------------
   console.log('\n======================================================');

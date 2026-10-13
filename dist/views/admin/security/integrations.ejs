@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            zlikDark: '#08110D',
+            zlikGreen: '#19D98B',
+            zlikDeepGreen: '#087A50',
+            zlikBg: '#F8FAF8',
+            zlikWhite: '#FFFFFF',
+            zlikSecondary: '#6B756F',
+            zlikBorder: '#E3E9E5'
+          },
+          fontFamily: {
+            display: ['Montserrat', 'sans-serif'],
+            body: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #08110D; color: #FFFFFF; }
+    .font-display { font-family: 'Montserrat', sans-serif; }
+  </style>
+</head>
+<body class="bg-[#08110D] text-white min-h-screen selection:bg-[#19D98B] selection:text-[#08110D]">
+
+  <!-- Top Navbar -->
+  <header class="border-b border-white/10 bg-[#08110D]/90 sticky top-0 z-40 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <a href="/<%= adminPath %>" class="text-2xl font-extrabold font-display tracking-tight text-white flex items-center gap-1">
+          zlik<span class="text-[#19D98B]">.</span>
+          <span class="text-xs uppercase px-2 py-0.5 ml-2 bg-[#19D98B]/20 text-[#19D98B] font-bold rounded tracking-wider">Console</span>
+        </a>
+        <span class="text-white/30 hidden sm:inline">/</span>
+        <a href="/<%= adminPath %>/security" class="text-sm font-semibold text-white/70 hover:text-white flex items-center gap-1.5 hidden sm:flex">
+          🛡️ Security & Trust
+        </a>
+        <span class="text-white/30 hidden sm:inline">/</span>
+        <span class="text-sm font-semibold text-[#19D98B] hidden sm:inline">Monnify Identity Settings</span>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <a href="/<%= adminPath %>/security" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/20 text-white/80 hover:text-white hover:border-white/40 transition">
+          ← Security Cockpit
+        </a>
+        <div class="text-right hidden sm:block">
+          <div class="text-xs font-bold text-white"><%= currentAdmin ? currentAdmin.name : 'Administrator' %></div>
+          <div class="text-[11px] text-[#19D98B] uppercase font-semibold tracking-wider"><%= currentAdmin && currentAdmin.role_info ? currentAdmin.role_info.name : 'Super Admin' %></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Header & Status Banner -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+      <div>
+        <h1 class="text-2xl font-extrabold font-display text-white flex items-center gap-2">
+          <span>⚙️ Monnify Identity & Bank Verification Settings</span>
+        </h1>
+        <p class="text-xs text-white/60 mt-1">
+          Configure API credentials at rest with AES-256-GCM encryption, switch between Sandbox and Production, and verify connection health.
+        </p>
+      </div>
+
+      <!-- Live Provider Status -->
+      <div class="flex items-center gap-2">
+        <% if (config.status === 'active') { %>
+          <div class="px-3.5 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-extrabold flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            ACTIVE & HEALTHY
+          </div>
+        <% } else if (config.status === 'error') { %>
+          <div class="px-3.5 py-1.5 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-extrabold flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-red-400"></span>
+            CONNECTION ERROR
+          </div>
+        <% } else { %>
+          <div class="px-3.5 py-1.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-extrabold flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            NOT CONFIGURED
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Security Information Card -->
+    <div class="bg-white/[0.03] border border-white/10 rounded-2xl p-5 flex items-start gap-4 text-xs">
+      <div class="w-9 h-9 rounded-xl bg-[#19D98B]/10 border border-[#19D98B]/20 flex items-center justify-center text-lg shrink-0">
+        🔒
+      </div>
+      <div class="space-y-1">
+        <div class="font-bold text-white">Zero Redeployment Credential Vault</div>
+        <p class="text-white/60 text-[11px] leading-relaxed">
+          Credentials are encrypted at rest with AES-256-GCM and authenticated using GCM auth tags. Outbound API calls strictly enforce HTTPS and whitelist validation against <code>sandbox.monnify.com</code> and <code>api.monnify.com</code> to prevent Server-Side Request Forgery (SSRF).
+        </p>
+      </div>
+    </div>
+
+    <!-- Configuration Form & Action Panel -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- Settings Form (2 Columns) -->
+      <div class="lg:col-span-2 bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-7 space-y-6">
+        <h2 class="text-sm font-bold font-display uppercase tracking-wider text-white border-b border-white/10 pb-4">
+          Provider Credentials & Environment
+        </h2>
+
+        <form id="providerConfigForm" onsubmit="handleSaveConfig(event)" class="space-y-5 text-xs">
+          
+          <!-- Environment Selector -->
+          <div>
+            <label class="block text-[11px] font-semibold text-white/60 uppercase mb-2">Environment Mode</label>
+            <div class="grid grid-cols-2 gap-3">
+              <label class="flex items-center gap-3 p-3.5 rounded-xl bg-black/40 border border-white/10 cursor-pointer hover:border-[#19D98B]/50 transition">
+                <input type="radio" name="environment" value="sandbox" <%= config.environment === 'sandbox' ? 'checked' : '' %> onchange="updateBaseUrlDisplay('sandbox')" class="accent-[#19D98B]">
+                <div>
+                  <div class="font-bold text-white">Sandbox Mode</div>
+                  <div class="text-[10px] text-white/50">Safe testing environment</div>
+                </div>
+              </label>
+
+              <label class="flex items-center gap-3 p-3.5 rounded-xl bg-black/40 border border-white/10 cursor-pointer hover:border-[#19D98B]/50 transition">
+                <input type="radio" name="environment" value="live" <%= config.environment === 'live' ? 'checked' : '' %> onchange="updateBaseUrlDisplay('live')" class="accent-[#19D98B]">
+                <div>
+                  <div class="font-bold text-white">Production (Live)</div>
+                  <div class="text-[10px] text-emerald-400 font-semibold">Authoritative CBN / NIBSS check</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Base URL (Read-only SSRF Safeguard) -->
+          <div>
+            <label class="block text-[11px] font-semibold text-white/60 uppercase mb-1.5">Validated Base URL (SSRF Whitelisted)</label>
+            <input type="text" id="baseUrlDisplay" value="<%= config.base_url %>" readonly class="w-full bg-black/60 border border-white/10 rounded-xl px-3.5 py-2.5 text-white/70 font-mono text-xs cursor-not-allowed">
+            <span class="text-[10px] text-white/40 mt-1 block">Automatically set based on selected environment to eliminate URL tampering.</span>
+          </div>
+
+          <!-- Monnify API Key -->
+          <div>
+            <label class="block text-[11px] font-semibold text-white/60 uppercase mb-1.5">Monnify API Key</label>
+            <input type="text" name="api_key" placeholder="Enter new API key (or leave empty to keep existing)" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-white placeholder-white/30 font-mono text-xs focus:outline-none focus:border-[#19D98B]">
+            <div class="text-[11px] text-white/50 mt-1">
+              Current Key on file: <code class="text-[#19D98B] font-mono"><%= config.api_key_masked %></code>
+            </div>
+          </div>
+
+          <!-- Monnify Secret Key -->
+          <div>
+            <label class="block text-[11px] font-semibold text-white/60 uppercase mb-1.5">Monnify Secret Key</label>
+            <input type="password" name="secret_key" placeholder="Enter new Secret key (or leave empty to keep existing)" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-white placeholder-white/30 font-mono text-xs focus:outline-none focus:border-[#19D98B]">
+            <span class="text-[10px] text-white/40 mt-1 block">Secret keys are never returned to the browser in plaintext.</span>
+          </div>
+
+          <!-- Contract Code -->
+          <div>
+            <label class="block text-[11px] font-semibold text-white/60 uppercase mb-1.5">Monnify Contract Code (Optional)</label>
+            <input type="text" name="contract_code" value="<%= config.contract_code %>" placeholder="e.g. 1234567890" class="w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-white placeholder-white/30 font-mono text-xs focus:outline-none focus:border-[#19D98B]">
+          </div>
+
+          <!-- Enabled Capabilities -->
+          <div class="space-y-2 pt-2">
+            <label class="block text-[11px] font-semibold text-white/60 uppercase mb-2">Enabled Provider Capabilities</label>
+            
+            <label class="flex items-center gap-3 p-3 rounded-xl bg-black/30 border border-white/5 cursor-pointer">
+              <input type="checkbox" name="capabilities" value="account_enquiry" <%= config.enabled_capabilities.includes('account_enquiry') ? 'checked' : '' %> class="accent-[#19D98B]">
+              <div>
+                <div class="font-bold text-white">Bank Account Name Resolution</div>
+                <div class="text-[10px] text-white/50">Resolves recipient account name from 10-digit NUBAN and bank code.</div>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-3 p-3 rounded-xl bg-black/30 border border-white/5 cursor-pointer">
+              <input type="checkbox" name="capabilities" value="bvn_match" <%= config.enabled_capabilities.includes('bvn_match') ? 'checked' : '' %> class="accent-[#19D98B]">
+              <div>
+                <div class="font-bold text-white">BVN Match & Validation</div>
+                <div class="text-[10px] text-white/50">Verifies account holder identity against BVN (Live mode only by regulation).</div>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-3 p-3 rounded-xl bg-black/30 border border-white/5 cursor-pointer">
+              <input type="checkbox" name="capabilities" value="nin_match" <%= config.enabled_capabilities.includes('nin_match') ? 'checked' : '' %> class="accent-[#19D98B]">
+              <div>
+                <div class="font-bold text-white">NIN Identity Validation</div>
+                <div class="text-[10px] text-white/50">Cross-checks legal name against National Identity Management Commission database.</div>
+              </div>
+            </label>
+          </div>
+
+          <div class="pt-4 border-t border-white/10 flex items-center justify-end gap-3">
+            <button type="submit" id="saveBtn" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#19D98B] text-[#08110D] hover:opacity-90 transition shadow-lg shadow-[#19D98B]/20">
+              Save Configuration
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Diagnostic & Testing Card (1 Column) -->
+      <div class="space-y-6">
+        
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+          <h2 class="text-sm font-bold font-display uppercase tracking-wider text-white border-b border-white/10 pb-4">
+            Connection Diagnostics
+          </h2>
+
+          <div class="space-y-3 text-xs">
+            <div class="flex justify-between items-center py-1">
+              <span class="text-white/50">Provider:</span>
+              <strong class="text-white">Monnify (TeamApt)</strong>
+            </div>
+            <div class="flex justify-between items-center py-1">
+              <span class="text-white/50">Last Tested:</span>
+              <span class="font-mono text-white/80"><%= config.last_tested_at || 'Never' %></span>
+            </div>
+            <div class="flex justify-between items-center py-1">
+              <span class="text-white/50">Last Result:</span>
+              <span class="font-mono text-emerald-400 font-bold"><%= config.last_test_result || 'N/A' %></span>
+            </div>
+            <% if (config.last_test_error) { %>
+              <div class="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-[11px]">
+                Error: <%= config.last_test_error %>
+              </div>
+            <% } %>
+          </div>
+
+          <div class="pt-4 border-t border-white/10">
+            <button onclick="handleTestConnection()" id="testBtn" class="w-full py-2.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white transition flex items-center justify-center gap-2">
+              <span>⚡ Test Monnify Handshake</span>
+            </button>
+          </div>
+
+          <div id="testOutput" class="hidden p-3.5 rounded-xl text-xs space-y-1"></div>
+        </div>
+
+        <!-- Monnify Test Guidelines -->
+        <div class="bg-white/[0.02] border border-white/10 rounded-2xl p-5 space-y-2 text-xs">
+          <div class="font-bold text-white flex items-center gap-1.5">
+            <span>💡 Integration Guidance</span>
+          </div>
+          <p class="text-[11px] text-white/50 leading-relaxed">
+            In Monnify Sandbox, live BVN and NIN checks are mocked according to CBN privacy mandates. For end-to-end testing, use the designated sandbox test accounts provided in Monnify's developer portal.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Outbound Integration Events Audit -->
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-white/10 pb-4">
+        <h2 class="text-sm font-bold font-display uppercase tracking-wider text-white flex items-center gap-2">
+          <span>📡 Outbound Integration Activity Log</span>
+        </h2>
+        <span class="text-xs text-white/40">Real-time HTTP handshakes & latency telemetry</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs font-mono text-[11px]">
+          <thead>
+            <tr class="text-white/40 border-b border-white/5">
+              <th class="pb-2.5 font-semibold">Timestamp</th>
+              <th class="pb-2.5 font-semibold">Method</th>
+              <th class="pb-2.5 font-semibold">Endpoint</th>
+              <th class="pb-2.5 font-semibold">Status Code</th>
+              <th class="pb-2.5 font-semibold">Latency</th>
+              <th class="pb-2.5 font-semibold text-right">Result</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-white/5">
+            <% if (recentEvents && recentEvents.length > 0) { %>
+              <% recentEvents.forEach(evt => { %>
+                <tr class="hover:bg-white/[0.02]">
+                  <td class="py-2.5 text-white/50"><%= evt.created_at %></td>
+                  <td class="py-2.5 font-bold text-purple-300"><%= evt.request_method %></td>
+                  <td class="py-2.5 text-white"><%= evt.endpoint %></td>
+                  <td class="py-2.5 text-white/70"><%= evt.status_code || '-' %></td>
+                  <td class="py-2.5 text-white/60"><%= evt.duration_ms ? evt.duration_ms + 'ms' : '-' %></td>
+                  <td class="py-2.5 text-right">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase <%= evt.result === 'success' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400' %>">
+                      <%= evt.result %>
+                    </span>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <tr>
+                <td colspan="6" class="py-6 text-center text-white/40 font-sans">No outbound integration calls recorded yet.</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function updateBaseUrlDisplay(env) {
+      const baseUrlInput = document.getElementById('baseUrlDisplay');
+      if (env === 'live') {
+        baseUrlInput.value = 'https://api.monnify.com';
+      } else {
+        baseUrlInput.value = 'https://sandbox.monnify.com';
+      }
+    }
+
+    async function handleSaveConfig(e) {
+      e.preventDefault();
+      const form = e.target;
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true;
+      btn.innerText = 'Saving...';
+
+      const formData = new FormData(form);
+      const capabilities = [];
+      form.querySelectorAll('input[name="capabilities"]:checked').forEach(cb => capabilities.push(cb.value));
+
+      const payload = {
+        environment: formData.get('environment'),
+        api_key: formData.get('api_key') || undefined,
+        secret_key: formData.get('secret_key') || undefined,
+        contract_code: formData.get('contract_code') || '',
+        enabled_capabilities: capabilities
+      };
+
+      try {
+        const res = await fetch('/api/admin/security/integrations/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('Configuration saved securely.');
+          window.location.reload();
+        } else {
+          alert('Error: ' + (data.error || 'Failed to save configuration'));
+        }
+      } catch (err) {
+        alert('Request failed: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Save Configuration';
+      }
+    }
+
+    async function handleTestConnection() {
+      const btn = document.getElementById('testBtn');
+      const out = document.getElementById('testOutput');
+      btn.disabled = true;
+      btn.innerText = 'Testing Handshake...';
+      out.className = 'p-3.5 rounded-xl text-xs space-y-1 bg-white/5 border border-white/10 block';
+      out.innerHTML = '<span class="text-white/60">Dispatching handshake request to Monnify...</span>';
+
+      try {
+        const res = await fetch('/api/admin/security/integrations/test', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          out.className = 'p-3.5 rounded-xl text-xs space-y-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 block';
+          out.innerHTML = `<strong>✓ Success!</strong> <div>${data.message}</div>`;
+        } else {
+          out.className = 'p-3.5 rounded-xl text-xs space-y-1 bg-red-500/10 border border-red-500/30 text-red-300 block';
+          out.innerHTML = `<strong>✕ Connection Failed:</strong> <div>${data.error || 'Unknown error'} (${data.latencyMs || 0}ms)</div>`;
+        }
+      } catch (err) {
+        out.className = 'p-3.5 rounded-xl text-xs space-y-1 bg-red-500/10 border border-red-500/30 text-red-300 block';
+        out.innerHTML = `<strong>✕ Network Error:</strong> <div>${err.message}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerText = '⚡ Test Monnify Handshake';
+      }
+    }
+  </script>
+
+</body>
+</html>

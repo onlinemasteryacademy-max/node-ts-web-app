@@ -18,13 +18,7 @@ function copyDirSync(src, dest) {
   }
 }
 
-// 1. Run safe asset recovery to ensure any new/historical uploads are in data/uploads
-try {
-  require('./recover_assets.js');
-} catch (e) {
-  console.warn('⚠️ Asset recovery warning:', e.message);
-}
-
+// Views and static assets copy
 copyDirSync(path.join(rootDir, 'src', 'views'), path.join(rootDir, 'dist', 'views'));
 copyDirSync(path.join(rootDir, 'src', 'public'), path.join(rootDir, 'dist', 'public'));
 

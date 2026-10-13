@@ -1,0 +1,267 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.encryptSecret = encryptSecret;
+exports.decryptSecret = decryptSecret;
+exports.maskAccountNumber = maskAccountNumber;
+exports.hashAccountNumber = hashAccountNumber;
+exports.maskApiKey = maskApiKey;
+exports.initSecurityDataModel = initSecurityDataModel;
+exports.getSellerProfile = getSellerProfile;
+exports.getOrCreateSellerProfile = getOrCreateSellerProfile;
+exports.logSecurityAudit = logSecurityAudit;
+exports.recordRiskEvent = recordRiskEvent;
+exports.isStoreOrderGated = isStoreOrderGated;
+const node_crypto_1 = __importDefault(require("node:crypto"));
+const db_js_1 = require("../../db/db.js");
+const env_js_1 = require("../../config/env.js");
+/**
+ * Key derivation for AES-256-GCM encryption of sensitive secrets
+ */
+function getDerivedKey() {
+    const secret = process.env.ENCRYPTION_KEY || env_js_1.ENV.SESSION_SECRET || 'zlik_super_secure_vault_master_key_2026';
+    return node_crypto_1.default.createHash('sha256').update(secret).digest();
+}
+/**
+ * Encrypt sensitive string (e.g. API keys, bank account numbers) using AES-256-GCM
+ */
+function encryptSecret(plaintext) {
+    if (!plaintext)
+        return '';
+    const key = getDerivedKey();
+    const iv = node_crypto_1.default.randomBytes(12);
+    const cipher = node_crypto_1.default.createCipheriv('aes-256-gcm', key, iv);
+    let encrypted = cipher.update(plaintext, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    const authTag = cipher.getAuthTag();
+    return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
+}
+/**
+ * Decrypt sensitive string using AES-256-GCM
+ */
+function decryptSecret(ciphertext) {
+    if (!ciphertext)
+        return '';
+    try {
+        const parts = ciphertext.split(':');
+        if (parts.length !== 3)
+            return ciphertext; // Fallback if unencrypted
+        const [ivHex, authTagHex, encryptedHex] = parts;
+        const key = getDerivedKey();
+        const iv = Buffer.from(ivHex, 'hex');
+        const authTag = Buffer.from(authTagHex, 'hex');
+        const decipher = node_crypto_1.default.createDecipheriv('aes-256-gcm', key, iv);
+        decipher.setAuthTag(authTag);
+        let decrypted = decipher.update(encryptedHex, 'hex', 'utf8');
+        decrypted += decipher.final('utf8');
+        return decrypted;
+    }
+    catch (err) {
+        return '';
+    }
+}
+/**
+ * Mask a bank account number safely (e.g. '0123456789' -> '0123••••89')
+ */
+function maskAccountNumber(accountNumber) {
+    const clean = String(accountNumber || '').trim();
+    if (clean.length < 6)
+        return '••••••';
+    return clean.slice(0, 4) + '••••' + clean.slice(-2);
+}
+/**
+ * Compute HMAC-SHA256 hash of an account number for duplicate bank detection without storing plaintext
+ */
+function hashAccountNumber(accountNumber) {
+    const clean = String(accountNumber || '').trim().replace(/[^0-9]/g, '');
+    return node_crypto_1.default.createHmac('sha256', getDerivedKey()).update(clean).digest('hex');
+}
+/**
+ * Mask an API key or Secret key for safe administrative display
+ */
+function maskApiKey(apiKey) {
+    const clean = String(apiKey || '').trim();
+    if (clean.length <= 8)
+        return '••••••••';
+    const prefix = clean.slice(0, 6);
+    const suffix = clean.slice(-4);
+    return `${prefix}••••••••${suffix}`;
+}
+/**
+ * Initialize and backfill Security & Trust data model
+ * Safe and idempotent: preserves all existing store data, products, and orders.
+ */
+function initSecurityDataModel() {
+    const db = (0, db_js_1.getDb)();
+    // 1. Seed default Monnify provider configuration if absent
+    try {
+        const existingMonnify = (0, db_js_1.dbFetchOne)('verification_provider_configs', { provider_key: 'monnify' });
+        if (!existingMonnify) {
+            (0, db_js_1.dbInsert)('verification_provider_configs', {
+                provider_key: 'monnify',
+                display_name: 'Monnify Verification Services',
+                environment: 'sandbox',
+                base_url: 'https://sandbox.monnify.com',
+                api_key_encrypted: null,
+                secret_key_encrypted: null,
+                api_key_masked: null,
+                contract_code: null,
+                enabled_capabilities_json: JSON.stringify(['account_enquiry', 'bvn_match', 'nin_match']),
+                status: 'not_configured'
+            });
+        }
+    }
+    catch (e) { }
+    // 2. Backfill existing stores into seller_profiles and seller_bank_accounts
+    try {
+        const stores = (0, db_js_1.dbFetchAll)('stores');
+        for (const store of stores) {
+            let seller = (0, db_js_1.dbFetchOne)('seller_profiles', { store_id: store.id });
+            if (!seller) {
+                const isVerified = Number(store.is_verified) === 1;
+                const sellerId = (0, db_js_1.dbInsert)('seller_profiles', {
+                    store_id: store.id,
+                    seller_type: store.business_type === 'company' || store.business_type === 'registered' ? 'business' : 'personal',
+                    legal_name: store.owner_name || store.store_name,
+                    public_store_name: store.store_name,
+                    identity_status: isVerified ? 'verified' : 'not_started',
+                    bank_status: store.bank_account_number ? (isVerified ? 'verified' : 'pending') : 'not_started',
+                    business_status: 'not_started',
+                    composite_verification_status: isVerified ? 'verified' : 'unverified',
+                    risk_level: 'low',
+                    risk_score: 0,
+                    order_gating_enabled: 1, // Legacy stores remain operational
+                    identity_consent_given: isVerified ? 1 : 0,
+                    consent_timestamp: isVerified ? new Date().toISOString() : null
+                });
+                // Migrate bank account if defined
+                if (store.bank_account_number && store.bank_name) {
+                    const rawAcct = String(store.bank_account_number).trim();
+                    (0, db_js_1.dbInsert)('seller_bank_accounts', {
+                        seller_id: sellerId,
+                        bank_code: '000',
+                        bank_name: store.bank_name.trim(),
+                        account_number_encrypted: encryptSecret(rawAcct),
+                        account_number_masked: maskAccountNumber(rawAcct),
+                        account_number_hash: hashAccountNumber(rawAcct),
+                        account_name: (store.bank_account_name || store.owner_name || store.store_name).trim(),
+                        account_type: 'individual',
+                        name_match_score: isVerified ? 1.0 : 0.0,
+                        name_match_result: isVerified ? 'exact_match' : 'pending',
+                        verification_status: isVerified ? 'verified' : 'pending',
+                        is_active: 1,
+                        verified_at: isVerified ? new Date().toISOString() : null
+                    });
+                }
+            }
+        }
+    }
+    catch (e) { }
+}
+/**
+ * Fetch a seller's profile by store ID
+ */
+function getSellerProfile(storeId) {
+    return (0, db_js_1.dbFetchOne)('seller_profiles', { store_id: storeId });
+}
+/**
+ * Fetch or auto-create a seller's profile by store ID
+ */
+function getOrCreateSellerProfile(storeId) {
+    let profile = (0, db_js_1.dbFetchOne)('seller_profiles', { store_id: storeId });
+    if (!profile) {
+        const store = (0, db_js_1.dbFetchOne)('stores', { id: storeId });
+        if (!store)
+            return null;
+        const isVerified = Number(store.is_verified) === 1;
+        const newId = (0, db_js_1.dbInsert)('seller_profiles', {
+            store_id: store.id,
+            seller_type: 'personal',
+            legal_name: store.owner_name || store.store_name,
+            public_store_name: store.store_name,
+            identity_status: isVerified ? 'verified' : 'not_started',
+            bank_status: store.bank_account_number ? (isVerified ? 'verified' : 'pending') : 'not_started',
+            business_status: 'not_started',
+            composite_verification_status: isVerified ? 'verified' : 'unverified',
+            risk_level: 'low',
+            risk_score: 0,
+            order_gating_enabled: 1,
+            identity_consent_given: isVerified ? 1 : 0
+        });
+        profile = (0, db_js_1.dbFetchOne)('seller_profiles', { id: newId });
+    }
+    return profile;
+}
+/**
+ * Log a high-integrity security audit event
+ */
+function logSecurityAudit(params) {
+    try {
+        (0, db_js_1.dbInsert)('security_audit_logs', {
+            actor_type: params.actor_type,
+            actor_id: params.actor_id || null,
+            action: params.action,
+            target_type: params.target_type || null,
+            target_id: params.target_id || null,
+            reason: params.reason || null,
+            ip_address: params.ip_address || null
+        });
+    }
+    catch (e) { }
+}
+/**
+ * Record a risk event and adjust seller's composite risk score
+ */
+function recordRiskEvent(params) {
+    try {
+        const seller = (0, db_js_1.dbFetchOne)('seller_profiles', { id: params.seller_id });
+        if (!seller)
+            return;
+        const currentScore = Number(seller.risk_score || 0);
+        const newScore = Math.max(0, Math.min(100, currentScore + params.score_delta));
+        let riskLevel = 'low';
+        if (newScore >= 75)
+            riskLevel = 'critical';
+        else if (newScore >= 50)
+            riskLevel = 'high';
+        else if (newScore >= 25)
+            riskLevel = 'medium';
+        (0, db_js_1.dbInsert)('risk_events', {
+            seller_id: params.seller_id,
+            event_type: params.event_type,
+            score_delta: params.score_delta,
+            new_score: newScore,
+            reason_code: params.reason_code,
+            metadata_json: params.metadata ? JSON.stringify(params.metadata) : null
+        });
+        (0, db_js_1.dbUpdate)('seller_profiles', {
+            risk_score: newScore,
+            risk_level: riskLevel
+        }, { id: params.seller_id });
+    }
+    catch (e) { }
+}
+/**
+ * Evaluates whether customer orders & payment instructions are gated for a storefront.
+ * Gating is active if seller is unverified and order_gating_enabled is 1.
+ */
+function isStoreOrderGated(storeId) {
+    const store = (0, db_js_1.dbFetchOne)('stores', { id: storeId });
+    if (!store || store.status === 'deleted')
+        return true;
+    // If store is explicitly verified by super admin
+    if (Number(store.is_verified) === 1)
+        return false;
+    const seller = getOrCreateSellerProfile(storeId);
+    if (!seller)
+        return false;
+    // If Super Admin explicitly disabled order gating for this store
+    if (Number(seller.order_gating_enabled) === 0)
+        return false;
+    // If seller passed full composite verification (identity + bank)
+    if (seller.composite_verification_status === 'verified')
+        return false;
+    return true;
+}
