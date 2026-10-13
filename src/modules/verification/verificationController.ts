@@ -7,7 +7,7 @@ import { submitBusinessVerification, getBusinessProfile } from './businessVerifi
 export async function verificationRoutes(fastify: FastifyInstance) {
   /**
    * GET /api/merchant/verification/status
-   * Live Verification & Gating Status for Merchant Store
+   * Live Verification & Gating Status for Merchant Store (Unified security status + store readiness metrics)
    */
   fastify.get('/api/merchant/verification/status', async (req: FastifyRequest, reply: FastifyReply) => {
     const store = (req as any).session?.merchantStore;
@@ -15,14 +15,28 @@ export async function verificationRoutes(fastify: FastifyInstance) {
       return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
     }
 
+    const currentStore = dbFetchOne<any>('stores', { id: store.id }) || store;
     const seller = getOrCreateSellerProfile(store.id);
     const isGated = isStoreOrderGated(store.id);
     const bankAccounts = dbFetchAll<any>('seller_bank_accounts', { seller_id: seller.id });
     const verifications = dbFetchAll<any>('seller_verifications', { seller_id: seller.id }, 'id DESC');
     const business = getBusinessProfile(seller.id);
 
+    // Compute storefront trust & readiness metrics
+    const paidOrders = dbFetchAll<any>('orders', { store_id: store.id, payment_status: 'paid' });
+    const reviews = dbFetchAll<any>('reviews', { store_id: store.id, status: 'published' });
+    const items = dbFetchAll<any>('items', { store_id: store.id, is_available: 1 });
+
+    const avgRating = reviews.length > 0 
+      ? (reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / reviews.length).toFixed(1)
+      : '5.0';
+
+    const isVerified = Boolean(currentStore.is_verified || seller.composite_verification_status === 'verified');
+    const verificationRequested = Boolean(currentStore.verification_requested);
+
     return reply.send({
       success: true,
+      // Security & Trust Profile
       seller_profile: seller,
       business_profile: business,
       is_gated: isGated,
@@ -31,7 +45,18 @@ export async function verificationRoutes(fastify: FastifyInstance) {
       bank_status: seller.bank_status,
       business_status: seller.business_status,
       bank_accounts: bankAccounts,
-      verifications: verifications
+      verifications: verifications,
+      // Store Eligibility & Readiness Compatibility
+      is_verified: isVerified,
+      verification_requested: verificationRequested,
+      metrics: {
+        paid_orders_count: paidOrders.length,
+        items_count: items.length,
+        reviews_count: reviews.length,
+        avg_rating: avgRating,
+        has_bank_details: Boolean(currentStore.bank_account_number),
+        has_logo: Boolean(currentStore.logo_url)
+      }
     });
   });
 

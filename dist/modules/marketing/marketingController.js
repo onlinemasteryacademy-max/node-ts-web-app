@@ -154,8 +154,8 @@ const marketingRoutes = async (fastify) => {
             message: 'Verification request submitted. Our compliance team will review your storefront.'
         });
     });
-    // 7. Store Verification Eligibility Status
-    fastify.get('/api/merchant/verification/status', async (req, reply) => {
+    // 7. Store Verification Eligibility Status (Renamed from /status to resolve duplicate route collision)
+    fastify.get('/api/merchant/verification/eligibility', async (req, reply) => {
         const store = req.session?.merchantStore;
         if (!store)
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });

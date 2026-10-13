@@ -84,10 +84,6 @@ fastify.register(fastifySession, {
   }
 });
 
-// Initialize Super Admin Credentials & Security Baseline
-initSuperAdminAccount();
-initSecurityDataModel();
-
 fastify.register(fastifyWebsocket);
 
 // Static Assets & Views Path Resolution (supports both tsx dev and compiled dist)
@@ -970,6 +966,10 @@ async function startServer() {
   try {
     // 1. Initialize Hostinger MySQL Persistence Bridge (Auto-creates tables & restores store owners)
     await initMySQLPersistence();
+
+    // 2. Initialize Super Admin Credentials & Security Baseline (after schema exists and data is hydrated)
+    initSuperAdminAccount();
+    initSecurityDataModel();
 
     await fastify.listen({ port: PORT, host: HOST });
     console.log(`⚡ Zlik High-Speed Server running in [${ENV.NODE_ENV}] mode on http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);

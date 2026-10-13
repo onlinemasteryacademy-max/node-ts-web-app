@@ -8,20 +8,31 @@ const businessVerificationService_js_1 = require("./businessVerificationService.
 async function verificationRoutes(fastify) {
     /**
      * GET /api/merchant/verification/status
-     * Live Verification & Gating Status for Merchant Store
+     * Live Verification & Gating Status for Merchant Store (Unified security status + store readiness metrics)
      */
     fastify.get('/api/merchant/verification/status', async (req, reply) => {
         const store = req.session?.merchantStore;
         if (!store) {
             return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
         }
+        const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
         const seller = (0, securityService_js_1.getOrCreateSellerProfile)(store.id);
         const isGated = (0, securityService_js_1.isStoreOrderGated)(store.id);
         const bankAccounts = (0, db_js_1.dbFetchAll)('seller_bank_accounts', { seller_id: seller.id });
         const verifications = (0, db_js_1.dbFetchAll)('seller_verifications', { seller_id: seller.id }, 'id DESC');
         const business = (0, businessVerificationService_js_1.getBusinessProfile)(seller.id);
+        // Compute storefront trust & readiness metrics
+        const paidOrders = (0, db_js_1.dbFetchAll)('orders', { store_id: store.id, payment_status: 'paid' });
+        const reviews = (0, db_js_1.dbFetchAll)('reviews', { store_id: store.id, status: 'published' });
+        const items = (0, db_js_1.dbFetchAll)('items', { store_id: store.id, is_available: 1 });
+        const avgRating = reviews.length > 0
+            ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
+            : '5.0';
+        const isVerified = Boolean(currentStore.is_verified || seller.composite_verification_status === 'verified');
+        const verificationRequested = Boolean(currentStore.verification_requested);
         return reply.send({
             success: true,
+            // Security & Trust Profile
             seller_profile: seller,
             business_profile: business,
             is_gated: isGated,
@@ -30,7 +41,18 @@ async function verificationRoutes(fastify) {
             bank_status: seller.bank_status,
             business_status: seller.business_status,
             bank_accounts: bankAccounts,
-            verifications: verifications
+            verifications: verifications,
+            // Store Eligibility & Readiness Compatibility
+            is_verified: isVerified,
+            verification_requested: verificationRequested,
+            metrics: {
+                paid_orders_count: paidOrders.length,
+                items_count: items.length,
+                reviews_count: reviews.length,
+                avg_rating: avgRating,
+                has_bank_details: Boolean(currentStore.bank_account_number),
+                has_logo: Boolean(currentStore.logo_url)
+            }
         });
     });
     /**

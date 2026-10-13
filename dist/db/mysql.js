@@ -454,8 +454,8 @@ async function initMySQLSchema(pool) {
       order_gating_enabled TINYINT NOT NULL DEFAULT 1,
       identity_consent_given TINYINT NOT NULL DEFAULT 0,
       consent_timestamp VARCHAR(32) DEFAULT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      created_at VARCHAR(100) DEFAULT NULL,
+      updated_at VARCHAR(100) DEFAULT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
         `CREATE TABLE IF NOT EXISTS seller_verifications (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -469,8 +469,8 @@ async function initMySQLSchema(pool) {
       verified_at VARCHAR(32) DEFAULT NULL,
       expires_at VARCHAR(32) DEFAULT NULL,
       redacted_metadata_json LONGTEXT DEFAULT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      created_at VARCHAR(100) DEFAULT NULL,
+      updated_at VARCHAR(100) DEFAULT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
         `CREATE TABLE IF NOT EXISTS business_profiles (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -487,8 +487,8 @@ async function initMySQLSchema(pool) {
       document_url TEXT DEFAULT NULL,
       verification_status VARCHAR(32) NOT NULL DEFAULT 'pending',
       verified_at VARCHAR(32) DEFAULT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      created_at VARCHAR(100) DEFAULT NULL,
+      updated_at VARCHAR(100) DEFAULT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
         `CREATE TABLE IF NOT EXISTS seller_bank_accounts (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -506,8 +506,8 @@ async function initMySQLSchema(pool) {
       provider_reference VARCHAR(100) DEFAULT NULL,
       is_active TINYINT NOT NULL DEFAULT 1,
       verified_at VARCHAR(32) DEFAULT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      created_at VARCHAR(100) DEFAULT NULL,
+      updated_at VARCHAR(100) DEFAULT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
         `CREATE TABLE IF NOT EXISTS verification_provider_configs (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -519,15 +519,15 @@ async function initMySQLSchema(pool) {
       secret_key_encrypted TEXT DEFAULT NULL,
       api_key_masked VARCHAR(32) DEFAULT NULL,
       contract_code VARCHAR(64) DEFAULT NULL,
-      enabled_capabilities_json TEXT NOT NULL,
+      enabled_capabilities_json LONGTEXT DEFAULT NULL,
       status VARCHAR(20) NOT NULL DEFAULT 'not_configured',
       last_tested_at VARCHAR(32) DEFAULT NULL,
       last_test_result VARCHAR(20) DEFAULT NULL,
       last_test_error TEXT DEFAULT NULL,
       created_by_admin_id INT DEFAULT NULL,
       updated_by_admin_id INT DEFAULT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      created_at VARCHAR(100) DEFAULT NULL,
+      updated_at VARCHAR(100) DEFAULT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
         `CREATE TABLE IF NOT EXISTS fraud_reports (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -545,8 +545,8 @@ async function initMySQLSchema(pool) {
       assigned_admin_id INT DEFAULT NULL,
       resolution_code VARCHAR(64) DEFAULT NULL,
       resolution_summary TEXT DEFAULT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      created_at VARCHAR(100) DEFAULT NULL,
+      updated_at VARCHAR(100) DEFAULT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
         `CREATE TABLE IF NOT EXISTS fraud_case_events (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -555,7 +555,7 @@ async function initMySQLSchema(pool) {
       actor_id INT DEFAULT NULL,
       event_type VARCHAR(50) NOT NULL,
       message TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at VARCHAR(100) DEFAULT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
         `CREATE TABLE IF NOT EXISTS risk_events (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -565,7 +565,7 @@ async function initMySQLSchema(pool) {
       new_score INT NOT NULL DEFAULT 0,
       reason_code VARCHAR(64) NOT NULL,
       metadata_json TEXT DEFAULT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at VARCHAR(100) DEFAULT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
         `CREATE TABLE IF NOT EXISTS security_audit_logs (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -576,7 +576,7 @@ async function initMySQLSchema(pool) {
       target_id INT DEFAULT NULL,
       reason TEXT DEFAULT NULL,
       ip_address VARCHAR(45) DEFAULT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at VARCHAR(100) DEFAULT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
         `CREATE TABLE IF NOT EXISTS integration_events (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -588,7 +588,7 @@ async function initMySQLSchema(pool) {
       result VARCHAR(20) NOT NULL DEFAULT 'success',
       error_code VARCHAR(64) DEFAULT NULL,
       correlation_id VARCHAR(64) NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at VARCHAR(100) DEFAULT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
     ];
     for (const sql of tableDefinitions) {
@@ -631,6 +631,8 @@ async function initMySQLSchema(pool) {
     const safeAlters = [
         `ALTER TABLE stores ADD COLUMN allow_bank_transfer TINYINT DEFAULT 1;`,
         `ALTER TABLE stores ADD COLUMN allow_pay_on_delivery TINYINT DEFAULT 0;`,
+        `ALTER TABLE stores ADD COLUMN verification_requested TINYINT DEFAULT 0;`,
+        `ALTER TABLE stores ADD COLUMN is_verified TINYINT DEFAULT 0;`,
         `ALTER TABLE orders ADD COLUMN receipt_url TEXT DEFAULT NULL;`,
         `ALTER TABLE reviews ADD COLUMN order_id INT DEFAULT NULL;`,
         `ALTER TABLE reviews ADD COLUMN customer_id INT DEFAULT NULL;`,

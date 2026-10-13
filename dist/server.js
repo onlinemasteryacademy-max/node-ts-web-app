@@ -78,9 +78,6 @@ fastify.register(session_1.default, {
         maxAge: 86400000 * 14 // 14 days
     }
 });
-// Initialize Super Admin Credentials & Security Baseline
-(0, adminSecurity_js_1.initSuperAdminAccount)();
-(0, securityService_js_1.initSecurityDataModel)();
 fastify.register(websocket_1.default);
 // Static Assets & Views Path Resolution (supports both tsx dev and compiled dist)
 const publicDir = node_fs_1.default.existsSync(node_path_1.default.join(__dirname, 'public'))
@@ -906,6 +903,9 @@ async function startServer() {
     try {
         // 1. Initialize Hostinger MySQL Persistence Bridge (Auto-creates tables & restores store owners)
         await (0, persistence_js_1.initMySQLPersistence)();
+        // 2. Initialize Super Admin Credentials & Security Baseline (after schema exists and data is hydrated)
+        (0, adminSecurity_js_1.initSuperAdminAccount)();
+        (0, securityService_js_1.initSecurityDataModel)();
         await fastify.listen({ port: PORT, host: HOST });
         console.log(`⚡ Zlik High-Speed Server running in [${env_js_1.ENV.NODE_ENV}] mode on http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}`);
     }
