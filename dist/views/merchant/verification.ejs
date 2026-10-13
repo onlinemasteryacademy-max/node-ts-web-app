@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Trust & Identity Verification — <%= store.store_name %> | Zlik Merchant</title>
     <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
@@ -34,6 +34,8 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #F8FAF8; color: #08110D; }
         .font-display { font-family: 'Montserrat', sans-serif; }
+        .pb-safe { padding-bottom: max(0.875rem, env(safe-area-inset-bottom, 0.875rem)); }
+        .pt-safe { padding-top: max(0.75rem, env(safe-area-inset-top, 0.75rem)); }
     </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased bg-[#F8FAF8]">
@@ -42,7 +44,7 @@
     <%- include('components/header_nav.ejs', { activeTab: 'verification', pageTitle: 'Trust & Verification', backUrl: '/merchant' }) %>
 
     <!-- Main Content -->
-    <main class="max-w-4xl mx-auto px-4 py-6 pb-24 flex-1 w-full space-y-6">
+    <main class="max-w-4xl mx-auto px-4 py-6 pb-28 sm:pb-8 flex-1 w-full space-y-6">
 
         <!-- Banner / Overview Card -->
         <div class="bg-gradient-to-r from-emerald-950 via-[#08110D] to-[#0A1A12] border border-[#19D98B]/30 rounded-2xl p-5 sm:p-6 text-white shadow-lg space-y-4">

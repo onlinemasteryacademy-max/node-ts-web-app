@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Debt Tracker — <%= store.store_name %> | zlik</title>
     <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -36,7 +36,8 @@
         .font-display { font-family: 'Montserrat', sans-serif; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0.5rem); }
+        .pb-safe { padding-bottom: max(0.875rem, env(safe-area-inset-bottom, 0.875rem)); }
+        .pt-safe { padding-top: max(0.75rem, env(safe-area-inset-top, 0.75rem)); }
     </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased">
@@ -44,7 +45,7 @@
     <!-- Merchant Header (Universal Component) -->
     <%- include('components/header_nav.ejs', { activeTab: 'debts', pageTitle: 'Debt Tracker' }) %>
 
-    <main class="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-24 sm:pb-8 flex-1 w-full space-y-5 sm:space-y-6">
+    <main class="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-28 sm:pb-8 flex-1 w-full space-y-5 sm:space-y-6">
 
         <div class="flex items-center justify-between gap-3 border-b border-[#E3E9E5]/60 pb-3">
             <div>

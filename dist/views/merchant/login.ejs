@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Sign in — zlik</title>
     <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -33,12 +33,14 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #F8FAF8; color: #08110D; }
         .font-display { font-family: 'Montserrat', sans-serif; }
+        .pb-safe { padding-bottom: max(0.875rem, env(safe-area-inset-bottom, 0.875rem)); }
+        .pt-safe { padding-top: max(0.75rem, env(safe-area-inset-top, 0.75rem)); }
     </style>
 </head>
-<body class="bg-[#F8FAF8] text-[#08110D] antialiased min-h-screen flex flex-col justify-between selection:bg-[#08110D] selection:text-[#19D98B]">
+<body class="bg-[#F8FAF8] text-[#08110D] antialiased min-h-screen flex flex-col justify-between selection:bg-[#08110D] selection:text-[#19D98B] pb-safe">
 
     <!-- Header Navigation -->
-    <header class="border-b border-[#E3E9E5] bg-[#F8FAF8]/95 backdrop-blur-md sticky top-0 z-40 transition-colors">
+    <header class="border-b border-[#E3E9E5] bg-[#F8FAF8]/95 backdrop-blur-md sticky top-0 z-40 transition-colors pt-safe">
         <div class="max-w-[1240px] mx-auto px-6 h-20 flex items-center justify-between">
             <a href="/" class="hover:opacity-90 transition inline-flex items-center gap-1">
                 <span class="font-display font-semibold text-2xl text-[#08110D]">zlik</span>

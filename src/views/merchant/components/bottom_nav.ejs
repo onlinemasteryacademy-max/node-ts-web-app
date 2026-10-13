@@ -1,10 +1,10 @@
 <!-- Mobile Persistent 4-Item Bottom Navigation Bar (Batch 2 & 3) -->
-<nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-[#E3E9E5] px-2 py-1.5 flex items-center justify-around shadow-[0_-4px_24px_rgba(8,17,13,0.06)] pb-safe font-body select-none"
+<nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-[#E3E9E5] px-3 pt-2 pb-3.5 flex items-center justify-around shadow-[0_-4px_24px_rgba(8,17,13,0.06)] pb-safe font-body select-none"
      aria-label="Merchant Mobile Navigation">
 
     <!-- Destination 1: Orders (Dashboard) -->
     <a href="/merchant" 
-       class="relative flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition duration-150 active:scale-95 <%= (typeof activeTab !== 'undefined' && activeTab === 'orders') ? 'text-[#087A50]' : 'text-[#6B756F] hover:text-[#08110D]' %>"
+       class="relative flex-1 flex flex-col items-center justify-center min-h-[52px] py-1.5 px-1 rounded-xl transition duration-150 active:scale-95 <%= (typeof activeTab !== 'undefined' && activeTab === 'orders') ? 'text-[#087A50]' : 'text-[#6B756F] hover:text-[#08110D]' %>"
        aria-label="Orders">
         <div class="relative">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -20,7 +20,7 @@
 
     <!-- Destination 2: Products -->
     <a href="/merchant/items" 
-       class="relative flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition duration-150 active:scale-95 <%= (typeof activeTab !== 'undefined' && activeTab === 'products') ? 'text-[#087A50]' : 'text-[#6B756F] hover:text-[#08110D]' %>"
+       class="relative flex-1 flex flex-col items-center justify-center min-h-[52px] py-1.5 px-1 rounded-xl transition duration-150 active:scale-95 <%= (typeof activeTab !== 'undefined' && activeTab === 'products') ? 'text-[#087A50]' : 'text-[#6B756F] hover:text-[#08110D]' %>"
        aria-label="Products">
         <div class="relative">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -35,7 +35,7 @@
 
     <!-- Destination 3: Live Chat Inbox -->
     <a href="/merchant/messages" 
-       class="relative flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition duration-150 active:scale-95 <%= (typeof activeTab !== 'undefined' && activeTab === 'chat') ? 'text-[#087A50]' : 'text-[#6B756F] hover:text-[#08110D]' %>"
+       class="relative flex-1 flex flex-col items-center justify-center min-h-[52px] py-1.5 px-1 rounded-xl transition duration-150 active:scale-95 <%= (typeof activeTab !== 'undefined' && activeTab === 'chat') ? 'text-[#087A50]' : 'text-[#6B756F] hover:text-[#08110D]' %>"
        aria-label="Chat">
         <div class="relative">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,7 +51,7 @@
 
     <!-- Destination 4: Debt Tracker -->
     <a href="/merchant/debts" 
-       class="relative flex-1 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition duration-150 active:scale-95 <%= (typeof activeTab !== 'undefined' && activeTab === 'debts') ? 'text-[#087A50]' : 'text-[#6B756F] hover:text-[#08110D]' %>"
+       class="relative flex-1 flex flex-col items-center justify-center min-h-[52px] py-1.5 px-1 rounded-xl transition duration-150 active:scale-95 <%= (typeof activeTab !== 'undefined' && activeTab === 'debts') ? 'text-[#087A50]' : 'text-[#6B756F] hover:text-[#08110D]' %>"
        aria-label="Debt">
         <div class="relative">
             <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

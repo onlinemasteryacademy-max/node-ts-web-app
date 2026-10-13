@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Customer Live Chat Desk — <%= store.store_name %> | zlik</title>
     <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -36,7 +36,8 @@
         .font-display { font-family: 'Montserrat', sans-serif; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0.5rem); }
+        .pb-safe { padding-bottom: max(0.875rem, env(safe-area-inset-bottom, 0.875rem)); }
+        .pt-safe { padding-top: max(0.75rem, env(safe-area-inset-top, 0.75rem)); }
     </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased">
@@ -45,7 +46,7 @@
     <%- include('components/header_nav.ejs', { activeTab: 'chat', pageTitle: 'Live Chat' }) %>
 
     <!-- Main Chat Workspace (3-Column Responsive Layout) -->
-    <main class="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-4 pb-20 sm:pb-4 flex-1 w-full flex flex-col h-[calc(100vh-65px)]">
+    <main class="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-4 pb-28 sm:pb-4 flex-1 w-full flex flex-col h-[calc(100dvh-135px)] sm:h-[calc(100vh-65px)]">
         <div class="flex-1 bg-white rounded-2xl border border-[#E3E9E5] shadow-xs grid grid-cols-1 md:grid-cols-12 overflow-hidden">
 
             <!-- Col 1: Conversations List (Inbox) -->
