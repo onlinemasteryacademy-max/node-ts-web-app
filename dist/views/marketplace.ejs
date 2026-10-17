@@ -177,9 +177,16 @@
           <div class="space-y-3.5">
             <div class="flex items-start justify-between gap-3">
               <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-xl bg-[#08110D] text-white flex items-center justify-center font-display font-bold text-lg shrink-0">
-                  <%= store.store_name.charAt(0).toUpperCase() %>
-                </div>
+                <% if (store.logo_url) { %>
+                  <img src="<%= store.logo_url %>" alt="<%= store.store_name %>" class="w-12 h-12 rounded-xl object-cover border border-[#E3E9E5] bg-white shrink-0" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                  <div class="w-12 h-12 rounded-xl bg-[#08110D] text-white hidden items-center justify-center font-display font-bold text-lg shrink-0">
+                    <%= store.store_name.charAt(0).toUpperCase() %>
+                  </div>
+                <% } else { %>
+                  <div class="w-12 h-12 rounded-xl bg-[#08110D] text-white flex items-center justify-center font-display font-bold text-lg shrink-0">
+                    <%= store.store_name.charAt(0).toUpperCase() %>
+                  </div>
+                <% } %>
                 <div>
                   <h3 class="font-bold font-display text-[#08110D] text-base leading-snug"><%= store.store_name %></h3>
                   <p class="text-xs text-[#6B756F]">📍 <%= store.city ? `${store.city}, ` : '' %><%= store.state || 'Nigeria' %></p>

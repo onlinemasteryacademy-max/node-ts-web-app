@@ -49,52 +49,19 @@
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 pb-28 sm:pb-8 flex-1 w-full space-y-5 sm:space-y-6">
 
-        <!-- Storefront Gating & Verification Banner (Batch 6) -->
-        <% if (typeof isGated !== 'undefined' && isGated) { %>
-            <div class="bg-gradient-to-r from-emerald-950 via-[#08110D] to-[#0A1A12] border border-[#19D98B]/30 rounded-2xl p-4 sm:p-5 text-white shadow-md space-y-3">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div class="flex items-start gap-3">
-                        <div class="w-9 h-9 rounded-xl bg-[#19D98B]/20 text-[#19D98B] flex items-center justify-center shrink-0 border border-[#19D98B]/40">
-                            <svg class="w-5 h-5 text-[#19D98B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-xs sm:text-sm text-[#19D98B] flex items-center gap-2 flex-wrap">
-                                <span>Activate Storefront Orders & Bank Direct Transfers</span>
-                                <span class="text-[9.5px] font-mono uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">Orders Gated</span>
-                            </h4>
-                            <p class="text-[11px] sm:text-xs text-[#E3E9E5]/80 mt-1 max-w-2xl leading-relaxed">
-                                To protect your business and prevent fraudulent transfers, customers cannot submit orders or view payout account details until your identity and payout bank account are verified.
-                            </p>
-                        </div>
-                    </div>
-                    <a href="/merchant/verification" class="shrink-0 bg-[#19D98B] hover:bg-[#15bf7a] text-[#08110D] font-bold text-xs px-3.5 py-2 rounded-xl transition shadow-sm flex items-center gap-1.5 self-start sm:self-center">
-                        <span>Complete Verification</span>
-                        <span>&rarr;</span>
-                    </a>
-                </div>
-                <!-- Progress Steps -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-white/10 text-[11px]">
-                    <div class="flex items-center gap-2 p-2 rounded-xl bg-white/5">
-                        <span class="<%= typeof sellerProfile !== 'undefined' && sellerProfile && sellerProfile.identity_status === 'verified' ? 'text-[#19D98B]' : 'text-amber-400' %> font-bold">
-                            <%= typeof sellerProfile !== 'undefined' && sellerProfile && sellerProfile.identity_status === 'verified' ? '✓' : '1.' %>
-                        </span>
-                        <span class="text-white/90">Identity (BVN / NIN): <strong><%= typeof sellerProfile !== 'undefined' && sellerProfile ? sellerProfile.identity_status.toUpperCase() : 'PENDING' %></strong></span>
-                    </div>
-                    <div class="flex items-center gap-2 p-2 rounded-xl bg-white/5">
-                        <span class="<%= typeof sellerProfile !== 'undefined' && sellerProfile && sellerProfile.bank_status === 'verified' ? 'text-[#19D98B]' : 'text-amber-400' %> font-bold">
-                            <%= typeof sellerProfile !== 'undefined' && sellerProfile && sellerProfile.bank_status === 'verified' ? '✓' : '2.' %>
-                        </span>
-                        <span class="text-white/90">Payout Bank: <strong><%= typeof sellerProfile !== 'undefined' && sellerProfile ? sellerProfile.bank_status.toUpperCase() : 'PENDING' %></strong></span>
-                    </div>
-                    <div class="flex items-center gap-2 p-2 rounded-xl bg-white/5">
-                        <span class="<%= typeof isGated !== 'undefined' && !isGated ? 'text-[#19D98B]' : 'text-white/40' %> font-bold">
-                            <%= typeof isGated !== 'undefined' && !isGated ? '✓' : '3.' %>
-                        </span>
-                        <span class="text-white/90">Order Acceptance: <strong><%= typeof isGated !== 'undefined' && !isGated ? 'ACTIVE' : 'GATED' %></strong></span>
-                    </div>
+        <!-- Top Header: Bold "Orders" Title with Store Status Toggle (Screenshot 1 Reference) -->
+        <div class="flex items-center justify-between gap-3 pt-1">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#111827] font-display">Orders</h1>
+                <p class="text-xs text-[#6B7280] mt-0.5">Manage customer orders and fulfillment in real-time</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 bg-white px-3.5 py-1.5 rounded-full border border-[#EAEFEB] shadow-xs select-none">
+                    <span class="w-2 h-2 rounded-full <%= (typeof store !== 'undefined' && store && store.is_active !== 0) ? 'bg-[#00A86B]' : 'bg-gray-400' %>"></span>
+                    <span class="text-xs font-semibold text-[#111827]"><%= (typeof store !== 'undefined' && store && store.is_active !== 0) ? 'Open' : 'Closed' %></span>
                 </div>
             </div>
-        <% } %>
+        </div>
 
         <!-- Low Stock Alert Banner -->
         <% if (lowStockItems && lowStockItems.length > 0) { %>
@@ -117,15 +84,15 @@
         <% } %>
 
         <!-- Store Performance Summary & 2x2 Mobile KPI Grid -->
-        <div class="bg-white rounded-2xl border border-[#E3E9E5] p-4 sm:p-5 shadow-2xs space-y-3.5 sm:space-y-4">
+        <div class="bg-white rounded-3xl border border-[#EAEFEB] p-4 sm:p-5 shadow-xs space-y-4">
             <div class="flex items-center justify-between gap-2">
                 <div>
-                    <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider font-mono">Store Performance</span>
-                    <h2 class="text-sm sm:text-base font-extrabold text-[#08110D] font-display">Overview & KPIs</h2>
+                    <span class="text-[10px] uppercase font-bold text-[#6B7280] tracking-wider font-mono">Store Performance</span>
+                    <h2 class="text-sm sm:text-base font-extrabold text-[#111827] font-display">Overview & KPIs</h2>
                 </div>
 
                 <div class="flex items-center gap-1.5">
-                    <select id="timeframeSelect" onchange="handleTimeframeChange(this.value)" class="bg-[#F8FAF8] border border-[#E3E9E5] text-xs font-semibold text-[#08110D] rounded-xl px-2.5 py-1.5 outline-none hover:border-[#08110D] transition">
+                    <select id="timeframeSelect" onchange="handleTimeframeChange(this.value)" class="bg-[#F8FAF9] border border-[#EAEFEB] text-xs font-semibold text-[#111827] rounded-full px-3 py-1.5 outline-none hover:border-[#084C38] transition">
                         <option value="today">Today</option>
                         <option value="yesterday">Yesterday</option>
                         <option value="this_week">This Week</option>
@@ -141,51 +108,51 @@
 
             <!-- 2x2 Grid on Mobile, 4-col on Desktop -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
-                <div class="p-3.5 sm:p-4 rounded-xl bg-white border border-[#E3E9E5] shadow-2xs">
+                <div class="p-4 rounded-2xl bg-[#F8FAF9] border border-[#EAEFEB]/80">
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider font-mono">Paid Sales</span>
-                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        <span class="text-[10px] uppercase font-bold text-[#6B7280] tracking-wider font-mono">Paid Sales</span>
+                        <span class="w-2 h-2 rounded-full bg-[#00A86B]"></span>
                     </div>
-                    <div class="text-base sm:text-xl font-bold text-[#087A50] font-mono mt-1.5" id="statRevenue">
+                    <div class="text-base sm:text-xl font-bold text-[#084C38] font-mono mt-2" id="statRevenue">
                         ₦<%= Number(revenueMetrics.today.confirmed_revenue).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
                     </div>
-                    <div class="text-[10.5px] text-[#6B756F] mt-0.5 truncate">
-                        <span id="statConfirmedCount" class="font-bold text-[#08110D]"><%= revenueMetrics.today.confirmed_count %></span> paid orders
+                    <div class="text-[10.5px] text-[#6B7280] mt-0.5 truncate">
+                        <span id="statConfirmedCount" class="font-bold text-[#111827]"><%= revenueMetrics.today.confirmed_count %></span> paid orders
                     </div>
                 </div>
 
-                <div class="p-3.5 sm:p-4 rounded-xl bg-white border border-[#E3E9E5] shadow-2xs">
+                <div class="p-4 rounded-2xl bg-[#F8FAF9] border border-[#EAEFEB]/80">
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider font-mono">Pending</span>
+                        <span class="text-[10px] uppercase font-bold text-[#6B7280] tracking-wider font-mono">Pending</span>
                         <span class="w-2 h-2 rounded-full bg-amber-500"></span>
                     </div>
-                    <div class="text-base sm:text-xl font-bold text-amber-700 font-mono mt-1.5" id="statPendingRevenue">
+                    <div class="text-base sm:text-xl font-bold text-amber-700 font-mono mt-2" id="statPendingRevenue">
                         ₦<%= Number(revenueMetrics.today.pending_revenue).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
                     </div>
-                    <div class="text-[10.5px] text-[#6B756F] mt-0.5 truncate">
-                        <span id="statPendingCount" class="font-bold text-[#08110D]"><%= revenueMetrics.today.pending_count %></span> pending
+                    <div class="text-[10.5px] text-[#6B7280] mt-0.5 truncate">
+                        <span id="statPendingCount" class="font-bold text-[#111827]"><%= revenueMetrics.today.pending_count %></span> pending
                     </div>
                 </div>
 
-                <div class="p-3.5 sm:p-4 rounded-xl bg-white border border-[#E3E9E5] shadow-2xs">
+                <div class="p-4 rounded-2xl bg-[#F8FAF9] border border-[#EAEFEB]/80">
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider font-mono">Page Visits</span>
+                        <span class="text-[10px] uppercase font-bold text-[#6B7280] tracking-wider font-mono">Page Visits</span>
                         <span class="w-2 h-2 rounded-full bg-blue-500"></span>
                     </div>
-                    <div class="text-base sm:text-xl font-bold text-[#08110D] font-mono mt-1.5" id="statVisits">
+                    <div class="text-base sm:text-xl font-bold text-[#111827] font-mono mt-2" id="statVisits">
                         <%= (visitorMetrics && visitorMetrics.today && visitorMetrics.today.visits) || 0 %>
                     </div>
-                    <div class="text-[10.5px] text-[#6B756F] mt-0.5 truncate" id="statVisitsSub">
+                    <div class="text-[10.5px] text-[#6B7280] mt-0.5 truncate" id="statVisitsSub">
                         Page views recorded
                     </div>
                 </div>
 
-                <div class="p-3.5 sm:p-4 rounded-xl bg-white border border-[#E3E9E5] shadow-2xs">
+                <div class="p-4 rounded-2xl bg-[#F8FAF9] border border-[#EAEFEB]/80">
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] uppercase font-bold text-[#6B756F] tracking-wider font-mono">Avg Order</span>
+                        <span class="text-[10px] uppercase font-bold text-[#6B7280] tracking-wider font-mono">Avg Order</span>
                         <span class="w-2 h-2 rounded-full bg-zinc-400"></span>
                     </div>
-                    <div class="text-base sm:text-xl font-bold text-[#08110D] font-mono mt-1.5" id="statAov">
+                    <div class="text-base sm:text-xl font-bold text-[#111827] font-mono mt-2" id="statAov">
                         ₦<%= Number(revenueMetrics.today.aov).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
                     </div>
                     <div class="text-[10.5px] text-[#6B756F] mt-0.5 truncate">
@@ -237,26 +204,26 @@
                     const claimedCount = orders.filter(o => o.payment_status === 'claimed').length;
                 %>
                 <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 text-xs font-semibold">
-                    <button type="button" onclick="setOrderStatusFilter('all')" id="ofilter-all" class="order-filter-btn px-3 py-1.5 rounded-xl bg-[#08110D] text-white whitespace-nowrap transition shadow-2xs">
+                    <button type="button" onclick="setOrderStatusFilter('all')" id="ofilter-all" class="order-filter-btn px-4 py-1.5 rounded-full bg-[#084C38] text-white whitespace-nowrap transition shadow-xs">
                         All (<%= orders.length %>)
                     </button>
                     <% if (claimedCount > 0) { %>
-                        <button type="button" onclick="setOrderStatusFilter('claimed')" id="ofilter-claimed" class="order-filter-btn px-3 py-1.5 rounded-xl bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap transition flex items-center gap-1.5 animate-pulse">
+                        <button type="button" onclick="setOrderStatusFilter('claimed')" id="ofilter-claimed" class="order-filter-btn px-4 py-1.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap transition flex items-center gap-1.5 animate-pulse">
                             <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
                             <span>Needs Action</span>
                             <span class="bg-amber-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono"><%= claimedCount %></span>
                         </button>
                     <% } %>
-                    <button type="button" onclick="setOrderStatusFilter('pending')" id="ofilter-pending" class="order-filter-btn px-3 py-1.5 rounded-xl bg-white text-[#6B756F] border border-[#E3E9E5] hover:text-[#08110D] whitespace-nowrap transition">
+                    <button type="button" onclick="setOrderStatusFilter('pending')" id="ofilter-pending" class="order-filter-btn px-4 py-1.5 rounded-full bg-white text-[#6B7280] border border-[#EAEFEB] hover:text-[#111827] whitespace-nowrap transition">
                         Pending
                     </button>
-                    <button type="button" onclick="setOrderStatusFilter('paid')" id="ofilter-paid" class="order-filter-btn px-3 py-1.5 rounded-xl bg-white text-[#6B756F] border border-[#E3E9E5] hover:text-[#08110D] whitespace-nowrap transition">
+                    <button type="button" onclick="setOrderStatusFilter('paid')" id="ofilter-paid" class="order-filter-btn px-4 py-1.5 rounded-full bg-white text-[#6B7280] border border-[#EAEFEB] hover:text-[#111827] whitespace-nowrap transition">
                         Paid
                     </button>
-                    <button type="button" onclick="setOrderStatusFilter('dispatched')" id="ofilter-dispatched" class="order-filter-btn px-3 py-1.5 rounded-xl bg-white text-[#6B756F] border border-[#E3E9E5] hover:text-[#08110D] whitespace-nowrap transition">
+                    <button type="button" onclick="setOrderStatusFilter('dispatched')" id="ofilter-dispatched" class="order-filter-btn px-4 py-1.5 rounded-full bg-white text-[#6B7280] border border-[#EAEFEB] hover:text-[#111827] whitespace-nowrap transition">
                         Dispatched
                     </button>
-                    <button type="button" onclick="setOrderStatusFilter('completed')" id="ofilter-completed" class="order-filter-btn px-3 py-1.5 rounded-xl bg-white text-[#6B756F] border border-[#E3E9E5] hover:text-[#08110D] whitespace-nowrap transition">
+                    <button type="button" onclick="setOrderStatusFilter('completed')" id="ofilter-completed" class="order-filter-btn px-4 py-1.5 rounded-full bg-white text-[#6B7280] border border-[#EAEFEB] hover:text-[#111827] whitespace-nowrap transition">
                         Completed
                     </button>
                 </div>
@@ -648,13 +615,13 @@
         function setOrderStatusFilter(filter) {
             currentOrderFilter = filter;
             document.querySelectorAll('.order-filter-btn').forEach(btn => {
-                btn.classList.remove('bg-[#08110D]', 'text-white');
-                btn.classList.add('bg-white', 'text-[#6B756F]', 'border', 'border-[#E3E9E5]');
+                btn.classList.remove('bg-[#084C38]', 'text-white', 'shadow-xs');
+                btn.classList.add('bg-white', 'text-[#6B7280]', 'border', 'border-[#EAEFEB]');
             });
             const activeBtn = document.getElementById('ofilter-' + filter);
             if (activeBtn) {
-                activeBtn.classList.remove('bg-white', 'text-[#6B756F]', 'border', 'border-[#E3E9E5]');
-                activeBtn.classList.add('bg-[#08110D]', 'text-white');
+                activeBtn.classList.remove('bg-white', 'text-[#6B7280]', 'border', 'border-[#EAEFEB]');
+                activeBtn.classList.add('bg-[#084C38]', 'text-white', 'shadow-xs');
             }
             filterOrdersList();
         }

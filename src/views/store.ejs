@@ -106,19 +106,6 @@
     </div>
     <% } %>
 
-    <!-- Storefront Order Gating Notice Banner (Batch 6) -->
-    <% if (typeof isGated !== 'undefined' && isGated) { %>
-    <div class="bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-xs text-amber-900 shadow-2xs">
-        <div class="max-w-6xl mx-auto flex items-center justify-between gap-3">
-            <div class="flex items-center gap-2">
-                <span class="text-sm">🔒</span>
-                <span><strong>Store Verification Notice:</strong> This storefront is currently completing merchant identity verification. Product browsing is active, but ordering and direct bank transfers are temporarily gated.</span>
-            </div>
-            <span class="hidden sm:inline-block text-[10px] uppercase font-mono font-bold bg-amber-200 text-amber-950 px-2.5 py-0.5 rounded-full shrink-0">Orders Gated</span>
-        </div>
-    </div>
-    <% } %>
-
     <!-- Store Top Banner / Nav -->
     <header class="sticky <%= typeof isDemo !== 'undefined' && isDemo ? 'top-[45px]' : 'top-0' %> z-30 bg-white/95 backdrop-blur-md border-b border-[#E3E9E5] transition shadow-xs">
         <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
@@ -146,14 +133,6 @@
                                     <span>✓</span> <span>Verified Individual</span>
                                 </button>
                             <% } %>
-                        <% } else if (typeof isGated !== 'undefined' && isGated) { %>
-                            <span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full border border-amber-300 flex items-center gap-0.5" title="Seller undergoing verification">
-                                <span>🔒</span> <span>Pending Verification</span>
-                            </span>
-                        <% } else { %>
-                            <button type="button" onclick="openTrustModal()" class="text-[10px] bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-2 py-0.5 rounded-full border border-gray-200 flex items-center gap-0.5 transition cursor-pointer" title="Under Verification">
-                                <span>ℹ️</span> <span>Under Verification</span>
-                            </button>
                         <% } %>
                     </h1>
                     <p class="text-xs text-[#6B756F] truncate"><%= store.bio || (templateConfig ? templateConfig.hero_headline : 'Order directly for quick delivery') %></p>
@@ -389,8 +368,8 @@
         </div>
     </main>
 
-    <!-- Storefront Trust & Safety Disclosure Banner -->
-    <div class="max-w-4xl mx-auto px-4 mt-12 mb-4 w-full">
+    <!-- Storefront Trust & Safety Disclosure Banner (Hidden from view) -->
+    <div class="hidden max-w-4xl mx-auto px-4 mt-12 mb-4 w-full">
         <div class="bg-white rounded-3xl border border-[#E3E9E5] p-5 text-xs shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div class="flex items-start gap-3">
                 <span class="text-xl shrink-0 mt-0.5">🛡️</span>
@@ -421,13 +400,6 @@
 
     <!-- Storefront Footer ("Powered by Zlik" Attribution on Free Plan) -->
     <footer class="text-center py-8 text-xs text-[#6B756F] border-t border-[#E3E9E5]/60 mt-4 bg-white/40 space-y-2">
-        <div class="flex items-center justify-center gap-4 text-[11px]">
-            <button type="button" onclick="openTrustModal()" class="hover:text-[#08110D] underline font-medium">Trust & Safety Policy</button>
-            <span>&bull;</span>
-            <button type="button" onclick="openDisputeModal()" class="text-red-600 hover:text-red-800 underline font-medium">Report Dispute</button>
-            <span>&bull;</span>
-            <a href="/privacy" target="_blank" class="hover:text-[#08110D] underline font-medium">NDPA Privacy</a>
-        </div>
         <% if (typeof showPoweredBy === 'undefined' || showPoweredBy) { %>
             <div>
                 <a href="/" target="_blank" class="inline-flex items-center gap-1.5 opacity-70 hover:opacity-100 transition">
@@ -2207,7 +2179,9 @@
             }
             const err = document.getElementById('modalStep2Error');
             if (err) err.classList.add('hidden');
-        const isStoreGated = <%= Boolean(typeof isGated !== 'undefined' && isGated) %>;
+        }
+
+        const isStoreGated = false;
 
         function openCheckoutModal() {
             if (isStoreGated) {

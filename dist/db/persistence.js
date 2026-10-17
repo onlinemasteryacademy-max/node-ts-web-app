@@ -83,7 +83,7 @@ async function initMySQLPersistence() {
                         const sql = `INSERT OR REPLACE INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})`;
                         const params = keys.map(k => {
                             const val = row[k];
-                            if (val === undefined || val === null)
+                            if (val === undefined || val === null || val === 'null')
                                 return null;
                             if (typeof val === 'object')
                                 return JSON.stringify(val);

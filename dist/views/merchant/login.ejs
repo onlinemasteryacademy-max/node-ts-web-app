@@ -8,45 +8,56 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        zlikDark: '#08110D',
-                        zlikGreen: '#19D98B',
-                        zlikDeep: '#087A50',
-                        zlikBg: '#F8FAF8',
-                        zlikWhite: '#FFFFFF',
-                        zlikMuted: '#6B756F',
-                        zlikBorder: '#E3E9E5'
+                        brand: {
+                            DEFAULT: '#084C38',
+                            hover: '#063b2c',
+                            mint: '#EDF5F1'
+                        }
                     },
                     fontFamily: {
-                        display: ['Montserrat', 'sans-serif'],
-                        body: ['Inter', 'sans-serif']
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
                     }
                 }
             }
         }
     </script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #F8FAF8; color: #08110D; }
-        .font-display { font-family: 'Montserrat', sans-serif; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAF9; color: #111827; }
         .pb-safe { padding-bottom: max(0.875rem, env(safe-area-inset-bottom, 0.875rem)); }
         .pt-safe { padding-top: max(0.75rem, env(safe-area-inset-top, 0.75rem)); }
+        html.is-mobile-app header { padding-top: max(1.125rem, env(safe-area-inset-top, 1.125rem)) !important; }
+        html.is-mobile-app body { padding-bottom: max(1.25rem, env(safe-area-inset-bottom, 1.25rem)) !important; }
     </style>
+    <script>
+        (function() {
+            try {
+                var isApp = <%= (typeof isMobileApp !== 'undefined' && isMobileApp) ? 'true' : 'false' %> ||
+                            (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.indexOf('ZlikMerchantApp') !== -1) ||
+                            (typeof window !== 'undefined' && !!window.AndroidBridge);
+                if (isApp) {
+                    document.documentElement.classList.add('is-mobile-app');
+                }
+            } catch(e) {}
+        })();
+    </script>
 </head>
-<body class="bg-[#F8FAF8] text-[#08110D] antialiased min-h-screen flex flex-col justify-between selection:bg-[#08110D] selection:text-[#19D98B] pb-safe">
+<body class="bg-[#F8FAF9] text-[#111827] antialiased min-h-screen flex flex-col justify-between pb-safe">
 
     <!-- Header Navigation -->
-    <header class="border-b border-[#E3E9E5] bg-[#F8FAF8]/95 backdrop-blur-md sticky top-0 z-40 transition-colors pt-safe">
-        <div class="max-w-[1240px] mx-auto px-6 h-20 flex items-center justify-between">
+    <header class="border-b border-[#EAEFEB] bg-white/95 backdrop-blur-md sticky top-0 z-40 transition-colors pt-safe">
+        <div class="max-w-[1240px] mx-auto px-6 h-18 flex items-center justify-between">
             <a href="/" class="hover:opacity-90 transition inline-flex items-center gap-1">
-                <span class="font-display font-semibold text-2xl text-[#08110D]">zlik</span>
+                <span class="font-bold text-2xl text-[#084C38]">zlik</span>
             </a>
             <div class="flex items-center gap-3">
-                <a href="/#pricing" class="bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] text-sm font-semibold font-display px-5 py-2.5 rounded-lg transition-all shadow-xs">
+                <a href="/#pricing" class="bg-[#084C38] hover:bg-[#063b2c] text-white text-xs font-bold px-5 py-2.5 rounded-full transition-all shadow-xs">
                     Create store
                 </a>
             </div>
@@ -55,42 +66,42 @@
 
     <!-- Main Login Area -->
     <main class="flex-1 flex items-center justify-center px-4 py-16">
-        <div class="max-w-md w-full bg-white rounded-2xl border border-[#E3E9E5] p-8 sm:p-10 shadow-zlik">
+        <div class="max-w-md w-full bg-white rounded-3xl border border-[#EAEFEB] p-8 sm:p-10 shadow-xs">
             <div class="mb-8 text-center">
-                <h1 class="text-2xl font-bold font-display tracking-tight text-[#08110D]">Seller sign in</h1>
-                <p class="text-xs text-[#6B756F] mt-1.5">Manage your orders, products, and online store.</p>
+                <h1 class="text-2xl font-bold tracking-tight text-[#111827]">Seller sign in</h1>
+                <p class="text-xs text-[#6B7280] mt-1.5">Manage your orders, products, and online store.</p>
             </div>
 
-            <form onsubmit="handleMerchantLogin(event)" class="space-y-4 text-xs font-body">
+            <form onsubmit="handleMerchantLogin(event)" class="space-y-4 text-xs">
                 <div>
-                    <label class="block font-semibold text-[#08110D] mb-1.5">Email address or WhatsApp phone</label>
-                    <input type="text" id="merchantIdentifier" required placeholder="name@store.com or 08012345678" class="w-full px-3.5 py-3 rounded-lg bg-white border border-[#E3E9E5] text-sm text-[#08110D] outline-none focus:border-[#08110D] transition">
+                    <label class="block font-semibold text-[#111827] mb-1.5">Email address or WhatsApp phone</label>
+                    <input type="text" id="merchantIdentifier" required placeholder="name@store.com or 08012345678" class="w-full px-4 py-3 rounded-2xl bg-[#F8FAF9] border border-[#EAEFEB] text-xs text-[#111827] outline-none focus:border-[#084C38] transition">
                 </div>
 
                 <div>
                     <div class="flex items-center justify-between mb-1.5">
-                        <label class="block font-semibold text-[#08110D]">5-Digit Security PIN</label>
+                        <label class="block font-semibold text-[#111827]">5-Digit Security PIN</label>
                     </div>
-                    <input type="password" id="merchantPin" required maxlength="5" pattern="[0-9]{5}" inputmode="numeric" placeholder="•••••" class="w-full px-3.5 py-3 rounded-lg bg-white border border-[#E3E9E5] text-sm text-[#08110D] outline-none focus:border-[#08110D] font-mono tracking-widest transition">
+                    <input type="password" id="merchantPin" required maxlength="5" pattern="[0-9]{5}" inputmode="numeric" placeholder="•••••" class="w-full px-4 py-3 rounded-2xl bg-[#F8FAF9] border border-[#EAEFEB] text-sm text-[#111827] outline-none focus:border-[#084C38] font-mono tracking-widest transition">
                 </div>
 
-                <div id="loginError" class="text-xs text-[#D94A4A] font-medium hidden"></div>
+                <div id="loginError" class="text-xs text-red-600 font-medium hidden"></div>
 
-                <button type="submit" id="loginBtn" class="w-full bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] font-semibold font-display text-sm py-3.5 rounded-lg shadow-xs transition duration-200 mt-2">
+                <button type="submit" id="loginBtn" class="w-full bg-[#084C38] hover:bg-[#063b2c] text-white font-bold text-xs py-3.5 rounded-full shadow-xs transition duration-200 mt-2">
                     Sign in to dashboard
                 </button>
             </form>
 
-            <div class="mt-8 pt-6 border-t border-[#E3E9E5] text-center text-xs text-[#6B756F]">
+            <div class="mt-8 pt-6 border-t border-[#EAEFEB] text-center text-xs text-[#6B7280]">
                 <span>Don't have an account?</span>
-                <a href="/#pricing" class="font-semibold text-[#08110D] hover:underline ml-1">Create free store &rarr;</a>
+                <a href="/#pricing" class="font-bold text-[#084C38] hover:underline ml-1">Create free store &rarr;</a>
             </div>
         </div>
     </main>
 
     <!-- Footer -->
-    <footer class="bg-[#08110D] text-white border-t border-[#08110D] py-8 font-body">
-        <div class="max-w-[1240px] mx-auto px-6 text-center text-xs text-[#E3E9E5]/50">
+    <footer class="bg-white text-[#6B7280] border-t border-[#EAEFEB] py-6 text-xs text-center">
+        <div class="max-w-[1240px] mx-auto px-6">
             &copy; <%= new Date().getFullYear() %> zlik. All rights reserved. &bull; Selling, Made Slick
         </div>
     </footer>

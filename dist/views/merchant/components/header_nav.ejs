@@ -1,3 +1,37 @@
+<!-- Mobile App Spacing Styles (Strictly active only inside the Android WebView app, zero effect on website) -->
+<style id="mobileAppSpacingStyles">
+    html.is-mobile-app header {
+        padding-top: max(1.125rem, env(safe-area-inset-top, 1.125rem)) !important;
+    }
+    html.is-mobile-app nav[aria-label="Merchant Mobile Navigation"] {
+        padding-bottom: max(1.25rem, env(safe-area-inset-bottom, 1.25rem)) !important;
+    }
+    html.is-mobile-app main {
+        padding-bottom: calc(max(1.25rem, env(safe-area-inset-bottom, 1.25rem)) + 4.75rem) !important;
+    }
+    html.is-mobile-app .mobile-app-fab {
+        bottom: calc(max(1.25rem, env(safe-area-inset-bottom, 1.25rem)) + 4rem) !important;
+    }
+    html.is-mobile-app .merchant-drawer-header {
+        padding-top: max(2rem, calc(env(safe-area-inset-top, 0px) + 1.25rem)) !important;
+    }
+    html.is-mobile-app .merchant-drawer-footer {
+        padding-bottom: max(1.5rem, calc(env(safe-area-inset-bottom, 0px) + 1rem)) !important;
+    }
+</style>
+<script>
+    (function() {
+        try {
+            var isApp = <%= (typeof isMobileApp !== 'undefined' && isMobileApp) ? 'true' : 'false' %> ||
+                        (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.indexOf('ZlikMerchantApp') !== -1) ||
+                        (typeof window !== 'undefined' && !!window.AndroidBridge);
+            if (isApp) {
+                document.documentElement.classList.add('is-mobile-app');
+            }
+        } catch(e) {}
+    })();
+</script>
+
 <!-- Merchant Universal Header Component (Batch 2 & 3) -->
 <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-[#E3E9E5] shadow-2xs font-body select-none">
     <div class="max-w-7xl mx-auto px-3 sm:px-4 pt-3.5 pb-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-4">
@@ -16,8 +50,11 @@
             <% } %>
 
             <!-- Store Avatar / Logo -->
-            <% if (typeof store !== 'undefined' && store && store.logo_url) { %>
-                <img src="<%= store.logo_url %>" alt="Logo" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-contain border border-[#E3E9E5] bg-white p-0.5 shrink-0 shadow-2xs">
+            <% if (typeof store !== 'undefined' && store && store.logo_url && store.logo_url !== 'null') { %>
+                <img src="<%= store.logo_url %>" alt="Logo" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-contain border border-[#E3E9E5] bg-white p-0.5 shrink-0 shadow-2xs" onerror="this.classList.add('hidden'); this.nextElementSibling?.classList.remove('hidden');">
+                <div class="hidden w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#08110D] text-[#19D98B] font-bold text-sm sm:text-base flex items-center justify-center font-display shrink-0 shadow-2xs">
+                    <%= (typeof store !== 'undefined' && store && store.store_name ? store.store_name.charAt(0).toUpperCase() : 'S') %>
+                </div>
             <% } else { %>
                 <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#08110D] text-[#19D98B] font-bold text-sm sm:text-base flex items-center justify-center font-display shrink-0 shadow-2xs">
                     <%= (typeof store !== 'undefined' && store && store.store_name ? store.store_name.charAt(0).toUpperCase() : 'S') %>
@@ -103,23 +140,23 @@
     </div>
 
     <!-- Desktop Navigation Tabs (Preserved on >= 640px screens; Sticky bottom bar is used on mobile) -->
-    <div class="hidden sm:flex max-w-7xl mx-auto px-4 items-center gap-2 overflow-x-auto text-xs font-medium border-t border-[#E3E9E5]/60 pt-2 pb-2">
-        <a href="/merchant" class="px-3.5 py-1.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'orders') ? 'bg-[#08110D] text-white font-semibold' : 'text-[#6B756F] hover:text-[#08110D]' %>">Orders</a>
-        <a href="/merchant/items" class="px-3.5 py-1.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'products') ? 'bg-[#08110D] text-white font-semibold' : 'text-[#6B756F] hover:text-[#08110D]' %>">Products</a>
-        <a href="/merchant/ledger" class="px-3.5 py-1.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'ledger') ? 'bg-[#08110D] text-white font-semibold' : 'text-[#6B756F] hover:text-[#08110D]' %>">Sales Ledger</a>
-        <a href="/merchant/reviews" class="px-3.5 py-1.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'reviews') ? 'bg-[#08110D] text-white font-semibold' : 'text-[#6B756F] hover:text-[#08110D]' %> flex items-center gap-1.5">
+    <div class="hidden sm:flex max-w-7xl mx-auto px-4 items-center gap-1.5 overflow-x-auto text-xs font-medium border-t border-[#EAEFEB]/80 pt-2.5 pb-2.5">
+        <a href="/merchant" class="px-3.5 py-1.5 rounded-full transition <%= (typeof activeTab !== 'undefined' && activeTab === 'orders') ? 'bg-[#084C38] text-white font-semibold shadow-xs' : 'text-[#6B7280] hover:text-[#111827] hover:bg-gray-100/70' %>">Orders</a>
+        <a href="/merchant/items" class="px-3.5 py-1.5 rounded-full transition <%= (typeof activeTab !== 'undefined' && activeTab === 'products') ? 'bg-[#084C38] text-white font-semibold shadow-xs' : 'text-[#6B7280] hover:text-[#111827] hover:bg-gray-100/70' %>">Products</a>
+        <a href="/merchant/ledger" class="px-3.5 py-1.5 rounded-full transition <%= (typeof activeTab !== 'undefined' && activeTab === 'ledger') ? 'bg-[#084C38] text-white font-semibold shadow-xs' : 'text-[#6B7280] hover:text-[#111827] hover:bg-gray-100/70' %>">Sales & Wallet</a>
+        <a href="/merchant/reviews" class="px-3.5 py-1.5 rounded-full transition <%= (typeof activeTab !== 'undefined' && activeTab === 'reviews') ? 'bg-[#084C38] text-white font-semibold shadow-xs' : 'text-[#6B7280] hover:text-[#111827] hover:bg-gray-100/70' %> flex items-center gap-1.5">
             <span>Reviews</span>
             <% if (typeof pending_count !== 'undefined' && pending_count > 0) { %>
                 <span class="bg-[#19D98B] text-[#08110D] text-[10px] font-bold px-1.5 py-0.2 rounded-full"><%= pending_count %></span>
             <% } %>
         </a>
-        <a href="/merchant/debts" class="px-3.5 py-1.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'debts') ? 'bg-[#08110D] text-white font-semibold' : 'text-[#6B756F] hover:text-[#08110D]' %>">Debts</a>
-        <a href="/merchant/messages" class="px-3.5 py-1.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'chat') ? 'bg-[#08110D] text-white font-semibold' : 'text-[#6B756F] hover:text-[#08110D]' %> flex items-center gap-1.5">
+        <a href="/merchant/debts" class="px-3.5 py-1.5 rounded-full transition <%= (typeof activeTab !== 'undefined' && activeTab === 'debts') ? 'bg-[#084C38] text-white font-semibold shadow-xs' : 'text-[#6B7280] hover:text-[#111827] hover:bg-gray-100/70' %>">Debts</a>
+        <a href="/merchant/messages" class="px-3.5 py-1.5 rounded-full transition <%= (typeof activeTab !== 'undefined' && activeTab === 'chat') ? 'bg-[#084C38] text-white font-semibold shadow-xs' : 'text-[#6B7280] hover:text-[#111827] hover:bg-gray-100/70' %> flex items-center gap-1.5">
             <span>Live Chat</span>
             <span id="navChatUnreadBadge" class="hidden bg-[#19D98B] text-[#08110D] text-[10px] font-semibold px-2 py-0.2 rounded-full animate-pulse shadow-2xs">0 new</span>
         </a>
-        <a href="/merchant/settings" class="px-3.5 py-1.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'settings') ? 'bg-[#08110D] text-white font-semibold' : 'text-[#6B756F] hover:text-[#08110D]' %>">Settings</a>
-        <a href="/merchant/verification" class="px-3.5 py-1.5 rounded-xl transition <%= (typeof activeTab !== 'undefined' && activeTab === 'verification') ? 'bg-[#08110D] text-white font-semibold' : 'text-[#6B756F] hover:text-[#08110D]' %> flex items-center gap-1.5">
+        <a href="/merchant/settings" class="px-3.5 py-1.5 rounded-full transition <%= (typeof activeTab !== 'undefined' && activeTab === 'settings') ? 'bg-[#084C38] text-white font-semibold shadow-xs' : 'text-[#6B7280] hover:text-[#111827] hover:bg-gray-100/70' %>">Settings</a>
+        <a href="/merchant/verification" class="px-3.5 py-1.5 rounded-full transition <%= (typeof activeTab !== 'undefined' && activeTab === 'verification') ? 'bg-[#084C38] text-white font-semibold shadow-xs' : 'text-[#6B7280] hover:text-[#111827] hover:bg-gray-100/70' %> flex items-center gap-1.5">
             <svg class="w-3.5 h-3.5 text-[#087A50]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
             <span>Trust & Verification</span>
         </a>

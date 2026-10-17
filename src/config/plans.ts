@@ -102,7 +102,7 @@ export const PLANS: Record<string, PlanFeatureConfig> = {
       unlimited_status_posters: true,
       whatsapp_daily_autoposter: true,
       customer_broadcasts_discounts_bundles_preorders: true,
-      marketplace_listings_discovery: true,
+      marketplace_listings_discovery: false,
       customer_reviews_verification_eligibility: true,
       brand_color_logo_controls: false,
       order_notification_sound_library: false,

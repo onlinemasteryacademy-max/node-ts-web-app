@@ -1421,15 +1421,19 @@ async function runTestSuite() {
 
   // 16.2 Record Visits across different timeframes
   const nowTime = new Date();
-  const todayStr = nowTime.toISOString().slice(0, 19).replace('T', ' ');
+  const formatLocal = (d: Date) => {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  };
+  const todayStr = formatLocal(nowTime);
 
   const yesterdayDate = new Date(nowTime.getFullYear(), nowTime.getMonth(), nowTime.getDate() - 1, 14, 0, 0);
-  const yesterdayStr = yesterdayDate.toISOString().slice(0, 19).replace('T', ' ');
+  const yesterdayStr = formatLocal(yesterdayDate);
 
-  const fiveDaysAgo = new Date(nowTime.getTime() - 5 * 86400000).toISOString().slice(0, 19).replace('T', ' ');
-  const twentyDaysAgo = new Date(nowTime.getTime() - 20 * 86400000).toISOString().slice(0, 19).replace('T', ' ');
-  const sixtyDaysAgo = new Date(nowTime.getTime() - 60 * 86400000).toISOString().slice(0, 19).replace('T', ' ');
-  const twoHundredDaysAgo = new Date(nowTime.getTime() - 200 * 86400000).toISOString().slice(0, 19).replace('T', ' ');
+  const fiveDaysAgo = formatLocal(new Date(nowTime.getTime() - 5 * 86400000));
+  const twentyDaysAgo = formatLocal(new Date(nowTime.getTime() - 20 * 86400000));
+  const sixtyDaysAgo = formatLocal(new Date(nowTime.getTime() - 60 * 86400000));
+  const twoHundredDaysAgo = formatLocal(new Date(nowTime.getTime() - 200 * 86400000));
 
   // Record Today visits (3 visits, 2 unique IPs: 102.89.4.1 & 102.89.4.2)
   dbInsert('analytics_events', { store_id: analyticsStoreId, event_name: 'store_visit', ip_address: '102.89.4.1', created_at: todayStr });

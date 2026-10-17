@@ -14,11 +14,56 @@ const db_js_1 = require("../../db/db.js");
 const helpers_js_1 = require("../../utils/helpers.js");
 const chatService_js_1 = require("../chat/chatService.js");
 const securityService_js_1 = require("../security/securityService.js");
+const sampleTemplatesData_js_1 = require("../../config/sampleTemplatesData.js");
 /**
  * Create Order with Identity Resolution & Anti-Spam Check
  */
 function createOrder(input) {
-    const store = (0, db_js_1.dbFetchOne)('stores', { id: input.store_id });
+    let store = (0, db_js_1.dbFetchOne)('stores', { id: input.store_id });
+    if (!store) {
+        const demoEntry = Object.values(sampleTemplatesData_js_1.SAMPLE_STORES_DATA).find(s => s.store.id === input.store_id);
+        if (demoEntry) {
+            try {
+                (0, db_js_1.dbInsert)('stores', {
+                    id: demoEntry.store.id,
+                    slug: demoEntry.store.slug,
+                    store_name: demoEntry.store.store_name,
+                    owner_name: 'Demo Merchant',
+                    email: `${demoEntry.store.slug}@demo.zlik.store`,
+                    whatsapp_number: '+2348000000000',
+                    plan_tier: 'pro',
+                    status: 'active',
+                    is_verified: 1,
+                    allow_bank_transfer: 1,
+                    allow_pay_on_delivery: 1,
+                    delivery_fee: demoEntry.store.delivery_fee || 0,
+                    template_slug: demoEntry.store.template_slug
+                });
+                const seller = (0, securityService_js_1.getOrCreateSellerProfile)(demoEntry.store.id);
+                if (seller) {
+                    (0, db_js_1.dbUpdate)('seller_profiles', { order_gating_enabled: 0, composite_verification_status: 'verified' }, { id: seller.id });
+                }
+                for (const item of demoEntry.items) {
+                    try {
+                        (0, db_js_1.dbInsert)('items', {
+                            id: item.id,
+                            store_id: demoEntry.store.id,
+                            title: item.title,
+                            price: item.price,
+                            category: item.category,
+                            image_url: item.image_url,
+                            is_available: 1
+                        });
+                    }
+                    catch (e) { }
+                }
+                store = (0, db_js_1.dbFetchOne)('stores', { id: input.store_id });
+            }
+            catch (e) {
+                store = (0, db_js_1.dbFetchOne)('stores', { id: input.store_id });
+            }
+        }
+    }
     if (!store)
         return { success: false, error: 'Store not found' };
     // Storefront Gating Enforcement (Batch 6)

@@ -70,5 +70,13 @@ exports.ENV = {
     DB_PASSWORD: process.env.DB_PASSWORD || '',
     // Persistent Storage Directories (Safe from Git deployments and rebuilds)
     DATA_DIR: process.env.DATA_DIR || '',
-    UPLOADS_DIR: process.env.UPLOADS_DIR || ''
+    UPLOADS_DIR: (() => {
+        if (process.env.UPLOADS_DIR)
+            return node_path_1.default.resolve(process.env.UPLOADS_DIR);
+        const hostingerStorage = '/home/u966016758/domains/zlik.store/storage/uploads';
+        if (node_fs_1.default.existsSync(hostingerStorage) || process.cwd().includes('/home/u966016758/')) {
+            return hostingerStorage;
+        }
+        return node_path_1.default.resolve(process.cwd(), 'data', 'uploads');
+    })()
 };

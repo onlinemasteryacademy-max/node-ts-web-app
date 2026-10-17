@@ -8,59 +8,55 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        zlikDark: '#08110D',
-                        zlikGreen: '#19D98B',
-                        zlikDeep: '#087A50',
-                        zlikBg: '#F8FAF8',
-                        zlikWhite: '#FFFFFF',
-                        zlikMuted: '#6B756F',
-                        zlikBorder: '#E3E9E5'
+                        brand: {
+                            DEFAULT: '#084C38',
+                            hover: '#063b2c',
+                            mint: '#EDF5F1'
+                        }
                     },
                     fontFamily: {
-                        display: ['Montserrat', 'sans-serif'],
-                        body: ['Inter', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace']
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
                     }
                 }
             }
         }
     </script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #F8FAF8; color: #08110D; }
-        .font-display { font-family: 'Montserrat', sans-serif; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAF9; color: #111827; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .pb-safe { padding-bottom: max(0.875rem, env(safe-area-inset-bottom, 0.875rem)); }
         .pt-safe { padding-top: max(0.75rem, env(safe-area-inset-top, 0.75rem)); }
     </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased">
+<body class="min-h-screen flex flex-col antialiased bg-[#F8FAF9]">
 
     <!-- Merchant Header (Universal Component) -->
     <%- include('components/header_nav.ejs', { activeTab: 'chat', pageTitle: 'Live Chat' }) %>
 
     <!-- Main Chat Workspace (3-Column Responsive Layout) -->
     <main class="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-4 pb-28 sm:pb-4 flex-1 w-full flex flex-col h-[calc(100dvh-135px)] sm:h-[calc(100vh-65px)]">
-        <div class="flex-1 bg-white rounded-2xl border border-[#E3E9E5] shadow-xs grid grid-cols-1 md:grid-cols-12 overflow-hidden">
+        <div class="flex-1 bg-white rounded-3xl border border-[#EAEFEB] shadow-xs grid grid-cols-1 md:grid-cols-12 overflow-hidden">
 
             <!-- Col 1: Conversations List (Inbox) -->
-            <div id="conversationsCol" class="col-span-12 md:col-span-4 border-r border-[#E3E9E5] flex flex-col h-full bg-white">
-                <div class="p-3.5 border-b border-[#E3E9E5] space-y-2.5">
+            <div id="conversationsCol" class="col-span-12 md:col-span-4 border-r border-[#EAEFEB] flex flex-col h-full bg-white">
+                <div class="p-4 border-b border-[#EAEFEB] space-y-2.5">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-extrabold font-display text-[#08110D]">Customer Threads</span>
+                        <span class="text-xs font-bold text-[#111827]">Customer Threads</span>
                         <div class="flex items-center gap-1.5">
                             <span id="monthlyChatUsageBadge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-full border"></span>
-                            <span id="convCountBadge" class="text-[10px] font-bold bg-[#F8FAF8] text-[#6B756F] border border-[#E3E9E5] px-2 py-0.5 rounded-full">0 chats</span>
+                            <span id="convCountBadge" class="text-[10px] font-bold bg-[#EDF5F1] text-[#084C38] border border-[#084C38]/20 px-2.5 py-0.5 rounded-full">0 chats</span>
                         </div>
                     </div>
                     <!-- Monthly Chat Limit Alert Banner if reached -->
-                    <div id="monthlyChatLimitAlert" class="hidden p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] leading-tight space-y-1.5">
+                    <div id="monthlyChatLimitAlert" class="hidden p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] leading-tight space-y-1.5">
                         <div class="flex items-center gap-1.5 font-bold">
                             <svg class="w-3.5 h-3.5 text-amber-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                             <span>Monthly Chat Quota Reached</span>
@@ -68,47 +64,47 @@
                         <p class="text-amber-800 text-[10px]">
                             You've used all 20 storefront live chats for this month. New storefront visitors are given a 1-click button to contact you directly on WhatsApp.
                         </p>
-                        <a href="/merchant/settings" class="inline-flex items-center gap-1 text-[10px] font-bold text-[#087A50] hover:underline">
+                        <a href="/merchant/settings" class="inline-flex items-center gap-1 text-[10px] font-bold text-[#084C38] hover:underline">
                             Upgrade to Pro for Unlimited Live Chat &rarr;
                         </a>
                     </div>
                     <div class="relative">
-                        <input type="text" id="convSearchInput" oninput="handleSearchConversations(this.value)" placeholder="Search customer name, phone, message..." class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl pl-3.5 pr-8 py-2 text-xs text-[#08110D] outline-none focus:border-[#08110D] transition">
-                        <span class="absolute right-3 top-2.5 text-[#6B756F]">
+                        <input type="text" id="convSearchInput" oninput="handleSearchConversations(this.value)" placeholder="Search customer name, phone, message..." class="w-full bg-[#F8FAF9] border border-[#EAEFEB] rounded-full pl-3.5 pr-8 py-2 text-xs text-[#111827] placeholder-[#6B7280]/60 outline-none focus:border-[#084C38] transition">
+                        <span class="absolute right-3 top-2.5 text-[#6B7280]">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         </span>
                     </div>
                 </div>
 
-                <div id="conversationsListContainer" class="flex-1 overflow-y-auto divide-y divide-[#E3E9E5]/60 text-xs">
-                    <div class="p-8 text-center text-[#6B756F]">Loading conversations...</div>
+                <div id="conversationsListContainer" class="flex-1 overflow-y-auto divide-y divide-[#EAEFEB]/60 text-xs">
+                    <div class="p-8 text-center text-[#6B7280]">Loading conversations...</div>
                 </div>
             </div>
 
             <!-- Col 2: Active Message Thread -->
-            <div id="chatThreadCol" class="hidden md:flex col-span-12 md:col-span-5 flex-col h-full bg-[#F8FAF8] border-r border-[#E3E9E5]">
+            <div id="chatThreadCol" class="hidden md:flex col-span-12 md:col-span-5 flex-col h-full bg-[#F8FAF9] border-r border-[#EAEFEB]">
                 <!-- Chat Top Header with Lead Contact Actions & Mobile Back Arrow -->
-                <div id="activeChatHeader" class="p-3 sm:p-3.5 bg-white border-b border-[#E3E9E5] flex items-center justify-between shrink-0">
+                <div id="activeChatHeader" class="p-3 sm:p-3.5 bg-white border-b border-[#EAEFEB] flex items-center justify-between shrink-0">
                     <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-                        <button type="button" onclick="backToConversationsList()" class="md:hidden w-8 h-8 rounded-xl bg-[#F8FAF8] border border-[#E3E9E5] text-[#08110D] flex items-center justify-center font-bold text-sm shrink-0 hover:bg-[#E3E9E5] transition" title="Back to Inbox">
-                            <svg class="w-4 h-4 text-[#08110D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7"/></svg>
+                        <button type="button" onclick="backToConversationsList()" class="md:hidden w-8 h-8 rounded-full bg-[#F8FAF9] border border-[#EAEFEB] text-[#111827] flex items-center justify-center font-bold text-sm shrink-0 hover:bg-[#EDF5F1] transition" title="Back to Inbox">
+                            <svg class="w-4 h-4 text-[#111827]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7"/></svg>
                         </button>
-                        <div id="activeChatAvatar" class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#08110D] text-[#19D98B] font-bold text-xs flex items-center justify-center font-display shrink-0 shadow-2xs">
+                        <div id="activeChatAvatar" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EDF5F1] text-[#084C38] border border-[#084C38]/20 font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
                             C
                         </div>
                         <div class="min-w-0">
-                            <h3 id="activeChatName" class="text-xs font-bold text-[#08110D] truncate font-display">Select Conversation</h3>
-                            <p id="activeChatPhone" class="text-[10px] sm:text-[11px] text-[#6B756F] truncate">Direct Storefront Channel</p>
+                            <h3 id="activeChatName" class="text-xs font-bold text-[#111827] truncate">Select Conversation</h3>
+                            <p id="activeChatPhone" class="text-[10px] sm:text-[11px] text-[#6B7280] truncate">Direct Storefront Channel</p>
                         </div>
                     </div>
 
                     <div id="activeChatActions" class="flex items-center gap-1.5 shrink-0 hidden">
-                        <a id="activeChatWhatsAppBtn" href="#" target="_blank" class="bg-emerald-50 hover:bg-emerald-100 text-[#087A50] border border-emerald-200 px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold transition flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5 text-[#087A50]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        <a id="activeChatWhatsAppBtn" href="#" target="_blank" class="bg-[#EDF5F1] hover:bg-[#084C38]/10 text-[#084C38] border border-[#084C38]/20 px-3 py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold transition flex items-center gap-1.5 shadow-xs">
+                            <svg class="w-3.5 h-3.5 text-[#084C38]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                             <span>WhatsApp</span>
                         </a>
-                        <a id="activeChatCallBtn" href="#" class="bg-white hover:bg-gray-50 text-[#08110D] border border-[#E3E9E5] px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold transition flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5 text-[#08110D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                        <a id="activeChatCallBtn" href="#" class="bg-white hover:bg-gray-50 text-[#111827] border border-[#EAEFEB] px-3 py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold transition flex items-center gap-1.5 shadow-xs">
+                            <svg class="w-3.5 h-3.5 text-[#111827]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                             <span>Call</span>
                         </a>
                     </div>
@@ -116,20 +112,20 @@
 
                 <!-- Messages Stream -->
                 <div id="messagesThreadStream" class="flex-1 p-4 overflow-y-auto space-y-3 text-xs">
-                    <div class="p-12 text-center text-[#6B756F]">Select a conversation on the left to start messaging.</div>
+                    <div class="p-12 text-center text-[#6B7280]">Select a conversation on the left to start messaging.</div>
                 </div>
 
                 <!-- Quick Replies Bar -->
-                <div class="px-3.5 py-2 bg-white/70 border-t border-[#E3E9E5] flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 text-[11px]">
-                    <button onclick="sendQuickReply('Thanks for contacting us! How can we assist you?')" class="bg-white border border-[#E3E9E5] hover:border-[#08110D] px-2.5 py-1 rounded-lg shrink-0 transition text-[#08110D] font-medium">Welcome Reply</button>
-                    <button onclick="sendQuickReply('Yes! This item is currently available in stock and ready for delivery.')" class="bg-white border border-[#E3E9E5] hover:border-[#08110D] px-2.5 py-1 rounded-lg shrink-0 transition text-[#08110D] font-medium">In Stock</button>
-                    <button onclick="sendQuickReply('Your order has been confirmed and is being packaged for dispatch.')" class="bg-white border border-[#E3E9E5] hover:border-[#08110D] px-2.5 py-1 rounded-lg shrink-0 transition text-[#08110D] font-medium">Order Processing</button>
+                <div class="px-3.5 py-2.5 bg-white border-t border-[#EAEFEB] flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0 text-[11px]">
+                    <button onclick="sendQuickReply('Thanks for contacting us! How can we assist you?')" class="bg-[#F8FAF9] hover:bg-[#EDF5F1] hover:text-[#084C38] border border-[#EAEFEB] px-3 py-1 rounded-full shrink-0 transition text-[#111827] font-medium">Welcome Reply</button>
+                    <button onclick="sendQuickReply('Yes! This item is currently available in stock and ready for delivery.')" class="bg-[#F8FAF9] hover:bg-[#EDF5F1] hover:text-[#084C38] border border-[#EAEFEB] px-3 py-1 rounded-full shrink-0 transition text-[#111827] font-medium">In Stock</button>
+                    <button onclick="sendQuickReply('Your order has been confirmed and is being packaged for dispatch.')" class="bg-[#F8FAF9] hover:bg-[#EDF5F1] hover:text-[#084C38] border border-[#EAEFEB] px-3 py-1 rounded-full shrink-0 transition text-[#111827] font-medium">Order Processing</button>
                 </div>
 
                 <!-- Message Input -->
-                <form id="merchantChatForm" onsubmit="handleSendMerchantMessage(event)" class="p-3 bg-white border-t border-[#E3E9E5] flex items-center gap-2 shrink-0">
-                    <input type="text" id="merchantMsgInput" placeholder="Type a reply..." autocomplete="off" class="flex-1 bg-[#F8FAF8] border border-[#E3E9E5] text-xs text-[#08110D] rounded-xl px-3.5 py-2.5 outline-none focus:border-[#08110D] transition">
-                    <button type="submit" id="merchantSendBtn" class="bg-[#08110D] hover:bg-black text-[#19D98B] font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-2xs shrink-0 flex items-center gap-1.5">
+                <form id="merchantChatForm" onsubmit="handleSendMerchantMessage(event)" class="p-3 bg-white border-t border-[#EAEFEB] flex items-center gap-2 shrink-0">
+                    <input type="text" id="merchantMsgInput" placeholder="Type a reply..." autocomplete="off" class="flex-1 bg-[#F8FAF9] border border-[#EAEFEB] text-xs text-[#111827] placeholder-[#6B7280]/60 rounded-full px-4 py-2.5 outline-none focus:border-[#084C38] transition">
+                    <button type="submit" id="merchantSendBtn" class="bg-[#084C38] hover:bg-[#063b2c] text-white font-bold text-xs px-4 py-2.5 rounded-full transition shadow-xs shrink-0 flex items-center gap-1.5">
                         <span>Send</span>
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                     </button>
@@ -139,19 +135,19 @@
             <!-- Col 3: Customer Context & Orders Sidebar (3 cols) -->
             <div class="hidden md:flex md:col-span-3 flex-col h-full bg-white p-4 overflow-y-auto space-y-4">
                 <div>
-                    <h4 class="text-xs font-extrabold text-[#08110D] uppercase tracking-wider font-display mb-3">Customer Lead Profile</h4>
-                    <div class="p-3.5 bg-[#F8FAF8] rounded-xl border border-[#E3E9E5] space-y-2 text-xs">
-                        <div class="font-bold text-[#08110D]" id="contextCustName">Customer</div>
-                        <div class="text-[11px] text-[#6B756F] font-mono" id="contextCustPhone">No phone specified</div>
-                        <div class="text-[11px] text-[#6B756F]" id="contextCustEmail"></div>
+                    <h4 class="text-xs font-bold text-[#111827] uppercase tracking-wider mb-3">Customer Lead Profile</h4>
+                    <div class="p-3.5 bg-[#F8FAF9] rounded-2xl border border-[#EAEFEB] space-y-2 text-xs">
+                        <div class="font-bold text-[#111827]" id="contextCustName">Customer</div>
+                        <div class="text-[11px] text-[#6B7280] font-mono" id="contextCustPhone">No phone specified</div>
+                        <div class="text-[11px] text-[#6B7280]" id="contextCustEmail"></div>
 
                         <div id="contextActionButtons" class="pt-2 flex flex-col gap-1.5 hidden">
-                            <a id="contextWhatsAppLink" href="#" target="_blank" class="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white text-center py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-2xs">
+                            <a id="contextWhatsAppLink" href="#" target="_blank" class="w-full bg-[#084C38] hover:bg-[#063b2c] text-white text-center py-2.5 rounded-full text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-xs">
                                 <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                                 <span>Reach out on WhatsApp</span>
                             </a>
-                            <a id="contextCallLink" href="#" class="w-full bg-white hover:bg-gray-50 border border-[#E3E9E5] text-[#08110D] text-center py-1.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-[#08110D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                            <a id="contextCallLink" href="#" class="w-full bg-white hover:bg-gray-50 border border-[#EAEFEB] text-[#111827] text-center py-2 rounded-full text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-xs">
+                                <svg class="w-3.5 h-3.5 text-[#111827]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                                 <span>Direct Phone Call</span>
                             </a>
                         </div>
@@ -159,23 +155,23 @@
                 </div>
 
                 <div>
-                    <h4 class="text-xs font-extrabold text-[#08110D] uppercase tracking-wider font-display mb-3">Customer Lifetime</h4>
+                    <h4 class="text-xs font-bold text-[#111827] uppercase tracking-wider mb-3">Customer Lifetime</h4>
                     <div class="grid grid-cols-2 gap-2 text-center">
-                        <div class="p-3 bg-[#F8FAF8] rounded-xl border border-[#E3E9E5]">
-                            <div class="text-base font-extrabold text-[#08110D] font-display" id="contextTotalOrders">0</div>
-                            <div class="text-[10px] text-[#6B756F] uppercase font-bold">Orders</div>
+                        <div class="p-3 bg-[#F8FAF9] rounded-2xl border border-[#EAEFEB]">
+                            <div class="text-base font-extrabold text-[#111827]" id="contextTotalOrders">0</div>
+                            <div class="text-[10px] text-[#6B7280] uppercase font-bold">Orders</div>
                         </div>
-                        <div class="p-3 bg-[#F8FAF8] rounded-xl border border-[#E3E9E5]">
-                            <div class="text-xs font-extrabold text-[#087A50] font-display truncate" id="contextTotalSpent">₦0.00</div>
-                            <div class="text-[10px] text-[#6B756F] uppercase font-bold">Total Spent</div>
+                        <div class="p-3 bg-[#F8FAF9] rounded-2xl border border-[#EAEFEB]">
+                            <div class="text-xs font-extrabold text-[#084C38] font-mono truncate" id="contextTotalSpent">₦0.00</div>
+                            <div class="text-[10px] text-[#6B7280] uppercase font-bold">Total Spent</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex-1">
-                    <h4 class="text-xs font-extrabold text-[#08110D] uppercase tracking-wider font-display mb-3">Recent Orders</h4>
+                    <h4 class="text-xs font-bold text-[#111827] uppercase tracking-wider mb-3">Recent Orders</h4>
                     <div id="contextOrdersList" class="space-y-2 text-xs">
-                        <div class="p-3 text-center text-[#6B756F] text-[11px] bg-[#F8FAF8] rounded-xl border border-[#E3E9E5]">No orders placed yet.</div>
+                        <div class="p-3 text-center text-[#6B7280] text-[11px] bg-[#F8FAF9] rounded-2xl border border-[#EAEFEB]">No orders placed yet.</div>
                     </div>
                 </div>
             </div>
@@ -259,7 +255,7 @@
             document.getElementById('convCountBadge').textContent = convs.length + ' chats';
 
             if (convs.length === 0) {
-                container.innerHTML = `<div class="p-8 text-center text-[#6B756F]">No conversations found.</div>`;
+                container.innerHTML = `<div class="p-8 text-center text-[#6B7280]">No conversations found.</div>`;
                 return;
             }
 
@@ -270,26 +266,26 @@
                 const initial = (c.customer_name || 'S').charAt(0).toUpperCase();
 
                 return `
-                    <div onclick="selectConversation(${c.id})" class="p-3.5 cursor-pointer transition flex items-start gap-3 ${isSelected ? 'bg-[#08110D]/5 border-l-4 border-[#08110D]' : 'hover:bg-[#F8FAF8]'}">
-                        <div class="w-9 h-9 rounded-full ${unread > 0 ? 'bg-[#19D98B] text-[#08110D]' : 'bg-[#08110D] text-white'} flex items-center justify-center font-bold text-xs shrink-0 font-display">
+                    <div onclick="selectConversation(${c.id})" class="p-3.5 cursor-pointer transition flex items-start gap-3 ${isSelected ? 'bg-[#EDF5F1] border-l-4 border-[#084C38]' : 'hover:bg-[#F8FAF9]'}">
+                        <div class="w-9 h-9 rounded-full ${unread > 0 ? 'bg-[#084C38] text-white' : 'bg-[#EDF5F1] text-[#084C38] border border-[#084C38]/20'} flex items-center justify-center font-bold text-xs shrink-0">
                             ${initial}
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between mb-0.5">
-                                <h4 class="text-xs font-bold text-[#08110D] truncate ${unread > 0 ? 'font-extrabold' : ''}">${escapeHtml(c.customer_name)}</h4>
-                                <span class="text-[10px] text-[#6B756F] shrink-0">${time}</span>
+                                <h4 class="text-xs font-bold text-[#111827] truncate ${unread > 0 ? 'font-extrabold' : ''}">${escapeHtml(c.customer_name)}</h4>
+                                <span class="text-[10px] text-[#6B7280] shrink-0">${time}</span>
                             </div>
-                            <p class="text-[11px] text-[#6B756F] truncate ${unread > 0 ? 'font-semibold text-[#08110D]' : ''}">
+                            <p class="text-[11px] text-[#6B7280] truncate ${unread > 0 ? 'font-semibold text-[#111827]' : ''}">
                                 ${escapeHtml(c.last_message_preview || 'New message')}
                             </p>
                             <div class="flex items-center justify-between mt-1.5">
                                 <div class="flex items-center gap-1.5 truncate">
-                                    <span class="text-[9px] font-bold text-[#087A50] bg-[#19D98B]/15 px-1.5 py-0.2 rounded">
+                                    <span class="text-[9px] font-bold text-[#084C38] bg-[#EDF5F1] px-2 py-0.5 rounded-full">
                                         ${c.total_orders_count > 0 ? c.total_orders_count + ' Orders' : 'Storefront Inquiry'}
                                     </span>
-                                    ${c.customer_phone ? `<span class="text-[9px] font-mono text-[#6B756F] bg-gray-100 px-1.5 py-0.2 rounded">${escapeHtml(c.customer_phone)}</span>` : ''}
+                                    ${c.customer_phone ? `<span class="text-[9px] font-mono text-[#6B7280] bg-[#F8FAF9] border border-[#EAEFEB] px-1.5 py-0.5 rounded-md">${escapeHtml(c.customer_phone)}</span>` : ''}
                                 </div>
-                                ${unread > 0 ? `<span class="bg-[#19D98B] text-[#08110D] text-[9px] font-bold px-2 py-0.2 rounded-full shrink-0">${unread} new</span>` : ''}
+                                ${unread > 0 ? `<span class="bg-[#084C38] text-white text-[9px] font-bold px-2 py-0.5 rounded-full shrink-0">${unread} new</span>` : ''}
                             </div>
                         </div>
                     </div>
@@ -368,11 +364,11 @@
                 row.id = 'merchant-msg-' + msg.id;
                 row.className = 'flex flex-col ' + (isMerchant ? 'items-end' : 'items-start') + ' space-y-1';
                 row.innerHTML = `
-                    <div class="max-w-[80%] px-4 py-2.5 rounded-2xl shadow-2xs ${isMerchant ? 'bg-[#08110D] text-white rounded-br-xs' : 'bg-white border border-[#E3E9E5] text-[#08110D] rounded-bl-xs'}">
+                    <div class="max-w-[80%] px-4 py-2.5 rounded-2xl shadow-xs ${isMerchant ? 'bg-[#084C38] text-white rounded-br-xs' : 'bg-white border border-[#EAEFEB] text-[#111827] rounded-bl-xs'}">
                         <div class="leading-relaxed break-words whitespace-pre-line text-xs">${escapeHtml(msg.message)}</div>
-                        <div class="text-[9px] mt-1 text-right ${isMerchant ? 'text-white/60' : 'text-[#6B756F]'} flex items-center justify-end gap-1">
+                        <div class="text-[9px] mt-1 text-right ${isMerchant ? 'text-white/70' : 'text-[#6B7280]'} flex items-center justify-end gap-1">
                             <span>${time}</span>
-                            ${isMerchant ? '<svg class="w-2.5 h-2.5 text-[#19D98B]" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' : ''}
+                            ${isMerchant ? '<svg class="w-2.5 h-2.5 text-white/80" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' : ''}
                         </div>
                     </div>
                 `;
@@ -409,17 +405,17 @@
                     const ordersContainer = document.getElementById('contextOrdersList');
                     const orders = data.orders || [];
                     if (orders.length === 0) {
-                        ordersContainer.innerHTML = `<div class="p-3 text-center text-[#6B756F] text-[11px] bg-[#F8FAF8] rounded-xl border border-[#E3E9E5]">No orders placed yet.</div>`;
+                        ordersContainer.innerHTML = `<div class="p-3 text-center text-[#6B7280] text-[11px] bg-[#F8FAF9] rounded-2xl border border-[#EAEFEB]">No orders placed yet.</div>`;
                     } else {
                         ordersContainer.innerHTML = orders.map(ord => `
-                            <div class="p-3 bg-[#F8FAF8] rounded-xl border border-[#E3E9E5] space-y-1">
+                            <div class="p-3 bg-[#F8FAF9] rounded-2xl border border-[#EAEFEB] space-y-1">
                                 <div class="flex items-center justify-between">
-                                    <span class="font-bold text-[#08110D]">#${ord.order_ref}</span>
-                                    <span class="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">${ord.order_status}</span>
+                                    <span class="font-bold text-[#111827]">#${ord.order_ref}</span>
+                                    <span class="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-[#EDF5F1] text-[#084C38] border border-[#084C38]/20">${ord.order_status}</span>
                                 </div>
-                                <div class="text-[11px] text-[#6B756F] flex items-center justify-between">
+                                <div class="text-[11px] text-[#6B7280] flex items-center justify-between">
                                     <span>₦${parseFloat(ord.total_amount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
-                                    <span>${ord.payment_status === 'paid' ? '<span class="inline-flex items-center gap-1 text-emerald-700 font-bold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Paid</span>' : '<span class="inline-flex items-center gap-1 text-amber-700 font-bold"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Unpaid</span>'}</span>
+                                    <span>${ord.payment_status === 'paid' ? '<span class="inline-flex items-center gap-1 text-[#084C38] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-[#084C38]"></span>Paid</span>' : '<span class="inline-flex items-center gap-1 text-amber-700 font-bold"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Unpaid</span>'}</span>
                                 </div>
                             </div>
                         `).join('');
@@ -444,11 +440,11 @@
             temp.id = 'temp-merchant-msg-' + key;
             temp.className = 'flex flex-col items-end space-y-1 opacity-90';
             temp.innerHTML = `
-                <div class="max-w-[80%] px-4 py-2.5 rounded-2xl shadow-2xs bg-[#08110D] text-white rounded-br-xs">
+                <div class="max-w-[80%] px-4 py-2.5 rounded-2xl shadow-xs bg-[#084C38] text-white rounded-br-xs">
                     <div class="leading-relaxed break-words whitespace-pre-line text-xs">${escapeHtml(text)}</div>
-                    <div class="text-[9px] mt-1 text-right text-white/60 flex items-center justify-end gap-1">
+                    <div class="text-[9px] mt-1 text-right text-white/70 flex items-center justify-end gap-1">
                         <span>${nowTime}</span>
-                        <span class="text-[#19D98B] animate-pulse flex items-center gap-1"><span>Sending...</span></span>
+                        <span class="text-white/80 animate-pulse flex items-center gap-1"><span>Sending...</span></span>
                     </div>
                 </div>
             `;
@@ -549,7 +545,7 @@
                     const badge = document.getElementById('monthlyChatUsageBadge');
                     const alert = document.getElementById('monthlyChatLimitAlert');
                     if (data.is_unlimited) {
-                        badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full border bg-emerald-50 text-[#087A50] border-emerald-200';
+                        badge.className = 'text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-[#EDF5F1] text-[#084C38] border-[#084C38]/20';
                         badge.textContent = 'Unlimited (' + (data.plan || 'PRO').toUpperCase() + ')';
                         badge.classList.remove('hidden');
                         if (alert) alert.classList.add('hidden');
@@ -557,7 +553,7 @@
                         const used = data.used || 0;
                         const limit = data.limit || 20;
                         const reached = data.limit_reached;
-                        badge.className = `text-[10px] font-bold px-2 py-0.5 rounded-full border ${reached ? 'bg-red-50 text-red-700 border-red-200' : 'bg-[#F8FAF8] text-[#08110D] border-[#E3E9E5]'}`;
+                        badge.className = `text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${reached ? 'bg-red-50 text-red-700 border-red-200' : 'bg-[#EDF5F1] text-[#084C38] border-[#084C38]/20'}`;
                         badge.textContent = `${used}/${limit} chats this month`;
                         badge.classList.remove('hidden');
                         if (alert) {

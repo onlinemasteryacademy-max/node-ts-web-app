@@ -96,10 +96,19 @@ const viewsDir = fs.existsSync(path.join(__dirname, 'views'))
   : path.resolve(process.cwd(), 'src', 'views');
 
 // Persistent Uploads Directory (safe from Git pulls, re-deployments, and builds)
-// By storing uploads in data/uploads (or UPLOADS_DIR), files will never be erased during git deployments!
-const persistentUploadsDir = process.env.UPLOADS_DIR
-  ? path.resolve(process.env.UPLOADS_DIR)
-  : path.resolve(process.cwd(), 'data', 'uploads');
+// By storing uploads in persistent storage outside hbuilds (or UPLOADS_DIR), files will never be erased during git deployments!
+function resolvePersistentUploadsDir(): string {
+  if (process.env.UPLOADS_DIR) {
+    return path.resolve(process.env.UPLOADS_DIR);
+  }
+  const hostingerStorage = '/home/u966016758/domains/zlik.store/storage/uploads';
+  if (fs.existsSync(hostingerStorage) || process.cwd().includes('/home/u966016758/')) {
+    return hostingerStorage;
+  }
+  return path.resolve(process.cwd(), 'data', 'uploads');
+}
+
+const persistentUploadsDir = resolvePersistentUploadsDir();
 
 if (!fs.existsSync(persistentUploadsDir)) {
   fs.mkdirSync(persistentUploadsDir, { recursive: true });
@@ -163,7 +172,14 @@ fastify.register(fastifyStatic, {
 // View Engine (EJS)
 fastify.register(fastifyView, {
   engine: { ejs },
-  root: viewsDir
+  root: viewsDir,
+  defaultContext: (req: FastifyRequest) => {
+    const ua = (req.headers['user-agent'] || '');
+    const isMobileApp = ua.includes('ZlikMerchantApp') || req.headers['x-requested-with'] === 'com.zlik.merchant';
+    return {
+      isMobileApp
+    };
+  }
 });
 
 // Register API Routes
@@ -298,11 +314,11 @@ fastify.post('/api/merchant/items', async (req: FastifyRequest<{ Body: any }>, r
     sku: body.sku ? body.sku.trim() : null,
     badge: body.badge ? body.badge.trim() : null,
     image_url: body.image_url ? body.image_url.trim() : null,
-    gallery_json: typeof body.gallery_json === 'object' ? JSON.stringify(body.gallery_json) : (body.gallery_json || null),
-    variants_json: typeof body.variants_json === 'object' ? JSON.stringify(body.variants_json) : (body.variants_json || null),
-    option_groups_json: typeof body.option_groups_json === 'object' ? JSON.stringify(body.option_groups_json) : (body.option_groups_json || null),
-    specs_json: typeof body.specs_json === 'object' ? JSON.stringify(body.specs_json) : (body.specs_json || null),
-    attributes_json: typeof body.attributes_json === 'object' ? JSON.stringify(body.attributes_json) : (body.attributes_json || null),
+    gallery_json: (body.gallery_json && typeof body.gallery_json === 'object') ? JSON.stringify(body.gallery_json) : (body.gallery_json && body.gallery_json !== 'null' ? body.gallery_json : null),
+    variants_json: (body.variants_json && typeof body.variants_json === 'object') ? JSON.stringify(body.variants_json) : (body.variants_json && body.variants_json !== 'null' ? body.variants_json : null),
+    option_groups_json: (body.option_groups_json && typeof body.option_groups_json === 'object') ? JSON.stringify(body.option_groups_json) : (body.option_groups_json && body.option_groups_json !== 'null' ? body.option_groups_json : null),
+    specs_json: (body.specs_json && typeof body.specs_json === 'object') ? JSON.stringify(body.specs_json) : (body.specs_json && body.specs_json !== 'null' ? body.specs_json : null),
+    attributes_json: (body.attributes_json && typeof body.attributes_json === 'object') ? JSON.stringify(body.attributes_json) : (body.attributes_json && body.attributes_json !== 'null' ? body.attributes_json : null),
     is_preorder: body.is_preorder ? 1 : 0,
     preorder_dispatch_date: body.preorder_dispatch_date ? body.preorder_dispatch_date.trim() : null,
     branch_id: body.branch_id ? parseInt(body.branch_id) : null,
@@ -575,10 +591,17 @@ fastify.get('/privacy', async (req: FastifyRequest, reply: FastifyReply) => {
   return reply.view('privacy.ejs');
 });
 
-// 2. Marketplace Directory
+// 2. Marketplace Directory (Exclusive to Paid & Verified Merchants)
 fastify.get('/marketplace', async (req: FastifyRequest, reply: FastifyReply) => {
   const rawStores = dbFetchAll<any>('stores', { status: 'active' });
-  const stores = rawStores.map(s => ({
+  const paidVerifiedStores = rawStores.filter(s => {
+    const isPaid = s.plan_tier === 'pro' || s.plan_tier === 'business' || s.plan_tier === 'enterprise';
+    if (!isPaid) return false;
+    if (Number(s.is_verified) === 1) return true;
+    const seller = dbFetchOne<any>('seller_profiles', { store_id: s.id });
+    return seller && seller.composite_verification_status === 'verified';
+  });
+  const stores = paidVerifiedStores.map(s => ({
     ...s,
     category_info: getStoreCategoryInfo(s)
   }));

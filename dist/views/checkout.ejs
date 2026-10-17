@@ -63,18 +63,6 @@
             </div>
         </div>
 
-        <% if (typeof isGated !== 'undefined' && isGated) { %>
-        <div class="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs font-medium space-y-1.5 shadow-2xs">
-            <div class="flex items-center gap-2 font-bold text-amber-950">
-                <span class="text-sm">🔒</span>
-                <span>Store Verification in Progress — Orders Gated</span>
-            </div>
-            <p class="text-[11.5px] text-amber-800 leading-relaxed">
-                This store is currently undergoing merchant identity verification. To protect customers and eliminate payment diversion, order creation and direct bank transfer instructions are temporarily gated.
-            </p>
-        </div>
-        <% } %>
-
         <div class="flex items-center justify-between">
             <h1 class="text-2xl font-extrabold font-display text-[#08110D]">Complete Your Order</h1>
             <span id="stepIndicator" class="text-xs font-bold font-display px-3 py-1 rounded-full bg-[#19D98B]/20 text-[#087A50]">
@@ -297,8 +285,8 @@
                 <% } %>
             </div>
 
-            <!-- Direct Transfer Protection & Anti-Diversion Warning Box -->
-            <div class="p-5 rounded-3xl bg-amber-50 border border-amber-300 text-amber-950 text-xs space-y-2.5 shadow-2xs">
+            <!-- Direct Transfer Protection & Anti-Diversion Warning Box (Hidden) -->
+            <div class="hidden p-5 rounded-3xl bg-amber-50 border border-amber-300 text-amber-950 text-xs space-y-2.5 shadow-2xs">
                 <div class="flex items-center gap-2 font-bold text-amber-950">
                     <span class="text-lg">🛡️</span>
                     <span class="font-display">Direct Transfer Safety Notice</span>
@@ -374,15 +362,9 @@
 
                     <!-- Submit & Back Buttons -->
                     <div class="space-y-2.5 pt-2">
-                        <% if (typeof isGated !== 'undefined' && isGated) { %>
-                            <button type="button" disabled class="w-full bg-gray-400 text-white font-extrabold text-xs py-4 rounded-2xl cursor-not-allowed opacity-60 uppercase tracking-wider font-display">
-                                🔒 Orders Gated (Verification Pending)
-                            </button>
-                        <% } else { %>
-                            <button type="submit" id="submitOrderBtn" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-extrabold text-xs py-4 rounded-2xl transition shadow-md flex items-center justify-center gap-2 uppercase tracking-wider font-display">
-                                <span>✓</span> <span>I Have Paid — Complete Order</span>
-                            </button>
-                        <% } %>
+                        <button type="submit" id="submitOrderBtn" class="w-full bg-[#08110D] hover:bg-black text-[#19D98B] font-extrabold text-xs py-4 rounded-2xl transition shadow-md flex items-center justify-center gap-2 uppercase tracking-wider font-display">
+                            <span>✓</span> <span>I Have Paid — Complete Order</span>
+                        </button>
                         <button type="button" onclick="goToStep(1)" class="w-full text-center text-xs font-bold text-[#6B756F] hover:text-[#08110D] py-2 transition">
                             ← Edit Contact & Delivery Details
                         </button>

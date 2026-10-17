@@ -86,7 +86,7 @@ export async function initMySQLPersistence(): Promise<void> {
 
             const params = keys.map(k => {
               const val = (row as any)[k];
-              if (val === undefined || val === null) return null;
+              if (val === undefined || val === null || val === 'null') return null;
               if (typeof val === 'object') return JSON.stringify(val);
               return val;
             });
