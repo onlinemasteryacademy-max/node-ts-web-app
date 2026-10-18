@@ -167,7 +167,7 @@
     <!-- Store Showcase Grid -->
     <div id="storesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <% stores.forEach(store => { %>
-        <div class="store-card bg-white rounded-2xl border border-[#E3E9E5] hover:border-gray-300 p-6 flex flex-col justify-between shadow-xs hover:shadow-md transition duration-200" 
+        <div onclick="if(!event.target.closest('a')) window.location.href='/<%= store.slug %>'" class="store-card bg-white rounded-2xl border border-[#E3E9E5] hover:border-[#19D98B] p-6 flex flex-col justify-between shadow-xs hover:shadow-md transition duration-200 cursor-pointer" 
              data-category="<%= store.category_info ? store.category_info.id : 'general' %>"
              data-category-name="<%= (store.category_info ? store.category_info.name : 'General Retail').toLowerCase() %>"
              data-name="<%= (store.store_name || '').toLowerCase() %>"

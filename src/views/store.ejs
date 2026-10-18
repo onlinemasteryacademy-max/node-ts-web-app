@@ -465,7 +465,7 @@
     </div>
 
     <!-- Active Open Order Warning Modal -->
-    <div id="openOrderWarningModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div id="openOrderWarningModal" onclick="if(event.target === this) closeOpenOrderWarningModal()" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl border border-[#E3E9E5]">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-lg">⚠️</div>
@@ -491,7 +491,7 @@
     </div>
 
     <!-- Checkout Modal -->
-    <div id="checkoutModal" class="fixed inset-0 z-[70] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div id="checkoutModal" onclick="if(event.target === this) closeCheckoutModal()" class="fixed inset-0 z-[70] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl border border-[#E3E9E5] max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between pb-3 border-b border-[#E3E9E5]">
                 <div class="flex items-center gap-2">
@@ -673,7 +673,7 @@
     </div>
 
     <!-- Aesthetic Industry-Adaptive Product Detail & Customization Modal -->
-    <div id="productDetailModal" class="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden transition-opacity duration-200">
+    <div id="productDetailModal" onclick="if(event.target === this) closeProductModal()" class="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden transition-opacity duration-200">
         <div id="productModalCard" class="bg-white rounded-3xl max-w-2xl w-full p-0 shadow-2xl border border-[#E3E9E5] overflow-hidden max-h-[92vh] flex flex-col transform transition-transform duration-200 scale-95">
             <!-- Header bar -->
             <div class="px-5 py-3.5 border-b border-[#E3E9E5] flex items-center justify-between bg-[#F8FAF8] shrink-0">
@@ -855,7 +855,7 @@
     </div>
 
     <!-- Storefront Share & QR Modal -->
-    <div id="storefrontShareModal" class="fixed inset-0 z-[80] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div id="storefrontShareModal" onclick="if(event.target === this) closeStoreShareModal()" class="fixed inset-0 z-[80] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 border border-[#E3E9E5] shadow-2xl text-center">
             <div class="flex items-center justify-between border-b border-[#E3E9E5] pb-3">
                 <div class="flex items-center gap-2 text-left">

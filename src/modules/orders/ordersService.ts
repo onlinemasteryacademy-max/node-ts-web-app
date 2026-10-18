@@ -56,6 +56,7 @@ export function createOrder(input: CreateOrderInput): {
           slug: demoEntry.store.slug,
           store_name: demoEntry.store.store_name,
           owner_name: 'Demo Merchant',
+          password_hash: '$2a$10$demostorepasswordhashfortesting',
           email: `${demoEntry.store.slug}@demo.zlik.store`,
           whatsapp_number: '+2348000000000',
           plan_tier: 'pro',

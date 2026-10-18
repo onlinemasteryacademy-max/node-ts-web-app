@@ -883,6 +883,12 @@ const renderTemplateDemo = async (req, reply) => {
 };
 fastify.get('/demo/:slug', renderTemplateDemo);
 fastify.get('/preview/:slug', renderTemplateDemo);
+fastify.get('/luxeaura', async (req, reply) => {
+    return renderTemplateDemo({ ...req, params: { slug: 'beauty_cosmetic' } }, reply);
+});
+fastify.get('/demo/luxeaura', async (req, reply) => {
+    return renderTemplateDemo({ ...req, params: { slug: 'beauty_cosmetic' } }, reply);
+});
 // 12. Public Storefront View (/store/:slug or /:slug)
 const renderStorefront = async (req, reply) => {
     const slug = req.params.slug;

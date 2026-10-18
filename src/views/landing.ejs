@@ -212,71 +212,79 @@
           </div>
         </div>
 
-        <!-- Right: Visual Interface Representation -->
+        <!-- Right: Visual Interface Representation (Clickable Live Store Demo) -->
         <div class="lg:col-span-5 relative">
-          <div class="bg-white rounded-2xl border border-[#E3E9E5] shadow-zlik p-6 relative overflow-hidden">
-            <!-- Store Header -->
-            <div class="flex items-center justify-between pb-4 border-b border-[#E3E9E5] mb-5">
-              <div>
-                <div class="text-[11px] font-mono text-[#6B756F]">zlik.store/luxeaura</div>
-                <h3 class="font-semibold text-base text-[#08110D] font-display mt-0.5">Luxe Aura Skincare</h3>
+          <a href="/luxeaura" class="block group cursor-pointer" title="Click to test live storefront demo">
+            <div class="bg-white rounded-2xl border border-[#E3E9E5] group-hover:border-[#19D98B] shadow-zlik group-hover:shadow-xl p-6 relative overflow-hidden transition-all duration-200">
+              <!-- Live Demo Badge Banner -->
+              <div class="absolute top-0 right-0 left-0 bg-[#08110D] text-white py-1 px-4 text-[10px] font-bold flex items-center justify-between font-mono">
+                <span class="text-[#19D98B] flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-[#19D98B] animate-pulse"></span> LIVE STORE PREVIEW</span>
+                <span class="text-white/70 group-hover:text-white transition">Tap to Test Order &rarr;</span>
               </div>
-              <span class="text-xs font-semibold text-[#087A50] bg-[#19D98B]/15 px-2.5 py-1 rounded-full">
-                Open Online
-              </span>
-            </div>
 
-            <!-- Product List in Cart -->
-            <div class="space-y-3 mb-5">
-              <div class="bg-[#F8FAF8] p-3.5 rounded-xl border border-[#E3E9E5] flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-white rounded-lg border border-[#E3E9E5] flex items-center justify-center text-base">
-                    ✨
-                  </div>
-                  <div>
-                    <div class="font-semibold text-xs text-[#08110D]">Vitamin C Serum (50ml)</div>
-                    <div class="text-[11px] text-[#6B756F]">Qty: 1</div>
-                  </div>
+              <!-- Store Header -->
+              <div class="flex items-center justify-between pb-4 border-b border-[#E3E9E5] mb-5 mt-4">
+                <div>
+                  <div class="text-[11px] font-mono text-[#6B756F]">zlik.store/luxeaura</div>
+                  <h3 class="font-semibold text-base text-[#08110D] font-display mt-0.5 group-hover:text-[#087A50] transition-colors">Luxe Aura Skincare</h3>
                 </div>
-                <div class="font-mono text-xs font-semibold text-[#08110D]">₦18,500</div>
+                <span class="text-xs font-semibold text-[#087A50] bg-[#19D98B]/15 px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <span>Open Online</span>
+                </span>
               </div>
 
-              <div class="bg-[#F8FAF8] p-3.5 rounded-xl border border-[#E3E9E5] flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-white rounded-lg border border-[#E3E9E5] flex items-center justify-center text-base">
-                    🧴
+              <!-- Product List in Cart -->
+              <div class="space-y-3 mb-5">
+                <div class="bg-[#F8FAF8] p-3.5 rounded-xl border border-[#E3E9E5] flex items-center justify-between group-hover:border-gray-300 transition">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white rounded-lg border border-[#E3E9E5] flex items-center justify-center text-base shrink-0">
+                      ✨
+                    </div>
+                    <div>
+                      <div class="font-semibold text-xs text-[#08110D]">Vitamin C Serum (50ml)</div>
+                      <div class="text-[11px] text-[#6B756F]">Qty: 1</div>
+                    </div>
                   </div>
-                  <div>
-                    <div class="font-semibold text-xs text-[#08110D]">Barrier Moisturizer</div>
-                    <div class="text-[11px] text-[#6B756F]">Qty: 1</div>
-                  </div>
+                  <div class="font-mono text-xs font-semibold text-[#08110D]">₦18,500</div>
                 </div>
-                <div class="font-mono text-xs font-semibold text-[#08110D]">₦14,000</div>
-              </div>
-            </div>
 
-            <!-- Order Summary Box -->
-            <div class="bg-[#08110D] text-white rounded-xl p-4 space-y-2.5">
-              <div class="flex justify-between text-xs text-[#E3E9E5]/70">
-                <span>Subtotal</span>
-                <span class="font-mono">₦32,500</span>
-              </div>
-              <div class="flex justify-between text-xs text-[#E3E9E5]/70">
-                <span>Delivery</span>
-                <span class="font-mono">₦2,500</span>
-              </div>
-              <div class="flex justify-between text-sm font-semibold pt-2 border-t border-white/15">
-                <span>Total</span>
-                <span class="text-[#19D98B] font-mono font-bold text-base">₦35,000</span>
-              </div>
-              <div class="pt-2">
-                <div class="w-full bg-[#19D98B] text-[#08110D] text-xs font-semibold font-display text-center py-2.5 rounded-lg flex items-center justify-center gap-2">
-                  <span>Complete Order & Checkout</span>
+                <div class="bg-[#F8FAF8] p-3.5 rounded-xl border border-[#E3E9E5] flex items-center justify-between group-hover:border-gray-300 transition">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white rounded-lg border border-[#E3E9E5] flex items-center justify-center text-base shrink-0">
+                      🧴
+                    </div>
+                    <div>
+                      <div class="font-semibold text-xs text-[#08110D]">Barrier Moisturizer</div>
+                      <div class="text-[11px] text-[#6B756F]">Qty: 1</div>
+                    </div>
+                  </div>
+                  <div class="font-mono text-xs font-semibold text-[#08110D]">₦14,000</div>
                 </div>
               </div>
-            </div>
 
-          </div>
+              <!-- Order Summary Box -->
+              <div class="bg-[#08110D] text-white rounded-xl p-4 space-y-2.5">
+                <div class="flex justify-between text-xs text-[#E3E9E5]/70">
+                  <span>Subtotal</span>
+                  <span class="font-mono">₦32,500</span>
+                </div>
+                <div class="flex justify-between text-xs text-[#E3E9E5]/70">
+                  <span>Delivery</span>
+                  <span class="font-mono">₦2,500</span>
+                </div>
+                <div class="flex justify-between text-sm font-semibold pt-2 border-t border-white/15">
+                  <span>Total</span>
+                  <span class="text-[#19D98B] font-mono font-bold text-base">₦35,000</span>
+                </div>
+                <div class="pt-2">
+                  <div class="w-full bg-[#19D98B] group-hover:bg-[#16C47D] text-[#08110D] text-xs font-bold font-display text-center py-2.5 rounded-lg flex items-center justify-center gap-2 transition shadow-xs">
+                    <span>Explore Store & Test Checkout &rarr;</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </a>
         </div>
       </div>
     </div>
