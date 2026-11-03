@@ -91,6 +91,12 @@
       <button onclick="switchTab('leads')" id="tab-btn-leads" class="nav-tab px-4 py-2 rounded-lg border border-transparent hover:text-[#19D98B] transition whitespace-nowrap">
         🏢 Enterprise Leads (<%= metrics.totalLeads %>)
       </button>
+      <button onclick="switchTab('affiliates')" id="tab-btn-affiliates" class="nav-tab px-4 py-2 rounded-lg border border-transparent hover:text-[#19D98B] transition whitespace-nowrap flex items-center gap-1.5">
+        🤝 Affiliates & Payouts (<%= (typeof affiliates !== 'undefined' ? affiliates.length : 0) %>)
+        <% if (typeof metrics !== 'undefined' && metrics.pendingPayoutsCount > 0) { %>
+          <span class="px-1.5 py-0.5 rounded-full bg-amber-400 text-black font-extrabold text-[10px]"><%= metrics.pendingPayoutsCount %></span>
+        <% } %>
+      </button>
       <button onclick="switchTab('audit')" id="tab-btn-audit" class="nav-tab px-4 py-2 rounded-lg border border-transparent hover:text-[#19D98B] transition whitespace-nowrap">
         📜 Logs & Maintenance
       </button>
@@ -962,6 +968,512 @@
         </div>
       </div>
     </div>
+
+    <!-- TAB 9: AFFILIATES & PAYOUTS -->
+    <div id="tab-affiliates" class="tab-content space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-1.5 text-xs font-bold text-[#19D98B] bg-[#19D98B]/10 px-3 py-1 rounded-full mb-1">
+            <span>Official Partner: The Online Mastery</span>
+          </div>
+          <h2 class="text-lg font-bold font-display text-white">Affiliate Program CRM & Payout Desk</h2>
+          <p class="text-xs text-white/60">Manage partner affiliates, track 70% 12-month recurring commissions, and approve bank withdrawals.</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <a href="/affiliates" target="_blank" class="px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold text-xs transition flex items-center gap-1.5">
+            <span>View Landing Page</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Affiliate Metric Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
+          <div class="text-xs text-white/60 font-semibold mb-1">REGISTERED AFFILIATES</div>
+          <div class="text-3xl font-extrabold font-display text-white"><%= (typeof affiliates !== 'undefined' ? affiliates.length : 0) %></div>
+          <div class="text-xs text-[#19D98B] mt-2 font-medium">● 60-day cookie window tracking</div>
+        </div>
+
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
+          <div class="text-xs text-white/60 font-semibold mb-1">COMMISSIONS GENERATED (70%)</div>
+          <div class="text-3xl font-extrabold font-display text-[#19D98B]">₦<%= Number((typeof metrics !== 'undefined' && metrics.totalAffiliateCommissions) || 0).toLocaleString() %></div>
+          <div class="text-xs text-white/60 mt-2 font-medium"><%= (typeof metrics !== 'undefined' && metrics.totalAffiliateSalesCount) || 0 %> subscription renewal payments</div>
+        </div>
+
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
+          <div class="text-xs text-white/60 font-semibold mb-1">WALLET BALANCES ACCRUED</div>
+          <div class="text-3xl font-extrabold font-display text-white">₦<%= Number((typeof metrics !== 'undefined' && metrics.totalAffiliatesOwed) || 0).toLocaleString() %></div>
+          <div class="text-xs text-white/60 mt-2 font-medium">Earned by partners (Min. ₦10k to withdraw)</div>
+        </div>
+
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-6 <%= (typeof metrics !== 'undefined' && metrics.pendingPayoutsCount > 0) ? 'border-amber-400/50 bg-amber-400/5' : '' %>">
+          <div class="text-xs font-semibold mb-1 <%= (typeof metrics !== 'undefined' && metrics.pendingPayoutsCount > 0) ? 'text-amber-400' : 'text-white/60' %>">PENDING PAYOUT REQUESTS</div>
+          <div class="text-3xl font-extrabold font-display text-amber-400">₦<%= Number((typeof metrics !== 'undefined' && metrics.pendingPayoutsTotal) || 0).toLocaleString() %></div>
+          <div class="text-xs text-amber-300/80 mt-2 font-medium"><%= (typeof metrics !== 'undefined' && metrics.pendingPayoutsCount) || 0 %> withdrawal(s) awaiting approval</div>
+        </div>
+      </div>
+
+      <!-- PAYOUT APPROVAL DESK -->
+      <div class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+        <div class="p-6 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h3 class="text-sm font-bold font-display uppercase tracking-wider text-white">Bank Payout Requests & Approval Desk</h3>
+            <p class="text-xs text-white/60">Review submitted bank withdrawal requests, verify NUBAN details, and approve disbursements</p>
+          </div>
+          <span class="text-xs text-white/60 font-mono">Min. ₦10,000 Threshold</span>
+        </div>
+
+        <% 
+          var allPayoutList = (typeof affiliatePayouts !== 'undefined') ? affiliatePayouts : [];
+          var pendingList = allPayoutList.filter(function(p) { return p.status === 'pending'; });
+          var completedList = allPayoutList.filter(function(p) { return p.status !== 'pending'; });
+        %>
+
+        <% if (pendingList.length === 0) { %>
+          <div class="p-8 text-center text-xs text-white/40">
+            No pending affiliate payout requests at this time. All disbursements are up to date!
+          </div>
+        <% } else { %>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-white/80">
+              <thead class="bg-white/5 border-b border-white/10 uppercase tracking-wider text-[10px] text-white/60">
+                <tr>
+                  <th class="py-3 px-4 font-bold">Request Date</th>
+                  <th class="py-3 px-4 font-bold">Affiliate Partner</th>
+                  <th class="py-3 px-4 font-bold">Withdrawal Amount</th>
+                  <th class="py-3 px-4 font-bold">Bank & Account Details</th>
+                  <th class="py-3 px-4 font-bold text-center">Desk Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-white/5 font-medium">
+                <% pendingList.forEach(function(p) { %>
+                  <tr class="hover:bg-white/5 transition">
+                    <td class="py-3.5 px-4 font-mono text-[11px] text-white/50">
+                      <%= new Date(p.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <div class="font-bold text-white"><%= p.affiliate_name %></div>
+                      <div class="text-[11px] text-white/60"><%= p.affiliate_email %> &bull; <%= p.affiliate_phone %></div>
+                      <span class="inline-block px-1.5 py-0.5 rounded text-[10px] bg-[#19D98B]/10 text-[#19D98B] font-mono mt-0.5">Code: <%= p.affiliate_code %></span>
+                    </td>
+                    <td class="py-3.5 px-4 font-mono font-bold text-lg text-[#19D98B]">
+                      ₦<%= Number(p.amount).toLocaleString() %>
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <div class="font-bold text-white"><%= p.bank_name %></div>
+                      <div class="font-mono text-sm text-[#19D98B] tracking-wider font-bold"><%= p.account_number %></div>
+                      <div class="text-[11px] text-white/70"><%= p.account_name %></div>
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      <div class="flex items-center justify-center gap-2">
+                        <button 
+                          onclick="openApprovePayoutModal(<%= p.id %>, '<%= p.amount %>', '<%= (p.affiliate_name || '').replace(/'/g, '\\\'') %>', '<%= p.bank_name %>', '<%= p.account_number %>', '<%= (p.account_name || '').replace(/'/g, '\\\'') %>')" 
+                          class="px-3 py-1.5 rounded-lg bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] font-bold text-xs transition"
+                        >
+                          Approve & Mark Paid
+                        </button>
+                        <button 
+                          onclick="openRejectPayoutModal(<%= p.id %>, '<%= p.amount %>', '<%= (p.affiliate_name || '').replace(/'/g, '\\\'') %>')" 
+                          class="px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-300 font-semibold text-xs border border-red-500/30 transition"
+                        >
+                          Reject & Refund
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+
+        <!-- Historical Payouts Accordion -->
+        <% if (completedList.length > 0) { %>
+          <div class="p-4 border-t border-white/10 bg-white/2">
+            <details class="text-xs">
+              <summary class="font-bold text-white/70 cursor-pointer hover:text-white py-1">
+                View Settled & Rejected Payout History (<%= completedList.length %>)
+              </summary>
+              <div class="overflow-x-auto mt-3">
+                <table class="w-full text-left text-xs text-white/70">
+                  <thead class="bg-white/5 uppercase text-[10px] text-white/50">
+                    <tr>
+                      <th class="py-2 px-3">Date</th>
+                      <th class="py-2 px-3">Affiliate</th>
+                      <th class="py-2 px-3">Amount</th>
+                      <th class="py-2 px-3">Bank Details</th>
+                      <th class="py-2 px-3">Status</th>
+                      <th class="py-2 px-3">Reference / Reason</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-white/5">
+                    <% completedList.forEach(function(p) { %>
+                      <tr>
+                        <td class="py-2.5 px-3 font-mono text-[11px]"><%= new Date(p.created_at).toLocaleDateString() %></td>
+                        <td class="py-2.5 px-3 font-semibold text-white"><%= p.affiliate_name %></td>
+                        <td class="py-2.5 px-3 font-mono font-bold text-white">₦<%= Number(p.amount).toLocaleString() %></td>
+                        <td class="py-2.5 px-3"><%= p.bank_name %> - <%= p.account_number %></td>
+                        <td class="py-2.5 px-3">
+                          <% if (p.status === 'paid') { %>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400">Paid</span>
+                          <% } else { %>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400">Rejected</span>
+                          <% } %>
+                        </td>
+                        <td class="py-2.5 px-3 text-[11px] text-white/60"><%= p.transaction_reference || p.rejection_reason || p.admin_notes || '—' %></td>
+                      </tr>
+                    <% }); %>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- ACTIVE AFFILIATES DIRECTORY -->
+      <div class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+        <div class="p-6 border-b border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h3 class="text-sm font-bold font-display uppercase tracking-wider text-white">All Registered Affiliates (<%= (typeof affiliates !== 'undefined' ? affiliates.length : 0) %>)</h3>
+            <p class="text-xs text-white/60">Standard (30%) &bull; Pro Academy Partners (70%) &bull; 12-Month Expiry</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button 
+              type="button" 
+              onclick="openAddAffiliateModal()" 
+              class="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs flex items-center gap-1.5 transition border border-white/10"
+            >
+              <span>➕</span>
+              <span>Add Single Affiliate</span>
+            </button>
+            <button 
+              type="button" 
+              onclick="openBulkAffiliateModal()" 
+              class="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs flex items-center gap-1.5 transition border border-amber-500/30"
+            >
+              <span>📂</span>
+              <span>Bulk Upload (CSV)</span>
+            </button>
+          </div>
+        </div>
+
+        <% if (!affiliates || affiliates.length === 0) { %>
+          <div class="p-8 text-center text-xs text-white/40">
+            No affiliates registered yet. Share the landing page link: <code>/affiliates</code> or click "Add Single Affiliate" above.
+          </div>
+        <% } else { %>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-white/80">
+              <thead class="bg-white/5 border-b border-white/10 uppercase tracking-wider text-[10px] text-white/60">
+                <tr>
+                  <th class="py-3 px-4 font-bold">Partner Details</th>
+                  <th class="py-3 px-4 font-bold">Tier / Cut</th>
+                  <th class="py-3 px-4 font-bold">Referral Code</th>
+                  <th class="py-3 px-4 font-bold text-center">Referrals (Active / Total)</th>
+                  <th class="py-3 px-4 font-bold text-right">Total Earned</th>
+                  <th class="py-3 px-4 font-bold text-right">Available Balance</th>
+                  <th class="py-3 px-4 font-bold">Bank Account</th>
+                  <th class="py-3 px-4 font-bold text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-white/5 font-medium">
+                <% affiliates.forEach(function(aff) { %>
+                  <tr class="hover:bg-white/5 transition">
+                    <td class="py-3.5 px-4">
+                      <div class="font-bold text-white"><%= aff.full_name %></div>
+                      <div class="text-[11px] text-white/60"><%= aff.email %></div>
+                      <div class="text-[11px] text-white/40"><%= aff.phone || 'No phone' %></div>
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <% const isPro = aff.tier === 'pro'; %>
+                      <% const cutPct = Math.round((aff.commission_rate !== undefined && aff.commission_rate !== null ? aff.commission_rate : (isPro ? 0.70 : 0.30)) * 100); %>
+                      <% if (isPro) { %>
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm">
+                          <span>💎</span>
+                          <span>Pro (<%= cutPct %>%)</span>
+                        </span>
+                      <% } else { %>
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-white/10 text-white/70 border border-white/15">
+                          <span>Standard (<%= cutPct %>%)</span>
+                        </span>
+                      <% } %>
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <span class="px-2 py-1 rounded bg-[#19D98B]/10 text-[#19D98B] font-mono font-bold text-xs select-all">
+                        <%= aff.referral_code %>
+                      </span>
+                      <div class="text-[10px] text-white/40 mt-1">zlik.store/?ref=<%= aff.referral_code %></div>
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      <div class="font-bold text-white text-sm">
+                        <span class="text-[#19D98B]"><%= aff.active_referral_count %></span>
+                        <span class="text-white/40 font-normal"> / <%= aff.referral_count %></span>
+                      </div>
+                      <div class="text-[10px] text-white/50"><%= aff.total_sales_count %> renewal payments</div>
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-mono font-bold text-white">
+                      ₦<%= Number(aff.total_earned || 0).toLocaleString() %>
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-mono font-bold <%= Number(aff.wallet_balance || 0) >= 10000 ? 'text-[#19D98B]' : 'text-white/80' %>">
+                      ₦<%= Number(aff.wallet_balance || 0).toLocaleString() %>
+                    </td>
+                    <td class="py-3.5 px-4">
+                      <% if (aff.account_number && aff.bank_name) { %>
+                        <div class="font-bold text-white text-[11px]"><%= aff.bank_name %></div>
+                        <div class="font-mono text-[11px] text-[#19D98B]"><%= aff.account_number %></div>
+                        <div class="text-[10px] text-white/50"><%= aff.account_name %></div>
+                      <% } else { %>
+                        <span class="text-[11px] text-white/30 italic">Not set</span>
+                      <% } %>
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                      <button 
+                        type="button" 
+                        onclick="showAffiliateReferralsModal(<%= JSON.stringify(aff.full_name) %>, <%= JSON.stringify(aff.referrals || []) %>)" 
+                        class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold text-xs transition"
+                      >
+                        View Stores (<%= aff.referral_count %>)
+                      </button>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: APPROVE AFFILIATE PAYOUT -->
+  <div id="approvePayoutModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#08110D] border border-white/15 rounded-2xl max-w-md w-full p-6 text-xs space-y-4">
+      <div class="border-b border-white/10 pb-3">
+        <h3 class="text-base font-bold font-display text-white mb-0.5">Approve Payout Disbursement</h3>
+        <p class="text-white/60 text-[11px]" id="approveModalAffiliateName"></p>
+      </div>
+
+      <input type="hidden" id="approvePayoutId">
+
+      <div class="bg-white/5 p-3.5 rounded-xl border border-white/10 space-y-1.5 text-xs">
+        <div class="flex justify-between">
+          <span class="text-white/60">Amount to Transfer:</span>
+          <span class="font-mono font-bold text-lg text-[#19D98B]" id="approveModalAmount"></span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-white/60">Bank Name:</span>
+          <span class="font-bold text-white" id="approveModalBank"></span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-white/60">Account Number:</span>
+          <span class="font-mono font-bold text-white text-sm" id="approveModalAccountNum"></span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-white/60">Account Holder:</span>
+          <span class="text-white font-semibold" id="approveModalAccountName"></span>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block font-semibold text-white/80 mb-1">Bank Transaction Reference / Transfer Session ID</label>
+          <input 
+            type="text" 
+            id="approvePayoutTxRef" 
+            placeholder="e.g. TRF-20261018-9842 or Bank Ref" 
+            class="w-full px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B] font-mono text-xs"
+          >
+        </div>
+
+        <div>
+          <label class="block font-semibold text-white/80 mb-1">Admin Audit Notes (Optional)</label>
+          <input 
+            type="text" 
+            id="approvePayoutNotes" 
+            placeholder="e.g. Verified via Access Bank Corporate Transfer" 
+            class="w-full px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B] text-xs"
+          >
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2 border-t border-white/10">
+        <button type="button" onclick="closeApprovePayoutModal()" class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold">Cancel</button>
+        <button type="button" id="confirmApproveBtn" onclick="submitApprovePayout()" class="px-4 py-2 rounded-lg bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] font-bold">Mark as Paid</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: REJECT AFFILIATE PAYOUT -->
+  <div id="rejectPayoutModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#08110D] border border-white/15 rounded-2xl max-w-md w-full p-6 text-xs space-y-4">
+      <div class="border-b border-white/10 pb-3">
+        <h3 class="text-base font-bold font-display text-red-400 mb-0.5">Reject Payout & Refund Balance</h3>
+        <p class="text-white/60 text-[11px]" id="rejectModalAffiliateName"></p>
+      </div>
+
+      <input type="hidden" id="rejectPayoutId">
+
+      <div class="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-300 text-xs">
+        Rejecting this payout will immediately credit <strong id="rejectModalAmount"></strong> back to the affiliate's wallet balance.
+      </div>
+
+      <div>
+        <label class="block font-semibold text-white/80 mb-1">Reason for Rejection (Shown to Affiliate)</label>
+        <textarea 
+          id="rejectPayoutReason" 
+          rows="3" 
+          placeholder="e.g. Invalid account number or mismatched account holder name. Please re-enter correct NUBAN details." 
+          class="w-full px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-red-400 text-xs"
+        ></textarea>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2 border-t border-white/10">
+        <button type="button" onclick="closeRejectPayoutModal()" class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold">Cancel</button>
+        <button type="button" id="confirmRejectBtn" onclick="submitRejectPayout()" class="px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-bold">Reject & Refund</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: VIEW AFFILIATE REFERRED STORES -->
+  <div id="affiliateReferralsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#08110D] border border-white/15 rounded-2xl max-w-xl w-full p-6 text-xs space-y-4 max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-white/10">
+        <div>
+          <h3 class="text-base font-bold font-display text-white" id="affRefModalTitle">Referred Stores</h3>
+          <p class="text-white/60 text-[11px]">Stores referred with active 12-month commission countdown</p>
+        </div>
+        <button onclick="closeAffiliateReferralsModal()" class="text-white/40 hover:text-white font-bold text-lg">&times;</button>
+      </div>
+
+      <div id="affRefModalBody" class="flex-1 overflow-y-auto space-y-2">
+        <!-- Rendered via JS -->
+      </div>
+
+      <div class="pt-3 border-t border-white/10 flex justify-end">
+        <button onclick="closeAffiliateReferralsModal()" class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-semibold">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD SINGLE AFFILIATE -->
+  <div id="addAffiliateModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#08110D] border border-white/15 rounded-2xl max-w-md w-full p-6 text-xs space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-white/10">
+        <div>
+          <h3 class="text-base font-bold font-display text-white">Add Affiliate Partner</h3>
+          <p class="text-white/60 text-[11px]">Creates account and sends welcome email with credentials</p>
+        </div>
+        <button onclick="closeAddAffiliateModal()" class="text-white/40 hover:text-white font-bold text-lg">&times;</button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block font-semibold text-white/80 mb-1">Full Name <span class="text-red-400">*</span></label>
+          <input type="text" id="addAffName" placeholder="e.g. John Doe" class="w-full px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B] text-xs">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-white/80 mb-1">Email Address <span class="text-red-400">*</span></label>
+          <input type="email" id="addAffEmail" placeholder="e.g. john@example.com" class="w-full px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B] text-xs">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-white/80 mb-1">Phone Number (Optional)</label>
+          <input type="tel" id="addAffPhone" placeholder="e.g. 08012345678" class="w-full px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B] text-xs">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-white/80 mb-1">Password (Leave blank to auto-generate)</label>
+          <input type="text" id="addAffPassword" placeholder="Auto-generated if empty" class="w-full px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B] text-xs font-mono">
+        </div>
+
+        <div>
+          <label class="block font-semibold text-white/80 mb-1">Affiliate Tier</label>
+          <select id="addAffTier" onchange="onAffTierChange(this.value)" class="w-full px-3.5 py-2.5 rounded-lg bg-[#08110D] border border-white/15 text-white outline-none focus:border-[#19D98B] text-xs">
+            <option value="pro" selected>💎 Pro Affiliate (70% Cut • The Online Mastery Partner)</option>
+            <option value="standard">Standard Affiliate (30% Cut)</option>
+            <option value="custom">Custom Commission Percentage</option>
+          </select>
+        </div>
+
+        <div id="customRateGroup" class="hidden">
+          <label class="block font-semibold text-white/80 mb-1">Custom Commission Rate (%)</label>
+          <input type="number" id="addAffCustomRate" min="1" max="100" placeholder="e.g. 50" class="w-full px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B] text-xs">
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-3 border-t border-white/10">
+        <button type="button" onclick="closeAddAffiliateModal()" class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold">Cancel</button>
+        <button type="button" id="submitAddAffBtn" onclick="submitAddAffiliate()" class="px-4 py-2 rounded-lg bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] font-bold">Create & Email Affiliate</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: BULK UPLOAD AFFILIATES (CSV) -->
+  <div id="bulkAffiliateModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#08110D] border border-white/15 rounded-2xl max-w-lg w-full p-6 text-xs space-y-4 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-white/10">
+        <div>
+          <h3 class="text-base font-bold font-display text-white">📂 Bulk Upload Affiliates</h3>
+          <p class="text-white/60 text-[11px]">Upload CSV to batch-create affiliates, assign 70% Pro Tier, and send welcome emails</p>
+        </div>
+        <button onclick="closeBulkAffiliateModal()" class="text-white/40 hover:text-white font-bold text-lg">&times;</button>
+      </div>
+
+      <div class="space-y-3 flex-1 overflow-y-auto pr-1">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-white/80 mb-1">Default Tier</label>
+            <select id="bulkAffTier" onchange="onBulkTierChange(this.value)" class="w-full px-3 py-2 rounded-lg bg-[#08110D] border border-white/15 text-white outline-none focus:border-[#19D98B] text-xs">
+              <option value="pro" selected>💎 Pro Affiliate (70%)</option>
+              <option value="standard">Standard Affiliate (30%)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-white/80 mb-1">Commission Cut (%)</label>
+            <input type="number" id="bulkAffRate" value="70" min="1" max="100" class="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B] text-xs">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-1">
+          <label class="font-semibold text-white/80">Upload CSV File</label>
+          <button type="button" onclick="downloadSampleCsv()" class="text-[11px] text-[#19D98B] hover:underline font-semibold flex items-center gap-1">
+            <span>📥</span> Download Sample CSV
+          </button>
+        </div>
+
+        <input 
+          type="file" 
+          id="bulkAffFile" 
+          accept=".csv,text/csv,text/plain" 
+          onchange="handleCsvFileSelected(event)" 
+          class="w-full text-xs text-white/70 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-white/15 file:text-white hover:file:bg-white/20 cursor-pointer"
+        >
+
+        <div>
+          <label class="block font-semibold text-white/80 mb-1">Or Paste CSV Content Directly</label>
+          <textarea 
+            id="bulkAffCsvText" 
+            rows="6" 
+            placeholder="full_name,email,phone&#10;John Doe,john@example.com,08012345678&#10;Jane Smith,jane@example.com,08098765432" 
+            class="w-full px-3.5 py-2.5 rounded-lg bg-white/10 border border-white/15 text-white outline-none focus:border-[#19D98B] font-mono text-xs leading-relaxed"
+          ></textarea>
+          <p class="text-[10px] text-white/40 mt-1">Headers allowed: <code>full_name,email,phone,commission_rate</code>. Comma, semicolon, or tab delimited.</p>
+        </div>
+
+        <div id="bulkAffProgress" class="hidden p-3 bg-white/5 border border-white/10 rounded-xl space-y-1 text-[11px]">
+          <!-- Progress / results -->
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-3 border-t border-white/10">
+        <button type="button" onclick="closeBulkAffiliateModal()" class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold">Cancel</button>
+        <button type="button" id="submitBulkAffBtn" onclick="submitBulkAffiliates()" class="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-[#08110D] font-bold">Upload & Send Emails</button>
+      </div>
+    </div>
   </div>
 
   <!-- Plan Override Modal -->
@@ -1739,6 +2251,341 @@
         }
       } catch (err) {
         alert('Network error executing bulk action.');
+      }
+    }
+
+    // ================= AFFILIATE PAYOUT ACTIONS =================
+    function openApprovePayoutModal(id, amount, name, bank, accNum, accName) {
+      document.getElementById('approvePayoutId').value = id;
+      document.getElementById('approveModalAffiliateName').textContent = `Beneficiary: ${name}`;
+      document.getElementById('approveModalAmount').textContent = `₦${Number(amount).toLocaleString()}`;
+      document.getElementById('approveModalBank').textContent = bank;
+      document.getElementById('approveModalAccountNum').textContent = accNum;
+      document.getElementById('approveModalAccountName').textContent = accName;
+      document.getElementById('approvePayoutTxRef').value = `TRF-${Date.now().toString().slice(-8)}`;
+      document.getElementById('approvePayoutNotes').value = '';
+      document.getElementById('approvePayoutModal').classList.remove('hidden');
+    }
+
+    function closeApprovePayoutModal() {
+      document.getElementById('approvePayoutModal').classList.add('hidden');
+    }
+
+    async function submitApprovePayout() {
+      const payoutId = document.getElementById('approvePayoutId').value;
+      const txRef = document.getElementById('approvePayoutTxRef').value.trim();
+      const notes = document.getElementById('approvePayoutNotes').value.trim();
+      const btn = document.getElementById('confirmApproveBtn');
+
+      btn.disabled = true;
+      btn.innerText = 'Marking as Paid...';
+
+      try {
+        const res = await fetch('/api/admin/affiliates/payouts/approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            payout_id: payoutId,
+            transaction_reference: txRef,
+            notes: notes
+          })
+        });
+        const json = await res.json();
+        if (json.success) {
+          alert('✅ Payout marked as paid successfully!');
+          window.location.reload();
+        } else {
+          alert('❌ ' + (json.error || 'Failed to approve payout'));
+          btn.disabled = false;
+          btn.innerText = 'Mark as Paid';
+        }
+      } catch (err) {
+        alert('❌ Network error approving payout');
+        btn.disabled = false;
+        btn.innerText = 'Mark as Paid';
+      }
+    }
+
+    function openRejectPayoutModal(id, amount, name) {
+      document.getElementById('rejectPayoutId').value = id;
+      document.getElementById('rejectModalAffiliateName').textContent = `Beneficiary: ${name}`;
+      document.getElementById('rejectModalAmount').textContent = `₦${Number(amount).toLocaleString()}`;
+      document.getElementById('rejectPayoutReason').value = '';
+      document.getElementById('rejectPayoutModal').classList.remove('hidden');
+    }
+
+    function closeRejectPayoutModal() {
+      document.getElementById('rejectPayoutModal').classList.add('hidden');
+    }
+
+    async function submitRejectPayout() {
+      const payoutId = document.getElementById('rejectPayoutId').value;
+      const reason = document.getElementById('rejectPayoutReason').value.trim();
+      const btn = document.getElementById('confirmRejectBtn');
+
+      if (!reason) {
+        alert('Please provide a reason for rejection (this will be displayed to the affiliate partner).');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = 'Rejecting & Refunding...';
+
+      try {
+        const res = await fetch('/api/admin/affiliates/payouts/reject', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            payout_id: payoutId,
+            reason: reason
+          })
+        });
+        const json = await res.json();
+        if (json.success) {
+          alert('✅ Payout request rejected and amount refunded back to affiliate wallet.');
+          window.location.reload();
+        } else {
+          alert('❌ ' + (json.error || 'Failed to reject payout'));
+          btn.disabled = false;
+          btn.innerText = 'Reject & Refund';
+        }
+      } catch (err) {
+        alert('❌ Network error rejecting payout');
+        btn.disabled = false;
+        btn.innerText = 'Reject & Refund';
+      }
+    }
+
+    function showAffiliateReferralsModal(affName, referrals) {
+      document.getElementById('affRefModalTitle').textContent = `${affName}'s Referred Stores (${referrals.length})`;
+      const body = document.getElementById('affRefModalBody');
+      body.innerHTML = '';
+
+      if (!referrals || referrals.length === 0) {
+        body.innerHTML = '<div class="p-6 text-center text-white/40">This affiliate partner has not referred any stores yet.</div>';
+      } else {
+        referrals.forEach(ref => {
+          const nowMs = Date.now();
+          const expiryMs = new Date(ref.commission_expires_at).getTime();
+          const diffDays = Math.max(0, Math.ceil((expiryMs - nowMs) / (1000 * 60 * 60 * 24)));
+          const isExpired = diffDays <= 0 || ref.status === 'expired';
+
+          const card = document.createElement('div');
+          card.className = 'p-3.5 bg-white/5 border border-white/10 rounded-xl space-y-2';
+          card.innerHTML = `
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="font-bold text-white text-sm">${ref.store_name}</div>
+                <div class="text-[11px] text-white/50 font-mono">zlik.store/${ref.store_slug}</div>
+              </div>
+              <div class="text-right">
+                ${isExpired ? `
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-white/10 text-white/50">12 Mo. Expired</span>
+                ` : `
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#19D98B]/20 text-[#19D98B] border border-[#19D98B]/30">
+                    Active &bull; ${diffDays} days left
+                  </span>
+                `}
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-[11px] text-white/70 pt-1 border-t border-white/5">
+              <div>Merchant: <strong class="text-white">${ref.owner_name}</strong></div>
+              <div class="text-right">Commissions: <strong class="text-[#19D98B] font-mono">₦${Number(ref.total_commissions_generated || 0).toLocaleString()}</strong></div>
+            </div>
+            <div class="text-[10px] text-white/40 font-mono">Signed up: ${new Date(ref.created_at).toLocaleDateString()} &bull; Expires: ${new Date(ref.commission_expires_at).toLocaleDateString()}</div>
+          `;
+          body.appendChild(card);
+        });
+      }
+
+      document.getElementById('affiliateReferralsModal').classList.remove('hidden');
+    }
+
+    function closeAffiliateReferralsModal() {
+      document.getElementById('affiliateReferralsModal').classList.add('hidden');
+    }
+
+    function openAddAffiliateModal() {
+      document.getElementById('addAffName').value = '';
+      document.getElementById('addAffEmail').value = '';
+      document.getElementById('addAffPhone').value = '';
+      document.getElementById('addAffPassword').value = '';
+      document.getElementById('addAffTier').value = 'pro';
+      document.getElementById('customRateGroup').classList.add('hidden');
+      document.getElementById('addAffCustomRate').value = '';
+      document.getElementById('addAffiliateModal').classList.remove('hidden');
+    }
+
+    function closeAddAffiliateModal() {
+      document.getElementById('addAffiliateModal').classList.add('hidden');
+    }
+
+    function onAffTierChange(tier) {
+      const customGroup = document.getElementById('customRateGroup');
+      if (tier === 'custom') {
+        customGroup.classList.remove('hidden');
+      } else {
+        customGroup.classList.add('hidden');
+      }
+    }
+
+    async function submitAddAffiliate() {
+      const full_name = document.getElementById('addAffName').value.trim();
+      const email = document.getElementById('addAffEmail').value.trim();
+      const phone = document.getElementById('addAffPhone').value.trim();
+      const password = document.getElementById('addAffPassword').value.trim();
+      const tierVal = document.getElementById('addAffTier').value;
+      const btn = document.getElementById('submitAddAffBtn');
+
+      if (!full_name || !email) {
+        alert('Please provide at least a Full Name and Email Address');
+        return;
+      }
+
+      let tier = 'pro';
+      let commission_rate = 0.70;
+
+      if (tierVal === 'standard') {
+        tier = 'standard';
+        commission_rate = 0.30;
+      } else if (tierVal === 'custom') {
+        tier = 'pro';
+        const customPct = parseFloat(document.getElementById('addAffCustomRate').value);
+        if (isNaN(customPct) || customPct <= 0 || customPct > 100) {
+          alert('Please enter a valid custom commission rate percentage between 1 and 100');
+          return;
+        }
+        commission_rate = customPct / 100;
+      }
+
+      btn.disabled = true;
+      btn.innerText = 'Creating & Sending Email...';
+
+      try {
+        const res = await fetch('/api/admin/affiliates/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            full_name,
+            email,
+            phone,
+            password: password || undefined,
+            tier,
+            commission_rate
+          })
+        });
+        const json = await res.json();
+        if (json.success) {
+          alert(`✅ Affiliate "${full_name}" created successfully!\nAn onboarding email has been sent to ${email} with their credentials and referral link.`);
+          window.location.reload();
+        } else {
+          alert('❌ ' + (json.error || 'Failed to create affiliate'));
+          btn.disabled = false;
+          btn.innerText = 'Create & Email Affiliate';
+        }
+      } catch (err) {
+        alert('❌ Network error creating affiliate');
+        btn.disabled = false;
+        btn.innerText = 'Create & Email Affiliate';
+      }
+    }
+
+    function openBulkAffiliateModal() {
+      document.getElementById('bulkAffTier').value = 'pro';
+      document.getElementById('bulkAffRate').value = '70';
+      document.getElementById('bulkAffCsvText').value = '';
+      document.getElementById('bulkAffFile').value = '';
+      const prog = document.getElementById('bulkAffProgress');
+      prog.innerHTML = '';
+      prog.classList.add('hidden');
+      document.getElementById('bulkAffiliateModal').classList.remove('hidden');
+    }
+
+    function closeBulkAffiliateModal() {
+      document.getElementById('bulkAffiliateModal').classList.add('hidden');
+    }
+
+    function onBulkTierChange(tier) {
+      if (tier === 'pro') {
+        document.getElementById('bulkAffRate').value = '70';
+      } else {
+        document.getElementById('bulkAffRate').value = '30';
+      }
+    }
+
+    function handleCsvFileSelected(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('bulkAffCsvText').value = e.target.result;
+      };
+      reader.readAsText(file);
+    }
+
+    function downloadSampleCsv() {
+      const csvContent = "full_name,email,phone,commission_rate\nJohn Doe,john@example.com,08012345678,0.70\nJane Smith,jane@example.com,08098765432,0.70\nMastery Marketer,partner@omastery.com,08123456789,0.70\n";
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'sample_affiliates_template.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    async function submitBulkAffiliates() {
+      const csv = document.getElementById('bulkAffCsvText').value.trim();
+      const tier = document.getElementById('bulkAffTier').value;
+      const rateVal = parseFloat(document.getElementById('bulkAffRate').value) || (tier === 'pro' ? 70 : 30);
+      const btn = document.getElementById('submitBulkAffBtn');
+      const progressBox = document.getElementById('bulkAffProgress');
+
+      if (!csv) {
+        alert('Please choose a CSV file or paste CSV content.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = 'Uploading & Sending Emails...';
+      progressBox.classList.remove('hidden');
+      progressBox.innerHTML = '<div class="text-amber-300">⏳ Processing CSV, creating affiliate accounts, and dispatching welcome emails...</div>';
+
+      try {
+        const res = await fetch('/api/admin/affiliates/bulk-upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            csv_content: csv,
+            tier: tier,
+            commission_rate: rateVal / 100
+          })
+        });
+        const json = await res.json();
+        if (json.success) {
+          let errHtml = '';
+          if (json.errors && json.errors.length > 0) {
+            errHtml = `<div class="text-red-400 mt-2 font-semibold">Skipped / Errors (${json.errors.length}):</div><ul class="list-disc pl-4 text-white/60 space-y-0.5">${json.errors.slice(0, 5).map(e => `<li>${e}</li>`).join('')}${json.errors.length > 5 ? `<li>...and ${json.errors.length - 5} more</li>` : ''}</ul>`;
+          }
+          progressBox.innerHTML = `
+            <div class="text-emerald-400 font-bold">✅ Successfully registered ${json.createdCount} affiliate(s)!</div>
+            <div class="text-white/70">All created affiliates have been assigned ${tier.toUpperCase()} tier (${rateVal}%) and sent welcome emails.</div>
+            ${errHtml}
+          `;
+          btn.innerText = 'Completed!';
+          setTimeout(() => {
+            window.location.reload();
+          }, 2500);
+        } else {
+          progressBox.innerHTML = `<div class="text-red-400 font-bold">❌ Error: ${json.error || 'Failed to process bulk upload'}</div>`;
+          btn.disabled = false;
+          btn.innerText = 'Upload & Send Emails';
+        }
+      } catch (err) {
+        progressBox.innerHTML = `<div class="text-red-400 font-bold">❌ Network error during bulk upload</div>`;
+        btn.disabled = false;
+        btn.innerText = 'Upload & Send Emails';
       }
     }
   </script>

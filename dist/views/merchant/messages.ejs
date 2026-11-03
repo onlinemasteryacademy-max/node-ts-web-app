@@ -45,39 +45,74 @@
     <main class="max-w-7xl mx-auto px-2 sm:px-4 py-2 sm:py-4 pb-28 sm:pb-4 flex-1 w-full flex flex-col h-[calc(100dvh-135px)] sm:h-[calc(100vh-65px)]">
         <div class="flex-1 bg-white rounded-3xl border border-[#EAEFEB] shadow-xs grid grid-cols-1 md:grid-cols-12 overflow-hidden">
 
-            <!-- Col 1: Conversations List (Inbox) -->
+            <!-- Col 1: Conversations List & Live Shoppers Desk -->
             <div id="conversationsCol" class="col-span-12 md:col-span-4 border-r border-[#EAEFEB] flex flex-col h-full bg-white">
-                <div class="p-4 border-b border-[#EAEFEB] space-y-2.5">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-bold text-[#111827]">Customer Threads</span>
-                        <div class="flex items-center gap-1.5">
-                            <span id="monthlyChatUsageBadge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-full border"></span>
-                            <span id="convCountBadge" class="text-[10px] font-bold bg-[#EDF5F1] text-[#084C38] border border-[#084C38]/20 px-2.5 py-0.5 rounded-full">0 chats</span>
-                        </div>
-                    </div>
-                    <!-- Monthly Chat Limit Alert Banner if reached -->
-                    <div id="monthlyChatLimitAlert" class="hidden p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] leading-tight space-y-1.5">
-                        <div class="flex items-center gap-1.5 font-bold">
-                            <svg class="w-3.5 h-3.5 text-amber-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                            <span>Monthly Chat Quota Reached</span>
-                        </div>
-                        <p class="text-amber-800 text-[10px]">
-                            You've used all 20 storefront live chats for this month. New storefront visitors are given a 1-click button to contact you directly on WhatsApp.
-                        </p>
-                        <a href="/merchant/settings" class="inline-flex items-center gap-1 text-[10px] font-bold text-[#084C38] hover:underline">
-                            Upgrade to Pro for Unlimited Live Chat &rarr;
-                        </a>
-                    </div>
-                    <div class="relative">
-                        <input type="text" id="convSearchInput" oninput="handleSearchConversations(this.value)" placeholder="Search customer name, phone, message..." class="w-full bg-[#F8FAF9] border border-[#EAEFEB] rounded-full pl-3.5 pr-8 py-2 text-xs text-[#111827] placeholder-[#6B7280]/60 outline-none focus:border-[#084C38] transition">
-                        <span class="absolute right-3 top-2.5 text-[#6B7280]">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        </span>
+                <!-- Desk Top Tab Switcher -->
+                <div class="p-3 border-b border-[#EAEFEB] bg-white">
+                    <div class="flex items-center gap-1 p-1 bg-[#F8FAF9] rounded-2xl border border-[#EAEFEB] text-xs font-bold">
+                        <button type="button" id="tabBtnInbox" onclick="switchDeskTab('inbox')" class="flex-1 py-1.5 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 bg-white text-[#084C38] shadow-xs">
+                            <span>Inbox</span>
+                            <span id="convCountBadge" class="text-[10px] font-mono bg-[#EDF5F1] text-[#084C38] px-1.5 py-0.2 rounded-full">0</span>
+                        </button>
+                        <button type="button" id="tabBtnLive" onclick="switchDeskTab('live')" class="flex-1 py-1.5 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 text-[#6B7280] hover:text-[#111827]">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>Live Shoppers</span>
+                            <span id="liveShoppersCountBadge" class="text-[10px] font-mono bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded-full">0</span>
+                        </button>
                     </div>
                 </div>
 
-                <div id="conversationsListContainer" class="flex-1 overflow-y-auto divide-y divide-[#EAEFEB]/60 text-xs">
-                    <div class="p-8 text-center text-[#6B7280]">Loading conversations...</div>
+                <!-- Sub-View 1: Standard Inbox Threads -->
+                <div id="inboxSubView" class="flex-1 flex flex-col min-h-0">
+                    <div class="p-3 border-b border-[#EAEFEB] space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-[#111827]">Conversations</span>
+                            <span id="monthlyChatUsageBadge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-full border"></span>
+                        </div>
+                        <!-- Monthly Chat Limit Alert Banner if reached -->
+                        <div id="monthlyChatLimitAlert" class="hidden p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px] leading-tight space-y-1.5">
+                            <div class="flex items-center gap-1.5 font-bold">
+                                <svg class="w-3.5 h-3.5 text-amber-700 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                <span>Monthly Chat Quota Reached</span>
+                            </div>
+                            <p class="text-amber-800 text-[10px]">
+                                You've used all 20 storefront live chats for this month.
+                            </p>
+                            <a href="/merchant/settings" class="inline-flex items-center gap-1 text-[10px] font-bold text-[#084C38] hover:underline">
+                                Upgrade to Pro for Unlimited Live Chat &rarr;
+                            </a>
+                        </div>
+                        <div class="relative">
+                            <input type="text" id="convSearchInput" oninput="handleSearchConversations(this.value)" placeholder="Search customer name, phone, message..." class="w-full bg-[#F8FAF9] border border-[#EAEFEB] rounded-full pl-3.5 pr-8 py-2 text-xs text-[#111827] placeholder-[#6B7280]/60 outline-none focus:border-[#084C38] transition">
+                            <span class="absolute right-3 top-2.5 text-[#6B7280]">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div id="conversationsListContainer" class="flex-1 overflow-y-auto divide-y divide-[#EAEFEB]/60 text-xs">
+                        <div class="p-8 text-center text-[#6B7280]">Loading conversations...</div>
+                    </div>
+                </div>
+
+                <!-- Sub-View 2: Live Shoppers Browsing Real-time Desk -->
+                <div id="liveShoppersSubView" class="hidden flex-1 flex flex-col min-h-0">
+                    <div class="p-3 border-b border-[#EAEFEB] flex items-center justify-between bg-[#F8FAF9]">
+                        <div>
+                            <span class="text-xs font-bold text-[#111827] flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                                <span>Browsing Storefront Right Now</span>
+                            </span>
+                            <p class="text-[10px] text-[#6B7280]">Click "Initiate Chat" to start a live conversation</p>
+                        </div>
+                        <button type="button" onclick="fetchLiveShoppers()" class="p-1.5 text-xs text-[#084C38] hover:bg-[#EDF5F1] rounded-lg transition" title="Refresh Live Shoppers">
+                            🔄
+                        </button>
+                    </div>
+
+                    <div id="liveShoppersListContainer" class="flex-1 overflow-y-auto divide-y divide-[#EAEFEB]/60 text-xs">
+                        <div class="p-8 text-center text-[#6B7280]">Scanning storefront for active shoppers...</div>
+                    </div>
                 </div>
             </div>
 
@@ -565,6 +600,187 @@
             } catch (e) {}
         }
 
+        let currentDeskTab = 'inbox';
+        let liveVisitors = [];
+        let pendingInitiateShopper = null;
+
+        function switchDeskTab(tab) {
+            currentDeskTab = tab;
+            const inboxBtn = document.getElementById('tabBtnInbox');
+            const liveBtn = document.getElementById('tabBtnLive');
+            const inboxView = document.getElementById('inboxSubView');
+            const liveView = document.getElementById('liveShoppersSubView');
+
+            if (tab === 'live') {
+                if (liveBtn) liveBtn.className = 'flex-1 py-1.5 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 bg-white text-[#084C38] shadow-xs';
+                if (inboxBtn) inboxBtn.className = 'flex-1 py-1.5 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 text-[#6B7280] hover:text-[#111827]';
+                if (inboxView) inboxView.classList.add('hidden');
+                if (liveView) liveView.classList.remove('hidden');
+                fetchLiveShoppers();
+            } else {
+                if (inboxBtn) inboxBtn.className = 'flex-1 py-1.5 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 bg-white text-[#084C38] shadow-xs';
+                if (liveBtn) liveBtn.className = 'flex-1 py-1.5 px-2.5 rounded-xl transition flex items-center justify-center gap-1.5 text-[#6B7280] hover:text-[#111827]';
+                if (liveView) liveView.classList.add('hidden');
+                if (inboxView) inboxView.classList.remove('hidden');
+            }
+        }
+
+        async function fetchLiveShoppers() {
+            try {
+                const res = await fetch('/api/merchant/analytics/live-visitors');
+                const data = await res.json();
+                if (data.success) {
+                    liveVisitors = data.visitors || [];
+                    const badge = document.getElementById('liveShoppersCountBadge');
+                    if (badge) badge.textContent = liveVisitors.length;
+                    renderLiveShoppersList(liveVisitors);
+                }
+            } catch (e) {}
+        }
+
+        function renderLiveShoppersList(visitors) {
+            const container = document.getElementById('liveShoppersListContainer');
+            if (!container) return;
+            if (!visitors || visitors.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 text-center text-[#6B7280] space-y-2">
+                        <div class="w-10 h-10 rounded-2xl bg-[#EDF5F1] text-[#084C38] flex items-center justify-center mx-auto text-lg font-bold">👀</div>
+                        <div class="font-bold text-xs text-[#111827]">No active shoppers right now</div>
+                        <p class="text-[11px] text-[#6B7280] max-w-xs mx-auto">When customers visit your storefront, they will appear here in real time with the item they are looking at.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = visitors.map(v => {
+                const initials = (v.display_name || 'S').charAt(0).toUpperCase();
+                const viewing = v.current_page || 'Storefront';
+                const safeSessionId = escapeHtml(v.session_id || '');
+                const safeName = escapeHtml(v.display_name || 'Shopper');
+                const safeViewing = escapeHtml(viewing);
+
+                return `
+                    <div class="p-3.5 border-b border-[#EAEFEB]/60 hover:bg-[#F8FAF9] transition space-y-2.5">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center shrink-0">
+                                    ${initials}
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 class="text-xs font-bold text-[#111827] truncate">${safeName}</h4>
+                                    <div class="flex items-center gap-1 text-[10px] text-emerald-700 font-semibold">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        <span>Active now (${escapeHtml(v.activity_label || 'just now')})</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="text-[9px] font-mono text-[#6B7280] bg-[#F8FAF9] border border-[#EAEFEB] px-1.5 py-0.5 rounded-md shrink-0">
+                                ${escapeHtml(v.traffic_source || 'Direct')}
+                            </span>
+                        </div>
+
+                        <div class="text-[11px] text-[#4B5563] bg-[#F8FAF9] p-2 rounded-xl border border-[#EAEFEB]/60 flex items-center justify-between gap-2">
+                            <div class="truncate">
+                                <span class="text-[#6B7280]">Viewing:</span>
+                                <strong class="text-[#111827]">${safeViewing}</strong>
+                            </div>
+                        </div>
+
+                        <div class="pt-1">
+                            <button type="button" onclick="openInitiateChatModal('${safeSessionId}', '${safeName}', '${safeViewing}')" class="w-full bg-[#084C38] hover:bg-[#063b2c] text-white text-xs font-bold py-2 rounded-xl transition shadow-xs flex items-center justify-center gap-1.5">
+                                <span>Initiate Chat 💬</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openInitiateChatModal(sessionId, name, viewing) {
+            pendingInitiateShopper = { sessionId, name, viewing };
+            const nameEl = document.getElementById('initModalShopperName');
+            const viewEl = document.getElementById('initModalViewingText');
+            const subEl = document.getElementById('initModalShopperSubtitle');
+            const inputEl = document.getElementById('initModalMsgInput');
+            const errEl = document.getElementById('initModalError');
+            const modal = document.getElementById('initiateChatModal');
+
+            if (nameEl) nameEl.textContent = name;
+            if (viewEl) viewEl.textContent = 'Currently Viewing: ' + viewing;
+            if (subEl) subEl.textContent = name + ' • ' + viewing;
+            if (inputEl) inputEl.value = `Hi! Welcome to ${storeData.store_name}. Let me know if you need any help with ${viewing}!`;
+            if (errEl) errEl.classList.add('hidden');
+            if (modal) modal.classList.remove('hidden');
+            setTimeout(() => inputEl?.focus(), 150);
+        }
+
+        function setInitiateMessage(text) {
+            const input = document.getElementById('initModalMsgInput');
+            if (input) input.value = text;
+        }
+
+        function closeInitiateChatModal() {
+            const modal = document.getElementById('initiateChatModal');
+            if (modal) modal.classList.add('hidden');
+            pendingInitiateShopper = null;
+        }
+
+        async function submitInitiateChat() {
+            if (!pendingInitiateShopper) return;
+            const input = document.getElementById('initModalMsgInput');
+            const err = document.getElementById('initModalError');
+            const btn = document.getElementById('initModalSubmitBtn');
+            const msg = (input ? input.value : '').trim();
+
+            if (!msg) {
+                if (err) {
+                    err.textContent = 'Please enter a message to send to the shopper.';
+                    err.classList.remove('hidden');
+                }
+                return;
+            }
+
+            if (err) err.classList.add('hidden');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<span>Sending...</span>';
+            }
+
+            try {
+                const res = await fetch('/api/chat/initiate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        visitor_session_id: pendingInitiateShopper.sessionId,
+                        customer_name: pendingInitiateShopper.name,
+                        message: msg
+                    })
+                });
+                const data = await res.json();
+                if (data.success && data.conversation) {
+                    closeInitiateChatModal();
+                    switchDeskTab('inbox');
+                    await loadConversationsList();
+                    selectConversation(data.conversation.id);
+                } else {
+                    if (err) {
+                        err.textContent = data.error || 'Failed to initiate chat. Please try again.';
+                        err.classList.remove('hidden');
+                    }
+                }
+            } catch(e) {
+                if (err) {
+                    err.textContent = 'Error connecting to server. Please try again.';
+                    err.classList.remove('hidden');
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>Send & Start Chat</span> <span>&rarr;</span>';
+                }
+            }
+        }
+
         function escapeHtml(str) {
             if (!str) return '';
             const div = document.createElement('div');
@@ -576,8 +792,83 @@
             loadConversationsList();
             loadMonthlyChatUsage();
             connectRealtimeStream();
+            fetchLiveShoppers();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('tab') === 'live') {
+                switchDeskTab('live');
+            }
+            if (urlParams.get('initiate_session')) {
+                const sId = urlParams.get('initiate_session');
+                const sName = urlParams.get('name') || 'Shopper';
+                const sViewing = urlParams.get('viewing') || 'Storefront';
+                openInitiateChatModal(sId, sName, sViewing);
+            }
+
+            // Periodic live shoppers poller
+            setInterval(() => {
+                fetchLiveShoppers();
+            }, 8000);
         });
     </script>
+
+    <!-- Initiate Merchant Chat Modal -->
+    <div id="initiateChatModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div class="bg-white rounded-3xl border border-[#EAEFEB] shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="p-4 sm:p-5 bg-[#084C38] text-white flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-2xl bg-[#19D98B] text-[#08110D] font-bold text-sm flex items-center justify-center shrink-0">
+                        💬
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold font-display text-white">Start Chat with Shopper</h3>
+                        <p id="initModalShopperSubtitle" class="text-[11px] text-[#E3E9E5]/80 truncate">Active on storefront</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeInitiateChatModal()" class="text-white/70 hover:text-white p-1 rounded-xl transition">✕</button>
+            </div>
+
+            <div class="p-5 space-y-4 text-xs">
+                <!-- Shopper Browsing Context Box -->
+                <div id="initModalContextBox" class="p-3 bg-[#F8FAF9] rounded-2xl border border-[#EAEFEB] space-y-1">
+                    <div class="flex items-center justify-between text-[11px]">
+                        <span class="font-bold text-[#111827]" id="initModalShopperName">Shopper</span>
+                        <span class="text-[10px] text-[#087A50] font-extrabold bg-emerald-50 px-2 py-0.5 rounded-full">ACTIVE NOW</span>
+                    </div>
+                    <p id="initModalViewingText" class="text-[11px] text-[#6B7280]">Browsing Storefront</p>
+                </div>
+
+                <!-- Quick Starter Prompts -->
+                <div>
+                    <label class="block text-[11px] font-bold text-[#111827] mb-1.5">Quick Greeting Starters:</label>
+                    <div class="flex flex-wrap gap-1.5">
+                        <button type="button" onclick="setInitiateMessage('Hi! Welcome to our store. Let me know if you need any help with this item!')" class="bg-[#F8FAF9] hover:bg-[#EDF5F1] hover:text-[#084C38] border border-[#EAEFEB] px-2.5 py-1 rounded-full text-[10.5px] transition text-[#111827]">👋 Welcome & Help</button>
+                        <button type="button" onclick="setInitiateMessage('Hello! We have this product in stock and ready to dispatch right away.')" class="bg-[#F8FAF9] hover:bg-[#EDF5F1] hover:text-[#084C38] border border-[#EAEFEB] px-2.5 py-1 rounded-full text-[10.5px] transition text-[#111827]">📦 In-Stock & Ready</button>
+                        <button type="button" onclick="setInitiateMessage('Hi! Feel free to ask any questions about sizing, delivery, or custom requests!')" class="bg-[#F8FAF9] hover:bg-[#EDF5F1] hover:text-[#084C38] border border-[#EAEFEB] px-2.5 py-1 rounded-full text-[10.5px] transition text-[#111827]">❓ Sizing & Questions</button>
+                    </div>
+                </div>
+
+                <!-- Message Input Area -->
+                <div>
+                    <label class="block text-[11px] font-bold text-[#111827] mb-1.5">Your Message:</label>
+                    <textarea id="initModalMsgInput" rows="3" placeholder="Type your greeting message to the shopper..." class="w-full bg-[#F8FAF9] border border-[#EAEFEB] rounded-2xl p-3 text-xs text-[#111827] placeholder-[#6B7280]/60 outline-none focus:border-[#084C38] transition resize-none"></textarea>
+                </div>
+
+                <div id="initModalError" class="hidden text-[11px] text-[#D94A4A] bg-red-50 border border-red-200 rounded-xl p-2.5 font-medium"></div>
+
+                <div class="flex items-center gap-2 pt-1">
+                    <button type="button" onclick="closeInitiateChatModal()" class="flex-1 py-2.5 rounded-full border border-[#EAEFEB] text-xs font-semibold text-[#6B7280] hover:text-[#111827] transition">
+                        Cancel
+                    </button>
+                    <button type="button" id="initModalSubmitBtn" onclick="submitInitiateChat()" class="flex-1 py-2.5 rounded-full bg-[#084C38] hover:bg-[#063b2c] text-white text-xs font-bold transition shadow-xs flex items-center justify-center gap-1.5">
+                        <span>Send & Start Chat</span>
+                        <span>&rarr;</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <%- include('components/bottom_nav.ejs', { activeTab: 'chat' }) %>
 </body>
 </html>

@@ -42,6 +42,7 @@ const domainsController_js_1 = require("./modules/domains/domainsController.js")
 const multiStoreController_js_1 = require("./modules/stores/multiStoreController.js");
 const analyticsController_js_1 = require("./modules/analytics/analyticsController.js");
 const billingController_js_1 = require("./modules/billing/billingController.js");
+const affiliateController_js_1 = require("./modules/affiliates/affiliateController.js");
 const mailer_js_1 = require("./modules/email/mailer.js");
 const multipart_1 = __importDefault(require("@fastify/multipart"));
 const node_fs_1 = __importDefault(require("node:fs"));
@@ -191,6 +192,34 @@ fastify.register(domainsController_js_1.domainsRoutes);
 fastify.register(multiStoreController_js_1.multiStoreRoutes);
 fastify.register(analyticsController_js_1.analyticsRoutes);
 fastify.register(billingController_js_1.billingRoutes);
+fastify.register(affiliateController_js_1.affiliateRoutes);
+// 60-Day Affiliate Referral Attribution Hook
+fastify.addHook('preHandler', async (req, reply) => {
+    const query = (req.query || {});
+    const refCode = (query.ref || query.aff || query.ref_code || '').trim();
+    if (refCode) {
+        const affiliate = (0, db_js_1.dbFetchOne)('affiliates', { referral_code: refCode, status: 'active' });
+        if (affiliate) {
+            // Set 60-day tracking cookie (60 * 24 * 60 * 60 * 1000 = 5,184,000,000 ms)
+            reply.setCookie('zlik_aff', affiliate.referral_code, {
+                path: '/',
+                maxAge: 60 * 24 * 60 * 60, // 60 days in seconds
+                httpOnly: true,
+                sameSite: 'lax',
+                secure: process.env.COOKIE_SECURE === 'true'
+            });
+            // Track unique cookie session ID
+            if (!req.cookies?.zlik_aff_session) {
+                reply.setCookie('zlik_aff_session', node_crypto_1.default.randomUUID(), {
+                    path: '/',
+                    maxAge: 60 * 24 * 60 * 60,
+                    httpOnly: true,
+                    sameSite: 'lax'
+                });
+            }
+        }
+    }
+});
 // Direct High-Speed Image Upload API (Up to 10MB per image, single or multiple)
 fastify.post('/api/upload', async (req, reply) => {
     const store = req.session?.merchantStore;
@@ -344,8 +373,29 @@ fastify.post('/api/merchant/settings', async (req, reply) => {
     if (body.template_slug !== undefined) {
         const validTemplates = Object.keys(templates_js_1.STORE_TEMPLATES);
         if (validTemplates.includes(body.template_slug)) {
+            const selectedTpl = templates_js_1.STORE_TEMPLATES[body.template_slug];
+            const isMerchantPaid = store.plan_tier === 'pro' || store.plan_tier === 'business';
+            if (selectedTpl?.is_pro && !isMerchantPaid) {
+                return reply.send({
+                    success: false,
+                    error: `${selectedTpl.name} is a Pro template. Please upgrade to Pro or Business to activate this design.`
+                });
+            }
             updates.template_slug = body.template_slug;
         }
+    }
+    if (body.hero_headline !== undefined)
+        updates.hero_headline = body.hero_headline ? body.hero_headline.trim() : null;
+    if (body.hero_subheading !== undefined)
+        updates.hero_subheading = body.hero_subheading ? body.hero_subheading.trim() : null;
+    if (body.cta_button_text !== undefined)
+        updates.cta_button_text = body.cta_button_text ? body.cta_button_text.trim() : null;
+    if (body.announcement_text !== undefined)
+        updates.announcement_text = body.announcement_text ? body.announcement_text.trim() : null;
+    if (body.storefront_customization_json !== undefined) {
+        updates.storefront_customization_json = typeof body.storefront_customization_json === 'object'
+            ? JSON.stringify(body.storefront_customization_json)
+            : (body.storefront_customization_json || null);
     }
     if (body.store_name) {
         const rawName = body.store_name.trim();
@@ -762,6 +812,26 @@ fastify.get('/merchant/settings', async (req, reply) => {
         isPro,
         planConfig: config
     });
+});
+// 9c. Merchant Customize Storefront Studio View
+fastify.get('/merchant/customize', async (req, reply) => {
+    const store = req.session?.merchantStore;
+    if (!store)
+        return reply.redirect('/merchant/login');
+    const currentStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id }) || store;
+    const { isPro, config } = (0, helpers_js_1.getStorePlanDetails)(currentStore);
+    const templateConfig = (0, templates_js_1.getStoreTemplateConfig)(currentStore.template_slug);
+    return reply.view('merchant/customize.ejs', {
+        store: currentStore,
+        templateConfig,
+        allTemplates: templates_js_1.STORE_TEMPLATES,
+        storeCategories: templates_js_1.STORE_CATEGORIES,
+        isPro,
+        planConfig: config
+    });
+});
+fastify.get('/merchant/settings/customize', async (_req, reply) => {
+    return reply.redirect('/merchant/customize');
 });
 // 9b. Merchant Trust & Identity Verification View
 fastify.get('/merchant/verification', async (req, reply) => {

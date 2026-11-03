@@ -13,8 +13,8 @@
 </a>
 <% } %>
 
-<!-- Signature 5-Tab Floating Bottom Navigation Bar (Screenshots 1-5 Reference) -->
-<nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-[#EAEFEB] px-3 py-2 flex items-center justify-between shadow-[0_-4px_24px_rgba(8,17,13,0.06)] pb-safe font-body select-none"
+<!-- Signature 4-Tab Floating Bottom Navigation Bar (Orders, Wallet, Products, Profile) -->
+<nav class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-xl border-t border-[#EAEFEB] px-4 py-2 flex items-center justify-around shadow-[0_-4px_24px_rgba(8,17,13,0.06)] pb-safe font-body select-none"
      aria-label="Merchant Mobile Navigation">
 
     <!-- Tab 1: Orders (Screenshot 1 Reference) -->
@@ -37,27 +37,6 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
             </svg>
             <span id="mobileNavOrdersBadge" class="hidden absolute top-1 right-1 w-2 h-2 rounded-full bg-[#19D98B] ring-2 ring-white"></span>
-        </a>
-    <% } %>
-
-    <!-- Tab 2: History (Screenshot 2 Reference) -->
-    <% const isHistory = (typeof activeTab !== 'undefined' && activeTab === 'history'); %>
-    <% if (isHistory) { %>
-        <a href="/merchant/ledger#history" 
-           class="relative flex items-center gap-2 bg-[#084C38] text-white px-3.5 py-2 rounded-full font-semibold text-xs shadow-xs transition-all duration-200 shrink-0"
-           aria-label="History">
-            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            <span class="tracking-tight text-[12px]">History</span>
-        </a>
-    <% } else { %>
-        <a href="/merchant/ledger#history" 
-           class="relative flex items-center justify-center w-10 h-10 rounded-full text-[#6B7280] hover:text-[#08110D] hover:bg-gray-100/60 transition-colors duration-150"
-           aria-label="History">
-            <svg class="w-5 h-5 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
         </a>
     <% } %>
 

@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-[#F8FAF9]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Customize Your Store — <%= store.store_name %></title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/assets/favicon.png">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        display: ['"Space Grotesk"', 'sans-serif'],
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+                    },
+                    colors: {
+                        zlik: {
+                            forest: '#084C38',
+                            dark: '#08110D',
+                            mint: '#19D98B',
+                            light: '#F8FAF9'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom, 1rem)); }
+    </style>
+</head>
+<body class="min-h-full font-sans text-[#111827] bg-[#F8FAF9] flex flex-col antialiased selection:bg-[#19D98B] selection:text-[#08110D]">
+
+    <!-- Header Navigation -->
+    <%- include('components/header_nav.ejs', { activeTab: 'customize', pageTitle: 'Customize Your Store', backUrl: '/merchant/settings' }) %>
+
+    <% 
+        const isMerchantPro = Boolean(typeof isPro !== 'undefined' && isPro);
+        let parsedCustomization = {};
+        try {
+            if (store.storefront_customization_json) {
+                parsedCustomization = typeof store.storefront_customization_json === 'string' 
+                    ? JSON.parse(store.storefront_customization_json) 
+                    : store.storefront_customization_json;
+            }
+        } catch(e) {}
+        const d2Config = parsedCustomization.design2 || {};
+        const d3Config = parsedCustomization.design3 || {};
+    %>
+
+    <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 pb-32 sm:pb-24 space-y-6">
+
+        <!-- Top Studio Banner & Quick Links -->
+        <div class="bg-white rounded-3xl border border-[#EAEFEB] p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">✨</span>
+                    <h2 class="text-base sm:text-lg font-bold text-[#111827] font-display">Storefront Design Studio</h2>
+                    <span id="activeTemplateBadge" class="bg-[#EDF5F1] text-[#084C38] border border-[#084C38]/20 font-bold text-[10.5px] px-2.5 py-0.5 rounded-full uppercase tracking-wider font-mono">
+                        Active: <%= templateConfig ? templateConfig.name : 'Classic Grid' %>
+                    </span>
+                </div>
+                <p class="text-xs text-[#6B7280]">
+                    Select and personalize your storefront layout, branding, hero banners, and promotional sections.
+                </p>
+            </div>
+            
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <a href="/<%= store.slug %>" target="_blank" class="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 bg-[#084C38] hover:bg-[#063b2c] text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition shadow-xs">
+                    <span>View Live Storefront</span>
+                    <span>↗</span>
+                </a>
+            </div>
+        </div>
+
+        <form id="customizeForm" onsubmit="handleSaveCustomization(event)" class="space-y-6">
+            <input type="hidden" id="selectedTemplateInput" value="<%= store.template_slug || 'general_clean' %>">
+
+            <!-- Card 1: Brand Logo & Accent Color -->
+            <div class="bg-white rounded-3xl border border-[#EAEFEB] p-5 sm:p-6 shadow-xs space-y-5 text-xs">
+                <div class="border-b border-[#EAEFEB] pb-3">
+                    <h3 class="font-bold text-sm text-[#111827]">Brand Identity & Visual Theme</h3>
+                    <p class="text-[11px] text-[#6B7280] mt-0.5">Your store logo, brand accent color, and store tagline.</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
+                    <!-- Logo Upload -->
+                    <div class="space-y-2">
+                        <label class="block font-medium text-[#111827]">Store Logo</label>
+                        <div class="flex items-center gap-4">
+                            <div id="logoPreviewContainer" class="w-16 h-16 rounded-2xl border border-[#EAEFEB] bg-[#F8FAF9] flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+                                <% if (store.logo_url) { %>
+                                    <img id="logoPreviewImg" src="<%= store.logo_url %>" alt="Store Logo" class="w-full h-full object-cover">
+                                <% } else { %>
+                                    <span id="logoPreviewPlaceholder" class="text-xl font-bold text-[#084C38] font-display"><%= (store.store_name || 'S').charAt(0).toUpperCase() %></span>
+                                <% } %>
+                            </div>
+                            <div class="flex-1 space-y-1.5">
+                                <div class="flex items-center gap-2">
+                                    <label class="cursor-pointer bg-[#084C38] hover:bg-[#063b2c] text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition shadow-xs">
+                                        <span>Upload Logo</span>
+                                        <input type="file" id="logoFileInput" accept="image/*" onchange="handleLogoUpload(this.files[0])" class="hidden">
+                                    </label>
+                                    <button type="button" onclick="removeStoreLogo()" id="removeLogoBtn" class="bg-[#F8FAF9] hover:bg-red-50 hover:text-red-700 text-[#6B7280] font-medium text-xs px-3 py-2 rounded-xl border border-[#EAEFEB] transition <%= store.logo_url ? '' : 'hidden' %>">
+                                        Remove
+                                    </button>
+                                </div>
+                                <p class="text-[10px] text-[#6B7280]">Recommended: Square PNG or JPG, max 10MB.</p>
+                            </div>
+                        </div>
+                        <input type="hidden" id="logoUrl" value="<%= store.logo_url || '' %>">
+                    </div>
+
+                    <!-- Brand Primary Accent Color -->
+                    <div class="space-y-2">
+                        <label class="block font-medium text-[#111827]">Brand Accent Color</label>
+                        <p class="text-[10px] text-[#6B7280]">Used for buttons, cart badges, and theme highlight elements.</p>
+                        <div class="flex items-center gap-2.5">
+                            <input type="color" id="storePrimaryColor" value="<%= store.primary_color || '#084C38' %>" onchange="document.getElementById('storePrimaryColorHex').value = this.value" class="w-10 h-10 rounded-xl border border-[#EAEFEB] cursor-pointer p-0.5 bg-white">
+                            <input type="text" id="storePrimaryColorHex" value="<%= store.primary_color || '#084C38' %>" oninput="document.getElementById('storePrimaryColor').value = this.value" class="flex-1 bg-[#F8FAF9] border border-[#EAEFEB] rounded-xl p-2.5 outline-none font-mono text-xs text-[#111827]">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-medium text-[#111827] mb-1">Store Bio / Tagline</label>
+                    <input type="text" id="storeBio" value="<%= store.bio || '' %>" placeholder="e.g. Quality essentials delivered nationwide" class="w-full bg-[#F8FAF9] border border-[#EAEFEB] rounded-2xl p-3 outline-none focus:border-[#084C38] text-xs font-medium">
+                    <span class="text-[10px] text-[#6B7280] mt-1 block">Displayed in your header and store bio sections.</span>
+                </div>
+            </div>
+
+            <!-- Card 2: Industry Category & Template Selector -->
+            <div class="bg-white rounded-3xl border border-[#EAEFEB] p-5 sm:p-6 shadow-xs space-y-5 text-xs">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#EAEFEB] pb-4">
+                    <div>
+                        <h3 class="font-bold text-sm text-[#111827]">Store Category & Templates</h3>
+                        <p class="text-[11px] text-[#6B7280] mt-0.5">Select your industry category and choose your preferred storefront design.</p>
+                    </div>
+                </div>
+
+                <!-- Category Selector -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label for="categorySelect" class="font-semibold text-[#111827] text-xs">Industry Category</label>
+                        <span class="text-[11px] text-[#6B7280]">1 Free + 2 Pro designs per category</span>
+                    </div>
+
+                    <select id="categorySelect" onchange="handleCategorySelect(this.value)" class="w-full bg-[#F8FAF9] border border-[#EAEFEB] focus:border-[#084C38] rounded-2xl p-3.5 text-xs font-medium text-[#111827] outline-none transition cursor-pointer">
+                        <% Object.values(storeCategories || {}).forEach(cat => { 
+                            const isCurrentCat = (templateConfig && templateConfig.category_id === cat.id) || (!templateConfig && cat.id === 'general');
+                        %>
+                            <option value="<%= cat.id %>" <%= isCurrentCat ? 'selected' : '' %>>
+                                <%= cat.name %> — <%= cat.tagline %>
+                            </option>
+                        <% }) %>
+                    </select>
+                </div>
+
+                <!-- 3-Template Cards Grid -->
+                <div class="space-y-1.5">
+                    <div id="templatesGrid" class="flex md:grid md:grid-cols-3 gap-3.5 pt-1 overflow-x-auto md:overflow-x-visible no-scrollbar snap-x snap-mandatory pb-2 md:pb-0">
+                        <!-- Injected dynamically via JS with swipeable cards on mobile -->
+                    </div>
+                    <div class="flex items-center justify-between md:hidden text-[10.5px] text-[#6B7280] px-1 pt-1">
+                        <span class="flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                            <span>Swipe to view templates</span>
+                        </span>
+                        <span class="font-semibold text-[#111827]">Slide</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Design 1 (Free Starter Grid) Customizer -->
+            <div id="design1SettingsBox" class="bg-white rounded-3xl border border-[#EAEFEB] p-5 sm:p-6 shadow-xs space-y-4 text-xs">
+                <div class="flex items-center justify-between border-b border-[#EAEFEB] pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-base">🎨</span>
+                        <div>
+                            <h3 class="font-bold text-sm text-[#111827]">Design 1 (Starter Grid) Customization</h3>
+                            <p class="text-[11px] text-[#6B7280]">Clean product-first layout included in all plans.</p>
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#19D98B]/20 text-[#087A50] font-mono">FREE INCLUDED</span>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-[#F8FAF9] border border-[#EAEFEB] space-y-2">
+                    <p class="text-[11px] text-[#6B7280] leading-relaxed">
+                        Design 1 features a modern, high-speed product catalog displaying your logo, store name, bio, brand primary color, search bar, category pills, and quick-add product cards.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Card 4: Design 2 (Curated Lifestyle Showcase) Customizer (Pro & Business) -->
+            <div id="design2SettingsBox" class="bg-white rounded-3xl border border-[#EAEFEB] p-5 sm:p-6 shadow-xs space-y-4 text-xs relative">
+                <div class="flex items-center justify-between border-b border-[#EAEFEB] pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-base">✨</span>
+                        <div>
+                            <h3 class="font-bold text-sm text-[#111827]">Design 2 (Curated Lifestyle Showcase) Customization</h3>
+                            <p class="text-[11px] text-[#6B7280]">Editorial layout with lifestyle hero cards, top announcement bar, and promotional highlights.</p>
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#08110D] text-[#19D98B] font-mono">PRO & BUSINESS</span>
+                </div>
+
+                <div id="design2ControlsWrapper" class="space-y-4 <%= isMerchantPro ? '' : 'blur-[1px] opacity-60 pointer-events-none select-none' %>">
+                    <!-- Top Announcement Bar -->
+                    <div>
+                        <label class="block text-[11px] font-medium text-[#111827] mb-1">Top Announcement Bar Text</label>
+                        <input type="text" id="d2Announcement" value="<%= store.announcement_text || d2Config.announcement || 'A little more good in every day · Free to explore, easy to shop' %>" placeholder="e.g. Free delivery on orders over ₦25,000" class="w-full bg-[#F8FAF9] border border-[#EAEFEB] rounded-xl p-2.5 outline-none text-xs text-[#111827] focus:border-[#084C38]">
+                    </div>
+
+                    <!-- Hero Section -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-medium text-[#111827] mb-1">Hero Eyebrow</label>
+                            <input type="text" id="d2HeroEyebrow" value="<%= d2Config.hero_eyebrow || 'The everyday edit' %>" placeholder="The everyday edit" class="w-full bg-[#F8FAF9] border border-[#EAEFEB] rounded-xl p-2 text-xs text-[#111827] focus:border-[#084C38]">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-[#111827] mb-1">Hero Title</label>
+                            <input type="text" id="d2HeroTitle" value="<%= d2Config.hero_title || store.hero_headline || 'Find your good thing.' %>" placeholder="Find your good thing." class="w-full bg-[#F8FAF9] border border-[#EAEFEB] rounded-xl p-2 text-xs text-[#111827] focus:border-[#084C38]">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-[#111827] mb-1">Hero Button Text</label>
+                            <input type="text" id="d2HeroCta" value="<%= d2Config.hero_cta_text || 'Explore the collection ↗' %>" placeholder="Explore the collection ↗" class="w-full bg-[#F8FAF9] border border-[#EAEFEB] rounded-xl p-2 text-xs text-[#111827] focus:border-[#084C38]">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-medium text-[#111827] mb-1">Hero Description</label>
+                        <textarea id="d2HeroDesc" rows="2" placeholder="Thoughtful finds for your wardrobe, your space and the little moments in between." class="w-full bg-[#F8FAF9] border border-[#EAEFEB] rounded-xl p-2.5 text-xs text-[#111827] outline-none focus:border-[#084C38]"><%= d2Config.hero_desc || store.hero_subheading || 'Thoughtful finds for your wardrobe, your space and the little moments in between.' %></textarea>
+                    </div>
+
+                    <!-- Promo Highlight Section -->
+                    <div class="pt-2 border-t border-[#EAEFEB] space-y-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-[#111827]">Special Promo Highlight Card</label>
+                            <p class="text-[10px] text-[#6B7280]">Featured brand spotlight displayed in Design 2 storefront</p>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-medium text-[#111827] mb-0.5">Promo Title</label>
+                                <input type="text" id="d2PromoTitle" value="<%= d2Config.promo_title || 'Find something worth keeping.' %>" placeholder="Find something worth keeping." class="w-full bg-[#F8FAF9] border border-[#EAEFEB] rounded-xl p-2 text-xs text-[#111827] focus:border-[#084C38]">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-medium text-[#111827] mb-0.5">Promo Description</label>
+                                <input type="text" id="d2PromoDesc" value="<%= d2Config.promo_desc || 'Good finds for the everyday — all in one place.' %>" placeholder="Good finds for the everyday — all in one place." class="w-full bg-[#F8FAF9] border border-[#EAEFEB] rounded-xl p-2 text-xs text-[#111827] focus:border-[#084C38]">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-medium text-[#111827] mb-1">Promo Highlight Image</label>
+                            <div class="flex items-center gap-4">
+                                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-gray-100 border border-[#EAEFEB] shrink-0 shadow-2xs">
+                                    <img id="d2PromoImagePreview" src="<%= d2Config.promo_image || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85' %>" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85'">
+                                </div>
+                                <div class="flex-1 space-y-1.5">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <label id="promoUploadBtn" class="cursor-pointer bg-[#084C38] hover:bg-[#063b2c] text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition shadow-xs inline-flex items-center gap-1.5 <%= isMerchantPro ? '' : 'pointer-events-none opacity-60' %>">
+                                            <span>Upload Promo Image</span>
+                                            <input type="file" id="promoFileInput" accept="image/*" onchange="handlePromoImageUpload(this.files[0])" class="hidden" <%= isMerchantPro ? '' : 'disabled' %>>
+                                        </label>
+                                        <button type="button" onclick="resetPromoImage()" id="resetPromoImageBtn" class="bg-[#F8FAF9] hover:bg-gray-100 text-[#6B7280] hover:text-[#111827] font-medium text-xs px-3 py-2 rounded-xl border border-[#EAEFEB] transition">
+                                            Reset to Default
+                                        </button>
+                                    </div>
+                                    <input type="hidden" id="d2PromoImage" value="<%= d2Config.promo_image || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85' %>">
+                                    <span class="text-[9.5px] text-[#6B7280] block">Upload your product or banner image (PNG, JPG, WEBP up to 10MB) to replace the default shoe image.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <% if (!isMerchantPro) { %>
+                    <div class="absolute inset-0 bg-white/50 backdrop-blur-[2px] rounded-3xl flex items-center justify-center p-4 z-10">
+                        <button type="button" onclick="openProUpgradeModal('Design 2 Showcase')" class="inline-flex items-center gap-1.5 bg-[#084C38] hover:bg-[#063b2c] text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-xs transition hover:scale-105">
+                            <span>🔒 Upgrade to Pro to Unlock Design 2 Customizer</span>
+                        </button>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Card 5: Design 3 (Hero Overlay & Studio) Customizer (Pro & Business) -->
+            <div id="design3SettingsBox" class="bg-white rounded-3xl border border-[#EAEFEB] p-5 sm:p-6 shadow-xs space-y-4 text-xs relative">
+                <div class="flex items-center justify-between border-b border-[#EAEFEB] pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-base">🛡️</span>
+                        <div>
+                            <h3 class="font-bold text-sm text-[#111827]">Design 3 (Hero Overlay & Studio) Customization</h3>
+                            <p class="text-[11px] text-[#6B7280]">Full-bleed banner studio with marquee ticker, custom cover imagery, and aesthetic overlay tint.</p>
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#08110D] text-[#19D98B] font-mono">PRO & BUSINESS</span>
+                </div>
+
+                <div id="design3ControlsWrapper" class="space-y-4 <%= isMerchantPro ? '' : 'blur-[1px] opacity-60 pointer-events-none select-none' %>">
+                    <!-- Marquee Ticker -->
+                    <div>
+                        <label class="block text-[11px] font-medium text-[#111827] mb-1">Top Announcement Marquee Ticker</label>
+                        <input type="text" id="d3TickerText" value="<%= d3Config.ticker_text || store.announcement_text || '⚡ LIMITED DROP • NATIONWIDE DELIVERY • 100% VERIFIED AUTHENTIC' %>" placeholder="⚡ FLASH SALE • ORDER NOW FOR SAME-DAY DISPATCH" class="w-full bg-[#F8FAF9] border border-[#EAEFEB] rounded-xl p-2.5 outline-none text-xs text-[#111827] focus:border-[#084C38]">
+                    </div>
+
+                    <!-- Hero Headline & Subheading -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-medium text-[#111827] mb-1">Hero Main Headline</label>
+                            <input type="text" id="d3HeroHeadline" value="<%= store.hero_headline || (templateConfig ? templateConfig.hero_headline : '') %>" placeholder="e.g. Simplicity & Quality in Every Detail" class="w-full bg-[#F8FAF9] border border-[#EAEFEB] rounded-xl p-2.5 outline-none text-xs text-[#111827] focus:border-[#084C38]">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-[#111827] mb-1">Aesthetic CTA Button Text</label>
+                            <input type="text" id="d3CtaBtnText" value="<%= store.cta_button_text || (templateConfig ? templateConfig.cta_button_text : '') || 'Explore Curated Goods ↓' %>" placeholder="e.g. Shop Latest Drop ↓" class="w-full bg-[#F8FAF9] border border-[#EAEFEB] rounded-xl p-2.5 outline-none text-xs text-[#111827] focus:border-[#084C38]">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-medium text-[#111827] mb-1">Hero Subheading</label>
+                        <textarea id="d3HeroSubheading" rows="2" placeholder="e.g. Carefully selected goods crafted for everyday modern living." class="w-full bg-[#F8FAF9] border border-[#EAEFEB] rounded-xl p-2.5 outline-none text-xs text-[#111827] focus:border-[#084C38]"><%= store.hero_subheading || (templateConfig ? templateConfig.hero_subheading : '') %></textarea>
+                    </div>
+
+                    <!-- Cover Photo & Overlay Tint -->
+                    <div class="pt-2 border-t border-[#EAEFEB] space-y-3">
+                        <div>
+                            <label class="block text-[11px] font-medium text-[#111827] mb-1">Hero Full Cover Photo</label>
+                            <div class="space-y-3">
+                                <div id="coverPreviewContainer" class="w-full aspect-[21/9] sm:aspect-[24/8] max-h-48 rounded-2xl border border-[#EAEFEB] bg-[#084C38] flex items-center justify-center overflow-hidden relative shadow-xs">
+                                    <img id="coverPreviewImg" src="<%= store.cover_url || (templateConfig ? templateConfig.default_cover_image : '') || '/assets/images/templates/general_modern.png' %>" alt="Cover Preview" class="w-full h-full object-cover">
+                                </div>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <label id="coverUploadBtn" class="cursor-pointer bg-[#084C38] hover:bg-[#063b2c] text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition shadow-xs">
+                                        <span>Upload Cover Photo</span>
+                                        <input type="file" id="coverFileInput" accept="image/*" onchange="handleCoverUpload(this.files[0])" class="hidden" <%= isMerchantPro ? '' : 'disabled' %>>
+                                    </label>
+                                    <button type="button" onclick="removeStoreCover()" id="removeCoverBtn" class="bg-[#F8FAF9] hover:bg-red-50 hover:text-red-700 text-[#6B7280] font-medium text-xs px-3 py-2 rounded-xl border border-[#EAEFEB] transition <%= store.cover_url ? '' : 'hidden' %>">
+                                        Reset to Default
+                                    </button>
+                                </div>
+                            </div>
+                            <input type="hidden" id="coverUrl" value="<%= store.cover_url || '' %>">
+                        </div>
+
+                        <!-- Overlay Tint Color -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                            <div>
+                                <label for="coverOverlayColor" class="block text-[11px] font-medium text-[#111827] mb-1">Banner Overlay Tint Color</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" id="coverOverlayColor" value="<%= store.cover_overlay_color || '#08110D' %>" onchange="document.getElementById('coverOverlayColorHex').value = this.value" class="w-9 h-9 rounded-xl border border-[#EAEFEB] cursor-pointer p-0.5 bg-white" <%= isMerchantPro ? '' : 'disabled' %>>
+                                    <input type="text" id="coverOverlayColorHex" value="<%= store.cover_overlay_color || '#08110D' %>" oninput="document.getElementById('coverOverlayColor').value = this.value" class="flex-1 bg-white border border-[#EAEFEB] rounded-xl p-2 outline-none font-mono text-xs text-[#111827]" <%= isMerchantPro ? '' : 'disabled' %>>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <% if (!isMerchantPro) { %>
+                    <div class="absolute inset-0 bg-white/50 backdrop-blur-[2px] rounded-3xl flex items-center justify-center p-4 z-10">
+                        <button type="button" onclick="openProUpgradeModal('Design 3 Studio')" class="inline-flex items-center gap-1.5 bg-[#084C38] hover:bg-[#063b2c] text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-xs transition hover:scale-105">
+                            <span>🔒 Upgrade to Pro to Unlock Design 3 Customizer</span>
+                        </button>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Sticky Save Bar at Bottom -->
+            <div class="fixed bottom-14 sm:bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-[#EAEFEB] p-3 sm:p-4 shadow-lg">
+                <div class="max-w-5xl mx-auto flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2 text-xs text-[#6B7280]">
+                        <span class="w-2 h-2 rounded-full bg-[#19D98B]"></span>
+                        <span class="hidden sm:inline">Changes will be visible immediately on your storefront.</span>
+                        <span class="sm:hidden">Immediate live update.</span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <a href="/merchant/settings" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-[#6B7280] hover:text-[#111827] hover:bg-[#F8FAF9] transition">
+                            Back
+                        </a>
+                        <button type="submit" id="saveCustomizationBtn" class="bg-[#084C38] hover:bg-[#063b2c] text-white font-semibold text-xs px-6 py-2.5 rounded-xl transition shadow-xs flex items-center gap-2 cursor-pointer">
+                            <span>Save Customization</span>
+                            <span id="saveSpinner" class="hidden">
+                                <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </main>
+
+    <!-- Template Fullscreen Preview Modal -->
+    <div id="templatePreviewModal" class="fixed inset-0 z-50 bg-[#08110D]/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 hidden">
+        <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[#EAEFEB] shadow-2xl flex flex-col font-sans">
+            <div class="p-4 sm:p-5 border-b border-[#EAEFEB] flex items-center justify-between sticky top-0 bg-white z-10">
+                <div class="flex items-center gap-2 min-w-0">
+                    <h3 id="tplModalName" class="font-bold text-sm sm:text-base text-[#111827] truncate font-display">Template Name</h3>
+                    <span id="tplModalTierBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#084C38] text-white font-mono shrink-0">PRO</span>
+                </div>
+                <button type="button" onclick="closeTemplatePreviewModal()" class="w-8 h-8 rounded-full bg-gray-100 text-[#6B7280] hover:text-[#111827] flex items-center justify-center transition">✕</button>
+            </div>
+
+            <div class="p-4 sm:p-6 space-y-4 text-xs">
+                <div class="w-full aspect-[16/10] rounded-2xl overflow-hidden border border-[#EAEFEB] bg-[#084C38] shadow-xs">
+                    <img id="tplModalCover" src="" alt="Template Preview" class="w-full h-full object-cover object-top">
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-[#6B7280]">
+                        <span id="tplModalCategory" class="font-medium text-[11px]">Category</span>
+                        <a id="tplModalDemoLink" href="#" target="_blank" class="text-[#084C38] font-semibold text-[11px] hover:underline flex items-center gap-1">
+                            <span>Open Live Demo</span>
+                            <span>↗</span>
+                        </a>
+                    </div>
+                    <p id="tplModalDesc" class="text-xs text-[#111827] leading-relaxed">Template description text goes here.</p>
+                </div>
+
+                <div class="space-y-1.5 pt-2 border-t border-[#EAEFEB]">
+                    <span class="font-bold text-[11px] text-[#111827]">Design Features:</span>
+                    <ul id="tplModalFeatures" class="space-y-1 text-[11px] text-[#6B7280]"></ul>
+                </div>
+            </div>
+
+            <div class="p-4 sm:p-5 border-t border-[#EAEFEB] bg-[#F8FAF9] flex items-center justify-end gap-2.5 sticky bottom-0">
+                <button type="button" onclick="closeTemplatePreviewModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-[#6B7280] hover:text-[#111827] transition">Close</button>
+                <button type="button" onclick="applyFromPreview()" class="bg-[#084C38] hover:bg-[#063b2c] text-white font-semibold text-xs px-5 py-2.5 rounded-xl transition shadow-xs">
+                    Use This Template
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pro Upgrade Modal -->
+    <div id="proUpgradeModal" class="fixed inset-0 z-50 bg-[#08110D]/70 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 border border-[#EAEFEB] shadow-2xl">
+            <div class="w-12 h-12 rounded-2xl bg-[#EDF5F1] text-[#084C38] mx-auto flex items-center justify-center text-xl font-bold font-display shadow-2xs">
+                ⚡
+            </div>
+            <div>
+                <h3 class="text-base font-bold text-[#111827] font-display">Upgrade to Unlock <span id="upgradeFeatureName">Pro Templates</span></h3>
+                <p class="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                    Access premium industry-tailored designs, hero overlay studios, marquee announcements, custom domains, and live visitor tracking.
+                </p>
+            </div>
+            <div class="p-3 bg-[#F8FAF9] rounded-2xl border border-[#EAEFEB] text-left text-xs space-y-1.5">
+                <div class="flex items-center gap-2 text-[#084C38] font-semibold">
+                    <span>✓</span> <span>All 20+ Pro Industry Templates</span>
+                </div>
+                <div class="flex items-center gap-2 text-[#084C38] font-semibold">
+                    <span>✓</span> <span>Full Hero Studio & Marquee Ticker</span>
+                </div>
+                <div class="flex items-center gap-2 text-[#084C38] font-semibold">
+                    <span>✓</span> <span>Curated Lifestyle Showcase (Design 2)</span>
+                </div>
+                <div class="flex items-center gap-2 text-[#084C38] font-semibold">
+                    <span>✓</span> <span>Zero Transaction Fees & Staff Accounts</span>
+                </div>
+            </div>
+            <div class="pt-2 flex items-center gap-2">
+                <button type="button" onclick="closeProUpgradeModal()" class="flex-1 py-2.5 rounded-xl border border-[#EAEFEB] text-xs font-semibold text-[#6B7280] hover:text-[#111827] transition">
+                    Maybe Later
+                </button>
+                <a href="/#pricing" class="flex-1 py-2.5 rounded-xl bg-[#084C38] hover:bg-[#063b2c] text-white text-xs font-semibold transition shadow-xs">
+                    View Pro Plans ↗
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation Bar (4-Tab Standard) -->
+    <%- include('components/bottom_nav.ejs', { activeTab: 'customize' }) %>
+
+    <!-- Client Scripts for Customizer -->
+    <script>
+        const allTemplatesData = <%- JSON.stringify(allTemplates || {}) %>;
+        const storeCategoriesData = <%- JSON.stringify(storeCategories || {}) %>;
+        const isMerchantPro = <%= isMerchantPro ? 'true' : 'false' %>;
+        let selectedTemplateId = '<%= store.template_slug || "general_clean" %>';
+        let currentCategoryId = '<%= (templateConfig && templateConfig.category_id) ? templateConfig.category_id : "general" %>';
+        let previewingTplId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            handleCategorySelect(currentCategoryId);
+        });
+
+        function handleCategorySelect(catId) {
+            if (!storeCategoriesData[catId]) catId = 'general';
+            currentCategoryId = catId;
+
+            const catSelect = document.getElementById('categorySelect');
+            if (catSelect && catSelect.value !== catId) {
+                catSelect.value = catId;
+            }
+
+            renderTemplatesForCategory(catId);
+        }
+
+        function renderTemplatesForCategory(catId) {
+            const container = document.getElementById('templatesGrid');
+            if (!container) return;
+
+            const categoryTemplates = Object.values(allTemplatesData).filter(t => t.category_id === catId);
+            if (categoryTemplates.length === 0) {
+                container.innerHTML = '<div class="col-span-3 text-center py-6 text-[#6B7280]">No templates found for this category.</div>';
+                return;
+            }
+
+            container.innerHTML = categoryTemplates.map(tpl => {
+                const isSelected = selectedTemplateId === tpl.id;
+                const isProTemplate = Boolean(tpl.is_pro);
+                const isLocked = isProTemplate && !isMerchantPro;
+                const coverImage = tpl.preview_image || ('/assets/images/templates/' + tpl.id + '.png');
+
+                let badgeHtml = isProTemplate 
+                    ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#084C38] text-white shadow-xs">PRO</span>'
+                    : '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#EDF5F1] text-[#084C38] border border-[#084C38]/20 shadow-xs">FREE</span>';
+
+                let singleActionBtn = '';
+                if (isSelected) {
+                    singleActionBtn = '<button type="button" disabled class="w-full text-xs font-semibold py-2.5 rounded-xl bg-[#084C38] text-white cursor-default">Selected</button>';
+                } else if (isLocked) {
+                    singleActionBtn = `<button type="button" onclick="event.stopPropagation(); openProUpgradeModal('${tpl.name}')" class="w-full text-xs font-semibold py-2.5 rounded-xl bg-[#084C38] hover:bg-[#063b2c] text-white transition shadow-xs">Upgrade to Pro</button>`;
+                } else {
+                    singleActionBtn = `<button type="button" onclick="event.stopPropagation(); selectTemplate('${tpl.id}')" class="w-full text-xs font-semibold py-2.5 rounded-xl bg-gray-100 hover:bg-[#084C38] text-[#111827] hover:text-white transition">Select</button>`;
+                }
+
+                const cardBorder = isSelected 
+                    ? 'border-[#084C38] bg-[#EDF5F1]/30 ring-2 ring-[#084C38] shadow-xs' 
+                    : 'border-[#EAEFEB] bg-white hover:border-[#084C38]/40 hover:shadow-xs';
+
+                return `
+                    <div onclick="previewTemplateDetails('${tpl.id}')" id="tplCard-${tpl.id}" class="template-option-card group relative p-3.5 rounded-3xl border cursor-pointer transition-all duration-200 flex flex-col justify-between w-[84vw] sm:w-[320px] md:w-auto shrink-0 md:shrink snap-center ${cardBorder}">
+                        <div class="space-y-2.5">
+                            <div class="relative w-full aspect-[16/10] h-40 sm:h-44 rounded-2xl overflow-hidden border border-[#EAEFEB] bg-[#084C38] shadow-xs group-hover:border-[#084C38]/30 transition">
+                                <img src="${coverImage}" onerror="this.onerror=null; this.src='/assets/images/templates/${tpl.id}.svg';" alt="${tpl.name} Screenshot" class="w-full h-full object-cover object-top filter brightness-50 contrast-125 transition-transform duration-300 group-hover:scale-105" loading="lazy">
+                                
+                                <div class="absolute inset-0 bg-[#084C38]/85 backdrop-blur-[2px] flex flex-col items-center justify-center p-3 text-center transition-all duration-200 group-hover:bg-[#084C38]/75">
+                                    <div class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center mb-1.5 border border-white/15">
+                                        <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    </div>
+                                    <span class="text-white font-medium text-[11px] tracking-wide">Click to Preview</span>
+                                    <span class="text-[9px] text-[#EDF5F1] font-mono mt-0.5">Open Full Screenshot ↗</span>
+                                </div>
+
+                                <div class="absolute top-2 right-2 z-10">
+                                    ${badgeHtml}
+                                </div>
+                            </div>
+
+                            <div class="min-w-0 pt-0.5">
+                                <h4 class="font-semibold text-xs text-[#08110D] truncate">${tpl.name}</h4>
+                                <span class="text-[10px] text-[#6B756F] block truncate mt-0.5">${tpl.category}</span>
+                            </div>
+
+                            <p class="text-[11px] text-[#6B756F] line-clamp-2 leading-relaxed">${tpl.tagline}</p>
+                        </div>
+
+                        <div class="pt-3 mt-3 border-t border-[#E3E9E5]/60">
+                            ${singleActionBtn}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectTemplate(templateId) {
+            const tpl = allTemplatesData[templateId];
+            if (!tpl) return;
+
+            if (tpl.is_pro && !isMerchantPro) {
+                openProUpgradeModal(tpl.name);
+                return;
+            }
+
+            selectedTemplateId = templateId;
+            document.getElementById('selectedTemplateInput').value = templateId;
+
+            const activeBadge = document.getElementById('activeTemplateBadge');
+            if (activeBadge) {
+                activeBadge.textContent = `Active: ${tpl.name}`;
+            }
+
+            renderTemplatesForCategory(currentCategoryId);
+        }
+
+        function previewTemplateDetails(templateId) {
+            const tpl = allTemplatesData[templateId];
+            if (!tpl) return;
+            previewingTplId = templateId;
+
+            const coverImg = document.getElementById('tplModalCover');
+            if (coverImg) {
+                coverImg.src = tpl.preview_image || ('/assets/images/templates/' + tpl.id + '.png');
+                coverImg.onerror = function() {
+                    this.onerror = null;
+                    this.src = '/assets/images/templates/' + tpl.id + '.svg';
+                };
+            }
+
+            const demoLink = document.getElementById('tplModalDemoLink');
+            if (demoLink) {
+                demoLink.href = '/demo/' + templateId;
+            }
+
+            document.getElementById('tplModalName').textContent = tpl.name;
+            document.getElementById('tplModalCategory').textContent = tpl.category;
+            document.getElementById('tplModalDesc').textContent = tpl.description;
+
+            const tierBadge = document.getElementById('tplModalTierBadge');
+            if (tierBadge) {
+                if (tpl.is_pro) {
+                    tierBadge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#08110D] text-[#19D98B] border border-[#19D98B]/30';
+                    tierBadge.textContent = 'PRO';
+                } else {
+                    tierBadge.className = 'text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#19D98B]/15 text-[#087A50] border border-[#19D98B]/30';
+                    tierBadge.textContent = 'FREE';
+                }
+            }
+
+            const featsList = document.getElementById('tplModalFeatures');
+            featsList.innerHTML = (tpl.features || []).map(f => `
+                <li class="flex items-center gap-2">
+                    <span class="text-[#087A50] font-bold">•</span>
+                    <span>${f}</span>
+                </li>
+            `).join('');
+
+            document.getElementById('templatePreviewModal').classList.remove('hidden');
+        }
+
+        function closeTemplatePreviewModal() {
+            document.getElementById('templatePreviewModal').classList.add('hidden');
+            previewingTplId = null;
+        }
+
+        function applyFromPreview() {
+            if (previewingTplId) {
+                const tpl = allTemplatesData[previewingTplId];
+                if (tpl && tpl.is_pro && !isMerchantPro) {
+                    closeTemplatePreviewModal();
+                    openProUpgradeModal(tpl.name);
+                    return;
+                }
+                selectTemplate(previewingTplId);
+                closeTemplatePreviewModal();
+            }
+        }
+
+        function openProUpgradeModal(featureName) {
+            const el = document.getElementById('upgradeFeatureName');
+            if (el) el.textContent = featureName || 'Pro Designs';
+            document.getElementById('proUpgradeModal').classList.remove('hidden');
+        }
+
+        function closeProUpgradeModal() {
+            document.getElementById('proUpgradeModal').classList.add('hidden');
+        }
+
+        async function handleLogoUpload(file) {
+            if (!file) return;
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File exceeds 10MB limit. Please choose a smaller image.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('files', file);
+
+            try {
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success && data.url) {
+                    document.getElementById('logoUrl').value = data.url;
+                    
+                    const container = document.getElementById('logoPreviewContainer');
+                    container.innerHTML = `<img id="logoPreviewImg" src="${data.url}" alt="Store Logo" class="w-full h-full object-cover">`;
+                    
+                    const removeBtn = document.getElementById('removeLogoBtn');
+                    if (removeBtn) removeBtn.classList.remove('hidden');
+                } else {
+                    alert(data.error || 'Failed to upload logo.');
+                }
+            } catch (err) {
+                alert('Network error while uploading logo.');
+            }
+        }
+
+        function removeStoreLogo() {
+            document.getElementById('logoUrl').value = '';
+            const container = document.getElementById('logoPreviewContainer');
+            const initial = '<%= (store.store_name || "S").charAt(0).toUpperCase() %>';
+            container.innerHTML = `<span id="logoPreviewPlaceholder" class="text-xl font-bold text-[#084C38] font-display">${initial}</span>`;
+            const removeBtn = document.getElementById('removeLogoBtn');
+            if (removeBtn) removeBtn.classList.add('hidden');
+            const fileInput = document.getElementById('logoFileInput');
+            if (fileInput) fileInput.value = '';
+        }
+
+        async function handleCoverUpload(file) {
+            if (!file) return;
+            if (!isMerchantPro) {
+                openProUpgradeModal('Pro Storefront Covers');
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File exceeds 10MB limit. Please choose a smaller image.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('files', file);
+
+            try {
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success && data.url) {
+                    document.getElementById('coverUrl').value = data.url;
+                    
+                    const container = document.getElementById('coverPreviewContainer');
+                    container.innerHTML = `<img id="coverPreviewImg" src="${data.url}" alt="Store Cover" class="w-full h-full object-cover">`;
+                    
+                    const removeBtn = document.getElementById('removeCoverBtn');
+                    if (removeBtn) removeBtn.classList.remove('hidden');
+                } else {
+                    alert(data.error || 'Failed to upload cover image.');
+                }
+            } catch (err) {
+                alert('Network error while uploading cover image.');
+            }
+        }
+
+        function removeStoreCover() {
+            document.getElementById('coverUrl').value = '';
+            const defaultCover = (typeof templateConfig !== 'undefined' && templateConfig && templateConfig.default_cover_image) || '/assets/images/templates/general_modern.png';
+            const container = document.getElementById('coverPreviewContainer');
+            container.innerHTML = `<img id="coverPreviewImg" src="${defaultCover}" alt="Cover Preview" class="w-full h-full object-cover">`;
+            const removeBtn = document.getElementById('removeCoverBtn');
+            if (removeBtn) removeBtn.classList.add('hidden');
+            const fileInput = document.getElementById('coverFileInput');
+            if (fileInput) fileInput.value = '';
+        }
+
+        async function handlePromoImageUpload(file) {
+            if (!file) return;
+            if (!isMerchantPro) {
+                openProUpgradeModal('Design 2 Promo Uploads');
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File exceeds 10MB limit. Please choose a smaller image.');
+                return;
+            }
+
+            const btn = document.getElementById('promoUploadBtn');
+            const originalContent = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.innerHTML = '<span>Uploading...</span>';
+                btn.classList.add('opacity-60', 'pointer-events-none');
+            }
+
+            const formData = new FormData();
+            formData.append('files', file);
+
+            try {
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                const uploadedUrl = data.url || (data.file_urls && data.file_urls[0]);
+                if (data.success && uploadedUrl) {
+                    const input = document.getElementById('d2PromoImage');
+                    const preview = document.getElementById('d2PromoImagePreview');
+                    if (input) input.value = uploadedUrl;
+                    if (preview) preview.src = uploadedUrl;
+                } else {
+                    alert(data.error || 'Failed to upload promo image.');
+                }
+            } catch (err) {
+                alert('Network error while uploading promo image.');
+            } finally {
+                if (btn) {
+                    btn.innerHTML = originalContent;
+                    btn.classList.remove('opacity-60', 'pointer-events-none');
+                }
+                const fileInput = document.getElementById('promoFileInput');
+                if (fileInput) fileInput.value = '';
+            }
+        }
+
+        function resetPromoImage() {
+            const defaultUrl = 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85';
+            const input = document.getElementById('d2PromoImage');
+            const preview = document.getElementById('d2PromoImagePreview');
+            if (input) input.value = defaultUrl;
+            if (preview) preview.src = defaultUrl;
+        }
+
+        async function handleSaveCustomization(e) {
+            e.preventDefault();
+            const btn = document.getElementById('saveCustomizationBtn');
+            const spinner = document.getElementById('saveSpinner');
+            if (btn) btn.disabled = true;
+            if (spinner) spinner.classList.remove('hidden');
+
+            const payload = {
+                template_slug: document.getElementById('selectedTemplateInput')?.value || 'general_clean',
+                bio: document.getElementById('storeBio')?.value?.trim() || '',
+                logo_url: document.getElementById('logoUrl')?.value?.trim() || null,
+                primary_color: document.getElementById('storePrimaryColorHex')?.value?.trim() || '#084C38',
+                cover_url: document.getElementById('coverUrl')?.value?.trim() || null,
+                cover_overlay_color: document.getElementById('coverOverlayColorHex')?.value?.trim() || '#08110D',
+                hero_headline: document.getElementById('d3HeroHeadline')?.value?.trim() || null,
+                hero_subheading: document.getElementById('d3HeroSubheading')?.value?.trim() || null,
+                cta_button_text: document.getElementById('d3CtaBtnText')?.value?.trim() || null,
+                announcement_text: document.getElementById('d2Announcement')?.value?.trim() || document.getElementById('d3TickerText')?.value?.trim() || null,
+                storefront_customization_json: {
+                    design2: {
+                        announcement: document.getElementById('d2Announcement')?.value?.trim() || '',
+                        hero_eyebrow: document.getElementById('d2HeroEyebrow')?.value?.trim() || 'The everyday edit',
+                        hero_title: document.getElementById('d2HeroTitle')?.value?.trim() || 'Find your good thing.',
+                        hero_desc: document.getElementById('d2HeroDesc')?.value?.trim() || 'Thoughtful finds for your wardrobe, your space and the little moments in between.',
+                        hero_cta_text: document.getElementById('d2HeroCta')?.value?.trim() || 'Explore the collection ↗',
+                        hero_label_small: document.getElementById('d2HeroLabelSmall')?.value?.trim() || 'A fresh perspective',
+                        hero_label_title: document.getElementById('d2HeroLabelTitle')?.value?.trim() || 'The new-season edit',
+                        promo_title: document.getElementById('d2PromoTitle')?.value?.trim() || 'Find something worth keeping.',
+                        promo_desc: document.getElementById('d2PromoDesc')?.value?.trim() || 'Good finds for the everyday — all in one place.',
+                        promo_image: document.getElementById('d2PromoImage')?.value?.trim() || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85'
+                    },
+                    design3: {
+                        ticker_text: document.getElementById('d3TickerText')?.value?.trim() || '⚡ LIMITED DROP • NATIONWIDE DELIVERY • 100% VERIFIED AUTHENTIC',
+                        hero_headline: document.getElementById('d3HeroHeadline')?.value?.trim() || '',
+                        hero_subheading: document.getElementById('d3HeroSubheading')?.value?.trim() || '',
+                        cta_button_text: document.getElementById('d3CtaBtnText')?.value?.trim() || 'Explore Curated Goods ↓'
+                    }
+                }
+            };
+
+            try {
+                const res = await fetch('/api/merchant/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Storefront customization saved successfully! 🎉');
+                } else {
+                    alert(data.error || 'Failed to save customization.');
+                }
+            } catch (err) {
+                alert('Network error while saving customization.');
+            } finally {
+                if (btn) btn.disabled = false;
+                if (spinner) spinner.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>

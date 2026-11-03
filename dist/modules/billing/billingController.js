@@ -9,6 +9,7 @@ const node_https_1 = __importDefault(require("node:https"));
 const db_js_1 = require("../../db/db.js");
 const helpers_js_1 = require("../../utils/helpers.js");
 const mailer_js_1 = require("../email/mailer.js");
+const affiliateService_js_1 = require("../affiliates/affiliateService.js");
 /**
  * Helper to call Paystack Verify Transaction API over HTTPS
  */
@@ -166,6 +167,11 @@ async function billingRoutes(fastify) {
             gateway_reference: verifyResult.data?.id ? String(verifyResult.data.id) : reference,
             paid_at: now.toISOString().slice(0, 19).replace('T', ' ')
         }, { id: payment.id });
+        // Process 70% Affiliate Commission (within 12-month window)
+        try {
+            (0, affiliateService_js_1.processSubscriptionCommission)(store.id, payment.amount, reference);
+        }
+        catch (e) { }
         // Refresh Merchant Session
         const updatedStore = (0, db_js_1.dbFetchOne)('stores', { id: store.id });
         req.session.merchantStore = updatedStore;
@@ -241,6 +247,11 @@ async function billingRoutes(fastify) {
                         gateway_reference: data.id ? String(data.id) : reference,
                         paid_at: now.toISOString().slice(0, 19).replace('T', ' ')
                     }, { id: payment.id });
+                    // Process 70% Affiliate Commission (within 12-month window)
+                    try {
+                        (0, affiliateService_js_1.processSubscriptionCommission)(store.id, payment.amount, reference);
+                    }
+                    catch (e) { }
                 }
             }
         }

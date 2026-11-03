@@ -135,54 +135,35 @@
         </div>
         <form id="settingsForm" onsubmit="handleSaveSettings(event)" class="space-y-6">
             
-            <!-- Store Category & Templates Card -->
-            <div class="bg-white rounded-3xl border border-[#EAEFEB] p-5 sm:p-6 shadow-xs space-y-5 text-xs">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#EAEFEB] pb-4">
-                    <div>
-                        <h3 class="font-bold text-sm text-[#111827]">Store Category & Templates</h3>
-                        <p class="text-[11px] text-[#6B7280] mt-0.5">Select your industry category and template design.</p>
+            <!-- Customize Your Store Gateway Card -->
+            <div class="bg-gradient-to-br from-[#084C38] via-[#063e2e] to-[#04241B] rounded-3xl p-5 sm:p-6 text-white shadow-md relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="relative z-10 space-y-1.5 max-w-lg">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">✨</span>
+                        <h3 class="font-bold text-base sm:text-lg font-display text-white">Customize Your Store</h3>
+                        <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#19D98B] text-[#08110D] font-mono">STUDIO</span>
                     </div>
-                    <div>
-                        <span id="activeTemplateBadge" class="bg-[#EDF5F1] text-[#084C38] border border-[#084C38]/20 font-bold text-[11px] px-3 py-1 rounded-full uppercase tracking-wider font-mono">
-                            Active: <%= templateConfig ? templateConfig.name : 'Classic Grid' %>
-                        </span>
-                    </div>
-                    <input type="hidden" id="selectedTemplateInput" value="<%= store.template_slug || 'general_clean' %>">
-                </div>
-
-                <!-- Category Selector (Dropdown Only) -->
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between">
-                        <label for="categorySelect" class="font-semibold text-[#111827] text-xs">Industry Category</label>
-                        <span class="text-[11px] text-[#6B7280]">1 Free + 2 Pro designs per category</span>
-                    </div>
-
-                    <!-- Category Dropdown -->
-                    <select id="categorySelect" onchange="handleCategorySelect(this.value)" class="w-full bg-[#F8FAF9] border border-[#EAEFEB] focus:border-[#084C38] rounded-2xl p-3.5 text-xs font-medium text-[#111827] outline-none transition cursor-pointer">
-                        <% Object.values(storeCategories || {}).forEach(cat => { 
-                            const isCurrentCat = (templateConfig && templateConfig.category_id === cat.id) || (!templateConfig && cat.id === 'general');
-                        %>
-                            <option value="<%= cat.id %>" <%= isCurrentCat ? 'selected' : '' %>>
-                                <%= cat.name %> — <%= cat.tagline %>
-                            </option>
-                        <% }) %>
-                    </select>
-                </div>
-
-                <!-- 3-Template Cards (Horizontal swipe/slide on mobile, 3-column grid on desktop) -->
-                <div class="space-y-1.5">
-                    <div id="templatesGrid" class="flex md:grid md:grid-cols-3 gap-3.5 pt-1 overflow-x-auto md:overflow-x-visible no-scrollbar snap-x snap-mandatory pb-2 md:pb-0">
-                        <!-- Injected dynamically via JS with swipeable cards on mobile -->
-                    </div>
-                    <div class="flex items-center justify-between md:hidden text-[10.5px] text-[#6B7280] px-1 pt-1">
-                        <span class="flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5 text-[#6B7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-                            <span>Swipe to view templates</span>
-                        </span>
-                        <span class="font-semibold text-[#111827]">Slide</span>
+                    <p class="text-xs text-emerald-100/90 leading-relaxed">
+                        Choose industry themes, customize hero banners, logos, brand colors, marquee tickers, and curated lifestyle sections.
+                    </p>
+                    <div class="pt-1 flex items-center gap-2 text-[11px] text-emerald-200 font-medium">
+                        <span>Current Active Template:</span>
+                        <span class="font-bold text-white underline decoration-[#19D98B] decoration-2 underline-offset-4"><%= templateConfig ? templateConfig.name : 'Classic Grid' %></span>
                     </div>
                 </div>
+
+                <div class="relative z-10 w-full sm:w-auto shrink-0">
+                    <a href="/merchant/customize" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#19D98B] hover:bg-[#15b775] text-[#08110D] font-bold text-xs px-5 py-3 rounded-2xl shadow-sm transition-all duration-200 active:scale-95 font-display">
+                        <span>Customize Your Store</span>
+                        <span class="text-sm font-extrabold">&rarr;</span>
+                    </a>
+                </div>
+
+                <!-- Subtle Decorative Background Circles -->
+                <div class="absolute -right-8 -bottom-10 w-44 h-44 rounded-full bg-white/5 pointer-events-none"></div>
+                <div class="absolute right-20 -top-12 w-32 h-32 rounded-full bg-[#19D98B]/10 pointer-events-none"></div>
             </div>
+            <input type="hidden" id="selectedTemplateInput" value="<%= store.template_slug || 'general_clean' %>">
 
             <!-- Storefront URL & QR Code -->
             <div class="bg-white rounded-3xl border border-[#EAEFEB] p-5 sm:p-6 shadow-xs space-y-4 text-xs">
@@ -242,87 +223,59 @@
                     <label class="block font-medium text-[#111827] mb-1">Store Bio / Tagline</label>
                     <textarea id="storeBio" rows="2" class="w-full bg-[#F8FAF9] border border-[#EAEFEB] rounded-2xl p-3 outline-none focus:border-[#084C38]"><%= store.bio || '' %></textarea>
                 </div>
-                <div class="space-y-2">
-                    <label class="block font-medium text-[#111827]">Store Logo</label>
-                    <div class="flex items-center gap-4">
-                        <div id="logoPreviewContainer" class="w-16 h-16 rounded-2xl border border-[#EAEFEB] bg-[#F8FAF9] flex items-center justify-center overflow-hidden shrink-0 shadow-xs">
+                <% 
+                    let parsedCustomization = {};
+                    try {
+                        if (store.storefront_customization_json) {
+                            parsedCustomization = typeof store.storefront_customization_json === 'string' 
+                                ? JSON.parse(store.storefront_customization_json) 
+                                : store.storefront_customization_json;
+                        }
+                    } catch(e) {}
+                    const d2Config = parsedCustomization.design2 || {};
+                    const d3Config = parsedCustomization.design3 || {};
+                %>
+
+                <!-- Store Logo & Visual Customization Shortcut -->
+                <div class="pt-3 border-t border-[#EAEFEB] flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl border border-[#EAEFEB] bg-[#F8FAF9] flex items-center justify-center overflow-hidden shrink-0 shadow-2xs">
                             <% if (store.logo_url) { %>
-                                <img id="logoPreviewImg" src="<%= store.logo_url %>" alt="Store Logo" class="w-full h-full object-cover">
+                                <img src="<%= store.logo_url %>" alt="Store Logo" class="w-full h-full object-cover">
                             <% } else { %>
-                                <span id="logoPreviewPlaceholder" class="text-xl font-bold text-[#084C38] font-display"><%= (store.store_name || 'S').charAt(0).toUpperCase() %></span>
+                                <span class="text-base font-bold text-[#084C38] font-display"><%= (store.store_name || 'S').charAt(0).toUpperCase() %></span>
                             <% } %>
                         </div>
-                        <div class="flex-1 space-y-1.5">
-                            <div class="flex items-center gap-2">
-                                <label class="cursor-pointer bg-[#084C38] hover:bg-[#063b2c] text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition shadow-xs">
-                                    <span>Upload Logo</span>
-                                    <input type="file" id="logoFileInput" accept="image/*" onchange="handleLogoUpload(this.files[0])" class="hidden">
-                                </label>
-                                <button type="button" onclick="removeStoreLogo()" id="removeLogoBtn" class="bg-[#F8FAF9] hover:bg-red-50 hover:text-red-700 text-[#6B7280] font-medium text-xs px-3 py-2 rounded-xl border border-[#EAEFEB] transition <%= store.logo_url ? '' : 'hidden' %>">
-                                    Remove
-                                </button>
-                            </div>
-                            <p class="text-[10px] text-[#6B7280]">Supports JPG, PNG, WebP, SVG (up to 10MB).</p>
-                        </div>
-                    </div>
-                    <input type="hidden" id="logoUrl" value="<%= store.logo_url || '' %>">
-                </div>
-
-                <% 
-                    const isCurrentTemplatePro = Boolean(templateConfig && templateConfig.is_pro);
-                %>
-                <!-- Store Cover Image & Banner Overlay (Pro Feature) -->
-                <div id="coverCustomizationSection" class="space-y-3 pt-3 border-t border-[#EAEFEB]">
-                    <div class="flex items-center justify-between">
                         <div>
-                            <label class="block font-medium text-[#111827]">Store Cover Image & Banner Tint</label>
-                            <span class="text-[10px] text-[#6B7280]">Shown on storefront hero banner (Included in Pro & Business templates)</span>
+                            <span class="block font-semibold text-xs text-[#111827]">Store Logo, Themes & Design</span>
+                            <span class="text-[11px] text-[#6B7280]">Customize banners, hero sections, brand colors and logos</span>
                         </div>
                     </div>
-
-                    <div class="relative rounded-2xl overflow-hidden">
-                        <div id="coverControlsWrapper" class="space-y-4 <%= isCurrentTemplatePro ? '' : 'blur-[1px] opacity-60 pointer-events-none select-none' %>">
-                            <div class="space-y-2">
-                                <div class="space-y-3">
-                                    <div id="coverPreviewContainer" class="w-full aspect-[21/9] sm:aspect-[24/8] max-h-40 rounded-2xl border border-[#EAEFEB] bg-[#084C38] flex items-center justify-center overflow-hidden relative shadow-xs">
-                                        <img id="coverPreviewImg" src="<%= store.cover_url || (templateConfig ? templateConfig.default_cover_image : '') || '/assets/images/templates/general_modern.png' %>" alt="Cover Preview" class="w-full h-full object-cover">
-                                    </div>
-                                    <div class="flex flex-wrap items-center gap-2">
-                                        <label id="coverUploadBtn" class="cursor-pointer bg-[#084C38] hover:bg-[#063b2c] text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition shadow-xs">
-                                            <span>Upload Cover</span>
-                                            <input type="file" id="coverFileInput" accept="image/*" onchange="handleCoverUpload(this.files[0])" class="hidden" <%= isCurrentTemplatePro ? '' : 'disabled' %>>
-                                        </label>
-                                        <button type="button" onclick="removeStoreCover()" id="removeCoverBtn" class="bg-[#F8FAF9] hover:bg-red-50 hover:text-red-700 text-[#6B7280] font-medium text-xs px-3 py-2 rounded-xl border border-[#EAEFEB] transition <%= store.cover_url ? '' : 'hidden' %>">
-                                            Reset to Default
-                                        </button>
-                                    </div>
-                                </div>
-                                <input type="hidden" id="coverUrl" value="<%= store.cover_url || '' %>">
-                            </div>
-
-                            <!-- Cover Overlay Color (Customizable for Overlay CTA Templates) -->
-                            <div class="space-y-2 pt-3 border-t border-[#EAEFEB]">
-                                <div class="flex items-center justify-between">
-                                    <label for="coverOverlayColor" class="block font-medium text-[#111827]">Banner Overlay Color</label>
-                                    <span class="text-[10px] text-[#6B7280]">Customizable dark tint for hero banner text</span>
-                                </div>
-                                <div class="flex items-center gap-3">
-                                    <input type="color" id="coverOverlayColor" value="<%= store.cover_overlay_color || '#084C38' %>" onchange="document.getElementById('coverOverlayColorHex').value = this.value" class="w-10 h-10 rounded-xl border border-[#EAEFEB] cursor-pointer p-0.5 bg-white" <%= isCurrentTemplatePro ? '' : 'disabled' %>>
-                                    <input type="text" id="coverOverlayColorHex" value="<%= store.cover_overlay_color || '#084C38' %>" oninput="document.getElementById('coverOverlayColor').value = this.value" class="flex-1 bg-[#F8FAF9] border border-[#EAEFEB] rounded-xl p-2.5 outline-none font-mono text-xs text-[#111827]" <%= isCurrentTemplatePro ? '' : 'disabled' %>>
-                                </div>
-                            </div>
-                        </div>
-
-                        <% if (!isCurrentTemplatePro) { %>
-                            <div class="absolute inset-0 bg-white/40 backdrop-blur-[2px] rounded-2xl flex items-center justify-center p-4 z-10">
-                                <button type="button" onclick="openProUpgradeModal('Pro Storefront Covers')" class="inline-flex items-center gap-1.5 bg-[#084C38] hover:bg-[#063b2c] text-white px-3.5 py-1.5 rounded-xl text-[10.5px] font-semibold font-display shadow-xs hover:scale-105 transition-all">
-                                    <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                                    <span>Upgrade to Pro</span>
-                                </button>
-                            </div>
-                        <% } %>
-                    </div>
+                    <a href="/merchant/customize" class="bg-[#EDF5F1] hover:bg-[#dff0e7] text-[#084C38] border border-[#084C38]/20 font-bold text-xs px-3.5 py-2 rounded-xl transition shadow-2xs shrink-0 flex items-center gap-1 font-display">
+                        <span>Customize Store</span>
+                        <span>↗</span>
+                    </a>
                 </div>
+
+                <!-- Hidden inputs to preserve storefront customization when saving profile details -->
+                <input type="hidden" id="logoUrl" value="<%= store.logo_url || '' %>">
+                <input type="hidden" id="coverUrl" value="<%= store.cover_url || '' %>">
+                <input type="hidden" id="coverOverlayColorHex" value="<%= store.cover_overlay_color || '#08110D' %>">
+                <input type="hidden" id="storePrimaryColorHex" value="<%= store.primary_color || '#084C38' %>">
+                <input type="hidden" id="d2Announcement" value="<%= store.announcement_text || d2Config.announcement || '' %>">
+                <input type="hidden" id="d2HeroEyebrow" value="<%= d2Config.hero_eyebrow || 'The everyday edit' %>">
+                <input type="hidden" id="d2HeroTitle" value="<%= d2Config.hero_title || store.hero_headline || 'Find your good thing.' %>">
+                <input type="hidden" id="d2HeroDesc" value="<%= d2Config.hero_desc || store.hero_subheading || 'Thoughtful finds for your wardrobe, your space and the little moments in between.' %>">
+                <input type="hidden" id="d2HeroCta" value="<%= d2Config.hero_cta_text || 'Explore the collection ↗' %>">
+                <input type="hidden" id="d2HeroLabelSmall" value="<%= d2Config.hero_label_small || 'A fresh perspective' %>">
+                <input type="hidden" id="d2HeroLabelTitle" value="<%= d2Config.hero_label_title || 'The new-season edit' %>">
+                <input type="hidden" id="d2PromoTitle" value="<%= d2Config.promo_title || 'Find something worth keeping.' %>">
+                <input type="hidden" id="d2PromoDesc" value="<%= d2Config.promo_desc || 'Good finds for the everyday — all in one place.' %>">
+                <input type="hidden" id="d2PromoImage" value="<%= d2Config.promo_image || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85' %>">
+                <input type="hidden" id="d3TickerText" value="<%= d3Config.ticker_text || store.announcement_text || '⚡ LIMITED DROP • NATIONWIDE DELIVERY • 100% VERIFIED AUTHENTIC' %>">
+                <input type="hidden" id="d3HeroHeadline" value="<%= store.hero_headline || '' %>">
+                <input type="hidden" id="d3HeroSubheading" value="<%= store.hero_subheading || '' %>">
+                <input type="hidden" id="d3CtaBtnText" value="<%= store.cta_button_text || '' %>">
             </div>
 
             <!-- Accepted Payment Methods -->
@@ -1442,7 +1395,31 @@
                 alert_sound: document.getElementById('alertSound')?.value || 'bell',
                 delivery_fee: parseFloat(document.getElementById('deliveryFee')?.value || 0),
                 allow_bank_transfer: document.getElementById('allowBankTransfer')?.checked ? 1 : 0,
-                allow_pay_on_delivery: document.getElementById('allowPayOnDelivery')?.checked ? 1 : 0
+                allow_pay_on_delivery: document.getElementById('allowPayOnDelivery')?.checked ? 1 : 0,
+                hero_headline: document.getElementById('d3HeroHeadline')?.value?.trim() || null,
+                hero_subheading: document.getElementById('d3HeroSubheading')?.value?.trim() || null,
+                cta_button_text: document.getElementById('d3CtaBtnText')?.value?.trim() || null,
+                announcement_text: document.getElementById('d2Announcement')?.value?.trim() || document.getElementById('d3TickerText')?.value?.trim() || null,
+                storefront_customization_json: {
+                    design2: {
+                        announcement: document.getElementById('d2Announcement')?.value?.trim() || '',
+                        hero_eyebrow: document.getElementById('d2HeroEyebrow')?.value?.trim() || 'The everyday edit',
+                        hero_title: document.getElementById('d2HeroTitle')?.value?.trim() || 'Find your good thing.',
+                        hero_desc: document.getElementById('d2HeroDesc')?.value?.trim() || 'Thoughtful finds for your wardrobe, your space and the little moments in between.',
+                        hero_cta_text: document.getElementById('d2HeroCta')?.value?.trim() || 'Explore the collection ↗',
+                        hero_label_small: document.getElementById('d2HeroLabelSmall')?.value?.trim() || 'A fresh perspective',
+                        hero_label_title: document.getElementById('d2HeroLabelTitle')?.value?.trim() || 'The new-season edit',
+                        promo_title: document.getElementById('d2PromoTitle')?.value?.trim() || 'Find something worth keeping.',
+                        promo_desc: document.getElementById('d2PromoDesc')?.value?.trim() || 'Good finds for the everyday — all in one place.',
+                        promo_image: document.getElementById('d2PromoImage')?.value?.trim() || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85'
+                    },
+                    design3: {
+                        ticker_text: document.getElementById('d3TickerText')?.value?.trim() || '⚡ LIMITED DROP • NATIONWIDE DELIVERY • 100% VERIFIED AUTHENTIC',
+                        hero_headline: document.getElementById('d3HeroHeadline')?.value?.trim() || '',
+                        hero_subheading: document.getElementById('d3HeroSubheading')?.value?.trim() || '',
+                        cta_button_text: document.getElementById('d3CtaBtnText')?.value?.trim() || 'Explore Curated Goods ↓'
+                    }
+                }
             };
 
             if (isAccountChanged) {

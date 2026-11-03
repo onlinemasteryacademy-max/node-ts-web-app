@@ -7,6 +7,7 @@ exports.sendMessage = sendMessage;
 exports.getConversationMessages = getConversationMessages;
 exports.listMerchantConversations = listMerchantConversations;
 exports.getCustomerChatContext = getCustomerChatContext;
+exports.initiateMerchantChat = initiateMerchantChat;
 const db_js_1 = require("../../db/db.js");
 const helpers_js_1 = require("../../utils/helpers.js");
 class RealtimeHub {
@@ -412,4 +413,70 @@ function getCustomerChatContext(conversationId, storeId) {
         total_spent: totalSpent
     };
     return { customer: customerData, orders: matchingOrders.slice(0, 10) };
+}
+/**
+ * Merchant initiates a conversation with an active storefront visitor
+ */
+function initiateMerchantChat(storeId, visitorSessionId, messageText, options = {}) {
+    const text = (messageText || '').trim();
+    if (!text)
+        return { success: false, error: 'Message cannot be empty' };
+    if (!storeId || !visitorSessionId)
+        return { success: false, error: 'Store ID and visitor session ID are required' };
+    const store = (0, db_js_1.dbFetchOne)('stores', { id: storeId });
+    if (!store)
+        return { success: false, error: 'Store not found' };
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    // Find existing conversation for this visitor_session_id or create one
+    let conv = (0, db_js_1.dbFetchOne)('chat_conversations', {
+        store_id: storeId,
+        customer_session_token: visitorSessionId
+    });
+    if (!conv) {
+        const custName = options.customerName || `Shopper #${visitorSessionId.slice(-4).toUpperCase()}`;
+        const convId = (0, db_js_1.dbInsert)('chat_conversations', {
+            store_id: storeId,
+            customer_session_token: visitorSessionId,
+            customer_name: custName,
+            customer_phone: null,
+            customer_email: null,
+            last_message_preview: text.length > 80 ? text.substring(0, 77) + '...' : text,
+            last_message_at: now,
+            unread_merchant_count: 0,
+            unread_customer_count: 1,
+            status: 'active',
+            created_at: now,
+            updated_at: now
+        });
+        conv = (0, db_js_1.dbFetchOne)('chat_conversations', { id: convId });
+    }
+    // Insert merchant's message
+    const msgId = (0, db_js_1.dbInsert)('chat_messages', {
+        conversation_id: conv.id,
+        store_id: storeId,
+        sender_type: 'merchant',
+        sender_name: store.store_name,
+        message: text,
+        order_id: null,
+        product_id: options.productId || null,
+        product_title: options.productTitle || null,
+        is_read: 0,
+        created_at: now
+    });
+    const preview = text.length > 80 ? text.substring(0, 77) + '...' : text;
+    (0, db_js_1.dbUpdate)('chat_conversations', {
+        last_message_preview: preview,
+        last_message_at: now,
+        unread_customer_count: (conv.unread_customer_count || 0) + 1,
+        updated_at: now
+    }, { id: conv.id });
+    const updatedConv = (0, db_js_1.dbFetchOne)('chat_conversations', { id: conv.id });
+    const newMsg = (0, db_js_1.dbFetchOne)('chat_messages', { id: msgId });
+    // Instant broadcast to customer session
+    exports.realtimeHub.broadcastToCustomer(visitorSessionId, 'merchant_initiated_chat', {
+        conversation: updatedConv,
+        message: newMsg
+    });
+    exports.realtimeHub.broadcastToCustomer(visitorSessionId, 'chat_message', newMsg);
+    return { success: true, conversation: updatedConv, message: newMsg };
 }

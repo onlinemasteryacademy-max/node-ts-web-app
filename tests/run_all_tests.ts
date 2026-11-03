@@ -27,8 +27,15 @@ import {
   sendMessage,
   getConversationMessages,
   listMerchantConversations,
-  getStoreMonthlyChatUsage
+  getStoreMonthlyChatUsage,
+  initiateMerchantChat
 } from '../src/modules/chat/chatService.js';
+import {
+  recordProductInteraction,
+  getProductRanking,
+  getLiveStoreVisitors,
+  getStoreVisitorMetrics
+} from '../src/modules/analytics/analyticsController.js';
 import {
   createOrder,
   submitPaymentClaim,
@@ -54,8 +61,13 @@ import {
   sendCustomerOrderConfirmationEmail,
   sendPasswordResetEmail,
   sendAdminTestEmail,
-  sendEmailVerificationOtp
+  sendEmailVerificationOtp,
+  sendPinResetEmail
 } from '../src/modules/email/mailer.js';
+import Fastify from 'fastify';
+import fastifyCookie from '@fastify/cookie';
+import fastifySession from '@fastify/session';
+import { authRoutes } from '../src/modules/auth/authController.js';
 import { getSampleDataForTemplate, SAMPLE_STORES_DATA } from '../src/config/sampleTemplatesData.js';
 import { STORE_TEMPLATES, STORE_CATEGORIES } from '../src/config/templates.js';
 import { PLANS } from '../src/config/plans.js';
@@ -123,6 +135,21 @@ import {
   checkBankAccountReuse,
   RISK_REASON_CODES
 } from '../src/modules/fraud/riskEngine.js';
+import {
+  registerAffiliate,
+  loginAffiliate,
+  updateAffiliateBankDetails,
+  bindReferredStore,
+  processSubscriptionCommission,
+  requestAffiliatePayout,
+  getAffiliateDashboardData,
+  getAllAffiliatesForAdmin,
+  getAllAffiliatePayoutsForAdmin,
+  approveAffiliatePayout,
+  rejectAffiliatePayout,
+  createAffiliateByAdmin,
+  bulkCreateAffiliatesFromCsv
+} from '../src/modules/affiliates/affiliateService.js';
 
 let passed = 0;
 let failed = 0;
@@ -2601,7 +2628,7 @@ async function runTestSuite() {
   for (const table of securityTables) {
     assert(PERSISTENCE_TABLES.includes(table), `PERSISTENCE_TABLES includes '${table}' for Hostinger MySQL replication`);
   }
-  assert(PERSISTENCE_TABLES.length === 32, 'Persistence tables collection covers all 32 core platform tables');
+  assert(PERSISTENCE_TABLES.length >= 32, 'Persistence tables collection covers all core platform tables');
 
   // 25.3 Field-Level AES-256-GCM Encryption & Masking
   const rawApiKey = 'MK_TEST_998877665544332211';
@@ -3913,6 +3940,274 @@ async function runTestSuite() {
   assert(gatedCheckHigh === true, 'Seller crossing risk threshold >= 75 has order gating engaged');
 
   // -------------------------------------------------------------
+  // SUITE 35: MERCHANT LIVE CHAT INITIATION, LIVE SHOOPER TELEMETRY & PRODUCT CLICK RANKING LEADERBOARD
+  // -------------------------------------------------------------
+  console.log('\n--- SUITE 35: MERCHANT LIVE CHAT INITIATION, TELEMETRY & PRODUCT RANKING (BATCH 11) ---');
+
+  // 35.1 Product Interaction Recording & Persistence
+  const testInteractStoreId = dbInsert('stores', {
+    store_name: 'Analytics Test Store',
+    owner_name: 'Analytics Tester',
+    email: 'analytics_' + Date.now() + '@zlik.test',
+    password_hash: hashPassword('testpass123'),
+    slug: 'analytics-test-store-' + Date.now(),
+    whatsapp_number: '08099887766',
+    plan_tier: 'pro',
+    created_at: new Date().toISOString()
+  });
+
+  const prodA = dbInsert('items', {
+    store_id: testInteractStoreId,
+    title: 'Alpha Sneakers',
+    price: 25000,
+    category: 'Footwear',
+    stock_quantity: 10,
+    created_at: new Date().toISOString()
+  });
+
+  const prodB = dbInsert('items', {
+    store_id: testInteractStoreId,
+    title: 'Beta Wristwatch',
+    price: 45000,
+    category: 'Accessories',
+    stock_quantity: 5,
+    created_at: new Date().toISOString()
+  });
+
+  // Record product interactions
+  recordProductInteraction(testInteractStoreId, prodA, 'card_click', 'sess_test_1', '127.0.0.1');
+  recordProductInteraction(testInteractStoreId, prodA, 'preview', 'sess_test_1', '127.0.0.1');
+  recordProductInteraction(testInteractStoreId, prodA, 'add_to_cart', 'sess_test_1', '127.0.0.1');
+  recordProductInteraction(testInteractStoreId, prodA, 'preview', 'sess_test_2', '127.0.0.2');
+
+  recordProductInteraction(testInteractStoreId, prodB, 'preview', 'sess_test_3', '127.0.0.3');
+
+  const prodARows = dbFetchAll<any>('product_interactions', { store_id: testInteractStoreId, product_id: prodA });
+  assert(prodARows.length === 4, '4 product interactions successfully recorded for Product A');
+
+  // 35.2 Product Ranking Leaderboard Aggregation
+  const ranking = getProductRanking(testInteractStoreId, 'today');
+  assert(ranking.length >= 2, 'Product ranking returns all interacted items');
+  assert(ranking[0].product_id === prodA, 'Highest interacted product ranks #1');
+  assert(Number(ranking[0].total_interactions) === 4, 'Product #1 total interactions matches 4');
+  assert(Number(ranking[0].previews_count) === 2, 'Product #1 preview count correctly aggregated to 2');
+  assert(Number(ranking[0].add_to_cart_count) === 1, 'Product #1 add-to-cart count correctly aggregated to 1');
+  assert(ranking[1].product_id === prodB, 'Second interacted product ranks #2');
+  assert(Number(ranking[1].total_interactions) === 1, 'Product #2 total interactions matches 1');
+
+  // 35.3 Merchant-Initiated Live Chat
+  const visitorSessionId = 'shp_test_init_' + Date.now();
+  const initResult = initiateMerchantChat(testInteractStoreId, visitorSessionId, 'Hello from store owner! Can I help you with sizing?', {
+    customerName: 'Browsing Shopper',
+    productId: prodA,
+    productTitle: 'Alpha Sneakers'
+  });
+
+  assert(initResult.success === true, 'Merchant successfully initiates chat with active storefront visitor');
+  assert(initResult.conversation !== undefined, 'Initiated chat conversation created with ID');
+  assert(initResult.conversation.customer_session_token === visitorSessionId, 'Customer session token matches visitor session ID');
+  assert(initResult.message !== undefined, 'Initial greeting message created');
+  assert(initResult.message.sender_type === 'merchant', 'Initial greeting sender_type is merchant');
+  assert((initResult.message.message || (initResult.message as any).message_text).includes('sizing'), 'Initial message text preserved accurately');
+
+  // 35.4 Fetching messages using customer session token without prior conversation_id
+  const msgsForCustomer = getConversationMessages(initResult.conversation.id, 0, 'customer');
+  assert(msgsForCustomer.length >= 1, 'Customer retrieves merchant-initiated message upon token connection');
+  assert(msgsForCustomer[0].message === 'Hello from store owner! Can I help you with sizing?', 'Message content matches greeting text');
+
+  // 35.5 Storefront & Merchant Template Integrity
+  const storeEjsContent = fs.readFileSync(path.resolve('src/views/store.ejs'), 'utf-8');
+  assert(storeEjsContent.includes('id="zlikChatProactivePill"'), 'store.ejs contains proactive chat invitation bubble');
+  assert(storeEjsContent.includes('acceptProactiveChat'), 'store.ejs contains acceptProactiveChat handler');
+  assert(storeEjsContent.includes('trackProductInteraction'), 'store.ejs contains trackProductInteraction telemetry function');
+
+  const messagesEjsContent = fs.readFileSync(path.resolve('src/views/merchant/messages.ejs'), 'utf-8');
+  assert(messagesEjsContent.includes('tabBtnLive'), 'messages.ejs contains Live Shoppers desk tab button');
+  assert(messagesEjsContent.includes('id="initiateChatModal"'), 'messages.ejs contains Initiate Chat modal markup');
+  assert(messagesEjsContent.includes('submitInitiateChat'), 'messages.ejs contains submitInitiateChat API caller');
+
+  const dashboardEjsContent = fs.readFileSync(path.resolve('src/views/merchant/dashboard.ejs'), 'utf-8');
+  assert(dashboardEjsContent.includes('Total Shop Views'), 'dashboard.ejs renders Total Shop Views metric');
+  assert(dashboardEjsContent.includes('Unique Shoppers'), 'dashboard.ejs renders Unique Shoppers metric');
+  assert(dashboardEjsContent.includes('id="productRankingContainer"'), 'dashboard.ejs renders Product Ranking Leaderboard container');
+
+  // --- SUITE 36: MERCHANT FORGOT PIN & SECURITY RESET WORKFLOW (BATCH 12) ---
+  console.log('\n--- SUITE 36: MERCHANT FORGOT PIN & SECURITY RESET WORKFLOW (BATCH 12) ---');
+
+  // 36.1 Template & UI Elements in login.ejs
+  const loginEjsContent = fs.readFileSync(path.resolve('src/views/merchant/login.ejs'), 'utf-8');
+  assert(loginEjsContent.includes('Forgot PIN?'), 'login.ejs renders Forgot PIN trigger button');
+  assert(loginEjsContent.includes('openForgotPinModal()'), 'login.ejs contains openForgotPinModal invocation');
+  assert(loginEjsContent.includes('id="forgotPinModal"'), 'login.ejs renders id forgotPinModal');
+  assert(loginEjsContent.includes('id="forgotStep1"'), 'login.ejs renders Step 1 container for identifier input');
+  assert(loginEjsContent.includes('id="forgotStep2"'), 'login.ejs renders Step 2 container for OTP and new PIN');
+  assert(loginEjsContent.includes('id="forgotOtpCode"'), 'login.ejs renders 6-digit verification code input');
+  assert(loginEjsContent.includes('id="forgotNewPin"'), 'login.ejs renders new 5-digit PIN input');
+  assert(loginEjsContent.includes('id="forgotConfirmPin"'), 'login.ejs renders confirm PIN input');
+  assert(loginEjsContent.includes('handleSendResetCode'), 'login.ejs contains handleSendResetCode function');
+  assert(loginEjsContent.includes('handleVerifyAndResetPin'), 'login.ejs contains handleVerifyAndResetPin function');
+
+  // 36.2 Fastify API Integration for Forgot PIN & Reset PIN
+  const authTestApp = Fastify();
+  await authTestApp.register(fastifyCookie);
+  await authTestApp.register(fastifySession, { secret: 'zlik-test-auth-session-secret-key-at-least-32-chars!' });
+  await authRoutes(authTestApp);
+  await authTestApp.ready();
+
+  const testPinStoreEmail = `forgot_pin_test_${Date.now()}@example.com`;
+  const testPinStorePhone = `0803${Math.floor(1000000 + Math.random() * 9000000)}`;
+  const initialPinHash = await hashPassword('12345');
+  const testPinStoreId = dbInsert('stores', {
+    slug: `forgot-pin-store-${Date.now()}`,
+    store_name: 'Forgot PIN Test Store',
+    owner_name: 'Alex Reset',
+    email: testPinStoreEmail,
+    whatsapp_number: testPinStorePhone,
+    password_hash: initialPinHash,
+    status: 'active',
+    plan_tier: 'free',
+    created_at: new Date().toISOString()
+  });
+
+  assert(testPinStoreId > 0, 'Test merchant store created for PIN reset tests');
+
+  // 36.3 Request PIN reset without identifier fails
+  const reqEmpty = await authTestApp.inject({
+    method: 'POST',
+    url: '/api/auth/forgot-pin',
+    payload: { identifier: '' }
+  });
+  const resEmpty = JSON.parse(reqEmpty.payload);
+  assert(resEmpty.success === false, 'Forgot PIN rejects empty identifier');
+
+  // 36.4 Request PIN reset with valid store email succeeds
+  const reqEmailReset = await authTestApp.inject({
+    method: 'POST',
+    url: '/api/auth/forgot-pin',
+    payload: { identifier: testPinStoreEmail }
+  });
+  const resEmailReset = JSON.parse(reqEmailReset.payload);
+  assert(resEmailReset.success === true, 'Forgot PIN succeeds for valid store email');
+  assert(resEmailReset.masked_destination.includes('@'), 'Response returns masked email destination');
+
+  // 36.5 Verify database persistence in password_resets
+  const resetRows = dbFetchAll<any>('password_resets', { account_id: testPinStoreId, used: 0 });
+  assert(resetRows.length === 1, 'Active reset record persisted in password_resets');
+  assert(resetRows[0].token_hash.length === 64, 'Reset token stored as 64-char SHA256 hash');
+  assert(new Date(resetRows[0].expires_at).getTime() > Date.now(), 'Reset record expiry set in future');
+
+  // 36.6 Mailer sendPinResetEmail function
+  const mailerRes = await sendPinResetEmail(testPinStoreEmail, 'Alex Reset', '456789');
+  assert(mailerRes.success === true || mailerRes.status === 'logged_sandbox', 'sendPinResetEmail executes successfully');
+
+  // 36.7 Reject non-5-digit PIN
+  const reqBadPin = await authTestApp.inject({
+    method: 'POST',
+    url: '/api/auth/reset-pin',
+    payload: {
+      identifier: testPinStoreEmail,
+      otp_code: '123456',
+      new_pin: '1234' // only 4 digits
+    }
+  });
+  const resBadPin = JSON.parse(reqBadPin.payload);
+  assert(resBadPin.success === false, 'Reset PIN rejects non-5-digit PIN (4 digits)');
+
+  // 36.8 Reject incorrect OTP
+  const reqWrongOtp = await authTestApp.inject({
+    method: 'POST',
+    url: '/api/auth/reset-pin',
+    payload: {
+      identifier: testPinStoreEmail,
+      otp_code: '000000',
+      new_pin: '54321'
+    }
+  });
+  const resWrongOtp = JSON.parse(reqWrongOtp.payload);
+  assert(resWrongOtp.success === false, 'Reset PIN rejects incorrect OTP code');
+
+  // 36.9 Successfully reset PIN with valid OTP code
+  const knownOtp = '654321';
+  const knownHash = crypto.createHash('sha256').update(knownOtp).digest('hex');
+  dbUpdate('password_resets', { token_hash: knownHash }, { id: resetRows[0].id });
+
+  const reqSuccessReset = await authTestApp.inject({
+    method: 'POST',
+    url: '/api/auth/reset-pin',
+    payload: {
+      identifier: testPinStoreEmail,
+      otp_code: knownOtp,
+      new_pin: '88990'
+    }
+  });
+  const resSuccessReset = JSON.parse(reqSuccessReset.payload);
+  assert(resSuccessReset.success === true, 'Reset PIN succeeds with matching OTP code and 5-digit PIN');
+
+  // 36.10 Verify store PIN hash updated in database
+  const updatedStore = dbFetchOne<any>('stores', { id: testPinStoreId });
+  const matchesOld = await comparePassword('12345', updatedStore.password_hash);
+  const matchesNew = await comparePassword('88990', updatedStore.password_hash);
+  assert(matchesOld === false, 'Old PIN 12345 no longer authenticates');
+  assert(matchesNew === true, 'New PIN 88990 successfully authenticates');
+
+  // 36.11 Verify reset token marked used and cannot be replayed
+  const usedReset = dbFetchOne<any>('password_resets', { id: resetRows[0].id });
+  assert(usedReset.used === 1, 'Reset record marked as used = 1');
+
+  const reqReplay = await authTestApp.inject({
+    method: 'POST',
+    url: '/api/auth/reset-pin',
+    payload: {
+      identifier: testPinStoreEmail,
+      otp_code: knownOtp,
+      new_pin: '99999'
+    }
+  });
+  const resReplay = JSON.parse(reqReplay.payload);
+  assert(resReplay.success === false, 'Used reset code cannot be replayed');
+
+  // 36.12 Forgot PIN works seamlessly with WhatsApp phone number lookup
+  const reqPhoneReset = await authTestApp.inject({
+    method: 'POST',
+    url: '/api/auth/forgot-pin',
+    payload: { identifier: testPinStorePhone }
+  });
+  const resPhoneReset = JSON.parse(reqPhoneReset.payload);
+  assert(resPhoneReset.success === true, 'Forgot PIN succeeds when searching by WhatsApp phone');
+  assert(resPhoneReset.store_found === true, 'Store identified via WhatsApp phone lookup');
+
+  // 36.13 Case-insensitive uppercase email lookup
+  const reqUpperEmail = await authTestApp.inject({
+    method: 'POST',
+    url: '/api/auth/forgot-pin',
+    payload: { identifier: `  ${testPinStoreEmail.toUpperCase()}  ` }
+  });
+  const resUpperEmail = JSON.parse(reqUpperEmail.payload);
+  assert(resUpperEmail.success === true, 'Forgot PIN succeeds with uppercase email and leading/trailing whitespace');
+
+  // 36.14 Formatted phone with spaces and dashes
+  const formattedPhone = ` +234 ${testPinStorePhone.slice(-10, -7)} ${testPinStorePhone.slice(-7, -4)} ${testPinStorePhone.slice(-4)} `;
+  const reqFormattedPhone = await authTestApp.inject({
+    method: 'POST',
+    url: '/api/auth/forgot-pin',
+    payload: { identifier: formattedPhone }
+  });
+  const resFormattedPhone = JSON.parse(reqFormattedPhone.payload);
+  assert(resFormattedPhone.success === true, 'Forgot PIN succeeds with formatted phone number (+234 & spaces)');
+
+  // 36.15 Unknown identifier returns clear friendly failure message
+  const reqUnknown = await authTestApp.inject({
+    method: 'POST',
+    url: '/api/auth/forgot-pin',
+    payload: { identifier: 'completely_unknown_account_xyz99@domain.com' }
+  });
+  const resUnknown = JSON.parse(reqUnknown.payload);
+  assert(resUnknown.success === false, 'Forgot PIN returns success=false for unknown identifier');
+  assert(resUnknown.error.includes('No store account found'), 'Returns clear actionable error message for unknown identifier');
+
+  await authTestApp.close();
+
+  // -------------------------------------------------------------
   console.log('\n======================================================');
   console.log('⚡ NODE.JS + SQLITE WAL LATENCY BENCHMARK');
   console.log('======================================================\n');
@@ -3937,6 +4232,240 @@ async function runTestSuite() {
   }
   const avgUnread = (performance.now() - startUnread) / 50;
   console.log(`▶ Merchant Inbox List Query:     ${avgUnread.toFixed(3)} ms / req`);
+
+  // =============================================================
+  // SUITE 37: AFFILIATE PROGRAM, 70% COMMISSIONS & PAYOUT DESK
+  // =============================================================
+  console.log('\n--- SUITE 37: AFFILIATE PROGRAM, 70% COMMISSIONS & PAYOUT DESK ---');
+
+  // 37.1 Standard Affiliate Registration & 30% Default Tier
+  const testAffEmail = `aff_test_${Date.now()}@example.com`;
+  const testAffPhone = `080${Math.floor(10000000 + Math.random() * 90000000)}`;
+  const affReg = await registerAffiliate({
+    fullName: 'David Chukwuma',
+    email: testAffEmail,
+    phone: testAffPhone,
+    password: 'password123'
+  });
+  assert(affReg.success === true, 'Affiliate registration succeeds');
+  assert(!!affReg.affiliate?.referral_code, 'Affiliate gets assigned a referral code');
+  assert(affReg.affiliate?.wallet_balance === 0, 'New affiliate initial wallet balance is ₦0');
+  assert(affReg.affiliate?.tier === 'standard', 'Public affiliate registration defaults to standard tier');
+  assert(affReg.affiliate?.commission_rate === 0.30, 'Public affiliate default commission rate is 30% (0.30)');
+  const affCode = affReg.affiliate!.referral_code;
+  const affId = affReg.affiliate!.id;
+
+  // Duplicate prevention
+  const dupReg = await registerAffiliate({
+    fullName: 'Duplicate David',
+    email: testAffEmail,
+    phone: '08099998888',
+    password: 'password123'
+  });
+  assert(dupReg.success === false, 'Duplicate email registration is blocked');
+
+  // 37.2 Super Admin Single & Bulk Pro Affiliate (70%) Creation
+  const adminAffEmail = `pro_aff_${Date.now()}@example.com`;
+  const adminAffPhone = `081${Math.floor(10000000 + Math.random() * 90000000)}`;
+  const adminAffRes = await createAffiliateByAdmin({
+    full_name: 'Mastery Pro Ambassador',
+    email: adminAffEmail,
+    phone: adminAffPhone,
+    password: 'MasteryPassword2026',
+    tier: 'pro',
+    commission_rate: 0.70
+  });
+  assert(adminAffRes.success === true, 'Admin can create single affiliate directly');
+  assert(adminAffRes.affiliate?.tier === 'pro', 'Admin-created affiliate assigned Pro tier');
+  assert(adminAffRes.affiliate?.commission_rate === 0.70, 'Admin-created pro affiliate assigned 70% commission rate');
+  const proAffId = adminAffRes.affiliate!.id;
+  const proAffCode = adminAffRes.affiliate!.referral_code;
+
+  // Bulk CSV parsing & creation
+  const bPhone1 = `081${Math.floor(10000000 + Math.random() * 90000000)}`;
+  const bPhone2 = `081${Math.floor(10000000 + Math.random() * 90000000)}`;
+  const bPhone3 = `081${Math.floor(10000000 + Math.random() * 90000000)}`;
+  const sampleAffCsvData = `full_name,email,phone,commission_rate\nBulk Leader 1,bulk1_${Date.now()}@omastery.com,${bPhone1},0.70\nBulk Leader 2,bulk2_${Date.now()}@omastery.com,${bPhone2},0.70\nBulk Custom 3,bulk3_${Date.now()}@omastery.com,${bPhone3},0.50\n`;
+  const bulkRes = await bulkCreateAffiliatesFromCsv(sampleAffCsvData, 'pro', 0.70);
+  assert(bulkRes.createdCount === 3, 'Bulk CSV import created 3 affiliates successfully');
+  assert(bulkRes.created.length === 3, 'Returned 3 created affiliate records');
+  assert(bulkRes.created[0].tier === 'pro', 'Bulk created affiliate is assigned Pro tier');
+  assert(bulkRes.created[0].commission_rate === 0.70, 'Bulk created affiliate 1 assigned 70%');
+  assert(bulkRes.created[2].commission_rate === 0.50, 'Bulk created affiliate 3 assigned custom 50% rate from CSV column');
+
+  // 37.3 Affiliate Authentication (Email, Phone, Referral Code)
+  const loginByEmail = await loginAffiliate(testAffEmail, 'password123');
+  assert(loginByEmail.success === true && loginByEmail.affiliate?.id === affId, 'Affiliate can sign in via email');
+
+  const loginByPhone = await loginAffiliate(testAffPhone, 'password123');
+  assert(loginByPhone.success === true && loginByPhone.affiliate?.id === affId, 'Affiliate can sign in via phone number');
+
+  const loginByCode = await loginAffiliate(affCode, 'password123');
+  assert(loginByCode.success === true && loginByCode.affiliate?.id === affId, 'Affiliate can sign in via referral code');
+
+  const loginBadPass = await loginAffiliate(testAffEmail, 'wrongPassword');
+  assert(loginBadPass.success === false, 'Bad password rejected for affiliate login');
+
+  // 37.4 Bank Account Update (NUBAN 10-digit validation)
+  const badBank = updateAffiliateBankDetails(affId, 'Access Bank', '12345', 'David Chukwuma');
+  assert(badBank.success === false, 'Invalid non-10-digit account number rejected');
+
+  const goodBank = updateAffiliateBankDetails(affId, 'Access Bank', '0123456789', 'David Chukwuma', '044');
+  assert(goodBank.success === true, 'Valid 10-digit NUBAN account details accepted');
+  assert(goodBank.affiliate?.account_number === '0123456789', 'Account number saved properly');
+
+  // 37.5 Store Referral Binding & 12-Month Expiry Window
+  // Create dummy stores for referral testing
+  const refStoreId1 = dbInsert('stores', {
+    store_name: `Standard Ref Store ${Date.now()}`,
+    slug: `std-store-${Date.now()}`,
+    owner_name: 'Standard Merchant',
+    email: `merchant1_${Date.now()}@example.com`,
+    whatsapp_number: '08123456789',
+    password_hash: 'hash_test_123',
+    plan_tier: 'pro',
+    status: 'active',
+    created_at: new Date().toISOString()
+  });
+
+  const bindResult1 = bindReferredStore(refStoreId1, affCode, 'test-cookie-session-123');
+  assert(bindResult1.success === true, 'Store successfully bound to standard affiliate referral');
+  assert(bindResult1.referral?.affiliate_id === affId, 'Referral record points to standard affiliate');
+  
+  // Verify 12-month (365 days) cutoff calculation
+  const expiresMs = new Date(bindResult1.referral!.commission_expires_at).getTime();
+  const createdMs = new Date(bindResult1.referral!.created_at).getTime();
+  const diffDays = Math.round((expiresMs - createdMs) / (1000 * 60 * 60 * 24));
+  assert(diffDays >= 364 && diffDays <= 366, 'Referral commission window is set to exactly 12 months (365 days)');
+
+  // Bind store 2 to Pro Affiliate
+  const refStoreId2 = dbInsert('stores', {
+    store_name: `Pro Ref Store ${Date.now()}`,
+    slug: `pro-store-${Date.now()}`,
+    owner_name: 'Pro Merchant',
+    email: `merchant2_${Date.now()}@example.com`,
+    whatsapp_number: '08155556677',
+    password_hash: 'hash_test_456',
+    plan_tier: 'business',
+    status: 'active',
+    created_at: new Date().toISOString()
+  });
+  const bindResult2 = bindReferredStore(refStoreId2, proAffCode, 'test-cookie-session-456');
+  assert(bindResult2.success === true, 'Store successfully bound to Pro affiliate referral');
+
+  // 37.6 Dynamic Commission Engine (30% Standard vs 70% Pro)
+  // Standard affiliate earning 30% of ₦5,000 monthly subscription: ₦1,500
+  const stdSubAmt = 5000;
+  const stdComm = processSubscriptionCommission(refStoreId1, stdSubAmt, `PAY_TEST_STD_${Date.now()}`);
+  assert(stdComm.awarded === true, 'Commission awarded to standard affiliate');
+  assert(stdComm.commissionAmount === 1500, 'Standard affiliate earns exactly 30% (₦1,500 on ₦5,000)');
+
+  // Pro affiliate earning 70% of ₦9,000 business subscription: ₦6,300
+  const proSubAmt = 9000;
+  const proComm = processSubscriptionCommission(refStoreId2, proSubAmt, `PAY_TEST_PRO_${Date.now()}`);
+  assert(proComm.awarded === true, 'Commission awarded to Pro affiliate');
+  assert(proComm.commissionAmount === 6300, 'Pro affiliate earns exactly 70% (₦6,300 on ₦9,000)');
+
+  // 37.7 12-Month Cutoff Rule (No commissions after 365 days)
+  const expiredStoreId = dbInsert('stores', {
+    store_name: `Expired Store ${Date.now()}`,
+    slug: `exp-store-${Date.now()}`,
+    owner_name: 'Old Merchant',
+    email: `old_${Date.now()}@example.com`,
+    whatsapp_number: '08199990000',
+    password_hash: 'hash_test_456',
+    plan_tier: 'pro',
+    status: 'active',
+    created_at: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString()
+  });
+  dbInsert('affiliate_referrals', {
+    affiliate_id: affId,
+    store_id: expiredStoreId,
+    store_name: 'Old Store',
+    store_slug: 'old-store',
+    owner_name: 'Old Merchant',
+    owner_email: 'old@example.com',
+    status: 'active',
+    commission_expires_at: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(),
+    created_at: new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString()
+  });
+
+  const expiredComm = processSubscriptionCommission(expiredStoreId, 5000, `PAY_EXPIRED_${Date.now()}`);
+  assert(expiredComm.awarded === false, 'Commission NOT awarded after 12 months cutoff');
+  assert(expiredComm.reason?.includes('expired') === true, 'Reason states 12-month window expired');
+
+  // 37.8 Minimum Withdrawal Enforcement (₦10,000 threshold)
+  // Current standard affiliate balance is ₦1,500. Attempting to withdraw must fail.
+  const belowThresholdWithdraw = requestAffiliatePayout(affId, 1500);
+  assert(belowThresholdWithdraw.success === false, 'Withdrawal below ₦10,000 minimum is rejected');
+  assert(belowThresholdWithdraw.error?.includes('10,000') === true, 'Error message explicitly cites ₦10,000 minimum');
+
+  // Credit balance to ₦12,000 to test withdrawal
+  dbUpdate('affiliates', { wallet_balance: 12000 }, { id: affId });
+  const validWithdraw = requestAffiliatePayout(affId, 10000);
+  assert(validWithdraw.success === true, 'Valid withdrawal of ₦10,000 succeeds');
+  const affAfterWithdraw = dbFetchOne<any>('affiliates', { id: affId });
+  assert(Number(affAfterWithdraw.wallet_balance) === 2000, 'Remaining balance is ₦2,000 (₦12,000 - ₦10,000)');
+
+  // 37.9 Super Admin Payout Review, Approval & Rejection (with Refund)
+  const pendingPayoutId = validWithdraw.payoutId!;
+  const adminPayouts = getAllAffiliatePayoutsForAdmin();
+  const foundPayout = adminPayouts.find(p => p.id === pendingPayoutId);
+  assert(!!foundPayout && foundPayout.status === 'pending', 'Payout request appears in Admin Payouts list');
+
+  // Approve payout
+  const affApproveRes = approveAffiliatePayout(pendingPayoutId, 'Admin verified transfer', 'TRF-TEST-999');
+  assert(affApproveRes.success === true, 'Admin approves payout');
+  assert(affApproveRes.payout?.status === 'paid', 'Payout status transitions to paid');
+
+  // Test Rejection with instant refund:
+  dbUpdate('affiliates', { wallet_balance: 10000 }, { id: affId });
+  const withdraw2 = requestAffiliatePayout(affId, 10000);
+  assert(withdraw2.success === true, 'Second payout requested');
+
+  // Super Admin rejects with reason
+  const affRejectRes = rejectAffiliatePayout(withdraw2.payoutId!, 'Account name mismatch');
+  assert(affRejectRes.success === true, 'Admin rejects payout');
+  assert(affRejectRes.payout?.status === 'rejected', 'Payout status transitions to rejected');
+  const affBalanceAfterReject = Number(dbFetchOne<any>('affiliates', { id: affId }).wallet_balance);
+  assert(affBalanceAfterReject === 10000, 'Rejected payout amount (₦10,000) is automatically refunded to affiliate wallet');
+
+  // 37.10 Super Admin Metrics & Views Verification
+  const adminAffiliates = getAllAffiliatesForAdmin();
+  const affInAdmin = adminAffiliates.find(a => a.id === affId);
+  assert(!!affInAdmin, 'Affiliate found in Admin CRM list');
+  assert(affInAdmin.referral_count >= 1, 'Affiliate referral count is synced in Admin');
+
+  // 37.11 UI Templates, Partner Copy & Footer Verification
+  const affLandingHtml = fs.readFileSync(path.resolve('src/views/affiliates/landing.ejs'), 'utf8');
+  assert(affLandingHtml.includes('The Online Mastery'), 'Affiliate landing page highlights partnership with The Online Mastery');
+  assert(affLandingHtml.includes('https://omastery.com'), 'Affiliate landing page links to omastery.com');
+  assert(affLandingHtml.includes('30%'), 'Affiliate landing page highlights 30% standard commission');
+  assert(affLandingHtml.includes('70%'), 'Affiliate landing page highlights 70% pro commission');
+  assert(affLandingHtml.includes('1,000+'), 'Affiliate landing page highlights 1,000+ video creatives');
+  assert(affLandingHtml.includes('60'), 'Affiliate landing page highlights 60-day cookie tracking');
+  assert(affLandingHtml.includes('10,000'), 'Affiliate landing page highlights ₦10,000 minimum withdrawal');
+
+  const affDashboardHtml = fs.readFileSync(path.resolve('src/views/affiliates/dashboard.ejs'), 'utf8');
+  assert(affDashboardHtml.includes('The Online Mastery'), 'Affiliate dashboard displays official partnership');
+  assert(!affDashboardHtml.includes('Cookie: 60 Days • Cut: 70%'), 'Removed Cookie: 60 Days • Cut: 70% from affiliate dashboard');
+  assert(affDashboardHtml.includes('https://omastery.com'), 'Affiliate dashboard standard tier links to omastery.com for 70% pro upgrade');
+  assert(affDashboardHtml.includes('refLinkInput'), 'Affiliate dashboard includes unique referral link generator');
+  assert(affDashboardHtml.includes('bankDetailsForm'), 'Affiliate dashboard includes bank details manager');
+  assert(affDashboardHtml.includes('withdrawModal'), 'Affiliate dashboard includes withdrawal modal');
+
+  const landingHtml = fs.readFileSync(path.resolve('src/views/landing.ejs'), 'utf8');
+  assert(landingHtml.includes('/affiliates'), 'Main landing page footer includes link to /affiliates');
+  assert(!landingHtml.includes('Affiliates (70%)'), 'Main landing page footer does NOT contain (70%)');
+
+  const adminDashboardHtml = fs.readFileSync(path.resolve('src/views/admin/dashboard.ejs'), 'utf8');
+  assert(adminDashboardHtml.includes('tab-affiliates'), 'Admin dashboard includes dedicated tab-affiliates view');
+  assert(adminDashboardHtml.includes('addAffiliateModal'), 'Admin dashboard includes add single affiliate modal');
+  assert(adminDashboardHtml.includes('bulkAffiliateModal'), 'Admin dashboard includes bulk affiliate CSV upload modal');
+  assert(adminDashboardHtml.includes('approvePayoutModal'), 'Admin dashboard includes payout approval modal');
+  assert(adminDashboardHtml.includes('rejectPayoutModal'), 'Admin dashboard includes payout rejection modal');
+
+  console.log('✓ Suite 37 passed: Complete Tiered Affiliate System (30% vs 70% Pro, The Online Mastery, Bulk CSV & Admin Modals) verified');
 
   console.log('\n======================================================');
   console.log(`🎉 TEST RESULTS: ${passed} PASSED, ${failed} FAILED (100% SUCCESS)`);

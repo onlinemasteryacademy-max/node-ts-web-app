@@ -11,6 +11,8 @@ exports.sendPasswordResetEmail = sendPasswordResetEmail;
 exports.sendAdminTestEmail = sendAdminTestEmail;
 exports.sendEmailVerificationOtp = sendEmailVerificationOtp;
 exports.sendBankAccountChangeOtp = sendBankAccountChangeOtp;
+exports.sendPinResetEmail = sendPinResetEmail;
+exports.sendAffiliateWelcomeEmail = sendAffiliateWelcomeEmail;
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const db_js_1 = require("../../db/db.js");
 /**
@@ -355,5 +357,116 @@ async function sendBankAccountChangeOtp(email, storeName, otpCode, bankName, acc
         subject: `Security Alert: Authorize Bank Account Change (${otpCode})`,
         htmlContent: html,
         templateName: 'bank_account_change_otp'
+    });
+}
+/**
+ * 8. Merchant PIN Reset Security OTP
+ */
+async function sendPinResetEmail(email, storeName, otpCode) {
+    const safeName = storeName?.trim() || 'Seller';
+    const html = emailLayout('Reset your 5-Digit Security PIN', `
+    <h2 style="font-size: 20px; font-weight: 700; color: #08110D; margin-top: 0;">Reset Your Security PIN</h2>
+    <p style="font-size: 14px; color: #4B5563;">Hello <strong>${safeName}</strong>, we received a request to reset the 5-digit security PIN for your Zlik store login.</p>
+    
+    <p style="font-size: 14px; color: #4B5563;">Enter the 6-digit verification code below on the merchant sign-in page to set your new PIN:</p>
+
+    <div style="background-color: #08110D; border-radius: 12px; padding: 24px; text-align: center; margin: 24px 0;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #19D98B; letter-spacing: 1px; margin-bottom: 8px;">6-DIGIT PIN RESET CODE</div>
+      <div style="font-size: 36px; font-weight: 800; color: #FFFFFF; letter-spacing: 8px; font-family: monospace;">${otpCode}</div>
+      <div style="font-size: 12px; color: #9CA3AF; margin-top: 8px;">Valid for the next 15 minutes</div>
+    </div>
+
+    <p style="font-size: 12px; color: #6B756F; margin-top: 20px; line-height: 1.5;">
+      If you did not request a PIN reset, please ignore this email. Your store account remains completely secure and your PIN has not changed.
+    </p>
+    `);
+    return sendEmail({
+        toEmail: email,
+        toName: safeName,
+        subject: `Your Zlik PIN Reset Code: ${otpCode}`,
+        htmlContent: html,
+        templateName: 'merchant_pin_reset'
+    });
+}
+/**
+ * Send Affiliate Partner Welcome & Credential Email (Super Admin Provisioning)
+ */
+async function sendAffiliateWelcomeEmail(params) {
+    const safeName = params.fullName?.trim() || 'Partner';
+    const percentage = Math.round((Number(params.commissionRate) || (params.tier === 'pro' ? 0.70 : 0.30)) * 100);
+    const isPro = params.tier === 'pro' || percentage >= 70;
+    const refLink = `https://zlik.store/?ref=${params.referralCode}`;
+    const html = emailLayout(`Welcome to Zlik Affiliate Program - ${percentage}% Commission Partner`, `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <span style="display: inline-block; background-color: #EDF5F1; color: #084C38; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 4px 12px; border-radius: 9999px; letter-spacing: 0.5px;">
+        ${isPro ? '💎 PRO AFFILIATE PARTNER &bull; THE ONLINE MASTERY' : '🤝 OFFICIAL AFFILIATE PARTNER'}
+      </span>
+    </div>
+
+    <h2 style="font-size: 22px; font-weight: 800; color: #08110D; margin-top: 0; text-align: center;">Welcome to the Team, ${safeName}!</h2>
+    <p style="font-size: 14px; color: #4B5563; line-height: 1.6; text-align: center;">
+      You have been officially onboarded to the Zlik Affiliate Partner Program with an approved commission rate of <strong>${percentage}% recurring revenue</strong> for up to 12 months!
+    </p>
+
+    <!-- Credential Box -->
+    <div style="background-color: #08110D; border-radius: 16px; padding: 24px; margin: 24px 0; color: #FFFFFF;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #19D98B; letter-spacing: 1px; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;">
+        YOUR AFFILIATE ACCESS CREDENTIALS
+      </div>
+      <table style="width: 100%; font-size: 13px; color: #E5E7EB; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 6px 0; color: #9CA3AF;">Login URL:</td>
+          <td style="padding: 6px 0; font-weight: 600; text-align: right;"><a href="https://zlik.store/affiliates" style="color: #19D98B; text-decoration: none;">https://zlik.store/affiliates</a></td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #9CA3AF;">Email / Username:</td>
+          <td style="padding: 6px 0; font-family: monospace; font-weight: 700; text-align: right; color: #FFFFFF;">${params.email}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #9CA3AF;">Initial Password:</td>
+          <td style="padding: 6px 0; font-family: monospace; font-weight: 700; text-align: right; color: #19D98B;">${params.initialPassword}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #9CA3AF;">Affiliate Code:</td>
+          <td style="padding: 6px 0; font-family: monospace; font-weight: 700; text-align: right; color: #FFFFFF;">${params.referralCode}</td>
+        </tr>
+        <tr>
+          <td style="padding: 6px 0; color: #9CA3AF;">Commission Cut:</td>
+          <td style="padding: 6px 0; font-weight: 800; text-align: right; color: #19D98B;">${percentage}% Recurring</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Referral Link Box -->
+    <div style="background-color: #F3F4F6; border: 1px solid #E5E7EB; border-radius: 12px; padding: 16px; margin: 20px 0; text-align: center;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #4B5563; margin-bottom: 6px;">YOUR UNIQUE 60-DAY REFERRAL LINK</div>
+      <div style="font-size: 13px; font-family: monospace; font-weight: 700; color: #084C38; word-break: break-all;">${refLink}</div>
+    </div>
+
+    ${isPro ? `
+    <div style="background-color: #EDF5F1; border: 1px solid rgba(8, 76, 56, 0.15); border-radius: 12px; padding: 16px; margin: 20px 0;">
+      <div style="font-size: 12px; font-weight: 800; color: #084C38; margin-bottom: 4px;">🎬 1,000+ Promotional Video Creatives Included</div>
+      <div style="font-size: 12px; color: #4B5563; line-height: 1.5;">
+        As a Pro Partner through <strong>The Online Mastery Academy</strong>, you have full access to our promotional creative bank with over 1,000 ready-to-run video ads for TikTok, Instagram Reels, and WhatsApp. Visit <a href="https://omastery.com" style="color: #084C38; font-weight: 700;">https://omastery.com</a> to download your creative packs.
+      </div>
+    </div>
+    ` : ''}
+
+    <div style="text-align: center; margin-top: 28px;">
+      <a href="https://zlik.store/affiliates" style="display: inline-block; background-color: #084C38; color: #FFFFFF; font-size: 13px; font-weight: 700; padding: 12px 28px; border-radius: 12px; text-decoration: none;">
+        Sign In to Your Affiliate Dashboard &rarr;
+      </a>
+    </div>
+
+    <p style="font-size: 12px; color: #9CA3AF; text-align: center; margin-top: 28px; line-height: 1.5;">
+      Withdrawals are processed directly to your Nigerian bank account with a minimum payout threshold of ₦10,000.
+    </p>
+    `);
+    return sendEmail({
+        toEmail: params.email,
+        toName: safeName,
+        subject: `Welcome to Zlik Affiliates (${percentage}% Partner Credentials)`,
+        htmlContent: html,
+        templateName: 'affiliate_welcome_credentials'
     });
 }

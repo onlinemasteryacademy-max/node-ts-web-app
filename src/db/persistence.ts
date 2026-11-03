@@ -28,6 +28,7 @@ export const PERSISTENCE_TABLES: string[] = [
   'subscription_payments',
   'analytics_events',
   'active_visitors',
+  'product_interactions',
   'reviews',
   'seller_profiles',
   'seller_verifications',
@@ -38,7 +39,11 @@ export const PERSISTENCE_TABLES: string[] = [
   'fraud_case_events',
   'risk_events',
   'security_audit_logs',
-  'integration_events'
+  'integration_events',
+  'affiliates',
+  'affiliate_referrals',
+  'affiliate_commissions',
+  'affiliate_payouts'
 ];
 
 /**

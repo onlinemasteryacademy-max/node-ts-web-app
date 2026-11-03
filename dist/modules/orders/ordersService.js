@@ -241,7 +241,10 @@ function createOrder(input) {
     const deliveryFee = input.fulfillment_type === 'pickup' ? 0 : Math.max(0, parseFloat(String(input.delivery_fee || 0)));
     const totalAmount = Math.max(0, subtotal - discountAmount) + deliveryFee;
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const orderRef = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+    let orderRef = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+    if ((0, db_js_1.dbFetchOne)('orders', { order_ref: orderRef })) {
+        orderRef = 'ORD-' + Date.now().toString().slice(-6) + Math.floor(100 + Math.random() * 900);
+    }
     const orderToken = node_crypto_1.default.randomBytes(16).toString('hex');
     const verificationHash = node_crypto_1.default.createHash('sha256').update(orderRef + orderToken + String(totalAmount)).digest('hex').substring(0, 12);
     const orderId = (0, db_js_1.dbInsert)('orders', {

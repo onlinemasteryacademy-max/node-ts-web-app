@@ -112,6 +112,11 @@ async function initMySQLSchema(pool) {
       custom_domain_status VARCHAR(50) DEFAULT 'unverified',
       allow_bank_transfer TINYINT DEFAULT 1,
       allow_pay_on_delivery TINYINT DEFAULT 0,
+      hero_headline VARCHAR(255) DEFAULT NULL,
+      hero_subheading TEXT DEFAULT NULL,
+      cta_button_text VARCHAR(100) DEFAULT NULL,
+      announcement_text VARCHAR(255) DEFAULT NULL,
+      storefront_customization_json LONGTEXT DEFAULT NULL,
       email_verified TINYINT DEFAULT 0,
       billing_cycle VARCHAR(50) DEFAULT 'monthly',
       paystack_customer_code VARCHAR(255) DEFAULT NULL,
@@ -394,6 +399,17 @@ async function initMySQLSchema(pool) {
       UNIQUE KEY uq_store_visitor (store_id, visitor_session_id),
       KEY idx_store_seen (store_id, last_seen_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+        `CREATE TABLE IF NOT EXISTS product_interactions (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      store_id INT NOT NULL,
+      product_id INT NOT NULL,
+      interaction_type VARCHAR(50) NOT NULL,
+      visitor_session_id VARCHAR(100) DEFAULT NULL,
+      ip_address VARCHAR(100) DEFAULT NULL,
+      created_at VARCHAR(100) DEFAULT NULL,
+      KEY idx_prod_interact_store (store_id, created_at),
+      KEY idx_prod_interact_prod (product_id, interaction_type)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
         `CREATE TABLE IF NOT EXISTS reviews (
       id INT AUTO_INCREMENT PRIMARY KEY,
       store_id INT NOT NULL,
@@ -589,6 +605,68 @@ async function initMySQLSchema(pool) {
       error_code VARCHAR(64) DEFAULT NULL,
       correlation_id VARCHAR(64) NOT NULL,
       created_at VARCHAR(100) DEFAULT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+        `CREATE TABLE IF NOT EXISTS affiliates (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      referral_code VARCHAR(64) NOT NULL UNIQUE,
+      full_name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      phone VARCHAR(64) NOT NULL,
+      password_hash VARCHAR(255) NOT NULL,
+      bank_name VARCHAR(100) DEFAULT NULL,
+      bank_code VARCHAR(50) DEFAULT NULL,
+      account_number VARCHAR(50) DEFAULT NULL,
+      account_name VARCHAR(255) DEFAULT NULL,
+      wallet_balance DECIMAL(15, 2) DEFAULT 0.00,
+      total_earned DECIMAL(15, 2) DEFAULT 0.00,
+      total_withdrawn DECIMAL(15, 2) DEFAULT 0.00,
+      tier VARCHAR(32) DEFAULT 'standard',
+      commission_rate DECIMAL(5, 2) DEFAULT 0.30,
+      status VARCHAR(32) DEFAULT 'active',
+      created_at VARCHAR(100) DEFAULT NULL,
+      updated_at VARCHAR(100) DEFAULT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+        `CREATE TABLE IF NOT EXISTS affiliate_referrals (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      affiliate_id INT NOT NULL,
+      store_id INT NOT NULL UNIQUE,
+      store_name VARCHAR(255) NOT NULL,
+      store_slug VARCHAR(100) NOT NULL,
+      owner_name VARCHAR(255) NOT NULL,
+      owner_email VARCHAR(255) NOT NULL,
+      cookie_session_id VARCHAR(100) DEFAULT NULL,
+      signup_date VARCHAR(100) DEFAULT NULL,
+      commission_expires_at VARCHAR(100) NOT NULL,
+      status VARCHAR(32) DEFAULT 'active',
+      total_commissions_generated DECIMAL(15, 2) DEFAULT 0.00,
+      created_at VARCHAR(100) DEFAULT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+        `CREATE TABLE IF NOT EXISTS affiliate_commissions (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      affiliate_id INT NOT NULL,
+      referral_id INT NOT NULL,
+      store_id INT NOT NULL,
+      payment_reference VARCHAR(191) NOT NULL UNIQUE,
+      subscription_amount DECIMAL(15, 2) NOT NULL,
+      commission_rate DECIMAL(5, 2) DEFAULT 0.70,
+      commission_amount DECIMAL(15, 2) NOT NULL,
+      status VARCHAR(32) DEFAULT 'approved',
+      earned_at VARCHAR(100) DEFAULT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`,
+        `CREATE TABLE IF NOT EXISTS affiliate_payouts (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      affiliate_id INT NOT NULL,
+      amount DECIMAL(15, 2) NOT NULL,
+      bank_name VARCHAR(100) NOT NULL,
+      account_number VARCHAR(50) NOT NULL,
+      account_name VARCHAR(255) NOT NULL,
+      status VARCHAR(32) DEFAULT 'pending',
+      transaction_reference VARCHAR(255) DEFAULT NULL,
+      rejection_reason TEXT DEFAULT NULL,
+      admin_notes TEXT DEFAULT NULL,
+      paid_at VARCHAR(100) DEFAULT NULL,
+      created_at VARCHAR(100) DEFAULT NULL,
+      updated_at VARCHAR(100) DEFAULT NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;`
     ];
     for (const sql of tableDefinitions) {
@@ -641,8 +719,16 @@ async function initMySQLSchema(pool) {
         `ALTER TABLE reviews ADD COLUMN moderated_at VARCHAR(100) DEFAULT NULL;`,
         `ALTER TABLE reviews ADD COLUMN moderated_by VARCHAR(255) DEFAULT NULL;`,
         `ALTER TABLE reviews ADD COLUMN rejection_reason TEXT DEFAULT NULL;`,
-        `ALTER TABLE reviews ADD COLUMN updated_at VARCHAR(100) DEFAULT NULL;`
+        `ALTER TABLE reviews ADD COLUMN updated_at VARCHAR(100) DEFAULT NULL;`,
+        `ALTER TABLE stores ADD COLUMN referred_by_affiliate_id INT DEFAULT NULL;`,
+        `ALTER TABLE affiliates ADD COLUMN total_withdrawn DECIMAL(15, 2) DEFAULT 0.00;`,
+        `ALTER TABLE affiliates ADD COLUMN tier VARCHAR(32) DEFAULT 'standard';`,
+        `ALTER TABLE affiliates ADD COLUMN commission_rate DECIMAL(5, 2) DEFAULT 0.30;`,
+        `ALTER TABLE affiliate_referrals ADD COLUMN signup_date VARCHAR(100) DEFAULT NULL;`,
+        `ALTER TABLE affiliate_payouts ADD COLUMN transaction_reference VARCHAR(255) DEFAULT NULL;`,
+        `ALTER TABLE affiliate_payouts ADD COLUMN rejection_reason TEXT DEFAULT NULL;`
     ];
+    indexes.push(`CREATE INDEX idx_affiliates_code ON affiliates (referral_code);`, `CREATE INDEX idx_aff_ref_aff ON affiliate_referrals (affiliate_id);`, `CREATE INDEX idx_aff_ref_store ON affiliate_referrals (store_id);`, `CREATE INDEX idx_aff_comm_aff ON affiliate_commissions (affiliate_id);`, `CREATE INDEX idx_aff_payout_aff ON affiliate_payouts (affiliate_id);`);
     for (const alterSql of safeAlters) {
         try {
             await p.query(alterSql);

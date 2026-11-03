@@ -36,9 +36,78 @@
         :root {
             --brand-primary: <%= store.primary_color || '#08110D' %>;
             --brand-accent: <%= templateConfig ? templateConfig.accent_color : '#19D98B' %>;
+            --d2-bg: #f6f7f4;
+            --d2-surface: #ffffff;
+            --d2-ink: #17251e;
+            --d2-muted: #77847b;
+            --d2-line: #e5eae4;
+            --d2-green: #0bbf72;
+            --d2-green-dark: #087b4b;
+            --d2-soft: #e7f7ee;
         }
         body { font-family: 'Inter', sans-serif; background-color: #F8FAF8; color: #08110D; }
         .font-display { font-family: 'Montserrat', sans-serif; }
+
+        /* Design 2 Styles */
+        .d2-announcement { background: #10271c; color: #e6f7ed; text-align: center; padding: 8px 14px; font-size: 11px; letter-spacing: .025em; }
+        .d2-announcement b { color: #65e8a7; font-weight: 700; }
+        .d2-hero { margin: 20px auto 0; width: min(1200px, calc(100% - 32px)); min-height: 340px; display: grid; grid-template-columns: .9fr 1.1fr; background: #edf5ef; border: 1px solid #e2ebe3; border-radius: 24px; overflow: hidden; }
+        .d2-hero-copy { padding: clamp(24px, 4vw, 56px); display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
+        .d2-eyebrow { text-transform: uppercase; font-size: 10px; font-weight: 800; letter-spacing: .14em; color: var(--d2-green-dark); }
+        .d2-hero-title { font-size: clamp(32px, 4vw, 54px); line-height: 1.02; letter-spacing: -.06em; margin: 14px 0 12px; font-weight: 800; color: #17251e; }
+        .d2-hero-title em { font-style: normal; color: var(--d2-green-dark); }
+        .d2-hero-desc { max-width: 380px; color: #68776d; line-height: 1.65; font-size: 13px; margin: 0 0 20px; }
+        .d2-btn { display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 999px; padding: 11px 20px; background: var(--d2-green-dark); color: #fff; font-weight: 750; font-size: 12px; transition: .2s; cursor: pointer; text-decoration: none; }
+        .d2-btn:hover { background: #065f3b; transform: translateY(-1px); }
+        .d2-hero-nav { display: flex; align-items: center; gap: 7px; margin-top: 22px; width: 100%; }
+        .d2-dot { width: 20px; height: 4px; border: 0; border-radius: 99px; background: #cad9ce; padding: 0; cursor: pointer; transition: background .2s; }
+        .d2-dot.on { background: var(--d2-green-dark); }
+        .d2-arrow { width: 32px; height: 32px; border: 1px solid #d3e0d6; background: #fff; border-radius: 50%; font-size: 16px; color: #244334; display: grid; place-items: center; cursor: pointer; transition: .2s; }
+        .d2-arrow:hover { border-color: var(--d2-green); color: var(--d2-green-dark); }
+        .d2-hero-image { min-height: 320px; position: relative; overflow: hidden; background: #dce9de; display: flex; align-items: center; justify-content: center; }
+        .d2-hero-image img { width: 100%; height: 100%; position: absolute; inset: 0; object-fit: cover; }
+        .d2-image-label { position: absolute; left: 20px; bottom: 18px; background: #ffffffeb; backdrop-filter: blur(8px); border: 1px solid #ffffff; border-radius: 14px; padding: 11px 15px; min-width: 170px; box-shadow: 0 10px 30px #163a2412; }
+        .d2-image-label small { display: block; color: var(--d2-muted); font-size: 10px; margin-bottom: 2px; }
+        .d2-image-label strong { font-size: 14px; color: #17251e; display: block; }
+        .d2-image-label span { float: right; color: var(--d2-green-dark); font-size: 12px; font-weight: 800; margin-top: -16px; }
+        .d2-category-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(130px, 1fr); gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+        .d2-category-row::-webkit-scrollbar { display: none; }
+        .d2-category { border: 1px solid var(--d2-line); background: #fff; border-radius: 16px; padding: 12px; min-height: 110px; display: flex; flex-direction: column; justify-content: space-between; text-align: left; transition: .18s; cursor: pointer; }
+        .d2-category:hover, .d2-category.selected { border-color: #91d7b2; background: #f0fbf4; transform: translateY(-2px); }
+        .d2-cat-img { height: 56px; display: grid; place-items: center; overflow: hidden; border-radius: 10px; background: #f1f4ef; font-size: 24px; }
+        .d2-cat-img img { width: 100%; height: 100%; object-fit: cover; }
+        .d2-cat-name { font-size: 11px; font-weight: 750; color: #17251e; margin-top: 6px; }
+        .d2-cat-name span { float: right; color: var(--d2-green-dark); }
+        .d2-product-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(210px, 240px); gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 4px 2px 12px; }
+        .d2-product-row::-webkit-scrollbar { display: none; }
+        .d2-promo { margin: 28px 0; border-radius: 20px; background: #10271c; color: #f5fff8; min-height: 180px; display: grid; grid-template-columns: 1fr .8fr; overflow: hidden; position: relative; }
+        .d2-promo-copy { padding: 26px 30px; align-self: center; z-index: 1; }
+        .d2-promo .d2-eyebrow { color: #7ce9ae; }
+        .d2-promo h2 { font-size: clamp(22px, 3vw, 34px); line-height: 1.08; letter-spacing: -.05em; margin: 8px 0; font-weight: 800; }
+        .d2-promo h2 em { font-style: normal; color: #70e5a5; }
+        .d2-promo p { color: #c1d4c8; font-size: 12px; margin: 0 0 16px; }
+        .d2-promo .d2-btn { background: #e5f9ec; color: #123b27; }
+        .d2-promo-art { position: relative; min-height: 180px; overflow: hidden; }
+        .d2-promo-art img { position: absolute; width: 100%; height: 100%; inset: 0; object-fit: cover; opacity: .82; }
+        .d2-benefits { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 24px 0 28px; border-top: 1px solid var(--d2-line); }
+        .d2-benefit { display: flex; gap: 10px; align-items: flex-start; }
+        .d2-benefit-icon { height: 34px; width: 34px; flex-shrink: 0; border-radius: 10px; background: #e4f6eb; color: var(--d2-green-dark); display: grid; place-items: center; font-size: 16px; font-weight: bold; }
+        .d2-benefit strong { display: block; font-size: 11px; margin: 2px 0 3px; color: #17251e; }
+        .d2-benefit small { display: block; color: var(--d2-muted); font-size: 10px; line-height: 1.5; }
+        @media(max-width: 900px) {
+            .d2-hero { grid-template-columns: 1fr 1fr; }
+            .d2-hero-copy { padding: 24px; }
+            .d2-product-row { grid-auto-columns: calc((100% - 16px) / 2.3); }
+            .d2-benefits { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media(max-width: 640px) {
+            .d2-hero { grid-template-columns: 1fr; margin-top: 12px; border-radius: 18px; }
+            .d2-hero-image { min-height: 200px; }
+            .d2-hero-title { font-size: 34px; }
+            .d2-product-row { grid-auto-columns: 46%; gap: 10px; }
+            .d2-promo { grid-template-columns: 1fr; }
+            .d2-promo-art { min-height: 130px; }
+        }
     </style>
 
     <!-- Meta Pixel Code -->
@@ -106,6 +175,30 @@
     </div>
     <% } %>
 
+    <% 
+        let storeCustomization = {};
+        try {
+            if (store.storefront_customization_json) {
+                storeCustomization = typeof store.storefront_customization_json === 'string'
+                    ? JSON.parse(store.storefront_customization_json)
+                    : store.storefront_customization_json;
+            }
+        } catch(e) {}
+        const d2Data = storeCustomization.design2 || {};
+        const d3Data = storeCustomization.design3 || {};
+        const activeTplSlug = store.template_slug || 'general_clean';
+        const activeBannerStyle = (templateConfig && templateConfig.banner_style) ? templateConfig.banner_style : 'standard_clean';
+        const isDesign2 = activeBannerStyle === 'cover_clean';
+        const isDesign3 = activeBannerStyle === 'cover_overlay_cta';
+        const announcementMsg = store.announcement_text || d2Data.announcement || 'A little more good in every day · Free to explore, easy to shop';
+    %>
+
+    <% if (isDesign2 && announcementMsg) { %>
+    <div class="d2-announcement">
+        <%= announcementMsg %>
+    </div>
+    <% } %>
+
     <!-- Store Top Banner / Nav -->
     <header class="sticky <%= typeof isDemo !== 'undefined' && isDemo ? 'top-[45px]' : 'top-0' %> z-30 bg-white/95 backdrop-blur-md border-b border-[#E3E9E5] transition shadow-xs">
         <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
@@ -167,31 +260,45 @@
         const bannerStyle = (templateConfig && templateConfig.banner_style) ? templateConfig.banner_style : 'standard_clean';
         const coverImg = store.cover_url || (templateConfig && templateConfig.default_cover_image) || 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1600&h=650&q=80';
         const overlayColor = store.cover_overlay_color || (templateConfig && templateConfig.default_overlay_color) || '#08110D';
-        const ctaBtnText = (templateConfig && templateConfig.cta_button_text) || 'Explore Products ↓';
+        const ctaBtnText = store.cta_button_text || (templateConfig && templateConfig.cta_button_text) || 'Explore Products ↓';
+        const tickerMessage = d3Data.ticker_text || store.announcement_text || '⚡ LIMITED DROP • NATIONWIDE DELIVERY • 100% VERIFIED AUTHENTIC';
     %>
 
-    <!-- Streetwear Marquee Ticker -->
-    <% if (isStreetwear) { %>
+    <!-- Marquee Ticker (Design 3 or Streetwear) -->
+    <% if (bannerStyle === 'cover_overlay_cta' || isStreetwear) { %>
     <div class="bg-[#08110D] text-[#19D98B] font-mono font-extrabold text-[11px] py-1.5 px-4 overflow-hidden border-b border-black flex items-center justify-around uppercase tracking-widest">
-        <span>⚡ LIMITED DROP SEASON 04</span>
-        <span>•</span>
-        <span>🔥 500GSM HEAVY FLEECE</span>
-        <span>•</span>
-        <span>📦 DIRECT LAGOS/WORLDWIDE DISPATCH</span>
+        <span><%= tickerMessage %></span>
         <span>•</span>
         <span>⚡ VERIFIED AUTHENTIC</span>
+        <span>•</span>
+        <span>📦 DIRECT LAGOS/WORLDWIDE DISPATCH</span>
     </div>
     <% } %>
 
     <% if (bannerStyle === 'cover_clean') { %>
-        <!-- Pro Template Style 1: Single Full-Width Cover Image (No buttons) -->
-        <section class="border-b border-[#E3E9E5] bg-black overflow-hidden relative">
-            <div class="w-full aspect-[21/9] sm:aspect-[24/9] max-h-[380px] min-h-[190px] relative overflow-hidden group">
-                <img src="<%= coverImg %>" alt="<%= store.store_name %> Banner" class="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105">
+        <!-- Design 2: Curated Lifestyle Showcase Hero (Uploaded Template Design) -->
+        <section class="d2-hero">
+            <div class="d2-hero-copy">
+                <div class="d2-eyebrow" id="d2HeroEyebrow"><%= d2Data.hero_eyebrow || 'The everyday edit' %></div>
+                <h1 class="d2-hero-title" id="d2HeroTitle">
+                    <%= d2Data.hero_title || store.hero_headline || (templateConfig ? templateConfig.hero_headline : 'Find your good thing.') %>
+                </h1>
+                <p class="d2-hero-desc" id="d2HeroDesc">
+                    <%= d2Data.hero_desc || store.hero_subheading || (templateConfig ? templateConfig.hero_subheading : (store.bio || 'Thoughtful finds for your wardrobe, your space and the little moments in between.')) %>
+                </p>
+                <div>
+                    <a class="d2-btn" href="#productsGrid" onclick="document.getElementById('productsGrid').scrollIntoView({behavior:'smooth'})">
+                        <span><%= d2Data.hero_cta_text || 'Explore the collection' %></span>
+                        <span>↗</span>
+                    </a>
+                </div>
+            </div>
+            <div class="d2-hero-image">
+                <img id="d2HeroImage" src="<%= coverImg %>" alt="<%= store.store_name %> Curated Edit">
             </div>
         </section>
     <% } else if (bannerStyle === 'cover_overlay_cta') { %>
-        <!-- Pro Template Style 2: Cover Image + Dark Customizable Overlay + White Title + Aesthetic Button -->
+        <!-- Design 3: Cover Image + Dark Customizable Overlay + White Title + Aesthetic Button -->
         <section class="border-b border-[#E3E9E5] relative overflow-hidden min-h-[260px] sm:min-h-[340px] flex items-center bg-[#08110D]">
             <!-- Background Cover Image -->
             <img src="<%= coverImg %>" alt="<%= store.store_name %> Cover" class="absolute inset-0 w-full h-full object-cover object-center">
@@ -228,7 +335,7 @@
             </div>
         </section>
     <% } else { %>
-        <!-- Free Starter Style: Standard Clean Header Banner -->
+        <!-- Design 1: Standard Clean Header Banner (Free Starter) -->
         <section class="border-b border-[#E3E9E5] relative overflow-hidden" style="background: linear-gradient(to right, <%= templateConfig ? templateConfig.accent_bg : '#F8FAF8' %>, #FFFFFF);">
             <div class="max-w-6xl mx-auto px-4 py-6 sm:py-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-5 relative z-10">
                 <div class="space-y-2 max-w-xl">
@@ -240,10 +347,10 @@
                     </div>
                     
                     <h2 class="text-xl sm:text-2xl font-extrabold font-display leading-tight text-[#08110D]">
-                        <%= templateConfig ? templateConfig.hero_headline : 'Curated Essentials & Everyday Favorites' %>
+                        <%= store.hero_headline || (templateConfig ? templateConfig.hero_headline : 'Curated Essentials & Everyday Favorites') %>
                     </h2>
                     <p class="text-xs text-[#6B756F] leading-relaxed">
-                        <%= templateConfig ? templateConfig.hero_subheading : 'Order directly from our verified online store for fast fulfillment.' %>
+                        <%= store.hero_subheading || (templateConfig ? templateConfig.hero_subheading : 'Order directly from our verified online store for fast fulfillment.') %>
                     </p>
                 </div>
 
@@ -366,6 +473,19 @@
                 <% }) %>
             <% } %>
         </div>
+
+        <% if (isDesign2) { %>
+            <!-- Design 2: Highlight Promo Banner (Single Title, Description & Customizable Image) -->
+            <section class="d2-promo">
+                <div class="d2-promo-copy">
+                    <h2><%= d2Data.promo_title || 'Find something worth keeping.' %></h2>
+                    <p><%= d2Data.promo_desc || 'Good finds for the everyday — all in one place.' %></p>
+                </div>
+                <div class="d2-promo-art">
+                    <img src="<%= d2Data.promo_image || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85' %>" alt="<%= d2Data.promo_title || 'Featured Promo' %>">
+                </div>
+            </section>
+        <% } %>
     </main>
 
     <!-- Storefront Trust & Safety Disclosure Banner (Hidden from view) -->
@@ -401,10 +521,15 @@
     <!-- Storefront Footer ("Powered by Zlik" Attribution on Free Plan) -->
     <footer class="text-center py-8 text-xs text-[#6B756F] border-t border-[#E3E9E5]/60 mt-4 bg-white/40 space-y-2">
         <% if (typeof showPoweredBy === 'undefined' || showPoweredBy) { %>
-            <div>
+            <div class="flex items-center justify-center gap-3">
                 <a href="/" target="_blank" class="inline-flex items-center gap-1.5 opacity-70 hover:opacity-100 transition">
                     <span>Powered by</span>
                     <span class="font-bold text-[#08110D] font-display tracking-tight">zlik</span>
+                </a>
+                <span class="text-[#E3E9E5]">•</span>
+                <a href="/marketplace" target="_blank" class="inline-flex items-center gap-1.5 opacity-75 hover:opacity-100 transition text-[11px] text-[#6B756F]">
+                    <span>Marketplace</span>
+                    <span class="text-[9px] bg-[#E8F8F0] text-[#087A50] font-bold px-1.5 py-0.2 rounded-full border border-[#BDE8D2]">Coming Soon</span>
                 </a>
             </div>
         <% } %>
@@ -886,6 +1011,25 @@
         </div>
     </div>
 
+    <!-- Proactive Store Owner Chat Invitation Bubble -->
+    <div id="zlikChatProactivePill" onclick="acceptProactiveChat()" class="hidden fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-40 max-w-[320px] bg-white border border-[#084C38]/20 shadow-[0_12px_36px_rgba(8,76,56,0.18)] rounded-2xl p-3.5 cursor-pointer flex items-start gap-3 transition-all duration-300 animate-bounce">
+        <div class="w-9 h-9 rounded-xl bg-[#084C38] text-[#19D98B] flex items-center justify-center font-bold text-sm shrink-0 font-display shadow-2xs">
+            💬
+        </div>
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-1">
+                <span class="font-bold text-xs text-[#08110D] truncate"><%= store.store_name %></span>
+                <span class="text-[9px] text-[#087A50] font-extrabold font-mono bg-emerald-50 px-1.5 py-0.2 rounded-full">ACTIVE NOW</span>
+            </div>
+            <p id="zlikProactiveMsgText" class="text-xs text-[#4B5563] line-clamp-2 mt-1 leading-snug">How can we help you today?</p>
+            <span class="text-[10px] font-bold text-[#084C38] mt-1.5 flex items-center gap-1">
+                <span>Tap to reply</span>
+                <span>&rarr;</span>
+            </span>
+        </div>
+        <button type="button" onclick="event.stopPropagation(); dismissProactiveChat();" class="text-gray-400 hover:text-black text-xs font-bold p-1">✕</button>
+    </div>
+
     <!-- Ultra-Lightweight Storefront Live Chat Widget -->
     <div id="zlikLiveChatTrigger" class="fixed bottom-4 right-4 z-40">
         <button onclick="toggleLiveChat()" class="group relative bg-[#08110D] hover:bg-black text-white p-3.5 sm:px-4 sm:py-3 rounded-full shadow-xl border border-white/15 transition-all duration-200 transform hover:scale-105 flex items-center gap-2.5 focus:outline-none" aria-label="Open Live Chat">
@@ -924,6 +1068,16 @@
                     <p class="text-[11px] text-[#6B756F] leading-relaxed max-w-xs mx-auto">
                         Please provide your name and WhatsApp number so the store owner can reach back out to you if offline.
                     </p>
+                </div>
+
+                <!-- Proactive Merchant Greeting Callout (Shown when admin initiated chat) -->
+                <div id="zlikProactiveLeadNotice" class="hidden p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1.5 text-left">
+                    <div class="flex items-center gap-1.5 text-[11px] font-bold text-[#087A50]">
+                        <span>💬</span>
+                        <span><%= store.store_name %> sent you a message:</span>
+                    </div>
+                    <p id="zlikProactiveLeadNoticeText" class="text-xs text-[#08110D] italic font-medium bg-white/80 p-2 rounded-lg border border-emerald-100"></p>
+                    <p class="text-[10.5px] text-[#087A50] font-medium">Enter your details below to join this chat and reply directly.</p>
                 </div>
 
                 <form id="zlikLeadForm" onsubmit="handleStartCustomerChat(event)" class="space-y-3 pt-1">
@@ -971,7 +1125,6 @@
         let cart = [];
         let chatOpen = false;
         let conversationId = null;
-        let sessionToken = localStorage.getItem('zlik_chat_token_' + storeData.id) || null;
         let lastMessageId = 0;
         let chatWs = null;
         let chatSSE = null;
@@ -983,14 +1136,36 @@
         // ==========================================
         // GENUINE LIVE CUSTOMER TELEMETRY ENGINE
         // ==========================================
-        let shopperSessionId = sessionStorage.getItem('zlik_shopper_id_' + storeData.id);
+        let shopperSessionId = localStorage.getItem('zlik_shopper_id_' + storeData.id) || sessionStorage.getItem('zlik_shopper_id_' + storeData.id);
         if (!shopperSessionId) {
             shopperSessionId = 'shp_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
-            sessionStorage.setItem('zlik_shopper_id_' + storeData.id, shopperSessionId);
+            try { sessionStorage.setItem('zlik_shopper_id_' + storeData.id, shopperSessionId); } catch(e){}
+            try { localStorage.setItem('zlik_shopper_id_' + storeData.id, shopperSessionId); } catch(e){}
+        }
+        let sessionToken = localStorage.getItem('zlik_chat_token_' + storeData.id) || shopperSessionId;
+        if (!localStorage.getItem('zlik_chat_token_' + storeData.id)) {
+            try { localStorage.setItem('zlik_chat_token_' + storeData.id, sessionToken); } catch(e){}
         }
 
         let currentBrowsingPage = 'Storefront';
         let currentBrowsingTitle = storeData.store_name || 'Store Home';
+
+        function trackProductInteraction(productId, actionType) {
+            if (!productId || !storeData || !storeData.id) return;
+            try {
+                fetch('/api/analytics/product-interaction', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    keepalive: true,
+                    body: JSON.stringify({
+                        store_id: storeData.id,
+                        product_id: parseInt(productId),
+                        interaction_type: actionType || 'card_click',
+                        visitor_session_id: shopperSessionId
+                    })
+                }).catch(() => {});
+            } catch(e) {}
+        }
 
         function detectTrafficSource() {
             const ref = document.referrer ? document.referrer.toLowerCase() : '';
@@ -1098,6 +1273,7 @@
         function openProductModal(productId) {
             const product = productsData.find(p => p.id === productId || p.id === parseInt(productId));
             if (!product) return;
+            trackProductInteraction(product.id, 'preview');
             sendShopperHeartbeat('Product: ' + product.title, product.title);
             currentModalProduct = product;
             currentModalQty = 1;
@@ -1155,7 +1331,7 @@
                 thumbContainer.innerHTML = currentProductGallery.map((url, idx) => `
                     <div onclick="switchModalImage('${url}')" data-src="${url}" class="gallery-thumb w-12 h-12 rounded-xl overflow-hidden border ${idx === 0 ? 'border-[#08110D] ring-2 ring-[#08110D]' : 'border-[#E3E9E5] opacity-70 hover:opacity-100'} shrink-0 cursor-pointer transition">
                         <img src="${url}" alt="Gallery Image" class="w-full h-full object-cover">
-                    </div>
+                    <\/div>
                 `).join('');
                 thumbContainer.classList.remove('hidden');
             } else {
@@ -1237,30 +1413,30 @@
                     if (sizes.length > 0) {
                         html += `
                             <div>
-                                <label class="block text-[10px] font-bold uppercase text-[#6B756F] mb-1">Select Size:</label>
+                                <label class="block text-[10px] font-bold uppercase text-[#6B756F] mb-1">Select Size:<\/label>
                                 <div class="flex flex-wrap gap-1.5" id="fashionSizePills">
                                     ${sizes.map((s, idx) => `
                                         <button type="button" onclick="selectFashionSize('${s}', this)" class="size-pill px-3 py-1 rounded-xl text-xs font-bold border ${idx === 0 ? 'bg-[#08110D] text-[#19D98B] border-[#08110D]' : 'bg-white text-[#08110D] border-[#E3E9E5]'} transition">
                                             ${s}
                                         </button>
                                     `).join('')}
-                                </div>
-                            </div>
+                                <\/div>
+                            <\/div>
                         `;
                     }
 
                     if (colors.length > 0) {
                         html += `
                             <div class="pt-2">
-                                <label class="block text-[10px] font-bold uppercase text-[#6B756F] mb-1">Select Color:</label>
+                                <label class="block text-[10px] font-bold uppercase text-[#6B756F] mb-1">Select Color:<\/label>
                                 <div class="flex flex-wrap gap-1.5" id="fashionColorPills">
                                     ${colors.map((c, idx) => `
                                         <button type="button" onclick="selectFashionColor('${c}', this)" class="color-pill px-3 py-1 rounded-xl text-xs font-bold border ${idx === 0 ? 'bg-[#08110D] text-[#19D98B] border-[#08110D]' : 'bg-white text-[#08110D] border-[#E3E9E5]'} transition">
                                             ${c}
                                         </button>
                                     `).join('')}
-                                </div>
-                            </div>
+                                <\/div>
+                            <\/div>
                         `;
                     }
 
@@ -1269,11 +1445,11 @@
                             <div class="pt-2 border-t border-[#E3E9E5] text-[11px] text-[#6B756F] space-y-0.5">
                                 ${attributes.material ? `<div><strong>Material:</strong> ${attributes.material}</div>` : ''}
                                 ${attributes.care ? `<div><strong>Care:</strong> ${attributes.care}</div>` : ''}
-                            </div>
+                            <\/div>
                         `;
                     }
 
-                    html += `</div>`;
+                    html += `<\/div>`;
                     container.innerHTML = html;
 
                     // Set defaults
@@ -1294,11 +1470,11 @@
                         html += `
                             <div class="bg-[#F8FAF8] p-3 rounded-2xl border border-[#E3E9E5] space-y-1.5">
                                 <div class="flex items-center justify-between text-xs">
-                                    <span class="font-bold text-[#08110D]">${g.name}</span>
+                                    <span class="font-bold text-[#08110D]">${g.name}<\/span>
                                     <span class="text-[10px] ${g.required ? 'text-amber-700 font-bold' : 'text-[#6B756F]'}">
                                         ${g.required ? 'Required *' : 'Optional'}
-                                    </span>
-                                </div>
+                                    <\/span>
+                                <\/div>
                                 <div class="space-y-1 pt-1">
                                     ${(g.options || []).map((opt, oIdx) => `
                                         <label class="flex items-center justify-between p-2 rounded-xl bg-white border border-[#E3E9E5] text-xs cursor-pointer hover:border-[#08110D] transition">
@@ -1311,19 +1487,19 @@
                                             </span>
                                         </label>
                                     `).join('')}
-                                </div>
-                            </div>
+                                <\/div>
+                            <\/div>
                         `;
                     });
 
                     html += `
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-[#6B756F] mb-1">Preparation Instructions (Optional):</label>
+                            <label class="block text-[10px] font-bold uppercase text-[#6B756F] mb-1">Preparation Instructions (Optional):<\/label>
                             <input type="text" id="foodPrepNotes" placeholder="e.g. Extra spicy, no onions, pack separately" class="w-full bg-[#F8FAF8] border border-[#E3E9E5] rounded-xl p-2.5 text-xs outline-none">
-                        </div>
+                        <\/div>
                     `;
 
-                    html += `</div>`;
+                    html += `<\/div>`;
                     container.innerHTML = html;
                 }
             }
@@ -1339,15 +1515,15 @@
                     if (volumes.length > 0) {
                         html += `
                             <div>
-                                <label class="block text-[10px] font-bold uppercase text-[#6B756F] mb-1">Select Bottle Volume:</label>
+                                <label class="block text-[10px] font-bold uppercase text-[#6B756F] mb-1">Select Bottle Volume:<\/label>
                                 <div class="flex flex-wrap gap-1.5" id="beautyVolumePills">
                                     ${volumes.map((v, idx) => `
                                         <button type="button" onclick="selectBeautyVolume('${v}', this)" class="volume-pill px-3 py-1 rounded-xl text-xs font-bold border ${idx === 0 ? 'bg-[#08110D] text-[#19D98B] border-[#08110D]' : 'bg-white text-[#08110D] border-[#E3E9E5]'} transition">
                                             ${v}
                                         </button>
                                     `).join('')}
-                                </div>
-                            </div>
+                                <\/div>
+                            <\/div>
                         `;
                         currentSelectedVariant = { volume: volumes[0], name: volumes[0] };
                     }
@@ -1355,27 +1531,27 @@
                     if (shades.length > 0) {
                         html += `
                             <div class="pt-2">
-                                <label class="block text-[10px] font-bold uppercase text-[#6B756F] mb-1">Select Shade / Tint:</label>
+                                <label class="block text-[10px] font-bold uppercase text-[#6B756F] mb-1">Select Shade / Tint:<\/label>
                                 <div class="flex flex-wrap gap-1.5" id="beautyShadePills">
                                     ${shades.map((s, idx) => `
                                         <button type="button" onclick="selectBeautyShade('${s}', this)" class="shade-pill px-3 py-1 rounded-xl text-xs font-bold border ${idx === 0 ? 'bg-[#08110D] text-[#19D98B] border-[#08110D]' : 'bg-white text-[#08110D] border-[#E3E9E5]'} transition">
                                             ${s}
                                         </button>
                                     `).join('')}
-                                </div>
-                            </div>
+                                <\/div>
+                            <\/div>
                         `;
                     }
 
                     if (attributes.ingredients) {
                         html += `
                             <div class="pt-2 border-t border-[#E3E9E5] text-[11px] text-[#6B756F]">
-                                <strong>Key Ingredients:</strong> ${attributes.ingredients}
-                            </div>
+                                <strong>Key Ingredients:<\/strong> ${attributes.ingredients}
+                            <\/div>
                         `;
                     }
 
-                    html += `</div>`;
+                    html += `<\/div>`;
                     container.innerHTML = html;
                 }
             }
@@ -1389,15 +1565,15 @@
                 if (configs.length > 0) {
                     html += `
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-[#6B756F] mb-1">Select Configuration:</label>
+                            <label class="block text-[10px] font-bold uppercase text-[#6B756F] mb-1">Select Configuration:<\/label>
                             <div class="flex flex-wrap gap-1.5" id="techConfigPills">
                                 ${configs.map((c, idx) => `
                                     <button type="button" onclick="selectTechConfig('${c}', this)" class="config-pill px-3 py-1 rounded-xl text-xs font-bold border ${idx === 0 ? 'bg-[#08110D] text-[#19D98B] border-[#08110D]' : 'bg-white text-[#08110D] border-[#E3E9E5]'} transition">
                                         ${c}
                                     </button>
                                 `).join('')}
-                            </div>
-                        </div>
+                            <\/div>
+                        <\/div>
                     `;
                     currentSelectedVariant = { config: configs[0], name: configs[0] };
                 }
@@ -1409,11 +1585,11 @@
                             ${attributes.warranty ? `<div><strong>Warranty:</strong> <span class="text-[#087A50] font-semibold">${attributes.warranty}</span></div>` : ''}
                             ${attributes.specs_text ? `<div><strong>Specs:</strong> ${attributes.specs_text}</div>` : ''}
                             ${attributes.box_contents ? `<div><strong>Box Contains:</strong> ${attributes.box_contents}</div>` : ''}
-                        </div>
+                        <\/div>
                     `;
                 }
 
-                html += `</div>`;
+                html += `<\/div>`;
                 container.innerHTML = html;
             }
         }
@@ -1557,7 +1733,7 @@
                 toast.className = 'fixed top-5 left-1/2 -translate-x-1/2 z-[100] bg-[#08110D] text-white px-5 py-2.5 rounded-2xl shadow-2xl text-xs font-bold border border-[#19D98B]/40 flex items-center gap-2 transition-all duration-300 transform -translate-y-4 opacity-0 pointer-events-none font-display';
                 document.body.appendChild(toast);
             }
-            toast.innerHTML = `<span class="text-[#19D98B]">●</span> <span>${message}</span>`;
+            toast.innerHTML = `<span class="text-[#19D98B]">●<\/span> <span>${message}<\/span>`;
             toast.classList.remove('-translate-y-4', 'opacity-0', 'pointer-events-none');
             toast.classList.add('translate-y-0', 'opacity-100');
             clearTimeout(window.toastTimer);
@@ -1584,6 +1760,7 @@
             }
 
             const unitPrice = parseFloat(product.price || 0);
+            trackProductInteraction(product.id, 'add_to_cart');
             const existing = cart.find(i => i.id === product.id && !i.variant && !i.selected_options);
             if (existing) {
                 existing.quantity += 1;
@@ -1638,6 +1815,7 @@
             const prepNotes = document.getElementById('foodPrepNotes')?.value || null;
             const unitPrice = currentModalUnitPrice || parseFloat(currentModalProduct.price || 0);
             const qty = currentModalQty || 1;
+            trackProductInteraction(currentModalProduct.id, 'add_to_cart');
 
             cart.push({
                 id: currentModalProduct.id,
@@ -1690,6 +1868,7 @@
             const prepNotes = document.getElementById('foodPrepNotes')?.value || null;
             const unitPrice = currentModalUnitPrice || parseFloat(currentModalProduct.price || 0);
             const qty = currentModalQty || 1;
+            trackProductInteraction(currentModalProduct.id, 'buy_now');
 
             cart.push({
                 id: currentModalProduct.id,
@@ -1894,7 +2073,7 @@
             const badge = document.getElementById('pModalReviewCountBadge');
             if (!list) return;
 
-            list.innerHTML = `<div class="text-[11px] text-[#6B756F]">Loading verified reviews...</div>`;
+            list.innerHTML = `<div class="text-[11px] text-[#6B756F]">Loading verified reviews...<\/div>`;
 
             try {
                 const res = await fetch(`/api/stores/${storeData.id}/reviews?item_id=${itemId}`);
@@ -1910,7 +2089,7 @@
                     }
 
                     if (d.reviews.length === 0) {
-                        list.innerHTML = `<div class="p-3 bg-[#F8FAF8] rounded-xl text-center text-[#6B756F] text-[11px]">No customer reviews yet. Be the first verified buyer to leave a review!</div>`;
+                        list.innerHTML = `<div class="p-3 bg-[#F8FAF8] rounded-xl text-center text-[#6B756F] text-[11px]">No customer reviews yet. Be the first verified buyer to leave a review!<\/div>`;
                         return;
                     }
 
@@ -1926,16 +2105,16 @@
                         return `
                             <div class="p-2.5 bg-[#F8FAF8] rounded-xl border border-[#E3E9E5] space-y-1">
                                 <div class="flex items-center justify-between gap-2">
-                                    <span class="font-bold text-[#08110D] flex items-center gap-1.5">${safeName} ${verifiedLabel}</span>
-                                    <span class="text-amber-500 font-bold text-xs tracking-tight">${stars}</span>
-                                </div>
-                                <p class="text-[11px] text-[#08110D]/90 leading-relaxed">${safeComment}</p>
-                            </div>
+                                    <span class="font-bold text-[#08110D] flex items-center gap-1.5">${safeName} ${verifiedLabel}<\/span>
+                                    <span class="text-amber-500 font-bold text-xs tracking-tight">${stars}<\/span>
+                                <\/div>
+                                <p class="text-[11px] text-[#08110D]/90 leading-relaxed">${safeComment}<\/p>
+                            <\/div>
                         `;
                     }).join('');
                 }
             } catch(e) {
-                list.innerHTML = `<div class="text-[11px] text-[#6B756F]">Verified reviews will appear here.</div>`;
+                list.innerHTML = `<div class="text-[11px] text-[#6B756F]">Verified reviews will appear here.<\/div>`;
             }
         }
 
@@ -2099,26 +2278,26 @@
             updateModalStep1BtnText();
 
             if (cart.length === 0) {
-                list.innerHTML = `<div class="p-8 text-center text-[#6B756F]">Your cart is empty.</div>`;
+                list.innerHTML = `<div class="p-8 text-center text-[#6B756F]">Your cart is empty.<\/div>`;
                 return;
             }
 
             list.innerHTML = cart.map((i, idx) => `
                 <div class="flex items-center justify-between gap-3 p-2.5 bg-[#F8FAF8] rounded-xl border border-[#E3E9E5]">
                     <div class="min-w-0 flex-1">
-                        <h4 class="font-bold text-xs text-[#08110D] truncate">${i.title}</h4>
+                        <h4 class="font-bold text-xs text-[#08110D] truncate">${i.title}<\/h4>
                         ${i.variant ? `<div class="text-[10px] text-purple-700 font-bold">${i.variant}</div>` : ''}
                         ${i.selected_options ? i.selected_options.map(o => `<div class="text-[10px] text-[#6B756F]">+ ${o.name} (${o.price > 0 ? '₦' + o.price : 'Free'})</div>`).join('') : ''}
                         ${i.notes ? `<div class="text-[10px] text-amber-700 italic font-semibold">Note: ${i.notes}</div>` : ''}
-                        <div class="font-bold font-mono text-[#087A50] text-xs mt-0.5">₦${(i.price * i.quantity).toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
-                    </div>
+                        <div class="font-bold font-mono text-[#087A50] text-xs mt-0.5">₦${(i.price * i.quantity).toLocaleString('en-US', {minimumFractionDigits: 2})}<\/div>
+                    <\/div>
                     <div class="flex items-center gap-1.5 shrink-0">
-                        <button type="button" onclick="updateCartQty(${idx}, -1)" class="w-6 h-6 rounded-lg bg-white border border-[#E3E9E5] text-xs font-bold hover:bg-gray-100">-</button>
-                        <span class="w-6 text-center font-bold font-mono text-xs">${i.quantity}</span>
-                        <button type="button" onclick="updateCartQty(${idx}, 1)" class="w-6 h-6 rounded-lg bg-white border border-[#E3E9E5] text-xs font-bold hover:bg-gray-100">+</button>
-                        <button type="button" onclick="removeCartItem(${idx})" class="text-red-500 hover:text-red-700 font-bold text-xs p-1 ml-1">🗑️</button>
-                    </div>
-                </div>
+                        <button type="button" onclick="updateCartQty(${idx}, -1)" class="w-6 h-6 rounded-lg bg-white border border-[#E3E9E5] text-xs font-bold hover:bg-gray-100">-<\/button>
+                        <span class="w-6 text-center font-bold font-mono text-xs">${i.quantity}<\/span>
+                        <button type="button" onclick="updateCartQty(${idx}, 1)" class="w-6 h-6 rounded-lg bg-white border border-[#E3E9E5] text-xs font-bold hover:bg-gray-100">+<\/button>
+                        <button type="button" onclick="removeCartItem(${idx})" class="text-red-500 hover:text-red-700 font-bold text-xs p-1 ml-1">🗑️<\/button>
+                    <\/div>
+                <\/div>
             `).join('');
         }
 
@@ -2492,30 +2671,100 @@
             return null;
         }
 
+        let lastProactiveMessageText = '';
+
         function toggleLiveChat(forceState) {
             chatOpen = typeof forceState === 'boolean' ? forceState : !chatOpen;
             const widget = document.getElementById('zlikLiveChatWidget');
+            if (!widget) return;
+
             if (chatOpen) {
+                const badge = document.getElementById('zlikChatUnreadBadge');
+                if (badge) badge.classList.add('hidden');
+
                 widget.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
                 widget.classList.add('opacity-100', 'scale-100');
 
                 const saved = getSavedCustomerChatInfo();
                 const leadGate = document.getElementById('zlikChatLeadGate');
                 const activeView = document.getElementById('zlikChatActiveView');
+                const hasContact = !!(saved && saved.name && saved.phone);
 
-                if (saved) {
+                if (hasContact) {
                     leadGate.classList.add('hidden');
                     activeView.classList.remove('hidden');
                     if (!conversationId) initCustomerChat(saved.name, saved.phone);
+                    else loadMessages();
+                    setTimeout(() => document.getElementById('zlikChatInput')?.focus(), 200);
                 } else {
                     leadGate.classList.remove('hidden');
                     activeView.classList.add('hidden');
+                    const proactiveNotice = document.getElementById('zlikProactiveLeadNotice');
+                    const proactiveText = document.getElementById('zlikProactiveLeadNoticeText');
+                    if (proactiveNotice && proactiveText && lastProactiveMessageText) {
+                        proactiveText.textContent = lastProactiveMessageText;
+                        proactiveNotice.classList.remove('hidden');
+                    } else if (proactiveNotice) {
+                        proactiveNotice.classList.add('hidden');
+                    }
                     setTimeout(() => document.getElementById('zlikLeadName')?.focus(), 150);
                 }
             } else {
                 widget.classList.remove('opacity-100', 'scale-100');
                 widget.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
             }
+        }
+
+        function playChatNotificationChime() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.4);
+            } catch(e) {}
+        }
+
+        function handleIncomingMerchantMessage(m) {
+            const rawText = m && (m.message || m.message_text || m.text);
+            if (rawText) {
+                lastProactiveMessageText = rawText;
+            }
+            if (chatOpen) {
+                loadMessages();
+                return;
+            }
+            const badge = document.getElementById('zlikChatUnreadBadge');
+            if (badge) {
+                badge.classList.remove('hidden');
+                badge.textContent = '1';
+            }
+            const pill = document.getElementById('zlikChatProactivePill');
+            const msgText = document.getElementById('zlikProactiveMsgText');
+            if (msgText && rawText) {
+                msgText.textContent = rawText;
+            }
+            if (pill) {
+                pill.classList.remove('hidden');
+            }
+            playChatNotificationChime();
+        }
+
+        function acceptProactiveChat() {
+            dismissProactiveChat();
+            toggleLiveChat(true);
+        }
+
+        function dismissProactiveChat() {
+            const pill = document.getElementById('zlikChatProactivePill');
+            if (pill) pill.classList.add('hidden');
         }
 
         async function handleStartCustomerChat(e) {
@@ -2601,11 +2850,11 @@
                             <div class="p-5 text-center space-y-3 bg-white rounded-2xl border border-amber-200 mt-4 shadow-sm">
                                 <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center text-xl font-bold mx-auto">
                                     💬
-                                </div>
-                                <h4 class="font-bold text-[#08110D] text-xs font-display">Monthly Live Chat Limit Reached</h4>
+                                <\/div>
+                                <h4 class="font-bold text-[#08110D] text-xs font-display">Monthly Live Chat Limit Reached<\/h4>
                                 <p class="text-[11px] text-[#6B756F] leading-relaxed">
                                     This store has reached its free monthly live chat allowance (20 new chats). Please message the seller directly on WhatsApp for instant assistance.
-                                </p>
+                                <\/p>
                                 ${rawWa ? `
                                     <div class="pt-2">
                                         <a href="${waUrl}" target="_blank" class="inline-flex items-center gap-1.5 bg-[#25D366] hover:bg-[#1EBE5D] text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-xs">
@@ -2614,7 +2863,7 @@
                                         </a>
                                     </div>
                                 ` : ''}
-                            </div>
+                            <\/div>
                         `;
                     }
                 } else {
@@ -2626,11 +2875,18 @@
         }
 
         async function loadMessages() {
-            if (!conversationId) return;
             try {
-                const res = await fetch(`/api/chat/messages?conversation_id=${conversationId}`);
+                const url = conversationId 
+                    ? `/api/chat/messages?conversation_id=${conversationId}` 
+                    : (sessionToken ? `/api/chat/messages?session_token=${encodeURIComponent(sessionToken)}` : null);
+                if (!url) return;
+                const res = await fetch(url);
                 const d = await res.json();
                 if (d.success && Array.isArray(d.messages)) {
+                    if (d.conversation_id) conversationId = d.conversation_id;
+                    if (d.messages.length > 0) {
+                        lastMessageId = d.messages[d.messages.length - 1].id || lastMessageId;
+                    }
                     renderMessages(d.messages);
                 }
             } catch(e){}
@@ -2645,7 +2901,7 @@
             const stream = document.getElementById('zlikChatMessageStream');
             if (!stream) return;
             if (!messages || messages.length === 0) {
-                stream.innerHTML = `<div class="text-center py-6 text-[#6B756F] text-xs">Hi! How can we help you today with ${storeData.store_name}?</div>`;
+                stream.innerHTML = `<div class="text-center py-6 text-[#6B756F] text-xs">Hi! How can we help you today with ${storeData.store_name}?<\/div>`;
                 return;
             }
             stream.innerHTML = messages.map(m => {
@@ -2655,10 +2911,10 @@
                 return `
                     <div class="flex ${isCustomer ? 'justify-end' : 'justify-start'}">
                         <div class="max-w-[80%] rounded-2xl px-3.5 py-2 text-xs ${isCustomer ? 'bg-[#08110D] text-white rounded-br-none' : 'bg-white border border-[#E3E9E5] text-[#08110D] rounded-bl-none shadow-2xs'}">
-                            <div class="whitespace-pre-wrap leading-relaxed">${escapeHtml(text)}</div>
-                            <div class="text-[9px] ${isCustomer ? 'text-white/60' : 'text-[#6B756F]'} text-right mt-0.5">${time}</div>
-                        </div>
-                    </div>
+                            <div class="whitespace-pre-wrap leading-relaxed">${escapeHtml(text)}<\/div>
+                            <div class="text-[9px] ${isCustomer ? 'text-white/60' : 'text-[#6B756F]'} text-right mt-0.5">${time}<\/div>
+                        <\/div>
+                    <\/div>
                 `;
             }).join('');
             stream.scrollTop = stream.scrollHeight;
@@ -2689,9 +2945,9 @@
             optimisticMsg.className = 'flex justify-end';
             optimisticMsg.innerHTML = `
                 <div class="max-w-[80%] rounded-2xl px-3.5 py-2 text-xs bg-[#08110D] text-white rounded-br-none">
-                    <div class="whitespace-pre-wrap leading-relaxed">${escapeHtml(text)}</div>
-                    <div class="text-[9px] text-white/60 text-right mt-0.5">Just now</div>
-                </div>
+                    <div class="whitespace-pre-wrap leading-relaxed">${escapeHtml(text)}<\/div>
+                    <div class="text-[9px] text-white/60 text-right mt-0.5">Just now<\/div>
+                <\/div>
             `;
             stream.appendChild(optimisticMsg);
             stream.scrollTop = stream.scrollHeight;
@@ -2719,16 +2975,40 @@
                 chatWs.onopen = () => {
                     chatWs.send(JSON.stringify({ type: 'auth', role: 'customer', session_token: sessionToken }));
                 };
-                chatWs.onmessage = () => {
-                    loadMessages();
+                chatWs.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'merchant_initiated_chat' || (data.type === 'chat_message' && data.sender_type === 'merchant')) {
+                            conversationId = data.conversation_id || conversationId;
+                            handleIncomingMerchantMessage(data);
+                        } else {
+                            loadMessages();
+                        }
+                    } catch(e) {
+                        loadMessages();
+                    }
                 };
             } catch(e){}
 
             // Polling fallback to guarantee continuous real-time messaging
             if (!window.chatPollTimer) {
-                window.chatPollTimer = setInterval(() => {
-                    if (chatOpen && conversationId) loadMessages();
-                }, 3500);
+                window.chatPollTimer = setInterval(async () => {
+                    if (chatOpen && (conversationId || sessionToken)) {
+                        loadMessages();
+                    } else if (!chatOpen && sessionToken) {
+                        try {
+                            const res = await fetch(`/api/chat/messages?session_token=${encodeURIComponent(sessionToken)}&after_id=${lastMessageId}`);
+                            const d = await res.json();
+                            if (d.success && Array.isArray(d.messages) && d.messages.length > 0) {
+                                conversationId = d.conversation_id || conversationId;
+                                const lastMsg = d.messages[d.messages.length - 1];
+                                if (lastMsg.sender_type === 'merchant') {
+                                    handleIncomingMerchantMessage(lastMsg);
+                                }
+                            }
+                        } catch(e) {}
+                    }
+                }, 4000);
             }
         }
 
@@ -2761,6 +3041,7 @@
                 }
             });
         }
+    </script>
 
     <!-- Storefront Trust & Verification Modal -->
     <div id="storeTrustModal" class="fixed inset-0 z-[80] bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 hidden">
@@ -3032,8 +3313,9 @@
             }
         }
 
-        // URL Hash check for direct product link
+        // URL Hash check for direct product link and activate live chat stream
         document.addEventListener('DOMContentLoaded', () => {
+            connectChatStreams();
             const hash = window.location.hash;
             if (hash.startsWith('#product-')) {
                 const pid = hash.replace('#product-', '');

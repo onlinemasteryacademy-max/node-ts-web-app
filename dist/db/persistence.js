@@ -33,6 +33,7 @@ exports.PERSISTENCE_TABLES = [
     'subscription_payments',
     'analytics_events',
     'active_visitors',
+    'product_interactions',
     'reviews',
     'seller_profiles',
     'seller_verifications',
@@ -43,7 +44,11 @@ exports.PERSISTENCE_TABLES = [
     'fraud_case_events',
     'risk_events',
     'security_audit_logs',
-    'integration_events'
+    'integration_events',
+    'affiliates',
+    'affiliate_referrals',
+    'affiliate_commissions',
+    'affiliate_payouts'
 ];
 /**
  * Initialize MySQL Persistence Bridge on Server Boot

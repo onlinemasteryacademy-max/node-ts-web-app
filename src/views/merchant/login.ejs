@@ -81,6 +81,9 @@
                 <div>
                     <div class="flex items-center justify-between mb-1.5">
                         <label class="block font-semibold text-[#111827]">5-Digit Security PIN</label>
+                        <button type="button" onclick="openForgotPinModal()" class="text-[11px] font-semibold text-[#084C38] hover:text-[#063b2c] hover:underline focus:outline-none transition">
+                            Forgot PIN?
+                        </button>
                     </div>
                     <input type="password" id="merchantPin" required maxlength="5" pattern="[0-9]{5}" inputmode="numeric" placeholder="•••••" class="w-full px-4 py-3 rounded-2xl bg-[#F8FAF9] border border-[#EAEFEB] text-sm text-[#111827] outline-none focus:border-[#084C38] font-mono tracking-widest transition">
                 </div>
@@ -98,6 +101,99 @@
             </div>
         </div>
     </main>
+
+    <!-- Forgot PIN Modal -->
+    <div id="forgotPinModal" class="fixed inset-0 z-50 bg-[#08110D]/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-md rounded-3xl border border-[#EAEFEB] shadow-xl overflow-hidden">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[#F0F4F1]">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-full bg-[#E8F5EE] text-[#084C38] flex items-center justify-center text-sm font-bold">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-[#111827]">Reset Security PIN</h3>
+                        <p class="text-[11px] text-[#6B7280]">Regain access to your seller dashboard</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeForgotPinModal()" class="text-[#9CA3AF] hover:text-[#111827] p-1.5 rounded-full hover:bg-[#F3F4F6] transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6">
+                <!-- STEP 1: Enter Identifier -->
+                <div id="forgotStep1" class="space-y-4">
+                    <p class="text-xs text-[#4B5563] leading-relaxed">
+                        Enter your registered store email or WhatsApp phone number. We'll send a 6-digit verification code to reset your PIN.
+                    </p>
+
+                    <div>
+                        <label class="block font-semibold text-[#111827] text-xs mb-1.5">Email address or WhatsApp phone</label>
+                        <input type="text" id="forgotIdentifier" placeholder="name@store.com or 08012345678" class="w-full px-4 py-3 rounded-2xl bg-[#F8FAF9] border border-[#EAEFEB] text-xs text-[#111827] outline-none focus:border-[#084C38] transition">
+                    </div>
+
+                    <div id="forgotErrorStep1" class="text-xs text-red-600 font-medium hidden"></div>
+
+                    <button type="button" id="sendCodeBtn" onclick="handleSendResetCode()" class="w-full bg-[#084C38] hover:bg-[#063b2c] text-white font-bold text-xs py-3.5 rounded-full shadow-xs transition duration-200">
+                        Send reset code &rarr;
+                    </button>
+                </div>
+
+                <!-- STEP 2: Enter Code & New PIN -->
+                <div id="forgotStep2" class="space-y-4 hidden">
+                    <div class="bg-[#F8FAF9] border border-[#EAEFEB] rounded-2xl p-3.5 text-xs text-[#4B5563]">
+                        <div class="text-[11px] text-[#6B7280]">Verification code sent to:</div>
+                        <div id="forgotTargetDisplay" class="font-bold text-[#111827] mt-0.5"></div>
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-[#111827] text-xs mb-1.5">6-Digit Verification Code</label>
+                        <input type="text" id="forgotOtpCode" maxlength="6" inputmode="numeric" placeholder="123456" class="w-full px-4 py-3 rounded-2xl bg-[#F8FAF9] border border-[#EAEFEB] text-sm text-[#111827] outline-none focus:border-[#084C38] font-mono tracking-widest text-center transition">
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-[#111827] text-xs mb-1.5">New 5-Digit Security PIN</label>
+                        <input type="password" id="forgotNewPin" maxlength="5" pattern="[0-9]{5}" inputmode="numeric" placeholder="•••••" class="w-full px-4 py-3 rounded-2xl bg-[#F8FAF9] border border-[#EAEFEB] text-sm text-[#111827] outline-none focus:border-[#084C38] font-mono tracking-widest transition">
+                    </div>
+
+                    <div>
+                        <label class="block font-semibold text-[#111827] text-xs mb-1.5">Confirm New 5-Digit PIN</label>
+                        <input type="password" id="forgotConfirmPin" maxlength="5" pattern="[0-9]{5}" inputmode="numeric" placeholder="•••••" class="w-full px-4 py-3 rounded-2xl bg-[#F8FAF9] border border-[#EAEFEB] text-sm text-[#111827] outline-none focus:border-[#084C38] font-mono tracking-widest transition">
+                    </div>
+
+                    <div id="forgotErrorStep2" class="text-xs text-red-600 font-medium hidden"></div>
+
+                    <button type="button" id="resetPinBtn" onclick="handleVerifyAndResetPin()" class="w-full bg-[#084C38] hover:bg-[#063b2c] text-white font-bold text-xs py-3.5 rounded-full shadow-xs transition duration-200">
+                        Set new PIN & sign in
+                    </button>
+
+                    <div class="flex items-center justify-between text-[11px] pt-1">
+                        <button type="button" onclick="goToStep1()" class="text-[#6B7280] hover:text-[#111827] transition">
+                            &larr; Change email/phone
+                        </button>
+                        <button type="button" id="resendCodeBtn" onclick="handleSendResetCode(true)" class="font-semibold text-[#084C38] hover:underline">
+                            Resend code
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Success -->
+                <div id="forgotStepSuccess" class="text-center py-6 space-y-3 hidden">
+                    <div class="w-12 h-12 rounded-full bg-[#E8F5EE] text-[#084C38] flex items-center justify-center mx-auto text-xl font-bold">
+                        ✓
+                    </div>
+                    <h4 class="text-sm font-bold text-[#111827]">PIN Updated Successfully!</h4>
+                    <p class="text-xs text-[#6B7280]">Redirecting you to your seller dashboard...</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="bg-white text-[#6B7280] border-t border-[#EAEFEB] py-6 text-xs text-center">
@@ -152,6 +248,179 @@
                 btn.textContent = 'Sign in to dashboard';
             }
         }
+
+        // --- Forgot PIN Modal Handling ---
+        function openForgotPinModal() {
+            const mainIdent = document.getElementById('merchantIdentifier').value.trim();
+            if (mainIdent) {
+                document.getElementById('forgotIdentifier').value = mainIdent;
+            }
+            goToStep1();
+            document.getElementById('forgotPinModal').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('forgotIdentifier').focus();
+            }, 50);
+        }
+
+        function closeForgotPinModal() {
+            document.getElementById('forgotPinModal').classList.add('hidden');
+        }
+
+        function goToStep1() {
+            document.getElementById('forgotStep1').classList.remove('hidden');
+            document.getElementById('forgotStep2').classList.add('hidden');
+            document.getElementById('forgotStepSuccess').classList.add('hidden');
+            document.getElementById('forgotErrorStep1').classList.add('hidden');
+            document.getElementById('forgotErrorStep2').classList.add('hidden');
+        }
+
+        async function handleSendResetCode(isResend = false) {
+            const identInput = document.getElementById('forgotIdentifier');
+            const ident = identInput.value.trim();
+            const errEl = isResend 
+                ? document.getElementById('forgotErrorStep2') 
+                : document.getElementById('forgotErrorStep1');
+            const btn = isResend 
+                ? document.getElementById('resendCodeBtn') 
+                : document.getElementById('sendCodeBtn');
+
+            if (!ident) {
+                errEl.textContent = 'Please enter your email or WhatsApp number';
+                errEl.classList.remove('hidden');
+                identInput.focus();
+                return;
+            }
+
+            errEl.classList.add('hidden');
+            const originalBtnText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = isResend ? 'Resending...' : 'Sending code...';
+
+            try {
+                const res = await fetch('/api/auth/forgot-pin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier: ident })
+                });
+                const result = await res.json().catch(() => ({}));
+
+                btn.disabled = false;
+                btn.textContent = originalBtnText;
+
+                if (!res.ok) {
+                    errEl.textContent = (result && result.error && result.error !== 'Not Found') 
+                        ? result.error 
+                        : 'Reset service temporarily unavailable. Please refresh and try again.';
+                    errEl.classList.remove('hidden');
+                    return;
+                }
+
+                if (result.success) {
+                    document.getElementById('forgotTargetDisplay').textContent = result.masked_destination || ident;
+                    document.getElementById('forgotStep1').classList.add('hidden');
+                    document.getElementById('forgotStep2').classList.remove('hidden');
+                    document.getElementById('forgotStepSuccess').classList.add('hidden');
+                    document.getElementById('forgotOtpCode').value = '';
+                    document.getElementById('forgotNewPin').value = '';
+                    document.getElementById('forgotConfirmPin').value = '';
+                    document.getElementById('forgotErrorStep2').classList.add('hidden');
+                    setTimeout(() => {
+                        document.getElementById('forgotOtpCode').focus();
+                    }, 50);
+                } else {
+                    errEl.textContent = result.error || 'No store account found matching that email or phone number.';
+                    errEl.classList.remove('hidden');
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.textContent = originalBtnText;
+                errEl.textContent = 'Network connection issue. Please check your connection and try again.';
+                errEl.classList.remove('hidden');
+            }
+        }
+
+        async function handleVerifyAndResetPin() {
+            const ident = document.getElementById('forgotIdentifier').value.trim();
+            const otpCode = document.getElementById('forgotOtpCode').value.trim();
+            const newPin = document.getElementById('forgotNewPin').value.trim();
+            const confirmPin = document.getElementById('forgotConfirmPin').value.trim();
+            const errEl = document.getElementById('forgotErrorStep2');
+            const btn = document.getElementById('resetPinBtn');
+
+            if (!otpCode || otpCode.length !== 6) {
+                errEl.textContent = 'Please enter the 6-digit verification code';
+                errEl.classList.remove('hidden');
+                document.getElementById('forgotOtpCode').focus();
+                return;
+            }
+
+            if (!/^\d{5}$/.test(newPin)) {
+                errEl.textContent = 'New PIN must be exactly 5 digits (numbers only)';
+                errEl.classList.remove('hidden');
+                document.getElementById('forgotNewPin').focus();
+                return;
+            }
+
+            if (newPin !== confirmPin) {
+                errEl.textContent = 'PINs do not match. Please re-type your PIN.';
+                errEl.classList.remove('hidden');
+                document.getElementById('forgotConfirmPin').focus();
+                return;
+            }
+
+            errEl.classList.add('hidden');
+            btn.disabled = true;
+            btn.textContent = 'Resetting PIN...';
+
+            try {
+                const res = await fetch('/api/auth/reset-pin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        identifier: ident,
+                        otp_code: otpCode,
+                        new_pin: newPin
+                    })
+                });
+                const result = await res.json().catch(() => ({}));
+
+                if (!res.ok) {
+                    btn.disabled = false;
+                    btn.textContent = 'Set new PIN & sign in';
+                    errEl.textContent = (result && result.error && result.error !== 'Not Found')
+                        ? result.error
+                        : 'Verification service temporarily unavailable. Please try again.';
+                    errEl.classList.remove('hidden');
+                    return;
+                }
+
+                if (result.success) {
+                    document.getElementById('forgotStep2').classList.add('hidden');
+                    document.getElementById('forgotStepSuccess').classList.remove('hidden');
+                    setTimeout(() => {
+                        window.location.href = result.redirect || '/merchant';
+                    }, 1200);
+                } else {
+                    btn.disabled = false;
+                    btn.textContent = 'Set new PIN & sign in';
+                    errEl.textContent = result.error || 'Verification failed. Please check your code.';
+                    errEl.classList.remove('hidden');
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.textContent = 'Set new PIN & sign in';
+                errEl.textContent = 'Network connection issue. Please check your connection and try again.';
+                errEl.classList.remove('hidden');
+            }
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeForgotPinModal();
+            }
+        });
     </script>
 </body>
 </html>
+

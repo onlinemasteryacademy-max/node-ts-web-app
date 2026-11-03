@@ -12,6 +12,7 @@ const mailer_js_1 = require("../email/mailer.js");
 const templates_js_1 = require("../../config/templates.js");
 const plans_js_1 = require("../../config/plans.js");
 const env_js_1 = require("../../config/env.js");
+const affiliateService_js_1 = require("../affiliates/affiliateService.js");
 const node_crypto_1 = __importDefault(require("node:crypto"));
 async function adminRoutes(fastify) {
     const secretAdminPrefix = '/' + env_js_1.ENV.ADMIN_SECRET_PATH;
@@ -262,6 +263,14 @@ async function adminRoutes(fastify) {
         const proPrice = Number(settings.pro_monthly_price || 5000);
         const businessPrice = Number(settings.business_monthly_price || 9000);
         const estimatedMrr = (proCount * proPrice) + (businessCount * businessPrice);
+        // Affiliate Program Data & Metrics
+        const affiliates = (0, affiliateService_js_1.getAllAffiliatesForAdmin)();
+        const affiliatePayouts = (0, affiliateService_js_1.getAllAffiliatePayoutsForAdmin)();
+        const totalAffiliateCommissions = affiliates.reduce((sum, a) => sum + (Number(a.total_earned) || 0), 0);
+        const totalAffiliatesOwed = affiliates.reduce((sum, a) => sum + (Number(a.wallet_balance) || 0), 0);
+        const pendingPayouts = affiliatePayouts.filter(p => p.status === 'pending');
+        const pendingPayoutsTotal = pendingPayouts.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+        const totalAffiliateSalesCount = affiliates.reduce((sum, a) => sum + (Number(a.total_sales_count) || 0), 0);
         return reply.view('admin/dashboard.ejs', {
             title: 'Super Admin Console - Zlik',
             adminPath: env_js_1.ENV.ADMIN_SECRET_PATH,
@@ -280,6 +289,8 @@ async function adminRoutes(fastify) {
             adminUsers,
             enterpriseLeads,
             settings,
+            affiliates,
+            affiliatePayouts,
             metrics: {
                 totalStores: stores.length,
                 activeStores,
@@ -292,7 +303,13 @@ async function adminRoutes(fastify) {
                 estimatedMrr,
                 todayOrders,
                 todayGmv,
-                totalLeads: enterpriseLeads.length
+                totalLeads: enterpriseLeads.length,
+                totalAffiliates: affiliates.length,
+                totalAffiliateCommissions,
+                totalAffiliatesOwed,
+                pendingPayoutsCount: pendingPayouts.length,
+                pendingPayoutsTotal,
+                totalAffiliateSalesCount
             }
         });
     });
@@ -717,6 +734,66 @@ async function adminRoutes(fastify) {
                 (0, adminHelpers_js_1.logAdminAction)(adminId, 'Database Backup', 'system', 0, `Created snapshot: ${backupName}`, request.ip);
                 return reply.send({ success: true, message: `Backup created: ${backupName}` });
             }
+            case 'get_affiliates': {
+                const affiliates = (0, affiliateService_js_1.getAllAffiliatesForAdmin)();
+                return reply.send({ success: true, affiliates });
+            }
+            case 'get_affiliate_payouts': {
+                const payouts = (0, affiliateService_js_1.getAllAffiliatePayoutsForAdmin)();
+                return reply.send({ success: true, payouts });
+            }
+            case 'approve_affiliate_payout': {
+                const payoutId = Number(body.payout_id || body.id);
+                const result = (0, affiliateService_js_1.approveAffiliatePayout)(payoutId, body.notes, body.transaction_reference);
+                if (!result.success) {
+                    return reply.code(400).send({ success: false, error: result.error });
+                }
+                (0, adminHelpers_js_1.logAdminAction)(adminId, 'Approve Affiliate Payout', 'affiliate_payouts', payoutId, `Approved ₦${result.payout?.amount?.toLocaleString()}`, request.ip);
+                return reply.send({ success: true, message: 'Affiliate payout approved and marked as paid', payout: result.payout });
+            }
+            case 'reject_affiliate_payout': {
+                const payoutId = Number(body.payout_id || body.id);
+                const result = (0, affiliateService_js_1.rejectAffiliatePayout)(payoutId, body.reason || 'Declined by Admin');
+                if (!result.success) {
+                    return reply.code(400).send({ success: false, error: result.error });
+                }
+                (0, adminHelpers_js_1.logAdminAction)(adminId, 'Reject Affiliate Payout', 'affiliate_payouts', payoutId, `Rejected & refunded ₦${result.payout?.amount?.toLocaleString()}`, request.ip);
+                return reply.send({ success: true, message: 'Affiliate payout rejected and amount refunded to wallet', payout: result.payout });
+            }
+            case 'create_affiliate': {
+                const result = await (0, affiliateService_js_1.createAffiliateByAdmin)({
+                    full_name: body.full_name,
+                    email: body.email,
+                    phone: body.phone,
+                    password: body.password,
+                    tier: body.tier,
+                    commission_rate: body.commission_rate !== undefined && body.commission_rate !== '' ? Number(body.commission_rate) : undefined
+                });
+                if (!result.success) {
+                    return reply.code(400).send({ success: false, error: result.error });
+                }
+                const ratePct = Math.round((result.affiliate?.commission_rate || 0.3) * 100);
+                (0, adminHelpers_js_1.logAdminAction)(adminId, 'Create Affiliate', 'affiliates', result.affiliate?.id || 0, `Created ${result.affiliate?.tier} affiliate (${ratePct}%)`, request.ip);
+                return reply.send({ success: true, message: 'Affiliate created successfully', affiliate: result.affiliate });
+            }
+            case 'bulk_create_affiliates':
+            case 'bulk_upload_affiliates': {
+                const csvContent = body.csv_content || body.csv || '';
+                if (!csvContent) {
+                    return reply.code(400).send({ success: false, error: 'CSV content is required' });
+                }
+                const defaultTier = body.tier || 'pro';
+                const defaultCommissionRate = body.commission_rate !== undefined && body.commission_rate !== '' ? Number(body.commission_rate) : 0.70;
+                const result = await (0, affiliateService_js_1.bulkCreateAffiliatesFromCsv)(csvContent, defaultTier, defaultCommissionRate);
+                (0, adminHelpers_js_1.logAdminAction)(adminId, 'Bulk Create Affiliates', 'affiliates', 0, `Created ${result.createdCount} affiliates (Errors: ${result.errors.length})`, request.ip);
+                return reply.send({
+                    success: true,
+                    message: `Successfully created ${result.createdCount} affiliate(s)`,
+                    createdCount: result.createdCount,
+                    errors: result.errors,
+                    created: result.created
+                });
+            }
             default:
                 return reply.code(400).send({ success: false, error: `Unknown admin action: ${action}` });
         }
@@ -725,4 +802,73 @@ async function adminRoutes(fastify) {
     fastify.post('/api/admin', handleAdminApi);
     fastify.get('/api/admin.php', handleAdminApi);
     fastify.post('/api/admin.php', handleAdminApi);
+    // Dedicated Affiliate Payout Admin Endpoints
+    fastify.post('/api/admin/affiliates/payouts/approve', async (request, reply) => {
+        const adminId = requireAdminAuth(request, reply);
+        if (!adminId)
+            return;
+        const body = (request.body || {});
+        const payoutId = Number(body.payout_id || body.id);
+        const result = (0, affiliateService_js_1.approveAffiliatePayout)(payoutId, body.notes, body.transaction_reference);
+        if (!result.success) {
+            return reply.code(400).send({ success: false, error: result.error });
+        }
+        (0, adminHelpers_js_1.logAdminAction)(adminId, 'Approve Affiliate Payout', 'affiliate_payouts', payoutId, `Approved ₦${result.payout?.amount?.toLocaleString()}`, request.ip);
+        return reply.send({ success: true, message: 'Affiliate payout approved and marked as paid', payout: result.payout });
+    });
+    fastify.post('/api/admin/affiliates/payouts/reject', async (request, reply) => {
+        const adminId = requireAdminAuth(request, reply);
+        if (!adminId)
+            return;
+        const body = (request.body || {});
+        const payoutId = Number(body.payout_id || body.id);
+        const result = (0, affiliateService_js_1.rejectAffiliatePayout)(payoutId, body.reason || 'Declined by Admin');
+        if (!result.success) {
+            return reply.code(400).send({ success: false, error: result.error });
+        }
+        (0, adminHelpers_js_1.logAdminAction)(adminId, 'Reject Affiliate Payout', 'affiliate_payouts', payoutId, `Rejected & refunded ₦${result.payout?.amount?.toLocaleString()}`, request.ip);
+        return reply.send({ success: true, message: 'Affiliate payout rejected and amount refunded to wallet', payout: result.payout });
+    });
+    // Dedicated Affiliate Creation Endpoints
+    fastify.post('/api/admin/affiliates/create', async (request, reply) => {
+        const adminId = requireAdminAuth(request, reply);
+        if (!adminId)
+            return;
+        const body = (request.body || {});
+        const result = await (0, affiliateService_js_1.createAffiliateByAdmin)({
+            full_name: body.full_name,
+            email: body.email,
+            phone: body.phone,
+            password: body.password,
+            tier: body.tier,
+            commission_rate: body.commission_rate !== undefined && body.commission_rate !== '' ? Number(body.commission_rate) : undefined
+        });
+        if (!result.success) {
+            return reply.code(400).send({ success: false, error: result.error });
+        }
+        const ratePct = Math.round((result.affiliate?.commission_rate || 0.3) * 100);
+        (0, adminHelpers_js_1.logAdminAction)(adminId, 'Create Affiliate', 'affiliates', result.affiliate?.id || 0, `Created ${result.affiliate?.tier} affiliate (${ratePct}%)`, request.ip);
+        return reply.send({ success: true, message: 'Affiliate created successfully', affiliate: result.affiliate });
+    });
+    fastify.post('/api/admin/affiliates/bulk-upload', async (request, reply) => {
+        const adminId = requireAdminAuth(request, reply);
+        if (!adminId)
+            return;
+        const body = (request.body || {});
+        const csvContent = body.csv_content || body.csv || '';
+        if (!csvContent) {
+            return reply.code(400).send({ success: false, error: 'CSV content is required' });
+        }
+        const defaultTier = body.tier || 'pro';
+        const defaultCommissionRate = body.commission_rate !== undefined && body.commission_rate !== '' ? Number(body.commission_rate) : 0.70;
+        const result = await (0, affiliateService_js_1.bulkCreateAffiliatesFromCsv)(csvContent, defaultTier, defaultCommissionRate);
+        (0, adminHelpers_js_1.logAdminAction)(adminId, 'Bulk Create Affiliates', 'affiliates', 0, `Created ${result.createdCount} affiliates (Errors: ${result.errors.length})`, request.ip);
+        return reply.send({
+            success: true,
+            message: `Successfully created ${result.createdCount} affiliate(s)`,
+            createdCount: result.createdCount,
+            errors: result.errors,
+            created: result.created
+        });
+    });
 }

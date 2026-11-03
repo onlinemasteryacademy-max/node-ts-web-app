@@ -105,6 +105,11 @@ export function initSchema(db: DatabaseSync): void {
       custom_domain_status TEXT DEFAULT 'unverified',
       allow_bank_transfer INTEGER DEFAULT 1,
       allow_pay_on_delivery INTEGER DEFAULT 0,
+      hero_headline TEXT DEFAULT NULL,
+      hero_subheading TEXT DEFAULT NULL,
+      cta_button_text TEXT DEFAULT NULL,
+      announcement_text TEXT DEFAULT NULL,
+      storefront_customization_json TEXT DEFAULT NULL,
       last_login_at TEXT DEFAULT NULL,
       last_login_ip TEXT DEFAULT NULL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -406,6 +411,19 @@ export function initSchema(db: DatabaseSync): void {
     CREATE INDEX IF NOT EXISTS idx_active_visitors_store_seen ON active_visitors(store_id, last_seen_at);
     CREATE INDEX IF NOT EXISTS idx_chat_conversations_store_month ON chat_conversations(store_id, created_at);
 
+    CREATE TABLE IF NOT EXISTS product_interactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      store_id INTEGER NOT NULL,
+      product_id INTEGER NOT NULL,
+      interaction_type TEXT NOT NULL,
+      visitor_session_id TEXT DEFAULT NULL,
+      ip_address TEXT DEFAULT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_prod_interact_store ON product_interactions(store_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_prod_interact_prod ON product_interactions(product_id, interaction_type);
+
     CREATE TABLE IF NOT EXISTS coupons (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       store_id INTEGER NOT NULL,
@@ -663,6 +681,72 @@ export function initSchema(db: DatabaseSync): void {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS affiliates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      referral_code TEXT NOT NULL UNIQUE,
+      full_name TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      phone TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
+      bank_name TEXT DEFAULT NULL,
+      bank_code TEXT DEFAULT NULL,
+      account_number TEXT DEFAULT NULL,
+      account_name TEXT DEFAULT NULL,
+      wallet_balance REAL DEFAULT 0.00,
+      total_earned REAL DEFAULT 0.00,
+      total_withdrawn REAL DEFAULT 0.00,
+      tier TEXT DEFAULT 'standard',
+      commission_rate REAL DEFAULT 0.30,
+      status TEXT DEFAULT 'active',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS affiliate_referrals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      affiliate_id INTEGER NOT NULL,
+      store_id INTEGER NOT NULL UNIQUE,
+      store_name TEXT NOT NULL,
+      store_slug TEXT NOT NULL,
+      owner_name TEXT NOT NULL,
+      owner_email TEXT NOT NULL,
+      cookie_session_id TEXT DEFAULT NULL,
+      signup_date TEXT DEFAULT CURRENT_TIMESTAMP,
+      commission_expires_at TEXT NOT NULL,
+      status TEXT DEFAULT 'active',
+      total_commissions_generated REAL DEFAULT 0.00,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS affiliate_commissions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      affiliate_id INTEGER NOT NULL,
+      referral_id INTEGER NOT NULL,
+      store_id INTEGER NOT NULL,
+      payment_reference TEXT NOT NULL UNIQUE,
+      subscription_amount REAL NOT NULL,
+      commission_rate REAL DEFAULT 0.70,
+      commission_amount REAL NOT NULL,
+      status TEXT DEFAULT 'approved',
+      earned_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS affiliate_payouts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      affiliate_id INTEGER NOT NULL,
+      amount REAL NOT NULL,
+      bank_name TEXT NOT NULL,
+      account_number TEXT NOT NULL,
+      account_name TEXT NOT NULL,
+      status TEXT DEFAULT 'pending',
+      transaction_reference TEXT DEFAULT NULL,
+      rejection_reason TEXT DEFAULT NULL,
+      admin_notes TEXT DEFAULT NULL,
+      paid_at TEXT DEFAULT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
     -- Composite Performance Indices
     CREATE INDEX IF NOT EXISTS idx_store_customer ON customers (store_id, phone_normalized);
     CREATE INDEX IF NOT EXISTS idx_store_claim ON payment_claims (store_id);
@@ -732,6 +816,11 @@ export function initSchema(db: DatabaseSync): void {
     `ALTER TABLE stores ADD COLUMN custom_domain_status TEXT DEFAULT 'unverified'`,
     `ALTER TABLE stores ADD COLUMN allow_bank_transfer INTEGER DEFAULT 1`,
     `ALTER TABLE stores ADD COLUMN allow_pay_on_delivery INTEGER DEFAULT 0`,
+    `ALTER TABLE stores ADD COLUMN hero_headline TEXT DEFAULT NULL`,
+    `ALTER TABLE stores ADD COLUMN hero_subheading TEXT DEFAULT NULL`,
+    `ALTER TABLE stores ADD COLUMN cta_button_text TEXT DEFAULT NULL`,
+    `ALTER TABLE stores ADD COLUMN announcement_text TEXT DEFAULT NULL`,
+    `ALTER TABLE stores ADD COLUMN storefront_customization_json TEXT DEFAULT NULL`,
     `ALTER TABLE orders ADD COLUMN discount_code TEXT DEFAULT NULL`,
     `ALTER TABLE orders ADD COLUMN discount_amount REAL DEFAULT 0.00`,
     `ALTER TABLE orders ADD COLUMN branch_id INTEGER DEFAULT NULL`,
@@ -749,7 +838,19 @@ export function initSchema(db: DatabaseSync): void {
     `ALTER TABLE reviews ADD COLUMN moderated_by TEXT DEFAULT NULL`,
     `ALTER TABLE reviews ADD COLUMN rejection_reason TEXT DEFAULT NULL`,
     `ALTER TABLE reviews ADD COLUMN updated_at TEXT DEFAULT NULL`,
-    `CREATE UNIQUE INDEX IF NOT EXISTS idx_reviews_unique_buyer ON reviews (store_id, item_id, customer_phone_hash)`
+    `ALTER TABLE stores ADD COLUMN referred_by_affiliate_id INTEGER DEFAULT NULL`,
+    `ALTER TABLE affiliates ADD COLUMN total_withdrawn REAL DEFAULT 0.00`,
+    `ALTER TABLE affiliates ADD COLUMN tier TEXT DEFAULT 'standard'`,
+    `ALTER TABLE affiliates ADD COLUMN commission_rate REAL DEFAULT 0.30`,
+    `ALTER TABLE affiliate_referrals ADD COLUMN signup_date TEXT DEFAULT CURRENT_TIMESTAMP`,
+    `ALTER TABLE affiliate_payouts ADD COLUMN transaction_reference TEXT DEFAULT NULL`,
+    `ALTER TABLE affiliate_payouts ADD COLUMN rejection_reason TEXT DEFAULT NULL`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_reviews_unique_buyer ON reviews (store_id, item_id, customer_phone_hash)`,
+    `CREATE INDEX IF NOT EXISTS idx_affiliates_code ON affiliates (referral_code)`,
+    `CREATE INDEX IF NOT EXISTS idx_aff_ref_aff ON affiliate_referrals (affiliate_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_aff_ref_store ON affiliate_referrals (store_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_aff_comm_aff ON affiliate_commissions (affiliate_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_aff_payout_aff ON affiliate_payouts (affiliate_id)`
   ];
 
   for (const sql of safeAlters) {

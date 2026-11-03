@@ -328,6 +328,78 @@ export function getLiveStoreVisitors(storeId: number, options: { branchId?: numb
   };
 }
 
+/**
+ * Record a product interaction event (click, preview modal, add_to_cart, etc.)
+ */
+export function recordProductInteraction(
+  storeId: number,
+  productId: number,
+  interactionType: string,
+  visitorSessionId?: string,
+  ipAddress?: string
+): void {
+  if (!storeId || !productId) return;
+  try {
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    dbInsert('product_interactions', {
+      store_id: storeId,
+      product_id: productId,
+      interaction_type: (interactionType || 'card_click').slice(0, 50),
+      visitor_session_id: visitorSessionId ? String(visitorSessionId).slice(0, 100) : null,
+      ip_address: ipAddress || null,
+      created_at: now
+    });
+  } catch (e) {}
+}
+
+/**
+ * Get product leaderboard ranked by highest clicks/interactions
+ */
+export function getProductRanking(storeId: number, timeframe: string = '7days') {
+  const db = getDb();
+  const now = new Date();
+  let startIso = '';
+
+  if (timeframe === 'today') {
+    startIso = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString().slice(0, 19).replace('T', ' ');
+  } else if (timeframe === 'yesterday') {
+    startIso = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString().slice(0, 19).replace('T', ' ');
+  } else if (timeframe === 'month' || timeframe === 'this_month') {
+    startIso = new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 19).replace('T', ' ');
+  } else if (timeframe === 'all' || timeframe === 'lifetime') {
+    startIso = '2000-01-01 00:00:00';
+  } else {
+    // default 7days
+    startIso = new Date(now.getTime() - 7 * 86400000).toISOString().slice(0, 19).replace('T', ' ');
+  }
+
+  try {
+    const rows = db.prepare(`
+      SELECT 
+        p.id as product_id,
+        p.title,
+        p.price,
+        p.image_url,
+        p.category,
+        p.stock_quantity,
+        COUNT(pi.id) as total_interactions,
+        SUM(CASE WHEN pi.interaction_type = 'card_click' OR pi.interaction_type = 'click' THEN 1 ELSE 0 END) as clicks_count,
+        SUM(CASE WHEN pi.interaction_type = 'preview' THEN 1 ELSE 0 END) as previews_count,
+        SUM(CASE WHEN pi.interaction_type = 'add_to_cart' THEN 1 ELSE 0 END) as add_to_cart_count
+      FROM items p
+      JOIN product_interactions pi ON p.id = pi.product_id
+      WHERE pi.store_id = ? AND pi.created_at >= ?
+      GROUP BY p.id
+      ORDER BY total_interactions DESC
+      LIMIT 20
+    `).all(storeId, startIso) as any[];
+
+    return rows;
+  } catch (e) {
+    return [];
+  }
+}
+
 export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
   // 1. Get Store Visitor Analytics (Merchant Console)
   fastify.get('/api/merchant/analytics/visitors', async (req: FastifyRequest, reply: FastifyReply) => {
@@ -381,23 +453,45 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.send({ success: true });
   });
 
-  // 4. Live Customer Tracking (Merchant Console - Pro & Business Only)
+  // 4. Product Interaction Tracking (Card click, preview modal open, add to cart)
+  fastify.post('/api/analytics/product-interaction', async (req: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
+    const body = (req.body || {}) as any;
+    const storeId = parseInt(body.store_id || '0');
+    const productId = parseInt(body.product_id || '0');
+    const interactionType = body.interaction_type || 'card_click';
+    const visitorSessionId = body.visitor_session_id;
+
+    if (!storeId || !productId) {
+      return reply.code(400).send({ success: false, error: 'store_id and product_id are required' });
+    }
+
+    recordProductInteraction(storeId, productId, interactionType, visitorSessionId, req.ip);
+    return reply.send({ success: true });
+  });
+
+  // 5. Product Ranking Leaderboard (Merchant Console)
+  fastify.get('/api/merchant/analytics/product-ranking', async (req: FastifyRequest<{ Querystring: any }>, reply: FastifyReply) => {
+    const store = (req as any).session?.merchantStore;
+    if (!store) return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
+
+    const currentStore = dbFetchOne<any>('stores', { id: store.id }) || store;
+    const timeframe = (req.query as any)?.timeframe || '7days';
+    const ranking = getProductRanking(currentStore.id, timeframe);
+
+    return reply.send({
+      success: true,
+      timeframe,
+      ranking
+    });
+  });
+
+  // 6. Live Customer Tracking (Merchant Console)
   fastify.get('/api/merchant/analytics/live-visitors', async (req: FastifyRequest<{ Querystring: any }>, reply: FastifyReply) => {
     const store = (req as any).session?.merchantStore;
     if (!store) return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
 
     const currentStore = dbFetchOne<any>('stores', { id: store.id }) || store;
     const planDetails = getStorePlanDetails(currentStore);
-
-    // Free users retain standard store analytics but cannot access live visitor tracking
-    if (!planDetails.isPro && !planDetails.isBusiness) {
-      return reply.code(403).send({
-        success: false,
-        locked: true,
-        error: 'Live customer tracking is available on Pro and Business plans',
-        tier: planDetails.tier
-      });
-    }
 
     const branchId = (req.query as any)?.branch_id ? parseInt((req.query as any).branch_id) : undefined;
     const liveData = getLiveStoreVisitors(currentStore.id, {
@@ -408,6 +502,7 @@ export const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.send({
       success: true,
       tier: planDetails.tier,
+      is_pro: planDetails.isPro,
       is_business: planDetails.isBusiness,
       active_count: liveData.active_count,
       visitors: liveData.visitors,

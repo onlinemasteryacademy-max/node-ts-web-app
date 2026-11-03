@@ -116,12 +116,55 @@ async function chatRoutes(fastify) {
                 const context = (0, chatService_js_1.getCustomerChatContext)(convId, store.id);
                 return reply.send({ success: true, ...context });
             }
+            // Action: merchant_initiate (Store owner initiates chat with active browser)
+            if (action === 'merchant_initiate') {
+                if (!store)
+                    return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
+                const body = (req.body || {});
+                const visitorSessionId = (body.visitor_session_id || '').trim();
+                const messageText = (body.message || '').trim();
+                const customerName = body.customer_name;
+                const productId = body.product_id ? parseInt(body.product_id) : null;
+                const productTitle = body.product_title || null;
+                if (!visitorSessionId)
+                    return reply.send({ success: false, error: 'visitor_session_id is required' });
+                if (!messageText)
+                    return reply.send({ success: false, error: 'message text cannot be empty' });
+                const result = (0, chatService_js_1.initiateMerchantChat)(store.id, visitorSessionId, messageText, {
+                    customerName,
+                    productId,
+                    productTitle
+                });
+                return reply.send(result);
+            }
             return reply.send({ success: false, error: 'Invalid chat action' });
         }
         catch (e) {
             return reply.code(500).send({ success: false, error: e.message });
         }
     };
+    // Dedicated endpoint for store owner initiating chat
+    fastify.post('/api/chat/initiate', async (req, reply) => {
+        const store = req.session?.merchantStore;
+        if (!store)
+            return reply.code(401).send({ success: false, error: 'Unauthorized: Merchant login required' });
+        const body = (req.body || {});
+        const visitorSessionId = (body.visitor_session_id || '').trim();
+        const messageText = (body.message || '').trim();
+        const customerName = body.customer_name;
+        const productId = body.product_id ? parseInt(body.product_id) : null;
+        const productTitle = body.product_title || null;
+        if (!visitorSessionId)
+            return reply.send({ success: false, error: 'visitor_session_id is required' });
+        if (!messageText)
+            return reply.send({ success: false, error: 'message text cannot be empty' });
+        const result = (0, chatService_js_1.initiateMerchantChat)(store.id, visitorSessionId, messageText, {
+            customerName,
+            productId,
+            productTitle
+        });
+        return reply.send(result);
+    });
     fastify.get('/api/chat', handleChatApi);
     fastify.post('/api/chat', handleChatApi);
     fastify.get('/api/chat.php', handleChatApi);
@@ -179,7 +222,7 @@ async function chatRoutes(fastify) {
             if (!convId)
                 return reply.send({ success: false, error: 'conversation_id is required' });
             const msgs = (0, chatService_js_1.getConversationMessages)(convId, afterId, 'customer');
-            return reply.send({ success: true, messages: msgs });
+            return reply.send({ success: true, conversation_id: convId, messages: msgs });
         }
         catch (e) {
             return reply.code(500).send({ success: false, error: e.message });

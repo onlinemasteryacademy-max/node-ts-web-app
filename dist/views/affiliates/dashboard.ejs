@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Affiliate Partner Dashboard — Zlik</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              DEFAULT: '#084C38',
+              hover: '#063b2c',
+              mint: '#EDF5F1',
+              accent: '#19D98B'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8FAF9; color: #111827; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+  <!-- ================= TOP HEADER ================= -->
+  <header class="bg-white border-b border-gray-100 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="/" class="text-2xl font-bold tracking-tight text-[#08110D]">zlik</a>
+        <span class="text-xs text-gray-300">/</span>
+        <span class="text-xs font-bold text-[#084C38] bg-[#EDF5F1] px-2.5 py-1 rounded-full uppercase tracking-wider">Affiliate Portal</span>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:block text-right">
+          <div class="text-xs font-bold text-gray-900"><%= affiliate.full_name %></div>
+          <div class="text-[11px] text-gray-500 font-mono">Code: <%= affiliate.referral_code %></div>
+        </div>
+        <a href="/affiliates/logout" class="text-xs font-semibold text-gray-600 hover:text-red-600 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-200 px-3 py-1.5 rounded-xl transition">
+          Log Out
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTENT ================= -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
+
+    <% 
+      var affRatePercent = Math.round((Number(affiliate.commission_rate) || (affiliate.tier === 'pro' ? 0.70 : 0.30)) * 100);
+      var isPro = affiliate.tier === 'pro' || affRatePercent >= 70;
+    %>
+
+    <!-- Top Welcome Banner & Partner Badge -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-xs">
+      <div>
+        <div class="flex flex-wrap items-center gap-2 mb-2">
+          <div class="inline-flex items-center gap-1.5 text-xs font-bold text-[#084C38] bg-[#EDF5F1] px-3 py-1 rounded-full">
+            <svg class="w-3.5 h-3.5 text-[#19D98B]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+            Official Partner: The Online Mastery
+          </div>
+          <% if (isPro) { %>
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+              💎 Pro Partner (<%= affRatePercent %>% Cut)
+            </span>
+          <% } else { %>
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+              Standard Partner (<%= affRatePercent %>% Cut)
+            </span>
+          <% } %>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-900">Welcome back, <%= affiliate.full_name %>!</h1>
+        <p class="text-xs text-gray-500 mt-0.5">Track your referrals, <%= affRatePercent %>% recurring commissions, and bank withdrawals.</p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button 
+          type="button" 
+          onclick="openWithdrawModal()" 
+          class="px-5 py-2.5 bg-[#084C38] hover:bg-[#063b2c] text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-2"
+        >
+          <svg class="w-4 h-4 text-[#19D98B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+          Request Withdrawal
+        </button>
+      </div>
+    </div>
+
+    <!-- UPGRADE TO PRO AFFILIATE BANNER (For Standard / Free Affiliates) -->
+    <% if (!isPro) { %>
+      <div class="bg-gradient-to-r from-[#084C38] to-[#0D634B] text-white p-6 rounded-3xl shadow-md border border-[#19D98B]/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+        <div class="space-y-1.5">
+          <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold bg-[#19D98B]/20 text-[#19D98B] border border-[#19D98B]/30 tracking-wide uppercase">
+            <span>🚀 Upgrade to Pro Partner</span>
+          </div>
+          <h2 class="text-lg sm:text-xl font-extrabold text-white">Unlock 70% Recurring Commissions + 1,000+ Promo Video Creatives</h2>
+          <p class="text-xs text-white/80 max-w-2xl leading-relaxed">
+            You are currently earning the standard 30% commission. Join through <strong>The Online Mastery Academy</strong> to instantly upgrade your account to <strong>70% recurring revenue</strong> and gain full access to over 1,000 ready-to-run video ad creatives for TikTok, Instagram, and WhatsApp marketing!
+          </p>
+        </div>
+        <a 
+          href="https://omastery.com" 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          class="px-5 py-3 rounded-xl bg-[#19D98B] hover:bg-[#16C47D] text-[#08110D] font-extrabold text-xs shadow-md whitespace-nowrap transition flex items-center gap-2 shrink-0"
+        >
+          <span>Join Academy & Upgrade (70%)</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+        </a>
+      </div>
+    <% } %>
+
+    <!-- Alert / Toast Banner -->
+    <div id="statusToast" class="hidden p-4 rounded-2xl text-xs font-semibold shadow-xs"></div>
+
+    <!-- ================= METRICS CARDS ================= -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Wallet Balance -->
+      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs">
+        <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Available Balance</div>
+        <div class="text-2xl font-extrabold text-[#084C38] font-mono mt-1">₦<%= Number(affiliate.wallet_balance || 0).toLocaleString() %></div>
+        <div class="text-[10px] text-gray-500 mt-1">Min. withdrawal: ₦<%= Number(minWithdrawal).toLocaleString() %></div>
+      </div>
+
+      <!-- Total Earned -->
+      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs">
+        <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Earned</div>
+        <div class="text-2xl font-extrabold text-gray-900 font-mono mt-1">₦<%= Number(affiliate.total_earned || 0).toLocaleString() %></div>
+        <div class="text-[10px] text-emerald-600 font-medium mt-1"><%= affRatePercent %>% recurring revenue</div>
+      </div>
+
+      <!-- Active Referrals -->
+      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs">
+        <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Active Stores</div>
+        <div class="text-2xl font-extrabold text-[#084C38] font-mono mt-1">
+          <%= referrals.filter(function(r) { return r.status === 'active' && new Date(r.commission_expires_at).getTime() > Date.now(); }).length %>
+        </div>
+        <div class="text-[10px] text-gray-500 mt-1">Within 12-month earning window</div>
+      </div>
+
+      <!-- Total Stores Referred -->
+      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs">
+        <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Signups</div>
+        <div class="text-2xl font-extrabold text-gray-900 font-mono mt-1"><%= referrals.length %></div>
+        <div class="text-[10px] text-gray-500 mt-1">Attributed via 60-day cookie</div>
+      </div>
+
+    </div>
+
+    <!-- ================= PROMOTION & REFERRAL LINK BOX ================= -->
+    <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-xs space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Your Unique Referral Link</h2>
+          <p class="text-xs text-gray-500">Every merchant who visits via your link gets tagged with a 60-day cookie.</p>
+        </div>
+      </div>
+
+      <!-- Referral Link Input with Copy & WhatsApp Share -->
+      <% var fullRefUrl = 'https://zlik.store/?ref=' + affiliate.referral_code; %>
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <div class="relative flex-1">
+          <input 
+            id="refLinkInput" 
+            type="text" 
+            readonly 
+            value="<%= fullRefUrl %>" 
+            class="w-full px-4 py-2.5 text-xs sm:text-sm font-mono font-semibold bg-gray-50 border border-gray-200 rounded-xl text-gray-800 select-all focus:outline-none"
+          >
+        </div>
+        <button 
+          type="button" 
+          onclick="copyReferralLink()" 
+          id="copyBtn"
+          class="px-4 py-2.5 bg-[#084C38] hover:bg-[#063b2c] text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 shrink-0"
+        >
+          <svg class="w-4 h-4 text-[#19D98B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+          <span id="copyBtnText">Copy Link</span>
+        </button>
+        <a 
+          href="https://api.whatsapp.com/send?text=Launch%20your%20slick%20online%20store%20in%20minutes%20with%20Zlik!%20Sign%20up%20here%3A%20<%= encodeURIComponent(fullRefUrl) %>" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          class="px-4 py-2.5 bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 shrink-0"
+        >
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.187-2.59-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.288.043.088.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.275.073.377-.044c.101-.116.433-.506.549-.68.116-.174.232-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.42-.099.825z"/></svg>
+          Share on WhatsApp
+        </a>
+      </div>
+    </div>
+
+    <!-- ================= BANK DETAILS & WITHDRAWAL SECTION ================= -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Bank Account Configuration Card -->
+      <div class="lg:col-span-6 bg-white p-6 rounded-3xl border border-gray-100 shadow-xs space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Bank Payout Details</h2>
+            <p class="text-xs text-gray-500">Withdrawals are wired directly to your Nigerian bank account</p>
+          </div>
+          <span class="text-xs font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg">NUBAN Verified</span>
+        </div>
+
+        <form id="bankDetailsForm" onsubmit="handleBankUpdate(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Select Bank</label>
+            <select 
+              name="bank_name" 
+              required 
+              class="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl border border-gray-200 focus:outline-none focus:border-[#084C38]"
+            >
+              <option value="">-- Choose your Nigerian Bank --</option>
+              <% (banks || []).forEach(function(b) { %>
+                <option value="<%= b.name %>" data-code="<%= b.code %>" <%= (affiliate.bank_name === b.name) ? 'selected' : '' %>>
+                  <%= b.name %>
+                </option>
+              <% }); %>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">10-Digit Account Number</label>
+            <input 
+              type="text" 
+              name="account_number" 
+              required 
+              maxlength="10" 
+              pattern="\d{10}" 
+              placeholder="0123456789" 
+              value="<%= affiliate.account_number || '' %>"
+              class="w-full px-3.5 py-2 text-xs sm:text-sm font-mono rounded-xl border border-gray-200 focus:outline-none focus:border-[#084C38]"
+            >
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Account Holder Full Name</label>
+            <input 
+              type="text" 
+              name="account_name" 
+              required 
+              placeholder="As registered with your bank" 
+              value="<%= affiliate.account_name || '' %>"
+              class="w-full px-3.5 py-2 text-xs sm:text-sm rounded-xl border border-gray-200 focus:outline-none focus:border-[#084C38]"
+            >
+          </div>
+
+          <div class="pt-1">
+            <button 
+              type="submit" 
+              id="saveBankBtn" 
+              class="w-full py-2.5 bg-gray-900 hover:bg-black text-white text-xs font-bold rounded-xl shadow-xs transition"
+            >
+              Save Bank Details
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Quick Withdrawal Card -->
+      <div class="lg:col-span-6 bg-white p-6 rounded-3xl border border-gray-100 shadow-xs flex flex-col justify-between space-y-4">
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Fast Payouts</h2>
+            <span class="text-xs text-gray-500 font-mono">Min: ₦10,000</span>
+          </div>
+          <div class="p-4 bg-[#EDF5F1] rounded-2xl border border-[#084C38]/10 space-y-1">
+            <div class="text-xs text-[#084C38] font-medium">Ready for Payout</div>
+            <div class="text-3xl font-black text-[#084C38] font-mono">₦<%= Number(affiliate.wallet_balance || 0).toLocaleString() %></div>
+            <div class="text-[11px] text-[#084C38]/80">
+              <% if ((Number(affiliate.wallet_balance) || 0) >= 10000) { %>
+                <span class="text-emerald-700 font-semibold">✓ Threshold reached! You can request withdrawal anytime.</span>
+              <% } else { %>
+                <span>₦<%= (10000 - (Number(affiliate.wallet_balance) || 0)).toLocaleString() %> more needed to reach minimum payout.</span>
+              <% } %>
+            </div>
+          </div>
+          <div class="text-xs text-gray-500 space-y-1 leading-relaxed">
+            <div>&bull; Payout requests are verified and credited within 24–48 business hours.</div>
+            <div>&bull; No hidden processing deductions: you receive 100% of your earnings.</div>
+            <div>&bull; Make sure your account name matches your registered legal name.</div>
+          </div>
+        </div>
+
+        <div>
+          <button 
+            type="button" 
+            onclick="openWithdrawModal()" 
+            class="w-full py-3 bg-[#084C38] hover:bg-[#063b2c] text-white text-xs font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-2"
+          >
+            <span>Withdraw Earnings</span>
+            <svg class="w-4 h-4 text-[#19D98B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ================= REFERRED STORES TABLE ================= -->
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-xs overflow-hidden">
+      <div class="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Your Referred Stores (<%= referrals.length %>)</h2>
+          <p class="text-xs text-gray-500">Each store pays you 70% of subscription fees for 12 months (365 days)</p>
+        </div>
+        <span class="text-xs text-gray-500 font-mono">70% Commission Rate</span>
+      </div>
+
+      <% if (!referrals || referrals.length === 0) { %>
+        <div class="p-12 text-center space-y-3">
+          <div class="w-12 h-12 bg-gray-50 text-gray-400 rounded-full flex items-center justify-center mx-auto">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          </div>
+          <div class="text-sm font-bold text-gray-800">No stores referred yet</div>
+          <p class="text-xs text-gray-500 max-w-sm mx-auto">Share your referral link on WhatsApp, Instagram, or YouTube to start onboarding Nigerian business owners.</p>
+          <button type="button" onclick="copyReferralLink()" class="px-4 py-2 bg-[#084C38] text-white text-xs font-semibold rounded-xl">Copy Your Link</button>
+        </div>
+      <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-gray-50 border-b border-gray-100 text-gray-500 uppercase tracking-wider text-[10px]">
+              <tr>
+                <th class="py-3 px-4 font-bold">Store</th>
+                <th class="py-3 px-4 font-bold">Owner</th>
+                <th class="py-3 px-4 font-bold">Joined On</th>
+                <th class="py-3 px-4 font-bold">12-Month Window Status</th>
+                <th class="py-3 px-4 font-bold text-right">Commissions Generated</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 font-medium">
+              <% referrals.forEach(function(ref) { 
+                var nowMs = Date.now();
+                var expiryMs = new Date(ref.commission_expires_at).getTime();
+                var diffDays = Math.max(0, Math.ceil((expiryMs - nowMs) / (1000 * 60 * 60 * 24)));
+                var isExpired = diffDays <= 0 || ref.status === 'expired';
+              %>
+                <tr class="hover:bg-gray-50/60 transition">
+                  <td class="py-3.5 px-4">
+                    <div class="font-bold text-gray-900"><%= ref.store_name %></div>
+                    <div class="text-[11px] text-gray-400 font-mono">/<%= ref.store_slug %></div>
+                  </td>
+                  <td class="py-3.5 px-4 text-gray-700">
+                    <div><%= ref.owner_name %></div>
+                    <div class="text-[11px] text-gray-400"><%= ref.owner_email || '—' %></div>
+                  </td>
+                  <td class="py-3.5 px-4 text-gray-500 font-mono text-[11px]">
+                    <%= new Date(ref.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <% if (isExpired) { %>
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-600">
+                        Expired (12 Mo. Completed)
+                      </span>
+                    <% } else { %>
+                      <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        Active &bull; <%= diffDays %> days left
+                      </span>
+                    <% } %>
+                  </td>
+                  <td class="py-3.5 px-4 text-right font-mono font-bold text-gray-900">
+                    ₦<%= Number(ref.total_commissions_generated || 0).toLocaleString() %>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- ================= WITHDRAWAL HISTORY ================= -->
+    <div class="bg-white rounded-3xl border border-gray-100 shadow-xs overflow-hidden">
+      <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+        <div>
+          <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Payout History</h2>
+          <p class="text-xs text-gray-500">Record of your withdrawal requests and bank disbursements</p>
+        </div>
+        <span class="text-xs text-gray-500 font-mono">Threshold: ₦10,000</span>
+      </div>
+
+      <% if (!payouts || payouts.length === 0) { %>
+        <div class="p-8 text-center text-xs text-gray-400">
+          No payouts requested yet.
+        </div>
+      <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-gray-50 border-b border-gray-100 text-gray-500 uppercase tracking-wider text-[10px]">
+              <tr>
+                <th class="py-3 px-4 font-bold">Request Date</th>
+                <th class="py-3 px-4 font-bold">Amount</th>
+                <th class="py-3 px-4 font-bold">Destination Bank</th>
+                <th class="py-3 px-4 font-bold">Status</th>
+                <th class="py-3 px-4 font-bold">Reference / Notes</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 font-medium">
+              <% payouts.forEach(function(p) { %>
+                <tr class="hover:bg-gray-50/60 transition">
+                  <td class="py-3 px-4 font-mono text-[11px] text-gray-500">
+                    <%= new Date(p.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) %>
+                  </td>
+                  <td class="py-3 px-4 font-mono font-bold text-gray-900">
+                    ₦<%= Number(p.amount).toLocaleString() %>
+                  </td>
+                  <td class="py-3 px-4 text-gray-700">
+                    <div><%= p.bank_name %></div>
+                    <div class="text-[11px] text-gray-400 font-mono"><%= p.account_number %> &bull; <%= p.account_name %></div>
+                  </td>
+                  <td class="py-3 px-4">
+                    <% if (p.status === 'paid') { %>
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                        Paid
+                      </span>
+                    <% } else if (p.status === 'rejected') { %>
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800">
+                        Rejected & Refunded
+                      </span>
+                    <% } else { %>
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 animate-pulse">
+                        Pending Review
+                      </span>
+                    <% } %>
+                  </td>
+                  <td class="py-3 px-4 text-gray-500 text-[11px]">
+                    <div><%= p.transaction_reference || p.admin_notes || '—' %></div>
+                    <% if (p.rejection_reason) { %>
+                      <div class="text-red-600 font-medium"><%= p.rejection_reason %></div>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+
+  </main>
+
+  <!-- ================= WITHDRAWAL MODAL ================= -->
+  <div id="withdrawModal" class="fixed inset-0 bg-black/50 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-gray-100 space-y-4">
+      <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+        <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Request Payout</h3>
+        <button onclick="closeWithdrawModal()" class="text-gray-400 hover:text-gray-800 font-bold text-lg">&times;</button>
+      </div>
+
+      <div class="space-y-3">
+        <div class="bg-gray-50 p-3.5 rounded-2xl text-xs space-y-1">
+          <div class="flex justify-between">
+            <span class="text-gray-500">Available to Withdraw:</span>
+            <span class="font-bold text-[#084C38] font-mono">₦<%= Number(affiliate.wallet_balance || 0).toLocaleString() %></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">Destination Account:</span>
+            <span class="font-semibold text-gray-800"><%= affiliate.bank_name ? (affiliate.bank_name + ' (' + affiliate.account_number + ')') : 'None configured' %></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">Minimum Threshold:</span>
+            <span class="font-bold text-gray-800 font-mono">₦10,000</span>
+          </div>
+        </div>
+
+        <% if (!affiliate.account_number || !affiliate.bank_name) { %>
+          <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800">
+            Please update your bank account details in the dashboard before requesting a payout.
+          </div>
+        <% } %>
+
+        <form id="withdrawForm" onsubmit="handleWithdrawSubmit(event)" class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Amount to Withdraw (₦)</label>
+            <input 
+              type="number" 
+              name="amount" 
+              required 
+              min="10000" 
+              max="<%= Number(affiliate.wallet_balance || 0) %>" 
+              value="<%= Math.max(10000, Number(affiliate.wallet_balance || 0)) %>" 
+              class="w-full px-3.5 py-2.5 text-sm font-mono font-bold rounded-xl border border-gray-200 focus:outline-none focus:border-[#084C38]"
+            >
+            <p class="text-[10px] text-gray-400 mt-1">Must be at least ₦10,000 and not exceed your available balance.</p>
+          </div>
+
+          <div class="flex gap-2 pt-2">
+            <button 
+              type="button" 
+              onclick="closeWithdrawModal()" 
+              class="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              id="confirmWithdrawBtn" 
+              <%= (!affiliate.account_number || (Number(affiliate.wallet_balance || 0) < 10000)) ? 'disabled' : '' %>
+              class="flex-1 py-2.5 bg-[#084C38] hover:bg-[#063b2c] disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-xs transition"
+            >
+              Confirm Withdrawal
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="bg-white border-t border-gray-100 py-6 mt-12">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
+      <div>&copy; 2026 Zlik &bull; Partnered with <strong>The Online Mastery</strong></div>
+      <div class="flex items-center gap-4">
+        <a href="/" class="hover:text-[#084C38]">Storefront</a>
+        <a href="/affiliates" class="hover:text-[#084C38]">Affiliate Program Info</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= CLIENT SCRIPTS ================= -->
+  <script>
+    function copyReferralLink() {
+      var copyText = document.getElementById("refLinkInput");
+      copyText.select();
+      copyText.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(copyText.value).then(function() {
+        var btnText = document.getElementById('copyBtnText');
+        btnText.innerText = 'Copied!';
+        setTimeout(function() { btnText.innerText = 'Copy Link'; }, 2500);
+      });
+    }
+
+    function showToast(msg, isSuccess) {
+      var toast = document.getElementById('statusToast');
+      toast.innerText = msg;
+      toast.className = 'p-4 rounded-2xl text-xs font-semibold shadow-xs ' + 
+        (isSuccess ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200');
+      toast.classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function handleBankUpdate(e) {
+      e.preventDefault();
+      var form = e.target;
+      var btn = document.getElementById('saveBankBtn');
+      btn.disabled = true;
+      btn.innerText = 'Saving...';
+
+      var selectEl = form.bank_name;
+      var selectedOption = selectEl.options[selectEl.selectedIndex];
+      var bankCode = selectedOption ? selectedOption.getAttribute('data-code') : '';
+
+      var payload = {
+        bank_name: form.bank_name.value,
+        account_number: form.account_number.value.trim(),
+        account_name: form.account_name.value.trim(),
+        bank_code: bankCode
+      };
+
+      try {
+        var res = await fetch('/api/affiliates/bank', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        var json = await res.json();
+        if (json.success) {
+          showToast('Bank account details saved successfully!', true);
+          setTimeout(function() { window.location.reload(); }, 1200);
+        } else {
+          showToast(json.error || 'Failed to update bank details', false);
+          btn.disabled = false;
+          btn.innerText = 'Save Bank Details';
+        }
+      } catch (err) {
+        showToast('Network error while saving bank details', false);
+        btn.disabled = false;
+        btn.innerText = 'Save Bank Details';
+      }
+    }
+
+    function openWithdrawModal() {
+      document.getElementById('withdrawModal').classList.remove('hidden');
+    }
+
+    function closeWithdrawModal() {
+      document.getElementById('withdrawModal').classList.add('hidden');
+    }
+
+    async function handleWithdrawSubmit(e) {
+      e.preventDefault();
+      var form = e.target;
+      var btn = document.getElementById('confirmWithdrawBtn');
+      btn.disabled = true;
+      btn.innerText = 'Processing...';
+
+      var amount = parseFloat(form.amount.value);
+      try {
+        var res = await fetch('/api/affiliates/payouts/request', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: amount })
+        });
+        var json = await res.json();
+        if (json.success) {
+          closeWithdrawModal();
+          showToast(json.message || 'Withdrawal request submitted!', true);
+          setTimeout(function() { window.location.reload(); }, 1500);
+        } else {
+          alert(json.error || 'Withdrawal request failed');
+          btn.disabled = false;
+          btn.innerText = 'Confirm Withdrawal';
+        }
+      } catch (err) {
+        alert('Network error while processing withdrawal');
+        btn.disabled = false;
+        btn.innerText = 'Confirm Withdrawal';
+      }
+    }
+  </script>
+</body>
+</html>

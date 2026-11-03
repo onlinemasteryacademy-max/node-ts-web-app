@@ -3,7 +3,8 @@ import crypto from 'node:crypto';
 import { dbFetchOne, dbFetchAll, dbInsert, dbUpdate } from '../../db/db.js';
 import { normalizePhoneNumber, hashPassword, comparePassword, validateStoreSlugAvailability, getPlatformSettings, getEffectivePlans } from '../../utils/helpers.js';
 import { validateStoreName } from '../../utils/storeNameValidator.js';
-import { sendEmailVerificationOtp, sendMerchantWelcomeEmail } from '../email/mailer.js';
+import { sendEmailVerificationOtp, sendMerchantWelcomeEmail, sendPinResetEmail } from '../email/mailer.js';
+import { bindReferredStore } from '../affiliates/affiliateService.js';
 
 const OTP_LIFETIME_SECONDS = 300; // 5 minutes validity
 
@@ -94,7 +95,8 @@ export async function authRoutes(fastify: FastifyInstance) {
       industry_id: parseInt(body.industry_id || '1'),
       template_id: parseInt(body.template_id || '1'),
       template_slug: body.template_slug || 'modern_grid',
-      business_type: body.business_type || 'retail'
+      business_type: body.business_type || 'retail',
+      ref_code: (body.ref_code || (req as any).cookies?.zlik_aff || '').trim()
     };
 
     // Save pending verification record
@@ -224,6 +226,14 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     const newStore = dbFetchOne<any>('stores', { id: storeId });
     (req as any).session.merchantStore = newStore;
+
+    // Bind Affiliate Referral if cookie or payload has referral code
+    const effectiveRefCode = payload.ref_code || (req as any).cookies?.zlik_aff;
+    if (effectiveRefCode) {
+      try {
+        bindReferredStore(storeId, effectiveRefCode, (req as any).cookies?.zlik_aff_session);
+      } catch (err) {}
+    }
 
     // ==========================================
     // Free Plan Branch -> Instant Launch
@@ -406,6 +416,14 @@ export async function authRoutes(fastify: FastifyInstance) {
     const newStore = dbFetchOne<any>('stores', { id: storeId });
     (req as any).session.merchantStore = newStore;
 
+    // Bind Affiliate Referral if payload or cookie has referral code
+    const magicRefCode = payload.ref_code || (req as any).cookies?.zlik_aff;
+    if (magicRefCode) {
+      try {
+        bindReferredStore(storeId, magicRefCode, (req as any).cookies?.zlik_aff_session);
+      } catch (err) {}
+    }
+
     if (!isPaidPlan) {
       sendMerchantWelcomeEmail(newStore).catch(() => {});
       return reply.redirect('/merchant?verified=1');
@@ -476,8 +494,60 @@ export async function authRoutes(fastify: FastifyInstance) {
     const newStore = dbFetchOne<any>('stores', { id: storeId });
     (req as any).session.merchantStore = newStore;
 
+    // Bind Affiliate Referral if cookie or payload has referral code
+    const directRefCode = (body.ref_code || (req as any).cookies?.zlik_aff || '').trim();
+    if (directRefCode) {
+      try {
+        bindReferredStore(storeId, directRefCode, (req as any).cookies?.zlik_aff_session);
+      } catch (err) {}
+    }
+
     return reply.send({ success: true, store: newStore, redirect: '/merchant' });
   });
+
+  /**
+   * Helper: Multi-attribute robust store resolver
+   * Resolves stores by case-insensitive email, normalized phone, store slug, or store name
+   */
+  function findStoreByIdentifier(rawInput: string): any {
+    if (!rawInput) return null;
+    const input = rawInput.trim();
+    if (!input) return null;
+
+    const allStores = dbFetchAll<any>('stores');
+
+    // 1. If it contains @, match email case-insensitively and trimmed
+    if (input.includes('@')) {
+      const targetEmail = input.toLowerCase();
+      const match = allStores.find(s => s.status !== 'deleted' && (s.email || '').trim().toLowerCase() === targetEmail);
+      if (match) return match;
+    }
+
+    // 2. Try normalized phone match (Nigerian and international formats, matching last 10 digits)
+    const phoneNorm = normalizePhoneNumber(input);
+    if (phoneNorm) {
+      const match = allStores.find(s => {
+        if (s.status === 'deleted') return false;
+        const sNorm = normalizePhoneNumber(s.whatsapp_number);
+        return sNorm === phoneNorm || (phoneNorm.length >= 7 && sNorm.endsWith(phoneNorm.slice(-10)));
+      });
+      if (match) return match;
+    }
+
+    // 3. Direct email check (in case user entered email without @ or with trailing spaces)
+    const emailMatch = allStores.find(s => s.status !== 'deleted' && (s.email || '').trim().toLowerCase() === input.toLowerCase());
+    if (emailMatch) return emailMatch;
+
+    // 4. Try matching store slug or store name (in case seller entered their store handle)
+    const cleanSlug = input.toLowerCase().replace(/[^a-z0-9-_]/g, '');
+    const slugMatch = allStores.find(s => 
+      s.status !== 'deleted' && 
+      ((s.slug || '').toLowerCase() === cleanSlug || (s.store_name || '').toLowerCase().trim() === input.toLowerCase())
+    );
+    if (slugMatch) return slugMatch;
+
+    return null;
+  }
 
   /**
    * 6. Merchant Dual Login (Email OR WhatsApp Phone with 5-Digit PIN)
@@ -491,25 +561,10 @@ export async function authRoutes(fastify: FastifyInstance) {
       return reply.send({ success: false, error: 'Please enter your email or WhatsApp number and 5-digit PIN' });
     }
 
-    let store: any = null;
-
-    // 1. Try Email
-    if (identifier.includes('@')) {
-      store = dbFetchOne<any>('stores', { email: identifier.toLowerCase() });
-    }
-
-    // 2. Try Phone
-    if (!store) {
-      const phoneNorm = normalizePhoneNumber(identifier);
-      const allStores = dbFetchAll<any>('stores');
-      store = allStores.find(s => {
-        const sNorm = normalizePhoneNumber(s.whatsapp_number);
-        return sNorm === phoneNorm || (phoneNorm && sNorm.endsWith(phoneNorm.slice(-10)));
-      });
-    }
+    const store = findStoreByIdentifier(identifier);
 
     if (!store) {
-      return reply.send({ success: false, error: 'No store account found with this email or phone number' });
+      return reply.send({ success: false, error: 'No store account found with this email, WhatsApp number, or store handle' });
     }
 
     const matches = await comparePassword(pin, store.password_hash);
@@ -559,5 +614,146 @@ export async function authRoutes(fastify: FastifyInstance) {
 
     return reply.send({ success: true, redirect: '/admin' });
   });
+
+  /**
+   * 9. Merchant Forgot PIN - Initiate Reset Code
+   */
+  fastify.post('/api/auth/forgot-pin', async (req: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
+    const body = (req.body || {}) as any;
+    const identifier = (body.identifier || body.email || body.phone || '').trim();
+
+    if (!identifier) {
+      return reply.send({ success: false, error: 'Please enter your registered email address, WhatsApp number, or store handle' });
+    }
+
+    const store = findStoreByIdentifier(identifier);
+
+    if (!store) {
+      return reply.send({
+        success: false,
+        error: 'No store account found matching that email, phone number, or store handle. Please verify and try again.'
+      });
+    }
+
+    const email = (store.email || '').trim();
+    if (!email || !email.includes('@')) {
+      return reply.send({
+        success: false,
+        error: `Your store "${store.store_name}" does not have an email address linked on file. Please contact Zlik WhatsApp support for manual PIN recovery.`
+      });
+    }
+
+    // Generate 6-digit secure numeric OTP
+    const otpCode = String(crypto.randomInt(100000, 999999));
+    const tokenHash = crypto.createHash('sha256').update(otpCode).digest('hex');
+    const nowMs = Date.now();
+    const expiresAt = new Date(nowMs + 15 * 60 * 1000).toISOString(); // 15 minutes validity
+
+    // Invalidate any older unused resets for this store
+    const existingResets = dbFetchAll<any>('password_resets', { account_id: store.id, used: 0 });
+    for (const r of existingResets) {
+      dbUpdate('password_resets', { used: 1 }, { id: r.id });
+    }
+
+    // Insert new reset record
+    dbInsert('password_resets', {
+      account_type: 'store',
+      account_id: store.id,
+      email: store.email,
+      token_hash: tokenHash,
+      expires_at: expiresAt,
+      used: 0,
+      created_at: new Date(nowMs).toISOString()
+    });
+
+    // Send email
+    await sendPinResetEmail(store.email, store.owner_name || store.store_name, otpCode);
+
+    // Mask email for client preview: e.g. jo***@gmail.com
+    const emailParts = email.split('@');
+    const namePart = emailParts[0];
+    const maskedName = namePart.length <= 2 
+      ? namePart[0] + '***' 
+      : namePart.slice(0, 2) + '*'.repeat(Math.max(2, namePart.length - 3)) + namePart.slice(-1);
+    const maskedEmail = `${maskedName}@${emailParts[1]}`;
+
+    return reply.send({
+      success: true,
+      store_found: true,
+      masked_destination: maskedEmail,
+      message: `A 6-digit PIN reset code was sent to ${maskedEmail}.`,
+      expires_in: 900
+    });
+  });
+
+  /**
+   * 10. Merchant Reset PIN - Verify OTP & Update 5-Digit PIN
+   */
+  fastify.post('/api/auth/reset-pin', async (req: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
+    const body = (req.body || {}) as any;
+    const identifier = (body.identifier || body.email || body.phone || '').trim();
+    const otpCode = String(body.otp_code || body.code || '').trim();
+    const newPin = String(body.new_pin || body.pin || '').trim();
+
+    if (!identifier) {
+      return reply.send({ success: false, error: 'Store identifier (email or phone) is required' });
+    }
+
+    if (!otpCode || otpCode.length !== 6) {
+      return reply.send({ success: false, error: 'Please enter the 6-digit verification code' });
+    }
+
+    if (!/^\d{5}$/.test(newPin)) {
+      return reply.send({ success: false, error: 'New PIN must be exactly 5 digits (numbers only)' });
+    }
+
+    const store = findStoreByIdentifier(identifier);
+
+    if (!store) {
+      return reply.send({ success: false, error: 'Store account not found' });
+    }
+
+    // Find active reset request for this store
+    const resets = dbFetchAll<any>('password_resets', { account_id: store.id, used: 0 });
+    const latestReset = resets.sort((a, b) => b.id - a.id)[0];
+
+    if (!latestReset) {
+      return reply.send({ success: false, error: 'No active PIN reset request found. Please request a new code.' });
+    }
+
+    const expiryMs = parseDateMs(latestReset.expires_at);
+    if (Date.now() > expiryMs) {
+      return reply.send({ success: false, error: 'Verification code has expired. Please request a new code.' });
+    }
+
+    const inputHash = crypto.createHash('sha256').update(otpCode).digest('hex');
+    if (inputHash !== latestReset.token_hash) {
+      return reply.send({ success: false, error: 'Invalid verification code. Please check and try again.' });
+    }
+
+    // Mark reset token as used
+    dbUpdate('password_resets', { used: 1 }, { id: latestReset.id });
+
+    // Hash new 5-digit PIN and update store
+    const newPassHash = await hashPassword(newPin);
+    const nowIso = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    dbUpdate('stores', { 
+      password_hash: newPassHash,
+      updated_at: nowIso 
+    }, { id: store.id });
+
+    const updatedStore = dbFetchOne<any>('stores', { id: store.id });
+
+    // Establish authenticated merchant session
+    (req as any).session.merchantStore = updatedStore;
+
+    return reply.send({
+      success: true,
+      message: 'Your 5-digit PIN has been successfully reset. You are now logged in.',
+      store: updatedStore,
+      redirect: '/merchant'
+    });
+  });
 }
+
 

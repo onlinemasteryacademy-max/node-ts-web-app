@@ -4,6 +4,7 @@ import https from 'node:https';
 import { dbFetchOne, dbFetchAll, dbInsert, dbUpdate } from '../../db/db.js';
 import { getPlatformSettings, getEffectivePlans } from '../../utils/helpers.js';
 import { sendEmail } from '../email/mailer.js';
+import { processSubscriptionCommission } from '../affiliates/affiliateService.js';
 
 /**
  * Helper to call Paystack Verify Transaction API over HTTPS
@@ -184,6 +185,11 @@ export async function billingRoutes(fastify: FastifyInstance) {
       paid_at: now.toISOString().slice(0, 19).replace('T', ' ')
     }, { id: payment.id });
 
+    // Process 70% Affiliate Commission (within 12-month window)
+    try {
+      processSubscriptionCommission(store.id, payment.amount, reference);
+    } catch (e) {}
+
     // Refresh Merchant Session
     const updatedStore = dbFetchOne<any>('stores', { id: store.id });
     (req as any).session.merchantStore = updatedStore;
@@ -269,6 +275,11 @@ export async function billingRoutes(fastify: FastifyInstance) {
             gateway_reference: data.id ? String(data.id) : reference,
             paid_at: now.toISOString().slice(0, 19).replace('T', ' ')
           }, { id: payment.id });
+
+          // Process 70% Affiliate Commission (within 12-month window)
+          try {
+            processSubscriptionCommission(store.id, payment.amount, reference);
+          } catch (e) {}
         }
       }
     }

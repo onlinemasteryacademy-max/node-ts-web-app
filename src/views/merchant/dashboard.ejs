@@ -136,40 +136,46 @@
 
                 <div class="p-4 rounded-2xl bg-[#F8FAF9] border border-[#EAEFEB]/80">
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] uppercase font-bold text-[#6B7280] tracking-wider font-mono">Page Visits</span>
+                        <span class="text-[10px] uppercase font-bold text-[#6B7280] tracking-wider font-mono">Total Shop Views</span>
                         <span class="w-2 h-2 rounded-full bg-blue-500"></span>
                     </div>
                     <div class="text-base sm:text-xl font-bold text-[#111827] font-mono mt-2" id="statVisits">
                         <%= (visitorMetrics && visitorMetrics.today && visitorMetrics.today.visits) || 0 %>
                     </div>
                     <div class="text-[10.5px] text-[#6B7280] mt-0.5 truncate" id="statVisitsSub">
-                        Page views recorded
+                        Total store page views
                     </div>
                 </div>
 
                 <div class="p-4 rounded-2xl bg-[#F8FAF9] border border-[#EAEFEB]/80">
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] uppercase font-bold text-[#6B7280] tracking-wider font-mono">Avg Order</span>
-                        <span class="w-2 h-2 rounded-full bg-zinc-400"></span>
+                        <span class="text-[10px] uppercase font-bold text-[#6B7280] tracking-wider font-mono">Unique Shoppers</span>
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                     </div>
-                    <div class="text-base sm:text-xl font-bold text-[#111827] font-mono mt-2" id="statAov">
-                        ₦<%= Number(revenueMetrics.today.aov).toLocaleString('en-US', {minimumFractionDigits: 2}) %>
+                    <div class="text-base sm:text-xl font-bold text-[#084C38] font-mono mt-2" id="statUniqueVisitorsTop">
+                        <%= (visitorMetrics && visitorMetrics.today && visitorMetrics.today.unique_visitors) || 0 %>
                     </div>
-                    <div class="text-[10.5px] text-[#6B756F] mt-0.5 truncate">
-                        Per transaction
+                    <div class="text-[10.5px] text-[#6B7280] mt-0.5 truncate" id="statUniqueSubTop">
+                        Distinct visitor sessions
                     </div>
                 </div>
             </div>
 
-            <!-- Fulfillment Split Footer Pill -->
-            <div class="flex items-center justify-between text-[11px] text-[#6B756F] pt-1 px-1 border-t border-[#E3E9E5]/60">
-                <div class="flex items-center gap-2">
-                    <span class="font-bold text-[#08110D]">Fulfillment:</span>
-                    <span>Delivery: <strong id="statDelivery" class="text-[#08110D]"><%= revenueMetrics.today.delivery_count %></strong></span>
+            <!-- Fulfillment & Live Shoppers Split Footer Pill -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-[#6B756F] pt-2 px-1 border-t border-[#EAEFEB]">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-bold text-[#111827]">Fulfillment:</span>
+                    <span>Delivery: <strong id="statDelivery" class="text-[#111827]"><%= revenueMetrics.today.delivery_count %></strong></span>
                     <span>&bull;</span>
-                    <span>Pickup: <strong id="statPickup" class="text-[#08110D]"><%= revenueMetrics.today.pickup_count %></strong></span>
+                    <span>Pickup: <strong id="statPickup" class="text-[#111827]"><%= revenueMetrics.today.pickup_count %></strong></span>
+                    <span>&bull;</span>
+                    <a href="/merchant/messages?tab=live" class="inline-flex items-center gap-1.5 font-bold text-[#084C38] hover:underline bg-[#EDF5F1] px-2.5 py-0.5 rounded-full border border-[#084C38]/20">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span id="topLiveShopperCount">0 Shoppers Live Now</span>
+                        <span>&rarr; Chat</span>
+                    </a>
                 </div>
-                <button type="button" onclick="toggleAnalyticsSection()" class="text-xs font-bold text-[#087A50] hover:underline flex items-center gap-1">
+                <button type="button" onclick="toggleAnalyticsSection()" class="text-xs font-bold text-[#084C38] hover:underline flex items-center gap-1 self-start sm:self-auto">
                     <span id="analyticsToggleText">More Analytics</span>
                     <span id="analyticsToggleChevron">▾</span>
                 </button>
@@ -204,14 +210,14 @@
                     const claimedCount = orders.filter(o => o.payment_status === 'claimed').length;
                 %>
                 <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5 text-xs font-semibold">
-                    <button type="button" onclick="setOrderStatusFilter('all')" id="ofilter-all" class="order-filter-btn px-4 py-1.5 rounded-full bg-[#084C38] text-white whitespace-nowrap transition shadow-xs">
+                    <button type="button" onclick="setOrderStatusFilter('all')" id="ofilter-all" class="order-filter-btn px-4 py-1.5 rounded-full bg-[#084C38] text-white border-transparent whitespace-nowrap transition shadow-xs">
                         All (<%= orders.length %>)
                     </button>
                     <% if (claimedCount > 0) { %>
-                        <button type="button" onclick="setOrderStatusFilter('claimed')" id="ofilter-claimed" class="order-filter-btn px-4 py-1.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap transition flex items-center gap-1.5 animate-pulse">
-                            <span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+                        <button type="button" onclick="setOrderStatusFilter('claimed')" id="ofilter-claimed" class="order-filter-btn px-4 py-1.5 rounded-full bg-white text-[#6B7280] border border-[#EAEFEB] hover:text-[#111827] whitespace-nowrap transition flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
                             <span>Needs Action</span>
-                            <span class="bg-amber-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono"><%= claimedCount %></span>
+                            <span id="claimedBadgeCount" class="bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold"><%= claimedCount %></span>
                         </button>
                     <% } %>
                     <button type="button" onclick="setOrderStatusFilter('pending')" id="ofilter-pending" class="order-filter-btn px-4 py-1.5 rounded-full bg-white text-[#6B7280] border border-[#EAEFEB] hover:text-[#111827] whitespace-nowrap transition">
@@ -434,86 +440,68 @@
             </div>
         </div>
 
-        <!-- Deep Visitor Analytics & Live Telemetry Section (Expandable on Mobile, Open on Desktop) -->
-        <div id="analyticsSection" class="bg-white rounded-2xl border border-[#E3E9E5] p-4 sm:p-5 shadow-2xs space-y-4">
+        <!-- Live Store Visitors Section -->
+        <div id="analyticsSection" class="bg-white rounded-3xl border border-[#EAEFEB] p-4 sm:p-5 shadow-xs space-y-4">
             <div class="flex items-center justify-between cursor-pointer" onclick="toggleAnalyticsSection()">
                 <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-xl bg-[#19D98B]/10 text-[#087A50] flex items-center justify-center shrink-0">
-                        <svg class="w-4 h-4 text-[#087A50]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                    <div class="w-8 h-8 rounded-xl bg-emerald-50 text-[#087A50] flex items-center justify-center shrink-0 border border-emerald-200">
+                        <svg class="w-4 h-4 text-[#087A50]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                     </div>
                     <div>
-                        <h2 class="text-sm sm:text-base font-bold text-[#08110D] font-display">Store Traffic & Live Telemetry</h2>
-                        <p class="text-[11px] text-[#6B756F]">Visitor trends, unique shoppers, and active real-time sessions</p>
+                        <h2 class="text-sm sm:text-base font-extrabold text-[#111827] font-display">Live Store Visitors</h2>
+                        <p class="text-[11px] text-[#6B7280]">Real-time storefront visitors browsing right now</p>
                     </div>
                 </div>
-                <button type="button" class="w-8 h-8 rounded-xl bg-[#F8FAF8] border border-[#E3E9E5] text-[#08110D] flex items-center justify-center font-bold text-xs" id="analyticsHeaderToggleChevron">
+                <button type="button" class="w-8 h-8 rounded-xl bg-[#F8FAF9] border border-[#EAEFEB] text-[#111827] flex items-center justify-center font-bold text-xs" id="analyticsHeaderToggleChevron">
                     ▾
                 </button>
             </div>
 
-            <div id="analyticsContent" class="space-y-4 pt-2 border-t border-[#E3E9E5]">
-                <!-- Timeframe switcher for Visitor Analytics -->
-                <div class="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1 text-xs font-medium bg-[#F8FAF8] p-1 rounded-xl border border-[#E3E9E5]">
-                    <button type="button" onclick="switchVisitorPeriod('today')" id="vbtn-today" class="visitor-tab-btn px-3 py-1.5 rounded-lg bg-[#08110D] text-white font-semibold transition text-xs whitespace-nowrap">Today</button>
-                    <button type="button" onclick="switchVisitorPeriod('yesterday')" id="vbtn-yesterday" class="visitor-tab-btn px-3 py-1.5 rounded-lg text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Yesterday</button>
-                    <button type="button" onclick="switchVisitorPeriod('7days')" id="vbtn-7days" class="visitor-tab-btn px-3 py-1.5 rounded-lg text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">7 Days</button>
-                    <button type="button" onclick="switchVisitorPeriod('month')" id="vbtn-month" class="visitor-tab-btn px-3 py-1.5 rounded-lg text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">1 Month</button>
-                    <button type="button" onclick="switchVisitorPeriod('quarterly')" id="vbtn-quarterly" class="visitor-tab-btn px-3 py-1.5 rounded-lg text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Quarterly</button>
-                    <button type="button" onclick="switchVisitorPeriod('yearly')" id="vbtn-yearly" class="visitor-tab-btn px-3 py-1.5 rounded-lg text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Yearly</button>
-                    <button type="button" onclick="switchVisitorPeriod('lifetime')" id="vbtn-lifetime" class="visitor-tab-btn px-3 py-1.5 rounded-lg text-[#6B756F] hover:text-[#08110D] transition text-xs whitespace-nowrap">Lifetime</button>
-                </div>
-
-                <!-- Unique Shoppers & Visits Detail -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div class="p-3.5 sm:p-4 rounded-xl bg-white border border-[#E3E9E5] shadow-2xs">
-                        <span class="text-[10px] uppercase font-semibold text-[#6B756F] font-mono">Unique Shoppers</span>
-                        <div class="text-xl sm:text-2xl font-bold text-[#087A50] font-mono mt-1" id="statUniqueVisitors">
-                            <%= (visitorMetrics && visitorMetrics.today && visitorMetrics.today.unique_visitors) || 0 %>
-                        </div>
-                        <span class="text-[11px] text-[#6B756F]" id="statUniqueSub">Distinct shoppers</span>
-                    </div>
-
-                    <div class="p-3.5 sm:p-4 rounded-xl bg-white border border-[#E3E9E5] shadow-2xs flex flex-col justify-between">
-                        <span class="text-[10px] uppercase font-semibold text-[#6B756F] font-mono">Live Active Count</span>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-                            <span class="text-xl sm:text-2xl font-bold text-[#08110D] font-mono" id="liveActiveCountText">
+            <div id="analyticsContent" class="space-y-4 pt-2 border-t border-[#EAEFEB]">
+                <!-- Focused Real-time Presence Status Bar -->
+                <div class="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-[#F8FAF9] border border-[#EAEFEB]">
+                    <div class="flex items-center gap-3">
+                        <span class="relative flex h-3 w-3">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                        </span>
+                        <div>
+                            <span class="text-base sm:text-xl font-black text-[#084C38] font-mono tracking-tight" id="liveActiveCountText">
                                 <%= (isPro || (store.plan_tier === 'business')) ? '0 Active Now' : 'Locked (Pro)' %>
                             </span>
+                            <span class="text-xs text-[#6B7280] ml-2 hidden sm:inline">&bull; Real-time storefront session pulse</span>
                         </div>
-                        <span class="text-[11px] text-[#6B756F]">Real-time storefront visitors</span>
                     </div>
+                    <% if (store.plan_tier === 'business') { %>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10.5px] text-[#6B7280]">Branch:</span>
+                            <select id="liveBranchFilter" onchange="fetchLiveVisitors()" class="bg-white border border-[#EAEFEB] text-[11px] font-medium text-[#111827] rounded-xl px-2.5 py-1 outline-none">
+                                <option value="">All Branches</option>
+                            </select>
+                        </div>
+                    <% } %>
                 </div>
 
                 <!-- Live Visitors Telemetry Table / Stream -->
                 <% if (isPro || (store.plan_tier === 'business')) { %>
                     <div class="space-y-2">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-[#08110D]">Live Shopper Feed</span>
-                            <% if (store.plan_tier === 'business') { %>
-                                <div class="flex items-center gap-1.5">
-                                    <span class="text-[11px] text-[#6B756F]">Branch:</span>
-                                    <select id="liveBranchFilter" onchange="fetchLiveVisitors()" class="bg-[#F8FAF8] border border-[#E3E9E5] text-[11px] font-medium text-[#08110D] rounded-xl px-2.5 py-1 outline-none">
-                                        <option value="">All Branches</option>
-                                    </select>
-                                </div>
-                            <% } %>
+                            <span class="text-xs font-bold text-[#111827] font-display">Live Shopper Feed</span>
                         </div>
 
-                        <div class="overflow-x-auto rounded-xl border border-[#E3E9E5]">
+                        <div class="overflow-x-auto rounded-2xl border border-[#EAEFEB] bg-white">
                             <table class="w-full text-left border-collapse text-xs">
                                 <thead>
-                                    <tr class="border-b border-[#E3E9E5] text-[10px] font-bold uppercase text-[#6B756F] bg-[#F8FAF8]">
-                                        <th class="p-2.5">Shopper</th>
-                                        <th class="p-2.5">Currently Viewing</th>
-                                        <th class="p-2.5">Traffic Source</th>
-                                        <th class="p-2.5">Time on Site</th>
-                                        <th class="p-2.5 text-right">Latest Pulse</th>
+                                    <tr class="border-b border-[#EAEFEB] text-[11px] font-bold text-[#6B7280] bg-[#F8FAF9]">
+                                        <th class="p-2.5 text-center w-12" title="Shopper Identity"><span class="cursor-default text-xs" title="Shopper">👤</span></th>
+                                        <th class="p-2.5 text-center w-40" title="Currently Viewing"><span class="cursor-default text-xs" title="Currently Viewing">👁️</span></th>
+                                        <th class="p-2.5 text-center w-28" title="Traffic Source"><span class="cursor-default text-xs" title="Traffic Source">🌐</span></th>
+                                        <th class="p-2.5 text-right w-20" title="Initiate Live Chat"><span class="cursor-default text-xs" title="Action">💬</span></th>
                                     </tr>
                                 </thead>
-                                <tbody id="liveVisitorsTableBody" class="divide-y divide-[#E3E9E5]/60 font-body">
+                                <tbody id="liveVisitorsTableBody" class="divide-y divide-[#EAEFEB]/60 font-body">
                                     <tr>
-                                        <td colspan="5" class="p-4 text-center text-[#6B756F] text-xs">
+                                        <td colspan="4" class="p-4 text-center text-[#6B7280] text-xs">
                                             <div class="inline-flex items-center gap-2">
                                                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                                                 <span>Listening for live store visitors...</span>
@@ -522,6 +510,30 @@
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+
+                        <!-- Top Clicked & Engaged Products Leaderboard -->
+                        <div class="space-y-3 pt-4 border-t border-[#EAEFEB]">
+                            <div class="flex items-center justify-between gap-2 flex-wrap">
+                                <div>
+                                    <h3 class="text-xs font-bold text-[#111827] uppercase tracking-wider font-display flex items-center gap-1.5">
+                                        <span>🔥 Most Clicked & Engaged Products</span>
+                                    </h3>
+                                    <p class="text-[11px] text-[#6B7280]">Products ranked by total shopper clicks, quick preview modal views, and add-to-carts</p>
+                                </div>
+                                <div class="flex items-center gap-1 bg-[#F8FAF9] p-1 rounded-xl border border-[#EAEFEB] text-xs font-semibold">
+                                    <button type="button" onclick="fetchProductRanking('today')" id="rankBtn-today" class="rank-tab-btn px-2.5 py-1 rounded-lg text-[#6B7280] hover:text-[#111827] transition text-[11px]">Today</button>
+                                    <button type="button" onclick="fetchProductRanking('7days')" id="rankBtn-7days" class="rank-tab-btn px-2.5 py-1 rounded-lg bg-[#084C38] text-white shadow-xs transition text-[11px] font-bold">7 Days</button>
+                                    <button type="button" onclick="fetchProductRanking('month')" id="rankBtn-month" class="rank-tab-btn px-2.5 py-1 rounded-lg text-[#6B7280] hover:text-[#111827] transition text-[11px]">30 Days</button>
+                                    <button type="button" onclick="fetchProductRanking('lifetime')" id="rankBtn-lifetime" class="rank-tab-btn px-2.5 py-1 rounded-lg text-[#6B7280] hover:text-[#111827] transition text-[11px]">All Time</button>
+                                </div>
+                            </div>
+
+                            <div id="productRankingContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <div class="p-6 text-center text-[#6B7280] text-xs col-span-2 bg-[#F8FAF9] rounded-2xl border border-[#EAEFEB]">
+                                    Loading product interaction leaderboard...
+                                </div>
+                            </div>
                         </div>
                     </div>
                 <% } else { %>
@@ -615,13 +627,20 @@
         function setOrderStatusFilter(filter) {
             currentOrderFilter = filter;
             document.querySelectorAll('.order-filter-btn').forEach(btn => {
-                btn.classList.remove('bg-[#084C38]', 'text-white', 'shadow-xs');
+                btn.classList.remove('bg-[#084C38]', 'text-white', 'shadow-xs', 'border-transparent', 'bg-amber-100', 'text-amber-900', 'border-amber-300', 'animate-pulse');
                 btn.classList.add('bg-white', 'text-[#6B7280]', 'border', 'border-[#EAEFEB]');
             });
+            const claimedBadge = document.getElementById('claimedBadgeCount');
+            if (claimedBadge) {
+                claimedBadge.className = 'bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold';
+            }
             const activeBtn = document.getElementById('ofilter-' + filter);
             if (activeBtn) {
                 activeBtn.classList.remove('bg-white', 'text-[#6B7280]', 'border', 'border-[#EAEFEB]');
-                activeBtn.classList.add('bg-[#084C38]', 'text-white', 'shadow-xs');
+                activeBtn.classList.add('bg-[#084C38]', 'text-white', 'shadow-xs', 'border-transparent');
+                if (filter === 'claimed' && claimedBadge) {
+                    claimedBadge.className = 'bg-white/20 text-white text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold';
+                }
             }
             filterOrdersList();
         }
@@ -720,10 +739,18 @@
             }
 
             const data = visitorMetrics[period] || { visits: 0, unique_visitors: 0, label: period };
-            document.getElementById('statVisits').textContent = Number(data.visits || 0).toLocaleString();
-            document.getElementById('statUniqueVisitors').textContent = Number(data.unique_visitors || 0).toLocaleString();
-            document.getElementById('statVisitsSub').textContent = `In ${data.label || period}`;
-            document.getElementById('statUniqueSub').textContent = `Distinct shoppers in ${data.label || period}`;
+            const vEl = document.getElementById('statVisits');
+            const uEl = document.getElementById('statUniqueVisitors');
+            const uTopEl = document.getElementById('statUniqueVisitorsTop');
+            if (vEl) vEl.textContent = Number(data.visits || 0).toLocaleString();
+            if (uEl) uEl.textContent = Number(data.unique_visitors || 0).toLocaleString();
+            if (uTopEl) uTopEl.textContent = Number(data.unique_visitors || 0).toLocaleString();
+            const vsEl = document.getElementById('statVisitsSub');
+            const usEl = document.getElementById('statUniqueSub');
+            const ustEl = document.getElementById('statUniqueSubTop');
+            if (vsEl) vsEl.textContent = `In ${data.label || period}`;
+            if (usEl) usEl.textContent = `Distinct shoppers in ${data.label || period}`;
+            if (ustEl) ustEl.textContent = `Distinct shoppers in ${data.label || period}`;
         }
 
         function playChime() {
@@ -777,6 +804,19 @@
             document.getElementById('statAov').textContent = '₦' + Number(data.aov).toLocaleString('en-US', {minimumFractionDigits: 2});
             document.getElementById('statDelivery').textContent = data.delivery_count;
             document.getElementById('statPickup').textContent = data.pickup_count;
+
+            // Map timeframe to visitor metric key
+            let vPeriod = 'today';
+            if (period === 'yesterday') vPeriod = 'yesterday';
+            else if (period === 'this_week') vPeriod = '7days';
+            else if (period === 'this_month' || period === 'last_month' || period === '3months' || period === '6months') vPeriod = 'month';
+            else if (period === 'yearly') vPeriod = 'yearly';
+            else if (period === 'lifetime') vPeriod = 'lifetime';
+            const vData = (visitorMetrics && visitorMetrics[vPeriod]) || { visits: 0, unique_visitors: 0, label: period };
+            const statVisits = document.getElementById('statVisits');
+            const statUniqueTop = document.getElementById('statUniqueVisitorsTop');
+            if (statVisits) statVisits.textContent = Number(vData.visits || 0).toLocaleString();
+            if (statUniqueTop) statUniqueTop.textContent = Number(vData.unique_visitors || 0).toLocaleString();
         }
 
         async function confirmPayment(orderId) {
@@ -980,6 +1020,8 @@
                 if (data.success) {
                     const countBadge = document.getElementById('liveActiveCountText');
                     if (countBadge) countBadge.textContent = `${data.active_count} Active Now`;
+                    const topLiveEl = document.getElementById('topLiveShopperCount');
+                    if (topLiveEl) topLiveEl.textContent = `${data.active_count} Shopper${data.active_count === 1 ? '' : 's'} Live Now`;
 
                     const tbody = document.getElementById('liveVisitorsTableBody');
                     if (!tbody) return;
@@ -987,7 +1029,7 @@
                     if (!data.visitors || data.visitors.length === 0) {
                         tbody.innerHTML = `
                             <tr>
-                                <td colspan="5" class="p-6 text-center text-[#6B756F] text-xs">
+                                <td colspan="4" class="p-6 text-center text-[#6B756F] text-xs">
                                     No customers actively browsing this store right now. Check back when customers arrive.
                                 </td>
                             </tr>
@@ -997,31 +1039,32 @@
 
                     tbody.innerHTML = data.visitors.map(v => {
                         const pulseColor = v.active_seconds_ago < 30 ? 'bg-emerald-500' : 'bg-amber-400';
-                        const pulseText = v.active_seconds_ago < 30 ? 'Active just now' : `${v.active_seconds_ago}s ago`;
+                        const safeSession = encodeURIComponent(v.session_id || '');
+                        const safeName = encodeURIComponent(v.display_name || 'Shopper');
+                        const safeViewing = encodeURIComponent(v.current_page || 'Storefront');
 
                         return `
-                            <tr class="hover:bg-[#F8FAF8] transition">
-                                <td class="p-3">
-                                    <div class="flex items-center gap-2">
-                                        <span class="w-2 h-2 rounded-full ${pulseColor}"></span>
-                                        <span class="font-semibold text-[#08110D]">${v.display_name}</span>
+                            <tr class="hover:bg-[#F8FAF9] transition">
+                                <td class="p-2.5">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full ${pulseColor}"></span>
+                                        <span class="font-semibold text-xs text-[#111827]">${v.display_name}</span>
                                     </div>
                                 </td>
-                                <td class="p-3">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-lg bg-gray-100 text-[#08110D] font-mono text-[11px]">
+                                <td class="p-2.5">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-[#F8FAF9] border border-[#EAEFEB] text-[#111827] font-mono text-[10px] truncate max-w-[160px]">
                                         ${v.current_page}
                                     </span>
                                 </td>
-                                <td class="p-3">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                <td class="p-2.5 text-center">
+                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9.5px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
                                         ${v.traffic_source}
                                     </span>
                                 </td>
-                                <td class="p-3 text-[#6B756F]">
-                                    ${v.minutes_on_site} min${v.minutes_on_site === 1 ? '' : 's'} on site
-                                </td>
-                                <td class="p-3 text-right font-mono text-[11px] text-[#6B756F]">
-                                    ${pulseText}
+                                <td class="p-2.5 text-right">
+                                    <a href="/merchant/messages?tab=live&initiate_session=${safeSession}&name=${safeName}&viewing=${safeViewing}" class="bg-[#084C38] hover:bg-[#063b2c] text-white text-[10px] font-bold px-2.5 py-1 rounded-lg transition inline-flex items-center gap-1 shadow-2xs">
+                                        <span>Chat</span> <span>💬</span>
+                                    </a>
                                 </td>
                             </tr>
                         `;
@@ -1032,9 +1075,93 @@
             }
         }
 
+        let currentRankingTimeframe = '7days';
+
+        async function fetchProductRanking(timeframe = '7days') {
+            currentRankingTimeframe = timeframe;
+            const container = document.getElementById('productRankingContainer');
+            if (!container) return;
+
+            document.querySelectorAll('.rank-tab-btn').forEach(b => {
+                b.className = 'rank-tab-btn px-2.5 py-1 rounded-lg text-[#6B7280] hover:text-[#111827] transition text-[11px]';
+            });
+            const activeBtn = document.getElementById('rankBtn-' + timeframe);
+            if (activeBtn) {
+                activeBtn.className = 'rank-tab-btn px-2.5 py-1 rounded-lg bg-[#084C38] text-white shadow-xs transition text-[11px] font-bold';
+            }
+
+            try {
+                const res = await fetch(`/api/merchant/analytics/product-ranking?timeframe=${timeframe}`);
+                const data = await res.json();
+                if (data.success && Array.isArray(data.ranking)) {
+                    renderProductRanking(data.ranking);
+                }
+            } catch(e) {}
+        }
+
+        function renderProductRanking(products) {
+            const container = document.getElementById('productRankingContainer');
+            if (!container) return;
+
+            if (!products || products.length === 0) {
+                container.innerHTML = `
+                    <div class="p-6 text-center text-[#6B7280] text-xs col-span-2 bg-[#F8FAF9] rounded-2xl border border-[#EAEFEB]">
+                        No product clicks or preview interactions recorded for this timeframe yet.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = products.map((p, idx) => {
+                const rankNum = idx + 1;
+                const totalClicks = Number(p.total_interactions || 0);
+                const previews = Number(p.previews_count || 0);
+                const cartAdds = Number(p.add_to_cart_count || 0);
+                const priceFormatted = Number(p.price || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+                const img = p.image_url || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=200&q=80';
+
+                return `
+                    <div class="p-3.5 bg-white rounded-2xl border border-[#EAEFEB] shadow-xs flex items-center justify-between gap-3 hover:border-[#084C38]/40 transition">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <span class="w-6 h-6 rounded-lg ${rankNum === 1 ? 'bg-amber-100 text-amber-900 border border-amber-300 font-extrabold' : rankNum <= 3 ? 'bg-emerald-50 text-emerald-900 font-bold' : 'bg-gray-100 text-[#6B7280] font-semibold'} text-xs flex items-center justify-center shrink-0 font-mono">
+                                #${rankNum}
+                            </span>
+                            <div class="w-11 h-11 rounded-xl overflow-hidden bg-[#F8FAF9] border border-[#EAEFEB] shrink-0">
+                                <img src="${escapeHtml(img)}" alt="${escapeHtml(p.title)}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="text-xs font-bold text-[#111827] truncate">${escapeHtml(p.title)}</h4>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <span class="text-[11px] font-mono text-[#084C38] font-bold">₦${priceFormatted}</span>
+                                    <span class="text-[10px] text-[#6B7280]">•</span>
+                                    <span class="text-[10px] text-[#6B7280] truncate">${escapeHtml(p.category || 'General')}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-right shrink-0">
+                            <div class="text-xs sm:text-sm font-extrabold text-[#111827] font-mono">
+                                ${totalClicks.toLocaleString()} <span class="text-[10px] font-normal text-[#6B7280]">clicks</span>
+                            </div>
+                            <div class="flex items-center gap-1 justify-end mt-1">
+                                <span class="text-[9px] font-bold bg-[#EDF5F1] text-[#084C38] px-1.5 py-0.2 rounded-full" title="Product modal previews">
+                                    👁️ ${previews}
+                                </span>
+                                <span class="text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.2 rounded-full" title="Added to cart">
+                                    🛒 ${cartAdds}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             checkUnreadChat();
             connectSSE();
+            fetchProductRanking('7days');
+
             if (isTrackingAuthorized) {
                 fetchLiveVisitors();
                 setInterval(fetchLiveVisitors, 8000);

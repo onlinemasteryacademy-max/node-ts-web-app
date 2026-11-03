@@ -284,7 +284,10 @@ export function createOrder(input: CreateOrderInput): {
   const totalAmount = Math.max(0, subtotal - discountAmount) + deliveryFee;
 
   const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-  const orderRef = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+  let orderRef = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+  if (dbFetchOne<any>('orders', { order_ref: orderRef })) {
+    orderRef = 'ORD-' + Date.now().toString().slice(-6) + Math.floor(100 + Math.random() * 900);
+  }
   const orderToken = crypto.randomBytes(16).toString('hex');
   const verificationHash = crypto.createHash('sha256').update(orderRef + orderToken + String(totalAmount)).digest('hex').substring(0, 12);
 
